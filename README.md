@@ -12,7 +12,7 @@ Android OBD-II diagnostics app for ELM327 Bluetooth/WiFi/USB adapters
 - **Customizable displays** - Dashboard views, charts, and gauges
 - **Multi-language** - Support for 40+ languages
 - **Plugin framework** - Extend functionality with plugins
-- **Data customization** - Add custom PIDs and conversions
+- **Custom vehicle support** - Add custom PIDs and conversions
 
 ### Version 1.2.x Features
 
@@ -20,7 +20,7 @@ Android OBD-II diagnostics app for ELM327 Bluetooth/WiFi/USB adapters
 - **New conversion types** - Bitmap and hash conversions for state messages
 - **Bar gauge display** in data screen
 - **Consistent coloring** across all display modes
-- **Advanced customization** via user-defined CSV files
+- **Advanced configuration** via user-defined CSV files
 
 ## Requirements
 
@@ -123,16 +123,50 @@ Configure how data is extracted from OBD responses:
 | min/max | Value limits |
 | label | Display label |
 
-### Custom Data Files
+### Custom Vehicle PIDs & Data Conversions
 
-Add custom PIDs, conversions, or fault codes by:
+OBD-Droid allows you to add support for non-standard PIDs and custom data conversions that are specific to your vehicle. This is useful for:
+- Manufacturer-specific PIDs not in the OBD-II standard
+- Aftermarket sensors and modifications
+- Custom calculated values from existing PIDs
 
-1. Create CSV files with your custom data
-2. Store in `/sdcard/com.obddroid.ecu.gui.androbd/custom/`
-3. Select files in app settings
-4. Files load at each app startup
+#### How to Add Custom PIDs:
 
-Template files are available in `/customization/templates/`
+1. **Start with template files** in `/custom-pids/` directory:
+   - **For beginners**: Use `example_basic_*` files as a starting point
+   - **For advanced users**: See `example_advanced_*` files for complex examples
+   - **Blank templates**: Use `template_blank_*` files to start from scratch
+
+2. **Copy your customized files** to your Android device:
+   - Store in `/sdcard/com.obddroid.ecu.gui.androbd/custom/`
+   - Or select files via app settings menu
+
+3. **Files automatically load** when the app starts
+
+#### Understanding the CSV Files:
+
+**cust_pids.csv** - Defines custom PIDs:
+- `svc`: Service mode (0x01, 0x02, etc.)
+- `pid`: Parameter ID in hex (e.g., 0x5F)
+- `formula`: Links to conversion formula name
+- `label`: Display name in the app
+- `min/max`: Expected value range
+
+**cust_conversions.csv** - Defines data conversion formulas:
+- `LINEAR`: Mathematical conversions (multiply/divide/offset)
+- `HASH`: Map numeric values to text (1="Running", 2="Stopped")
+- `BITMAP`: Decode bit flags for status indicators
+- Supports both METRIC and IMPERIAL units
+
+**Example Files Included**:
+- `example_basic_*` - Simple examples (turbo boost, oil temp, transmission temp)
+- `example_advanced_*` - Complex examples (hash states, bitmaps, multi-unit conversions)
+- `template_blank_*` - Empty templates ready for your custom PIDs
+
+**Quick Example**: Adding turbo boost pressure (see example_basic files):
+1. Conversion: `TURBO_BOOST_PSI,LINEAR,0,IMPERIAL,0.145,1,0,-14.7,psi`
+2. PID: `0x01,0x67,0,1,0,8,0xFF,TURBO_BOOST_PSI,%.1f,-14.7,30,turbo_boost,Turbo Boost`
+3. Copy to device and restart app
 
 ## Plugin Framework
 
@@ -210,7 +244,7 @@ OBD-Droid/
 ├── androbd/          # Main Android application
 ├── library/          # Core OBD library
 ├── plugin/           # Plugin framework
-└── customization/    # Template files
+└── custom-pids/      # Custom PID template files
 ```
 
 ### Technologies
@@ -243,7 +277,7 @@ OBD-Droid/
 - Review log files for errors
 
 ## Support
-- Check documentation in `/customization/templates/`
+- Check template files in `/custom-pids/` for examples
 - Review plugin examples for extending functionality
 
 ---

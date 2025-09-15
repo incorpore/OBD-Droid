@@ -1,0 +1,4 @@
+svc	pid	ofs	len	bit_ofs	bit_len	bit_mask	formula	format	min	max	mnemonic	label	Remarks
+0x01	0x67	0	1	0	8	0xFF	TURBO_BOOST_PSI	%.1f	-14.7	30	turbo_boost	Turbo Boost	Example: Turbo boost pressure sensor
+0x01	0x68	0	1	0	8	0xFF	OIL_TEMP_C	%.0f	-40	150	oil_temp	Oil Temperature	Example: Engine oil temperature
+0x01	0x69	0	1	0	8	0xFF	TRANS_TEMP	%.0f	-40	150	trans_temp	Trans Temperature	Example: Transmission fluid temperature
