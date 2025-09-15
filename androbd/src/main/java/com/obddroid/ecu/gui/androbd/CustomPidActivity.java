@@ -24,7 +24,7 @@ import com.obddroid.ecu.EcuDataPv;
  * - Store customized values to preferences
  * - Re-use preference values at further runs
  */
-public class PidCustomization
+public class CustomPidActivity
     extends Activity
 {
     /** Data item to be customized */

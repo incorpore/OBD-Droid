@@ -24,7 +24,7 @@ import java.util.logging.Level;
  * performing data transmissions when connected.
  */
 @SuppressLint("NewApi")
-public class BtCommService extends CommService
+public class BluetoothCommService extends CommService
 {
 	
 	private BtConnectThread mBtConnectThread;
@@ -39,7 +39,7 @@ public class BtCommService extends CommService
 	 * @param context The UI Activity Context
 	 * @param handler A Handler to send messages back to the UI Activity
 	 */
-	BtCommService(Context context, Handler handler)
+	BluetoothCommService(Context context, Handler handler)
 	{
 		super(context, handler);
 
@@ -305,7 +305,7 @@ public class BtCommService extends CommService
 			}
 
 			// Reset the BtConnectThread because we're done
-			synchronized (BtCommService.this)
+			synchronized (BluetoothCommService.this)
 			{
 				mBtConnectThread = null;
 			}

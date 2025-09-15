@@ -189,9 +189,9 @@ public class MainActivity extends ListActivity
      * Data list adapters
      */
     private static ObdItemAdapter mPidAdapter;
-    private static VidItemAdapter mVidAdapter;
-    private static TidItemAdapter mTidAdapter;
-    private static DfcItemAdapter mDfcAdapter;
+    private static VehicleInfoAdapter mVidAdapter;
+    private static TestResultAdapter mTidAdapter;
+    private static FaultCodeAdapter mDfcAdapter;
     private static PluginDataAdapter mPluginDataAdapter;
     private static ObdItemAdapter currDataAdapter;
     /**
@@ -525,9 +525,9 @@ public class MainActivity extends ListActivity
 
         // Set up all data adapters
         mPidAdapter = new ObdItemAdapter(this, R.layout.obd_item, ObdProt.PidPvs);
-        mVidAdapter = new VidItemAdapter(this, R.layout.obd_item, ObdProt.VidPvs);
-        mTidAdapter = new TidItemAdapter(this, R.layout.obd_item, ObdProt.VidPvs);
-        mDfcAdapter = new DfcItemAdapter(this, R.layout.obd_item, ObdProt.tCodes);
+        mVidAdapter = new VehicleInfoAdapter(this, R.layout.obd_item, ObdProt.VidPvs);
+        mTidAdapter = new TestResultAdapter(this, R.layout.obd_item, ObdProt.VidPvs);
+        mDfcAdapter = new FaultCodeAdapter(this, R.layout.obd_item, ObdProt.tCodes);
         mPluginDataAdapter = new PluginDataAdapter(this, R.layout.obd_item, mPluginPvs);
         currDataAdapter = mPidAdapter;
 
@@ -810,7 +810,9 @@ public class MainActivity extends ListActivity
                 return true;
 
             case R.id.plugin_manager:
-                // Plugin manager view removed
+                // Launch plugin manager
+                Intent pluginIntent = new Intent(this, PluginManagerActivity.class);
+                startActivity(pluginIntent);
                 return true;
 
             case R.id.save:
@@ -1932,7 +1934,7 @@ public class MainActivity extends ListActivity
         // Get the BluetoothDevice object
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
         // Attempt to connect to the device
-        mCommService = new BtCommService(this, mHandler);
+        mCommService = new BluetoothCommService(this, mHandler);
         mCommService.connect(device, secure);
     }
 

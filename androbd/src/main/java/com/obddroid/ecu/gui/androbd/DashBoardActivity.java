@@ -261,10 +261,10 @@ public class DashBoardActivity extends Activity
 		// Set data item to be customized
 		EcuDataPv pv = adapter.getItem(position);
 		EcuDataItem item = EcuDataItems.byMnemonic.get(pv.get(EcuDataPv.FID_MNEMONIC));
-		PidCustomization.item = item;
+		CustomPidActivity.item = item;
 
 		// start customization ...
-		Intent intent = new Intent(this, PidCustomization.class);
+		Intent intent = new Intent(this, CustomPidActivity.class);
 		startActivity(intent);
 
 		return true;

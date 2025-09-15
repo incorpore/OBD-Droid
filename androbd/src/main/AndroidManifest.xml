@@ -58,8 +58,12 @@
             android:configChanges="touchscreen|orientation|screenSize"
             android:label="@string/settings" />
         <activity
-            android:name=".PidCustomization"
+            android:name=".CustomPidActivity"
             android:label="@string/customize_display"
+            android:configChanges="touchscreen|orientation|screenSize" />
+        <activity
+            android:name=".PluginManagerActivity"
+            android:label="@string/plugin_manager"
             android:configChanges="touchscreen|orientation|screenSize" />
         <provider
             android:name="androidx.core.content.FileProvider"

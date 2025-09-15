@@ -168,63 +168,110 @@ OBD-Droid allows you to add support for non-standard PIDs and custom data conver
 2. PID: `0x01,0x67,0,1,0,8,0xFF,TURBO_BOOST_PSI,%.1f,-14.7,30,turbo_boost,Turbo Boost`
 3. Copy to device and restart app
 
-## Plugin Framework
+## Plugin System
 
-OBD-Droid supports extension plugins for additional functionality.
+OBD-Droid features an extensible plugin architecture that allows third-party developers to add functionality without modifying the core app.
 
-### Plugin Architecture
+### Plugin Manager
 
-Plugins are separate APK packages that:
-- Cannot run standalone
-- Are invoked by OBD-Droid
-- Handle their own configuration and storage
-- Communicate via Android intents
+Access the Plugin Manager from the main menu to:
+- View installed OBD-Droid compatible plugins
+- See plugin capabilities and features
+- Configure plugin settings (when supported)
+- Enable/disable individual plugins
 
-### Plugin Features
+### How Plugins Work
 
-Plugins declare supported features via bitmask:
+Plugins are separate Android apps that:
+- Register to handle the `com.obddroid.androbd.plugin.IDENTIFY` intent
+- Cannot run standalone - they extend OBD-Droid functionality
+- Communicate with OBD-Droid via Android intents
+- Handle their own data storage and configuration
+
+### Plugin Capabilities
+
+Plugins declare their features using a bitmask system:
 
 | Bit | Feature | Description |
 |-----|---------|-------------|
-| 0 | PLUGIN_CONFIG | Configuration dialog support |
-| 1 | MANUAL_ACTION | Manual trigger support |
-| 2 | DATA_UPDATE | Receives data from OBD-Droid |
-| 3 | DATA_PROVISION | Provides data to OBD-Droid |
+| 0 | CONFIG | Has configuration interface |
+| 1 | ACTION | Supports manual trigger actions |
+| 2 | DATA | Receives OBD data updates |
+| 3 | DATA_PROVIDER | Provides data to OBD-Droid |
 
-### Plugin Communication
+### Creating a Plugin
 
-#### Identification
-Plugins respond to broadcast intent:
-- `com.obddroid.androbd.plugin.Plugin.IDENTIFY`
+#### 1. Basic Plugin Structure
 
-Response includes:
-- NAME, VERSION, CLASS
-- FEATURES (bitmask)
-- DESCRIPTION, COPYRIGHT, LICENSE
+Create a new Android app with an Activity that handles the IDENTIFY intent:
 
-#### Data Exchange
-For DATA_UPDATE/DATA_PROVISION features:
+```xml
+<!-- AndroidManifest.xml -->
+<activity android:name=".PluginActivity">
+    <intent-filter>
+        <action android:name="com.obddroid.androbd.plugin.IDENTIFY" />
+        <category android:name="android.intent.category.DEFAULT" />
+    </intent-filter>
+</activity>
+```
 
-**DATALIST** - List of available data items:
-- Name (unique mnemonic)
-- SVC/PID (OBD identifiers)
-- Description
-- Units
+#### 2. Respond to Identification
 
-**DATA** - Value updates:
-- Name (data item identifier)
-- Value (textual representation)
+When OBD-Droid queries for plugins, respond with your plugin's information:
 
-### Creating Plugins
+```java
+// In your plugin's activity
+Intent response = new Intent();
+response.putExtra("NAME", "My OBD Plugin");
+response.putExtra("VERSION", "1.0");
+response.putExtra("FEATURES", 0x05); // CONFIG + DATA
+response.putExtra("DESCRIPTION", "Logs OBD data to CSV");
+setResult(RESULT_OK, response);
+```
 
-1. Extend `com.obddroid.androbd.plugin.Plugin`
-2. Implement required intent handlers
-3. Declare supported features
-4. Package as separate APK
+#### 3. Handle Data Updates
 
-Example plugins:
-- **CSV Logger** - Log OBD data to CSV files
-- **MQTT Publisher** - Publish data to MQTT broker
+If your plugin has the DATA feature, register to receive OBD data:
+
+```java
+<receiver android:name=".DataReceiver">
+    <intent-filter>
+        <action android:name="com.obddroid.androbd.plugin.DATA" />
+    </intent-filter>
+</receiver>
+```
+
+#### 4. Provide Custom Data (Optional)
+
+Plugins with DATA_PROVIDER can inject custom sensor data back to OBD-Droid.
+
+### Example Plugin Ideas
+
+- **CSV Logger** - Save OBD data to CSV files for analysis
+- **Cloud Sync** - Upload driving data to cloud services
+- **MQTT Bridge** - Stream real-time data to IoT platforms
+- **Performance Analyzer** - Calculate 0-60 times, quarter mile, etc.
+- **Fuel Tracker** - Monitor fuel economy and costs
+- **Maintenance Reminder** - Track service intervals
+- **Custom Gauges** - Additional visualization options
+- **Voice Alerts** - Spoken warnings for parameters
+
+### Plugin Development Tips
+
+1. **Test with Plugin Manager** - Ensure your plugin appears in the list
+2. **Handle permissions** - Request necessary Android permissions
+3. **Respect battery** - Don't drain battery with excessive processing
+4. **Follow conventions** - Use the intent structure documented above
+5. **Provide settings** - Let users configure plugin behavior
+
+### Available Plugin Examples
+
+Check the `/plugin` directory for the plugin framework structure. While full plugin examples are coming soon, the framework provides:
+- Intent definitions
+- Data exchange protocols
+- Communication patterns
+
+Visit the [OBD-Droid GitHub](https://github.com/Wal33D/OBD-Droid) for plugin examples and templates
 
 ## Permissions
 
@@ -244,7 +291,8 @@ OBD-Droid/
 ├── androbd/          # Main Android application
 ├── library/          # Core OBD library
 ├── plugin/           # Plugin framework
-└── custom-pids/      # Custom PID template files
+├── custom-pids/      # Custom PID template files
+└── desktop-launcher/ # Desktop Java test scripts (development only)
 ```
 
 ### Technologies

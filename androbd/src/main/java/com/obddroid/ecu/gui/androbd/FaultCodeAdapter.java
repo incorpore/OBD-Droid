@@ -15,13 +15,12 @@ import java.util.Collection;
 import java.util.Objects;
 
 /**
- * Adapter to display OBD DFCs
+ * Adapter to display OBD Diagnostic Fault Codes
  *
-
  */
-public class DfcItemAdapter extends ObdItemAdapter
+public class FaultCodeAdapter extends ObdItemAdapter
 {
-	public DfcItemAdapter(Context context, int resource, PvList pvs)
+	public FaultCodeAdapter(Context context, int resource, PvList pvs)
 	{
 		super(context, resource, pvs);
 	}

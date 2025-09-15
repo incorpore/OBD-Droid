@@ -16,9 +16,9 @@ import java.util.Collection;
  *
 
  */
-public class TidItemAdapter extends ObdItemAdapter
+public class TestResultAdapter extends ObdItemAdapter
 {
-    public TidItemAdapter(Context context, int resource, PvList pvs)
+    public TestResultAdapter(Context context, int resource, PvList pvs)
     {
         super(context, resource, pvs);
     }

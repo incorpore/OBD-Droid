@@ -11,9 +11,9 @@ import java.util.Collection;
  *
 
  */
-public class VidItemAdapter extends ObdItemAdapter
+public class VehicleInfoAdapter extends ObdItemAdapter
 {
-	public VidItemAdapter(Context context, int resource, PvList pvs)
+	public VehicleInfoAdapter(Context context, int resource, PvList pvs)
 	{
 		super(context, resource, pvs);
 	}

@@ -4,12 +4,15 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
@@ -65,9 +68,22 @@ public class BtDeviceListActivity extends Activity
 			getActionBar().hide();
 		}
 
-		// Set status bar color to match dark header
+		// Get preferences for fullscreen mode
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		boolean fullScreenMode = prefs.getBoolean(MainActivity.PREF_FULLSCREEN, true);
+
+		// Apply fullscreen mode if enabled
+		if (fullScreenMode) {
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		}
+
+		// Set window background color based on night mode
+		getWindow().getDecorView().setBackgroundColor(MainActivity.nightMode ? Color.BLACK : Color.WHITE);
+
+		// Set status bar color to match theme
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			getWindow().setStatusBarColor(Color.parseColor("#000000"));
+			// For night mode, use black status bar, for day mode use a dark gray to match the header
+			getWindow().setStatusBarColor(MainActivity.nightMode ? Color.BLACK : Color.parseColor("#212121"));
 		}
 
 		// Set result CANCELED in case the user backs out
