@@ -65,13 +65,9 @@ public class BtDeviceListActivity extends Activity
 			getActionBar().hide();
 		}
 
-		// Set status bar color based on theme
+		// Set status bar color to match dark header
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			if (MainActivity.nightMode) {
-				getWindow().setStatusBarColor(Color.parseColor("#000000"));
-			} else {
-				getWindow().setStatusBarColor(Color.parseColor("#1976D2")); // colorPrimaryDark
-			}
+			getWindow().setStatusBarColor(Color.parseColor("#000000"));
 		}
 
 		// Set result CANCELED in case the user backs out

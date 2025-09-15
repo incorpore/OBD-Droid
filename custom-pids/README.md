@@ -1,76 +1,78 @@
-# Custom PID Configuration Templates
+# Custom PIDs Templates
 
-These CSV files allow you to add support for vehicle-specific PIDs and data conversions that aren't part of the standard OBD-II protocol.
+This directory contains template files for adding custom PIDs (Parameter IDs) to OBD-Droid.
 
-## Files
+## Files Overview
 
-### cust_pids.csv
-Defines custom Parameter IDs (PIDs) for your vehicle. Use this to add:
-- Manufacturer-specific PIDs
-- Aftermarket sensor PIDs
-- Custom calculated parameters
+### For Beginners
+- **`example_basic_pids.csv`** - Simple PID examples (turbo boost, oil temp, transmission temp)
+- **`example_basic_conversions.csv`** - Simple conversion formulas for the basic PIDs
 
-### cust_conversions.csv
-Defines how to convert raw OBD data into human-readable values. Supports:
-- **LINEAR**: Mathematical conversions (multiply, divide, offset)
-- **HASH**: Map numbers to text states
-- **BITMAP**: Decode bit-masked status flags
+### For Advanced Users
+- **`example_advanced_pids.csv`** - Complex PID examples with bitmaps and hash conversions
+- **`example_advanced_conversions.csv`** - Advanced conversion formulas including state mappings
+
+### Blank Templates
+- **`template_blank_pids.csv`** - Empty PID template with headers only
+- **`template_blank_conversions.csv`** - Empty conversions template with headers only
 
 ## How to Use
 
-1. **Edit these template files** with your custom PIDs
-2. **Copy to your Android device**: `/sdcard/com.obddroid.ecu.gui.androbd/custom/`
-3. **Select in app settings** or files will auto-load on startup
-4. **Restart the app** to load your custom PIDs
+1. **Choose your starting point:**
+   - New to custom PIDs? Start with `example_basic_*` files
+   - Experienced? Check `example_advanced_*` for complex examples
+   - Want to start fresh? Use `template_blank_*` files
 
-## Example: Adding a Custom Sensor
+2. **Edit the CSV files:**
+   - Add your vehicle-specific PIDs
+   - Define conversion formulas for your sensors
+   - Test with known values if possible
 
-To add a boost pressure sensor at PID 0x99:
+3. **Install on your device:**
+   ```
+   /sdcard/com.obddroid.ecu.gui.androbd/custom/
+   ```
+   Or select files through the app's settings menu
 
-**In cust_conversions.csv:**
-```csv
-BOOST_PSI,LINEAR,0,IMPERIAL,0.145,1,0,0,psi,Boost pressure conversion
+4. **Restart OBD-Droid** to load your custom PIDs
+
+## Basic Example Explained
+
+The basic example shows how to add a turbo boost pressure sensor:
+
+### Conversion (in example_basic_conversions.csv):
 ```
-
-**In cust_pids.csv:**
-```csv
-0x01,0x99,0,2,0,16,0xFFFF,BOOST_PSI,%.1f,0,30,boost,Boost Pressure,Custom boost sensor
+TURBO_BOOST_PSI,LINEAR,0,IMPERIAL,0.145,1,0,-14.7,psi
 ```
+- Converts raw data to PSI
+- Applies atmospheric pressure correction (-14.7)
+- Formula: `(raw_value * 0.145 / 1) - 14.7`
 
-## Column Descriptions
+### PID Definition (in example_basic_pids.csv):
+```
+0x01,0x67,0,1,0,8,0xFF,TURBO_BOOST_PSI,%.1f,-14.7,30,turbo_boost,Turbo Boost
+```
+- Service: 0x01 (current data)
+- PID: 0x67 (manufacturer specific)
+- Links to TURBO_BOOST_PSI conversion
+- Display range: -14.7 to 30 PSI
 
-### cust_pids.csv Columns:
-- `svc`: Service mode (0x01, 0x02, etc.)
-- `pid`: Parameter ID in hex
-- `ofs`: Byte offset in response
-- `len`: Data length in bytes
-- `bit_ofs`: Bit offset for partial byte data
-- `bit_len`: Number of bits to read
-- `bit_mask`: Bitmask for data extraction
-- `formula`: Name of conversion formula to use
-- `format`: Display format (printf style)
-- `min/max`: Expected value range
-- `mnemonic`: Short identifier
-- `label`: Display name in app
-- `Remarks`: Notes/description
+## Conversion Types
 
-### cust_conversions.csv Columns:
-- `CONVERSION_ID`: Unique name for the conversion
-- `TYPE`: LINEAR, HASH, or BITMAP
-- `VARIANT`: Version number (usually 0)
-- `SYSTEM`: METRIC or IMPERIAL
-- `FACT`: Multiplication factor
-- `DIV`: Division factor
-- `OFFS`: Offset to add
-- `PhOf`: Physical offset (rarely used)
-- `UNIT`: Display unit (psi, g/min, etc.)
-- `Remark`: Conversion description
-- `Parameters`: For HASH/BITMAP - value mappings
-- `Beschreibung`: German description (optional)
+- **LINEAR** - Mathematical conversion (multiply, divide, add offset)
+- **HASH** - Map numbers to text (1="On", 2="Off")
+- **BITMAP** - Decode bit flags (bit 0="Ready", bit 1="Active")
+- **ASCII** - Convert to text string
 
 ## Tips
 
-- Test with one PID at a time to debug issues
-- Use existing entries as templates
-- Keep backups of working configurations
-- Check app logs if PIDs don't appear
+- Always backup your working files
+- Test one PID at a time when debugging
+- Check vehicle documentation for PID specifications
+- Use metric or imperial units as needed
+- PIDs 0x00-0x20 are standard OBD-II (don't override these)
+- PIDs 0x21+ are often manufacturer-specific
+
+## Need Help?
+
+Check the main README.md for detailed documentation on the CSV file format and field descriptions.
