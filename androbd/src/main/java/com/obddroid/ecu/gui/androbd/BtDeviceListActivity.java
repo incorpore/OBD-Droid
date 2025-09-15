@@ -52,6 +52,9 @@ public class BtDeviceListActivity extends Activity
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
+		// Set theme based on night mode setting (must be before super.onCreate)
+		setTheme(MainActivity.nightMode ? R.style.AppTheme_Dark : R.style.AppTheme);
+
 		// Hide the title bar for this activity (must be before super.onCreate)
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 
@@ -62,9 +65,13 @@ public class BtDeviceListActivity extends Activity
 			getActionBar().hide();
 		}
 
-		// Set status bar color to dark theme
+		// Set status bar color based on theme
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			getWindow().setStatusBarColor(Color.parseColor("#000000"));
+			if (MainActivity.nightMode) {
+				getWindow().setStatusBarColor(Color.parseColor("#000000"));
+			} else {
+				getWindow().setStatusBarColor(Color.parseColor("#1976D2")); // colorPrimaryDark
+			}
 		}
 
 		// Set result CANCELED in case the user backs out
