@@ -20,6 +20,7 @@ public class ModernDeviceAdapter extends BaseAdapter {
     private final Context context;
     private final List<BluetoothDevice> devices;
     private final LayoutInflater inflater;
+    private String lastUsedDeviceAddress = null;
 
     public ModernDeviceAdapter(Context context) {
         this.context = context;
@@ -32,6 +33,11 @@ public class ModernDeviceAdapter extends BaseAdapter {
             devices.add(device);
             notifyDataSetChanged();
         }
+    }
+
+    public void setLastUsedDeviceAddress(String address) {
+        this.lastUsedDeviceAddress = address;
+        notifyDataSetChanged();
     }
 
     public void clear() {
@@ -77,10 +83,24 @@ public class ModernDeviceAdapter extends BaseAdapter {
         if (deviceName == null || deviceName.isEmpty()) {
             deviceName = "Unknown Device";
         }
-        holder.deviceName.setText(deviceName);
+
+        // Check if this is the last used device
+        boolean isLastUsed = (lastUsedDeviceAddress != null &&
+                            device.getAddress().equals(lastUsedDeviceAddress));
+
+        // Add indicator for last used device
+        if (isLastUsed && position == 0) {
+            holder.deviceName.setText(deviceName + " ★");
+        } else {
+            holder.deviceName.setText(deviceName);
+        }
 
         // Set status text
-        holder.deviceStatus.setText("Tap to connect • Hold for MAC address");
+        if (isLastUsed && position == 0) {
+            holder.deviceStatus.setText("Recently used • Tap to reconnect");
+        } else {
+            holder.deviceStatus.setText("Tap to connect • Hold for MAC address");
+        }
 
         // Set icon based on device type (you can customize this)
         if (deviceName.toLowerCase().contains("obd") ||

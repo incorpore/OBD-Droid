@@ -4,9 +4,11 @@ import com.obddroid.pvs.ProcessVar;
 import com.obddroid.pvs.PvChangeEvent;
 import com.obddroid.pvs.PvChangeListener;
 
+import java.util.Enumeration;
 import java.util.Iterator;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 /**
@@ -91,15 +93,18 @@ public class PvTreeNode extends DefaultMutableTreeNode
 	 */
 	private PvTreeNode findChild(Object userObject)
 	{
-		PvTreeNode currNode;
 		// search through children for matching user object
 		@SuppressWarnings("unchecked")
-		Iterator<PvTreeNode> it = children.iterator();
-		while (it.hasNext())
+		Enumeration<TreeNode> it = children.elements();
+		while (it.hasMoreElements())
 		{
-			currNode = it.next();
-			if (userObject == currNode.userObject)
-				return currNode;
+			TreeNode node = it.nextElement();
+			if (node instanceof PvTreeNode)
+			{
+				PvTreeNode currNode = (PvTreeNode) node;
+				if (userObject == currNode.userObject)
+					return currNode;
+			}
 		}
 		// haven't found it -> return NULL
 		return null;

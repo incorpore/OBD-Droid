@@ -108,6 +108,7 @@ public class BtDeviceListActivity extends Activity
 		// Get references to UI elements
 		emptyState = findViewById(R.id.empty_state);
 		ImageButton scanButton = findViewById(R.id.btn_scan);
+		ImageButton bluetoothSettingsButton = findViewById(R.id.btn_bluetooth_settings);
 		Button settingsButton = findViewById(R.id.btn_open_settings);
 
 		// Set up button listeners
@@ -115,6 +116,15 @@ public class BtDeviceListActivity extends Activity
 			scanButton.setOnClickListener(v -> scanForDevices());
 		}
 
+		// Bluetooth settings button in header
+		if (bluetoothSettingsButton != null) {
+			bluetoothSettingsButton.setOnClickListener(v -> {
+				Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
+				startActivity(intent);
+			});
+		}
+
+		// Bluetooth settings button in empty state
 		if (settingsButton != null) {
 			settingsButton.setOnClickListener(v -> {
 				Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
@@ -138,8 +148,31 @@ public class BtDeviceListActivity extends Activity
 			// Hide empty state
 			hideEmptyState();
 
+			// Get the last connected device address from preferences
+			String lastDeviceAddress = prefs.getString(MainActivity.PRESELECT.LAST_DEV_ADDRESS.toString(), null);
+			BluetoothDevice lastDevice = null;
+
+			// Set the last used device address on the adapter for visual indication
+			modernAdapter.setLastUsedDeviceAddress(lastDeviceAddress);
+
+			// First, find and add the last connected device if it exists
+			if (lastDeviceAddress != null) {
+				for (BluetoothDevice device : pairedDevices) {
+					if (device.getAddress().equals(lastDeviceAddress)) {
+						lastDevice = device;
+						modernAdapter.addDevice(device);
+						break;
+					}
+				}
+			}
+
+			// Then add all other devices
 			for (BluetoothDevice device : pairedDevices)
 			{
+				// Skip if this is the last device (already added)
+				if (lastDevice != null && device.getAddress().equals(lastDevice.getAddress())) {
+					continue;
+				}
 				modernAdapter.addDevice(device);
 			}
 		} else

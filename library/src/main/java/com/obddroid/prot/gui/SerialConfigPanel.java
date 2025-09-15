@@ -1,7 +1,11 @@
 package com.obddroid.prot.gui;
 
+import gnu.io.CommPortIdentifier;
+import gnu.io.SerialPort;
+
 import java.awt.event.ItemEvent;
 import java.util.Enumeration;
+import java.util.logging.Logger;
 
 /**
  * Configuration GUI-Panel for RXTX Serial port object
@@ -384,7 +388,7 @@ public class SerialConfigPanel
 			} catch (Exception e)
 			{
 				newPort = null;
-				Logger.getLogger(getClass()).warn(e.getMessage());
+				Logger.getLogger(getClass().getName()).warning(e.getMessage());
 			}
 
 			setPort(newPort);

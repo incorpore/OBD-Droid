@@ -1,5 +1,10 @@
 apply plugin: 'java'
 
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
 compileJava {
     options.incremental = true
 }
@@ -20,6 +25,29 @@ sourceSets {
             include('com/obddroid/ecu/prot/obd/res/*')
         }
     }
+
+    // Desktop source set includes everything
+    desktop {
+        java {
+            srcDirs = ['src/main/java']
+        }
+        resources {
+            srcDirs = ['src/main/java', 'src/main/resources']
+            include('com/obddroid/ecu/prot/obd/res/**')
+            include('com/obddroid/ecu/prot/vag/res/**')
+            include('com/obddroid/ecu/gui/res/**')
+            include('**/*.properties')
+            include('**/*.png')
+            include('**/*.gif')
+            include('**/*.form')
+            include('**/*.csv')
+        }
+    }
+}
+
+configurations {
+    desktopImplementation.extendsFrom implementation
+    desktopRuntimeOnly.extendsFrom runtimeOnly
 }
 
 test {
@@ -29,10 +57,41 @@ test {
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.3'
-}
 
+    // Desktop dependencies - using modern alternatives
+    desktopImplementation 'jfree:jfreechart:1.0.13'
+    desktopImplementation 'jfree:jcommon:1.0.16'
+
+    // Use jSerialComm instead of RXTX (modern, actively maintained)
+    desktopImplementation 'com.fazecast:jSerialComm:2.10.4'
+
+    // Also add to compileOnly so it compiles but doesn't include in Android
+    compileOnly 'com.fazecast:jSerialComm:2.10.4'
+}
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+// Task to build desktop JAR with all classes and dependencies
+task desktopJar(type: Jar) {
+    dependsOn compileDesktopJava
+
+    archiveClassifier = 'desktop-all'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from sourceSets.desktop.output
+
+    // Include all dependencies
+    from {
+        configurations.desktopRuntimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    manifest {
+        attributes(
+            'Main-Class': 'com.obddroid.ecu.gui.application.ObdTestFrame',
+            'Class-Path': configurations.desktopRuntimeClasspath.collect { it.getName() }.join(' ')
+        )
+    }
 }

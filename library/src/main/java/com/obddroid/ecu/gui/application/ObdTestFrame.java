@@ -52,8 +52,8 @@ public class ObdTestFrame extends javax.swing.JFrame
 
 	/** protocol handler */
 	private static final ElmProt prt = new ElmProt();
-	/** Serial communication handler */
-	private static final SerialHandler ser = new SerialHandler();
+	/** Serial communication handler - replaced by JSerialCommHandler */
+	// private static final SerialHandler ser = new SerialHandler();
 
 	/** is this a simulation, or the real world? */
 	static boolean isSimulation = false;
@@ -89,9 +89,9 @@ public class ObdTestFrame extends javax.swing.JFrame
 	private ObdTestFrame()
 	{
 		ObdProt.VidPvs.addPvChangeListener(this);
-		// set up serial handler and protocol drivers
-		ser.setMessageHandler(prt);
-		prt.addTelegramWriter(ser);
+		// Serial handler now set up in main() when port is provided
+		// ser.setMessageHandler(prt);
+		// prt.addTelegramWriter(ser);
 		initComponents();
 		// panAbout.setText(about);
 		panObdData.setPidPvs(ObdProt.PidPvs);
@@ -342,7 +342,11 @@ public class ObdTestFrame extends javax.swing.JFrame
 
 	private void miCommConfigureActionPerformed()//GEN-FIRST:event_miCommConfigureActionPerformed
 	{//GEN-HEADEREND:event_miCommConfigureActionPerformed
-		ser.configure();
+		// Configuration now handled through port setup
+		JOptionPane.showMessageDialog(this,
+			"Port configuration is set at startup.\nRestart with different port if needed.",
+			"Port Configuration",
+			JOptionPane.INFORMATION_MESSAGE);
 	}//GEN-LAST:event_miCommConfigureActionPerformed
 
 	private void miCommStopActionPerformed()//GEN-FIRST:event_miCommStopActionPerformed
@@ -531,15 +535,48 @@ public class ObdTestFrame extends javax.swing.JFrame
 		{
 			try
 			{
-				ser.setDeviceName(args[0]);
+				// Use jSerialComm directly instead of the old SerialHandler
+				com.fazecast.jSerialComm.SerialPort port = com.fazecast.jSerialComm.SerialPort.getCommPort(args[0]);
+				if (port != null)
+				{
+					// Configure the port
+					port.setBaudRate(38400);
+					port.setNumDataBits(8);
+					port.setNumStopBits(com.fazecast.jSerialComm.SerialPort.ONE_STOP_BIT);
+					port.setParity(com.fazecast.jSerialComm.SerialPort.NO_PARITY);
+					port.setFlowControl(com.fazecast.jSerialComm.SerialPort.FLOW_CONTROL_DISABLED);
+
+					if (!port.openPort())
+					{
+						JOptionPane.showMessageDialog(frm,
+							"Failed to open port: " + args[0],
+							"Communication error",
+							JOptionPane.ERROR_MESSAGE);
+					}
+					else
+					{
+						// Create a serial handler wrapper for jSerialComm
+						JSerialCommHandler handler = new JSerialCommHandler(port);
+						handler.setMessageHandler(prt);
+						prt.addTelegramWriter(handler);
+						handler.start();
+
+						JOptionPane.showMessageDialog(frm,
+							"Connected to: " + args[0],
+							"Connected",
+							JOptionPane.INFORMATION_MESSAGE);
+					}
+				}
 			} catch (Exception ex)
 			{
 				JOptionPane.showMessageDialog(frm,
 					ex,
 					"Communication error",
 					JOptionPane.ERROR_MESSAGE);
+				// Fall back to simulation mode
+				Thread sim = new Thread(prt);
+				sim.start();
 			}
-			ser.start();
 		} else
 		{
 			// without parameter we do internal telegram simulation ...

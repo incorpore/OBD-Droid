@@ -12,8 +12,10 @@ The desktop launcher runs `ObdTestFrame` - a Java Swing application that:
 
 ## Files
 
-- **JObd.sh** - Linux/Mac launcher script
-- **JObd.bat** - Windows launcher script
+- **run-desktop.sh** - Linux/Mac launcher script (NEW)
+- **run-desktop.bat** - Windows launcher script (NEW)
+- **JObd.sh** - Legacy Linux/Mac launcher script
+- **JObd.bat** - Legacy Windows launcher script
 - **logging.properties** - Java logging configuration
 
 ## How It Works
@@ -35,25 +37,39 @@ The desktop launcher runs `ObdTestFrame` - a Java Swing application that:
 
 ## Usage
 
-### Linux/Mac:
+### Using New Scripts (Recommended):
+
+#### Linux/Mac:
 ```bash
 # With serial port (e.g., USB adapter)
-./JObd.sh /dev/ttyUSB0
+./desktop-launcher/run-desktop.sh /dev/ttyUSB0
 
 # With Bluetooth serial
-./JObd.sh /dev/rfcomm0
+./desktop-launcher/run-desktop.sh /dev/rfcomm0
 
-# Demo mode (no hardware)
-./JObd.sh
+# Demo/Simulation mode (no hardware)
+./desktop-launcher/run-desktop.sh
 ```
 
-### Windows:
+#### Windows:
 ```batch
 REM With serial port
-JObd.bat COM3
+desktop-launcher\run-desktop.bat COM3
 
-REM Demo mode
-JObd.bat
+REM Demo/Simulation mode
+desktop-launcher\run-desktop.bat
+```
+
+### Using Legacy Scripts:
+
+#### Linux/Mac:
+```bash
+./JObd.sh /dev/ttyUSB0
+```
+
+#### Windows:
+```batch
+JObd.bat COM3
 ```
 
 ## Requirements
@@ -64,12 +80,12 @@ JObd.bat
 
 ## Building the Desktop Version
 
-The library builds automatically with Gradle:
+Build the desktop JAR with all dependencies:
 ```bash
-./gradlew :library:jar
+./gradlew desktopJar
 ```
 
-This creates `library/build/libs/library.jar` containing:
+This creates `library/build/libs/library-desktop-all.jar` containing:
 - Core OBD protocol classes
 - Desktop GUI components (ObdTestFrame, VagTestFrame)
 - Serial communication handlers

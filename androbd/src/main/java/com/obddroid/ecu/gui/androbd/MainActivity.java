@@ -557,6 +557,7 @@ public class MainActivity extends ListActivity
         if (actionBar != null)
         {
             actionBar.setDisplayShowTitleEnabled(true);
+            actionBar.setSubtitle("Connect a Device");
         }
         // start automatic toolbar hider
         setAutoHider(prefs.getBoolean(PREF_AUTOHIDE, false));
@@ -1700,7 +1701,23 @@ public class MainActivity extends ListActivity
             // remember previous mode
             // set new mode
             this.mode = mode;
-            setStatus(mode.toString());
+            // Set appropriate status message based on mode
+            switch (mode) {
+                case OFFLINE:
+                    setStatus("Connect a Device");
+                    break;
+                case ONLINE:
+                    setStatus("Online");
+                    break;
+                case DEMO:
+                    setStatus("Demo Mode");
+                    break;
+                case FILE:
+                    setStatus("Viewing Saved Data");
+                    break;
+                default:
+                    setStatus(mode.toString());
+            }
         }
     }
 
