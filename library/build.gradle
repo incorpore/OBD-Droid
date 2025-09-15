@@ -1,0 +1,38 @@
+apply plugin: 'java'
+
+compileJava {
+    options.incremental = true
+}
+
+sourceSets {
+    main {
+        java {
+            exclude(
+                    'com/obddroid/common/res',
+                    'com/obddroid/pvs/gui',
+                    'com/obddroid/prot/gui',
+                    'com/obddroid/ecu/gui',
+                    'com/obddroid/ecu/prot/vag',
+            )
+        }
+        resources {
+            srcDirs("src/main/java")
+            include('com/obddroid/ecu/prot/obd/res/*')
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.3'
+}
+
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
