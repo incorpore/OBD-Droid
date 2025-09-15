@@ -3,14 +3,14 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:background="?android:attr/windowBackground">
 
     <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@color/colorPrimary"
+        android:background="#1a1a1a"
         android:padding="16dp"
         android:elevation="4dp">
 
@@ -37,7 +37,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="(Paired Devices)"
-                    android:textColor="#E0E0E0"
+                    android:textColor="?android:attr/textColorSecondary"
                     android:textSize="14sp"
                     android:layout_marginTop="2dp"/>
 
@@ -87,7 +87,7 @@
                 android:layout_width="96dp"
                 android:layout_height="96dp"
                 android:src="@android:drawable/stat_sys_data_bluetooth"
-                android:tint="#CCCCCC"
+                android:tint="?android:attr/textColorTertiary"
                 android:layout_marginBottom="16dp"/>
 
             <TextView
@@ -95,7 +95,7 @@
                 android:layout_height="wrap_content"
                 android:text="No paired devices found"
                 android:textSize="18sp"
-                android:textColor="#666666"
+                android:textColor="?android:attr/textColorPrimary"
                 android:layout_marginBottom="8dp"/>
 
             <TextView
@@ -103,7 +103,7 @@
                 android:layout_height="wrap_content"
                 android:text="Make sure Bluetooth is enabled and pair your OBD adapter in system settings"
                 android:textSize="14sp"
-                android:textColor="#999999"
+                android:textColor="?android:attr/textColorSecondary"
                 android:gravity="center"
                 android:layout_marginBottom="24dp"/>
 
@@ -113,7 +113,7 @@
                 android:layout_height="wrap_content"
                 android:text="Open Bluetooth Settings"
                 android:textColor="@android:color/white"
-                android:background="@color/colorPrimary"
+                android:background="?android:attr/colorPrimary"
                 android:padding="12dp"/>
         </LinearLayout>
 

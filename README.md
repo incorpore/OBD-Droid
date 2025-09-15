@@ -242,13 +242,7 @@ OBD-Droid/
 - Verify measurement system settings
 - Review log files for errors
 
-## License
-
-This project is open source. See LICENSE file for details.
-
 ## Support
-
-- Report issues on [GitHub Issues](https://github.com/Wal33D/OBD-Droid/issues)
 - Check documentation in `/customization/templates/`
 - Review plugin examples for extending functionality
 

@@ -10,10 +10,6 @@ import com.obddroid.prot.StreamHandler;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-/**
- * Network communication service to allow connection to WIFI OBD adapters
- * Created by OBD-Droid on 17.04.16.
- */
 public class NetworkCommService
 	extends CommService
 	implements Runnable

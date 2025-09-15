@@ -10,7 +10,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 25
         versionCode 20616
-        versionName 'V2.6.16'
+        versionName 'OBD-Droid'
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 

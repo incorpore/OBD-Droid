@@ -6,10 +6,6 @@ import com.obddroid.androbd.plugin.mgr.PluginManager;
 import java.util.Timer;
 import java.util.TimerTask;
 
-/**
- * Created by erwin on 26.12.17.
- */
-
 public class MainActivity
         extends PluginManager
         implements Plugin.DataReceiver

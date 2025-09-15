@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
@@ -58,6 +60,11 @@ public class BtDeviceListActivity extends Activity
 		// Also hide action bar if present
 		if (getActionBar() != null) {
 			getActionBar().hide();
+		}
+
+		// Set status bar color to dark theme
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			getWindow().setStatusBarColor(Color.parseColor("#000000"));
 		}
 
 		// Set result CANCELED in case the user backs out
