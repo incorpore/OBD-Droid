@@ -37,15 +37,6 @@ public class SettingsActivity
 	 */
 	private static SharedPreferences prefs;
 	/**
-	 * preference keys for extension files
-	 */
-	static final String[] extKeys =
-	{
-		"ext_file_conversions",
-		"ext_file_dataitems"
-	};
-
-	/**
 	 * key ids for device network settings
 	 */
 	private static final String[] networkKeys =
@@ -108,11 +99,6 @@ public class SettingsActivity
 
 			// Load the preferences from an XML resource
 			addPreferencesFromResource(R.xml.settings);
-
-			for (String key : extKeys)
-			{
-				setPrefsText(key);
-			}
 
 			// set up communication media selection
 			setupCommMediaSelection();
@@ -340,32 +326,7 @@ public class SettingsActivity
 		@Override
 		public void onActivityResult(int requestCode, int resultCode, Intent data)
 		{
-			Preference pref;
-			SharedPreferences.Editor ed = prefs.edit();
-			String value = (resultCode == Activity.RESULT_OK) ? String.valueOf(data.getData()) : null;
-			// find the right key
-			for (String key : extKeys)
-			{
-				pref = findPreference(key);
-				if (pref.hashCode() == requestCode)
-				{
-					ed.putString(key, value);
-					pref.setSummary(value != null ? value : getString(R.string.select_extension));
-
-					if(value != null)
-					{
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
-						{
-						/* Remember persistent read permission for selected file,
-						   otherwise we will NOT be allowed to load it on startup ... ;( */
-							getContentResolver().takePersistableUriPermission(Objects.requireNonNull(data.getData()),
-															                  Intent.FLAG_GRANT_READ_URI_PERMISSION);
-						}
-					}
-				}
-			}
-
-			ed.apply();
+			// Extension files are no longer supported
 		}
 
 		@Override

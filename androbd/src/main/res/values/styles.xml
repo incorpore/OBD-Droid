@@ -2,8 +2,21 @@
     <!-- Application theme. -->
     <style name="AppTheme" parent="@android:style/Theme.DeviceDefault.Light.DarkActionBar" >
         <item name="android:activatedBackgroundIndicator">@drawable/activated_background</item>
+        <item name="android:actionMenuTextAppearance">@style/MenuTextAppearance</item>
+        <item name="android:dropDownListViewStyle">@style/PopupMenuListView</item>
     </style>
     <style name="AppTheme.Dark" parent="@android:style/Theme.DeviceDefault" >
         <item name="android:activatedBackgroundIndicator">@drawable/activated_background</item>
+        <item name="android:actionMenuTextAppearance">@style/MenuTextAppearance</item>
+        <item name="android:dropDownListViewStyle">@style/PopupMenuListView</item>
+    </style>
+
+    <style name="MenuTextAppearance" parent="@android:style/TextAppearance.DeviceDefault.Widget.ActionBar.Menu">
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="PopupMenuListView" parent="@android:style/Widget.DeviceDefault.ListView.DropDown">
+        <item name="android:divider">@android:color/transparent</item>
+        <item name="android:dividerHeight">0dp</item>
     </style>
 </resources>

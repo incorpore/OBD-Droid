@@ -1807,52 +1807,7 @@ public class MainActivity extends ListActivity
      */
     private void loadPreferredExtensions()
     {
-        String errors = "";
-
-        // custom conversions
-        try
-        {
-            String filePath = prefs.getString(SettingsActivity.extKeys[0], null);
-            if (filePath != null)
-            {
-                log.info("Load ext. conversions: " + filePath);
-                Uri uri = Uri.parse(filePath);
-                InputStream inStr = getContentResolver().openInputStream(uri);
-                EcuDataItems.cnv.loadFromStream(inStr);
-            }
-        } catch (Exception e)
-        {
-            log.log(Level.SEVERE, "Load ext. conversions: ", e);
-            e.printStackTrace();
-            errors += e.getLocalizedMessage() + "\n";
-        }
-
-        // custom PIDs
-        try
-        {
-            String filePath = prefs.getString(SettingsActivity.extKeys[1], null);
-            if (filePath != null)
-            {
-                log.info("Load ext. conversions: " + filePath);
-                Uri uri = Uri.parse(filePath);
-                InputStream inStr = getContentResolver().openInputStream(uri);
-                ObdProt.dataItems.loadFromStream(inStr);
-            }
-        } catch (Exception e)
-        {
-            log.log(Level.SEVERE, "Load ext. PIDs: ", e);
-            e.printStackTrace();
-            errors += e.getLocalizedMessage() + "\n";
-        }
-
-        if (errors.length() != 0)
-        {
-            dlgBuilder
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setTitle(R.string.extension_loading)
-                    .setMessage(getString(R.string.check_cust_settings) + errors)
-                    .show();
-        }
+        // Extension files are no longer supported - functionality removed
     }
 
     /**

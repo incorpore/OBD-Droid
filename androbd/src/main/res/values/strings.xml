@@ -12,15 +12,15 @@
     <!-- menu  -->
     <string name="action_connect">Connect</string>
     <string name="obd_none">NO service</string>
-    <string name="obd_services">OBD Services</string>
-    <string name="obd_veh_info">OBD Vehicle Info</string>
-    <string name="obd_data">OBD Data</string>
-    <string name="service_freezeframes">OBD Freeze Frames</string>
-    <string name="service_testcontrol">OBD test control</string>
-    <string name="obd_codes">OBD fault codes</string>
-    <string name="obd_permanentcodes">OBD fault codes (permanent)</string>
-    <string name="obd_pendingcodes">OBD fault codes (pending)</string>
-    <string name="obd_clearcodes">Clear fault codes</string>
+    <string name="obd_services">Services</string>
+    <string name="obd_veh_info">Vehicle Info</string>
+    <string name="obd_data">Data</string>
+    <string name="service_freezeframes">Freeze Frames</string>
+    <string name="service_testcontrol">Test Control</string>
+    <string name="obd_codes">Fault Codes</string>
+    <string name="obd_permanentcodes">Fault Codes (Permanent)</string>
+    <string name="obd_pendingcodes">Fault Codes (Pending)</string>
+    <string name="obd_clearcodes">Clear Codes</string>
     <string name="obd_clear_info">
 This will reset the MIL and clear all emission-related diagnostic\n
 information, including:\n
@@ -77,7 +77,7 @@ period of time while the ECU recalibrates itself.
     <string name="filter">Filter selected</string>
     <!-- Settings -->
     <string name="settings">Settings</string>
-    <string name="common_settings">Common settings</string>
+    <string name="common_settings">General settings</string>
     <string name="measure_system_description">Measurement units system (metric / imperial)</string>
     <string name="measure_system">Measurement units</string>
     <string name="metric">metric</string>
@@ -167,10 +167,10 @@ period of time while the ECU recalibrates itself.
     <string name="elm_reset_on_nrc_descr">Reset ELM adapter on NRC error?</string>
     <string name="select_ecu_addr">Select ECU address …</string>
     <string name="disconnect">Disconnect</string>
-    <string name="reset_preselections">Reset last pre-selections</string>
-    <string name="use_last_settings_description">Use last settings at startup (BT address, ECU address, Display items …)</string>
+    <string name="reset_preselections">Clear saved startup preferences</string>
+    <string name="use_last_settings_description">Remember settings at startup (BT address, ECU address, Display items …)</string>
     <string name="use_last_settings">Use last settings</string>
-    <string name="common_settings_description">Common settings for app control</string>
+    <string name="common_settings_description">General settings for app control</string>
     <string name="secure_connect">Secure connection</string>
     <string name="secure_connect_description">Use encrypted Bluetooth connection</string>
     <string name="elm_options">ELM options</string>

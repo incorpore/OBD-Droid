@@ -52,18 +52,6 @@
                 android:padding="8dp"
                 android:contentDescription="Open Bluetooth Settings"
                 android:tint="@android:color/white"
-                android:layout_gravity="center_vertical"
-                android:layout_marginEnd="8dp"/>
-
-            <ImageButton
-                android:id="@+id/btn_scan"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@android:drawable/ic_menu_search"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:padding="8dp"
-                android:contentDescription="Scan for devices"
-                android:tint="@android:color/white"
                 android:layout_gravity="center_vertical"/>
         </LinearLayout>
 
@@ -72,7 +60,8 @@
     <!-- Device List Container -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <!-- Device List -->
         <ListView

@@ -5,6 +5,8 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -32,6 +34,12 @@ public class PluginManagerActivity extends Activity {
 
         // Set theme based on night mode
         setTheme(MainActivity.nightMode ? R.style.AppTheme_Dark : R.style.AppTheme);
+
+        // Set status bar and navigation bar to black
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(Color.BLACK);
+            getWindow().setNavigationBarColor(Color.BLACK);
+        }
 
         // Create a simple ListView
         pluginListView = new ListView(this);

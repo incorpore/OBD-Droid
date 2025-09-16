@@ -1,11 +1,14 @@
 package com.obddroid.ecu.gui.androbd;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -18,6 +21,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -80,10 +84,11 @@ public class BtDeviceListActivity extends Activity
 		// Set window background color based on night mode
 		getWindow().getDecorView().setBackgroundColor(MainActivity.nightMode ? Color.BLACK : Color.WHITE);
 
-		// Set status bar color to match theme
+		// Set status bar color to black to match the header
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			// For night mode, use black status bar, for day mode use a dark gray to match the header
-			getWindow().setStatusBarColor(MainActivity.nightMode ? Color.BLACK : Color.parseColor("#212121"));
+			getWindow().setStatusBarColor(Color.BLACK);
+			// Also set navigation bar to black if supported
+			getWindow().setNavigationBarColor(Color.BLACK);
 		}
 
 		// Set result CANCELED in case the user backs out
@@ -107,14 +112,10 @@ public class BtDeviceListActivity extends Activity
 
 		// Get references to UI elements
 		emptyState = findViewById(R.id.empty_state);
-		ImageButton scanButton = findViewById(R.id.btn_scan);
 		ImageButton bluetoothSettingsButton = findViewById(R.id.btn_bluetooth_settings);
 		Button settingsButton = findViewById(R.id.btn_open_settings);
 
 		// Set up button listeners
-		if (scanButton != null) {
-			scanButton.setOnClickListener(v -> scanForDevices());
-		}
 
 		// Bluetooth settings button in header
 		if (bluetoothSettingsButton != null) {
@@ -187,29 +188,184 @@ public class BtDeviceListActivity extends Activity
 	{
 		public void onItemClick(AdapterView<?> av, View v, int position, long id)
 		{
-			// Cancel discovery because it's costly and we're about to connect
-			if (mBtAdapter != null) {
-				mBtAdapter.cancelDiscovery();
-			}
-
 			// Get the device from the adapter
-			BluetoothDevice device = modernAdapter.getItem(position);
+			final BluetoothDevice device = modernAdapter.getItem(position);
 
 			if (device == null) {
 				return;
 			}
 
-			// Get the MAC address
-			String address = device.getAddress();
+			// Get device info
+			String deviceName = device.getName();
+			if (deviceName == null || deviceName.isEmpty()) {
+				deviceName = "Unknown Device";
+			}
+			final String address = device.getAddress();
+			final String originalName = deviceName;
 
-			// Create the result Intent and include the MAC address
-			Intent intent = new Intent();
-			intent.putExtra(EXTRA_DEVICE_ADDRESS, address);
+			// Get saved nickname if exists
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(BtDeviceListActivity.this);
+			String savedNickname = prefs.getString("device_nickname_" + address, "");
+			final String[] currentNickname = {savedNickname}; // Use array to allow modification in inner class
 
-			// Set result and finish this Activity
-			setResult(Activity.RESULT_OK, intent);
-			log.log(Level.FINE, "Sending Result...");
-			finish();
+			// Create custom layout for dialog
+			LinearLayout mainLayout = new LinearLayout(BtDeviceListActivity.this);
+			mainLayout.setOrientation(LinearLayout.VERTICAL);
+			mainLayout.setPadding(60, 40, 60, 40);
+
+			// Device Information Section
+			LinearLayout infoContainer = new LinearLayout(BtDeviceListActivity.this);
+			infoContainer.setOrientation(LinearLayout.VERTICAL);
+
+			// Add nickname/name as first item (editable)
+			TextView nicknameLabel = new TextView(BtDeviceListActivity.this);
+			nicknameLabel.setText("Nickname");
+			nicknameLabel.setTextSize(12);
+			nicknameLabel.setTextColor(Color.parseColor("#757575"));
+			nicknameLabel.setPadding(0, 0, 0, 5);
+			infoContainer.addView(nicknameLabel);
+
+			// Add device name/nickname as editable TextView
+			final TextView nameDisplay = new TextView(BtDeviceListActivity.this);
+			String displayName = !savedNickname.isEmpty() ? savedNickname : originalName;
+			nameDisplay.setText(displayName);
+			nameDisplay.setTextSize(16);
+			nameDisplay.setTextColor(Color.parseColor("#2196F3")); // Material Blue for editable field
+			nameDisplay.setTypeface(null, android.graphics.Typeface.BOLD);
+			nameDisplay.setPadding(0, 0, 0, 0);
+
+			// Add hint text below the name
+			TextView hintText = new TextView(BtDeviceListActivity.this);
+			hintText.setText("(Long press to edit)");
+			hintText.setTextSize(10);
+			hintText.setTextColor(Color.parseColor("#9E9E9E")); // Light grey
+			hintText.setPadding(0, 2, 0, 0);
+
+			infoContainer.addView(nameDisplay);
+			infoContainer.addView(hintText);
+
+			// Add each info item with better formatting
+			if (!savedNickname.isEmpty()) {
+				addInfoRow(infoContainer, "Original Name", originalName);
+			}
+			addInfoRow(infoContainer, "Device Type", getDeviceType(device));
+			addInfoRow(infoContainer, "MAC Address", address);
+
+			// Status with color coding
+			TextView statusLabel = new TextView(BtDeviceListActivity.this);
+			statusLabel.setText("Status");
+			statusLabel.setTextSize(12);
+			statusLabel.setTextColor(Color.parseColor("#757575"));
+			statusLabel.setPadding(0, 15, 0, 5);
+			infoContainer.addView(statusLabel);
+
+			TextView statusValue = new TextView(BtDeviceListActivity.this);
+			if (isLastUsedDevice(address)) {
+				statusValue.setText("● Recently Connected");
+				statusValue.setTextColor(Color.parseColor("#4CAF50")); // Green
+			} else {
+				statusValue.setText("● Ready to Connect");
+				statusValue.setTextColor(Color.parseColor("#FF9800")); // Orange
+			}
+			statusValue.setTextSize(14);
+			statusValue.setTypeface(null, android.graphics.Typeface.BOLD);
+			infoContainer.addView(statusValue);
+
+			mainLayout.addView(infoContainer);
+
+			// Create and show dialog with custom view
+			AlertDialog.Builder builder = new AlertDialog.Builder(BtDeviceListActivity.this);
+			builder.setTitle("Device Details");
+			builder.setView(mainLayout);
+
+			// Make name editable on long press
+			nameDisplay.setOnLongClickListener(new View.OnLongClickListener() {
+				@Override
+				public boolean onLongClick(View v) {
+					// Show input dialog for nickname
+					AlertDialog.Builder inputBuilder = new AlertDialog.Builder(BtDeviceListActivity.this);
+					inputBuilder.setTitle("Edit Nickname");
+
+					// Create container with padding for the EditText
+					LinearLayout inputContainer = new LinearLayout(BtDeviceListActivity.this);
+					inputContainer.setOrientation(LinearLayout.VERTICAL);
+					inputContainer.setPadding(50, 20, 50, 20);
+
+					final EditText input = new EditText(BtDeviceListActivity.this);
+					input.setText(currentNickname[0]);
+					input.setHint("e.g., My Car");
+					input.setSingleLine(true);
+					input.selectAll();
+
+					inputContainer.addView(input);
+					inputBuilder.setView(inputContainer);
+
+					inputBuilder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							String newNickname = input.getText().toString().trim();
+							currentNickname[0] = newNickname;
+
+							// Update display
+							if (!newNickname.isEmpty()) {
+								nameDisplay.setText(newNickname);
+								prefs.edit().putString("device_nickname_" + address, newNickname).apply();
+							} else {
+								nameDisplay.setText(originalName);
+								prefs.edit().remove("device_nickname_" + address).apply();
+							}
+
+							// Refresh the adapter
+							modernAdapter.notifyDataSetChanged();
+						}
+					});
+
+					inputBuilder.setNegativeButton("Cancel", null);
+					inputBuilder.show();
+
+					// Request focus and show keyboard
+					input.postDelayed(new Runnable() {
+						@Override
+						public void run() {
+							input.requestFocus();
+						}
+					}, 100);
+
+					return true;
+				}
+			});
+
+			// Add Connect button
+			builder.setPositiveButton("Connect", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					// Cancel discovery because it's costly and we're about to connect
+					if (mBtAdapter != null) {
+						mBtAdapter.cancelDiscovery();
+					}
+
+					// Create the result Intent and include the MAC address
+					Intent intent = new Intent();
+					intent.putExtra(EXTRA_DEVICE_ADDRESS, address);
+
+					// Set result and finish this Activity
+					setResult(Activity.RESULT_OK, intent);
+					log.log(Level.FINE, "Sending Result...");
+					finish();
+				}
+			});
+
+			// Add Cancel button
+			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+				}
+			});
+
+			// Show the dialog
+			AlertDialog dialog = builder.create();
+			dialog.show();
 		}
 	};
 
@@ -248,9 +404,41 @@ public class BtDeviceListActivity extends Activity
 		}
 	}
 
-	// Scan for devices (placeholder - can be implemented later)
-	private void scanForDevices() {
-		Toast.makeText(this, "Scanning for devices...", Toast.LENGTH_SHORT).show();
-		// TODO: Implement device discovery
+	// Helper method to get device type
+	private String getDeviceType(BluetoothDevice device) {
+		String name = device.getName();
+		if (name != null) {
+			String nameLower = name.toLowerCase();
+			if (nameLower.contains("obd") || nameLower.contains("elm327")) {
+				return "OBD-II Adapter";
+			} else if (nameLower.contains("veepeak")) {
+				return "VeePeak Adapter";
+			}
+		}
+		return "Bluetooth Device";
+	}
+
+	// Helper method to check if device is the last used one
+	private boolean isLastUsedDevice(String address) {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		String lastDeviceAddress = prefs.getString(MainActivity.PRESELECT.LAST_DEV_ADDRESS.toString(), null);
+		return lastDeviceAddress != null && lastDeviceAddress.equals(address);
+	}
+
+	// Helper method to add info rows to the dialog
+	private void addInfoRow(LinearLayout container, String label, String value) {
+		TextView labelView = new TextView(this);
+		labelView.setText(label);
+		labelView.setTextSize(12);
+		labelView.setTextColor(Color.parseColor("#757575"));
+		labelView.setPadding(0, 15, 0, 5);
+		container.addView(labelView);
+
+		TextView valueView = new TextView(this);
+		valueView.setText(value);
+		valueView.setTextSize(14);
+		valueView.setTextColor(Color.parseColor("#424242"));
+		valueView.setPadding(0, 0, 0, 0);
+		container.addView(valueView);
 	}
 }

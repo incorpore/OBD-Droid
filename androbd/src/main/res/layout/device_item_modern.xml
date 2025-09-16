@@ -48,14 +48,4 @@
 
     </LinearLayout>
 
-    <!-- Signal/Status Indicator -->
-    <ImageView
-        android:id="@+id/signal_indicator"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:src="@android:drawable/ic_menu_more"
-        android:tint="?android:attr/textColorTertiary"
-        android:layout_gravity="center_vertical"
-        android:layout_marginStart="8dp"/>
-
 </LinearLayout>

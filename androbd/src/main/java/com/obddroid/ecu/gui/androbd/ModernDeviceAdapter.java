@@ -2,6 +2,8 @@ package com.obddroid.ecu.gui.androbd;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -70,7 +72,6 @@ public class ModernDeviceAdapter extends BaseAdapter {
             holder.deviceName = convertView.findViewById(R.id.device_name);
             holder.deviceStatus = convertView.findViewById(R.id.device_status);
             holder.deviceIcon = convertView.findViewById(R.id.device_icon);
-            holder.signalIndicator = convertView.findViewById(R.id.signal_indicator);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
@@ -78,11 +79,16 @@ public class ModernDeviceAdapter extends BaseAdapter {
 
         BluetoothDevice device = getItem(position);
 
-        // Set device name
+        // Get device name and nickname
         String deviceName = device.getName();
         if (deviceName == null || deviceName.isEmpty()) {
             deviceName = "Unknown Device";
         }
+
+        // Check for saved nickname
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        String nickname = prefs.getString("device_nickname_" + device.getAddress(), "");
+        String displayName = !nickname.isEmpty() ? nickname : deviceName;
 
         // Check if this is the last used device
         boolean isLastUsed = (lastUsedDeviceAddress != null &&
@@ -90,16 +96,20 @@ public class ModernDeviceAdapter extends BaseAdapter {
 
         // Add indicator for last used device
         if (isLastUsed && position == 0) {
-            holder.deviceName.setText(deviceName + " ★");
+            holder.deviceName.setText(displayName + " ★");
         } else {
-            holder.deviceName.setText(deviceName);
+            holder.deviceName.setText(displayName);
         }
 
         // Set status text
         if (isLastUsed && position == 0) {
+            // Recently used device - always show this first
             holder.deviceStatus.setText("Recently used • Tap to reconnect");
+        } else if (!nickname.isEmpty()) {
+            // Show original name when nickname is set
+            holder.deviceStatus.setText(deviceName + " • Tap to connect");
         } else {
-            holder.deviceStatus.setText("Tap to connect • Hold for MAC address");
+            holder.deviceStatus.setText("Tap to connect");
         }
 
         // Set icon based on device type (you can customize this)
@@ -120,6 +130,5 @@ public class ModernDeviceAdapter extends BaseAdapter {
         TextView deviceName;
         TextView deviceStatus;
         ImageView deviceIcon;
-        ImageView signalIndicator;
     }
 }

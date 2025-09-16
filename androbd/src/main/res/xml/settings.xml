@@ -3,9 +3,7 @@
                   android:icon="@android:drawable/ic_menu_manage"
                   android:title="@string/settings">
 
-    <PreferenceScreen
-        android:icon="@android:drawable/ic_menu_manage"
-        android:summary="@string/common_settings_description"
+    <PreferenceCategory
         android:title="@string/common_settings">
 
         <MultiSelectListPreference
@@ -32,40 +30,20 @@
             android:title="@string/full_screen_display"
             />
 
-        <PreferenceCategory
-            android:title="@string/autohide_toolbar">
-
-            <CheckBoxPreference
-                android:defaultValue="false"
-                android:key="autohide_toolbar"
-                android:summary="@string/autohide_toolbar_description"
-                android:title="@string/autohide_toolbar"
-                />
-
-            <CheckBoxPreference
-                android:defaultValue="false"
-                android:dependency="autohide_toolbar"
-                android:key="toolbar_overlay"
-                android:summary="@string/toolbar_overlay_sum"
-                android:title="@string/toolbar_overlay"
-                />
-
-            <EditTextPreference
-                android:defaultValue="15"
-                android:dependency="autohide_toolbar"
-                android:inputType="numberDecimal"
-                android:key="autohide_delay"
-                android:summary="@string/autohide_delay_description"
-                android:title="@string/autohide_delay"
-                />
-
-        </PreferenceCategory>
-
         <CheckBoxPreference
             android:defaultValue="false"
-            android:key="night_mode"
-            android:summary="@string/night_mode_description"
-            android:title="@string/night_mode"
+            android:key="autohide_toolbar"
+            android:summary="@string/autohide_toolbar_description"
+            android:title="@string/autohide_toolbar"
+            />
+
+        <EditTextPreference
+            android:defaultValue="15"
+            android:dependency="autohide_toolbar"
+            android:inputType="numberDecimal"
+            android:key="autohide_delay"
+            android:summary="@string/autohide_delay_description"
+            android:title="@string/autohide_delay"
             />
 
         <ListPreference
@@ -78,8 +56,7 @@
             android:title="@string/measure_system"
             />
 
-    </PreferenceScreen>
-
+    </PreferenceCategory>
 
     <PreferenceScreen
         android:icon="@android:drawable/ic_menu_manage"
@@ -260,32 +237,6 @@
                 android:summary="@string/logging_level_description"
                 android:title="@string/logging_level"
                 />
-        </PreferenceCategory>
-
-        <PreferenceCategory
-            android:title="@string/extension_files">
-            <Preference
-                android:icon="@drawable/ic_action_load"
-                android:key="ext_file_conversions"
-                android:summary="@string/select_extension"
-                android:title="@string/conversions"
-                >
-                <intent
-                    android:action="android.intent.action.OPEN_DOCUMENT"
-                    android:mimeType="*/*"
-                    />
-            </Preference>
-            <Preference
-                android:icon="@drawable/ic_action_load"
-                android:key="ext_file_dataitems"
-                android:summary="@string/select_extension"
-                android:title="@string/data_items"
-                >
-                <intent
-                    android:action="android.intent.action.OPEN_DOCUMENT"
-                    android:mimeType="*/*"
-                    />
-            </Preference>
         </PreferenceCategory>
 
         <PreferenceCategory
