@@ -12,7 +12,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
+import android.view.WindowManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -73,6 +75,13 @@ public final class UsbDeviceListActivity extends Activity
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+
+		// Apply full screen based on preference
+		if(PreferenceManager.getDefaultSharedPreferences(this).getBoolean(MainActivity.PREF_FULLSCREEN, false))
+		{
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		}
+
 		setContentView(R.layout.usb_list);
 
 		mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);

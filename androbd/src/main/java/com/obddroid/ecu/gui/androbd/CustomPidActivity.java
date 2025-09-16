@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.SeekBar;
@@ -15,8 +17,8 @@ import com.obddroid.ecu.EcuDataItem;
 import com.obddroid.ecu.EcuDataPv;
 
 /**
- * Customisation of OBD data item display
- * - Allow customisation of:
+ * customization of OBD data item display
+ * - Allow customization of:
  *   - Display color
  *   - Display value range (MIN/MAX)
  * - per data item
@@ -61,6 +63,13 @@ public class CustomPidActivity
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+
+        // Apply full screen based on preference
+        if(PreferenceManager.getDefaultSharedPreferences(this).getBoolean(MainActivity.PREF_FULLSCREEN, false))
+        {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        }
+
         setContentView(R.layout.pid_customization);
 
         btnOk       = findViewById(R.id.btnOk);

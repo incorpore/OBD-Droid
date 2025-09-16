@@ -167,14 +167,14 @@ public class DashBoardActivity extends Activity
 	{
 		super.onCreate(savedInstanceState);
 		setTheme(MainActivity.nightMode ? R.style.AppTheme_Dark : R.style.AppTheme);
-		// set to full screen
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
-		// keep main display on?
-		if(MainActivity.prefs.getBoolean("keep_screen_on", false))
+		// Apply full screen based on preference
+		if(MainActivity.prefs.getBoolean(MainActivity.PREF_FULLSCREEN, false))
 		{
-			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		}
+
+		// Always keep main display on for vehicle diagnostics
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		// hide the action bar
 		ActionBar actionBar = getActionBar();
 		if (actionBar != null) actionBar.hide();

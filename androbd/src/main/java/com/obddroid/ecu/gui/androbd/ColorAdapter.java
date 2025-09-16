@@ -60,7 +60,7 @@ public class ColorAdapter
 
     /**
      * Get color for a specified EcuDataItem
-     * - includes customisation settings
+     * - includes customization settings
      *
      * @param currPv current EcuDataPv
      * @return Display color for given EcuDataPv

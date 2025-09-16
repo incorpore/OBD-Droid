@@ -14,6 +14,7 @@ import android.preference.MultiSelectListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.obddroid.ecu.EcuDataItem;
@@ -78,6 +79,12 @@ public class SettingsActivity
 		super.onCreate(savedInstanceState);
 		setTheme(MainActivity.nightMode ? R.style.AppTheme_Dark : R.style.AppTheme);
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+		// Apply full screen based on preference
+		if(prefs.getBoolean(MainActivity.PREF_FULLSCREEN, false))
+		{
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		}
 
 		// Display the fragment as the main content.
 		getFragmentManager().beginTransaction().replace(android.R.id.content,
@@ -344,6 +351,19 @@ public class SettingsActivity
 			{
 				EditTextPreference currPref = (EditTextPreference) pref;
 				currPref.setSummary(currPref.getText());
+			}
+
+			// Apply full screen changes instantly
+			if(MainActivity.PREF_FULLSCREEN.equals(key))
+			{
+				if(sharedPreferences.getBoolean(MainActivity.PREF_FULLSCREEN, false))
+				{
+					getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+				}
+				else
+				{
+					getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+				}
 			}
 
 			if(KEY_COMM_MEDIUM.equals(key))

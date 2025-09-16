@@ -17,6 +17,10 @@
         android:icon="@drawable/ic_daynight"
         android:title="@string/day_night_mode"/>
     <item
+        android:id="@+id/demo_mode"
+        android:icon="@android:drawable/ic_menu_compass"
+        android:title="@string/demo_mode"/>
+    <item
         android:id="@+id/save"
         android:icon="@android:drawable/ic_menu_save"
         android:title="@string/save"/>

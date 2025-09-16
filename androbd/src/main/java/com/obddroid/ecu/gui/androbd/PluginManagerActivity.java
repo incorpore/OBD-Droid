@@ -8,6 +8,8 @@ import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -34,6 +36,12 @@ public class PluginManagerActivity extends Activity {
 
         // Set theme based on night mode
         setTheme(MainActivity.nightMode ? R.style.AppTheme_Dark : R.style.AppTheme);
+
+        // Apply full screen based on preference
+        if(PreferenceManager.getDefaultSharedPreferences(this).getBoolean(MainActivity.PREF_FULLSCREEN, false))
+        {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        }
 
         // Set status bar and navigation bar to black
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

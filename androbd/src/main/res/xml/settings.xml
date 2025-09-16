@@ -3,67 +3,7 @@
                   android:icon="@android:drawable/ic_menu_manage"
                   android:title="@string/settings">
 
-    <PreferenceCategory
-        android:title="@string/common_settings">
-
-        <ListPreference
-            android:defaultValue="0"
-            android:dialogTitle="@string/measure_system"
-            android:entries="@array/measure_options"
-            android:entryValues="@array/measure_option_values"
-            android:key="measure_system"
-            android:summary="@string/measure_system_description"
-            android:title="@string/measure_system"
-            />
-
-        <CheckBoxPreference
-            android:defaultValue="true"
-            android:key="use_last_settings_simple"
-            android:summary="@string/use_last_settings_description"
-            android:title="@string/use_last_settings"
-            />
-
-        <CheckBoxPreference
-            android:defaultValue="true"
-            android:key="keep_screen_on"
-            android:summary="@string/keep_screen_on_description"
-            android:title="@string/keep_screen_on"
-            />
-
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="full_screen"
-            android:summary="@string/full_screen_display_description"
-            android:title="@string/full_screen_display"
-            />
-
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="autohide_toolbar"
-            android:summary="@string/autohide_toolbar_description"
-            android:title="@string/autohide_toolbar"
-            />
-
-        <EditTextPreference
-            android:defaultValue="15"
-            android:dependency="autohide_toolbar"
-            android:inputType="numberDecimal"
-            android:key="autohide_delay"
-            android:summary="@string/autohide_delay_description"
-            android:title="@string/autohide_delay"
-            />
-
-    </PreferenceCategory>
-
-    <CheckBoxPreference
-        android:defaultValue="false"
-        android:key="developer_mode"
-        android:summary="Show advanced developer settings"
-        android:title="Developer mode"
-        />
-
     <PreferenceScreen
-        android:icon="@android:drawable/ic_menu_manage"
         android:summary="@string/obd_opt_description"
         android:title="@string/obd_options">
 
@@ -77,6 +17,7 @@
                 android:entryValues="@array/empty"
                 android:key="comm_medium"
                 android:title="@string/select_medium"
+                android:layout="@layout/preference_indented"
                 />
 
             <CheckBoxPreference
@@ -85,6 +26,7 @@
                 android:key="bt_secure_connection"
                 android:summary="@string/secure_connect_description"
                 android:title="@string/secure_connect"
+                android:layout="@layout/preference_indented"
                 />
 
             <EditTextPreference
@@ -94,6 +36,7 @@
                 android:key="device_address"
                 android:summary="@string/device_address_description"
                 android:title="@string/device_address"
+                android:layout="@layout/preference_indented"
                 />
 
             <EditTextPreference
@@ -103,6 +46,7 @@
                 android:key="device_port"
                 android:summary="@string/device_port_description"
                 android:title="@string/device_port"
+                android:layout="@layout/preference_indented"
                 />
 
             <ListPreference
@@ -113,6 +57,7 @@
                 android:key="comm_baudrate"
                 android:title="@string/comm_baudrate"
                 android:summary="@string/comm_baudrate_description"
+                android:layout="@layout/preference_indented"
                 />
 
             <ListPreference
@@ -122,6 +67,7 @@
                 android:entryValues="@array/empty"
                 android:key="protocol"
                 android:title="@string/select_protocol"
+                android:layout="@layout/preference_indented"
                 />
 
             <MultiSelectListPreference
@@ -132,6 +78,7 @@
                 android:key="data_items"
                 android:summary="@string/items_for_display_descr"
                 android:title="@string/items_for_display"
+                android:layout="@layout/preference_indented"
                 />
 
         </PreferenceCategory>
@@ -146,6 +93,7 @@
                 android:minLines="5"
                 android:summary="@string/elm_custom_init_descr"
                 android:title="@string/elm_custom_init"
+                android:layout="@layout/preference_indented"
                 />
 
             <ListPreference
@@ -153,6 +101,7 @@
                 android:key="adaptive_timing_mode"
                 android:summary="@string/elm_adaptive_timing_descr"
                 android:title="@string/elm_adaptive_timing"
+                android:layout="@layout/preference_indented"
                 />
 
             <CheckBoxPreference
@@ -160,6 +109,7 @@
                 android:key="elm_reset_on_nrc"
                 android:summary="@string/elm_reset_on_nrc_descr"
                 android:title="@string/elm_reset_on_nrc"
+                android:layout="@layout/preference_indented"
                 />
 
             <EditTextPreference
@@ -169,16 +119,57 @@
                 android:key="data_disable_max"
                 android:summary="@string/data_disable_max_description"
                 android:title="@string/data_disable_max"
+                android:layout="@layout/preference_indented"
+                />
+
+            <MultiSelectListPreference
+                android:defaultValue="@array/empty"
+                android:dialogTitle="@string/disable_elm_cmds"
+                android:entries="@array/empty"
+                android:entryValues="@array/empty"
+                android:key="elm_cmd_disable"
+                android:summary="@string/disable_elm_cmds_descr"
+                android:title="@string/disable_elm_cmds"
+                android:layout="@layout/preference_indented"
                 />
 
         </PreferenceCategory>
     </PreferenceScreen>
 
-    <PreferenceScreen
-        android:icon="@android:drawable/ic_menu_save"
-        android:summary="@string/csv_export_description"
-        android:title="@string/csv_export_options"
-        >
+    <PreferenceCategory
+        android:title="@string/common_settings">
+
+        <ListPreference
+            android:defaultValue="0"
+            android:dialogTitle="@string/measure_system"
+            android:entries="@array/measure_options"
+            android:entryValues="@array/measure_option_values"
+            android:key="measure_system"
+            android:summary="@string/measure_system_description"
+            android:title="@string/measure_system"
+            android:layout="@layout/preference_indented"
+            />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="use_last_settings_simple"
+            android:summary="@string/use_last_settings_description"
+            android:title="@string/use_last_settings"
+            android:layout="@layout/preference_indented"
+            />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="full_screen"
+            android:summary="@string/full_screen_display_description"
+            android:title="@string/full_screen_display"
+            android:layout="@layout/preference_indented"
+            />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/csv_export_options">
 
         <ListPreference
             android:defaultValue=","
@@ -188,6 +179,7 @@
             android:key="csv_field_delimiter"
             android:summary="@string/csv_field_delimiter_description"
             android:title="@string/csv_field_delimiter"
+            android:layout="@layout/preference_indented"
             />
 
         <ListPreference
@@ -198,12 +190,14 @@
             android:key="csv_record_delimiter"
             android:summary="@string/csv_rec_delimiter_description"
             android:title="@string/csv_rec_delimiter"
+            android:layout="@layout/preference_indented"
             />
 
         <CheckBoxPreference
             android:key="csv_text_quoted"
             android:summary="@string/csv_text_quoted_description"
             android:title="@string/csv_text_quoted"
+            android:layout="@layout/preference_indented"
             />
 
         <CheckBoxPreference
@@ -211,47 +205,26 @@
             android:key="send_after_export"
             android:summary="@string/send_after_export_descr"
             android:title="@string/send_after_export"
+            android:layout="@layout/preference_indented"
             />
 
-    </PreferenceScreen>
+    </PreferenceCategory>
 
-    <PreferenceScreen
-        android:dependency="developer_mode"
-        android:icon="@android:drawable/ic_menu_manage"
-        android:summary="@string/dev_opt_description"
-        android:title="@string/development_options"
-        >
-        <PreferenceCategory
-            android:title="@string/debugging"
-            >
-            <ListPreference
-                android:defaultValue="INFO"
-                android:dialogTitle="@string/logging_level"
-                android:entries="@array/logging_options"
-                android:entryValues="@array/logging_options"
-                android:key="log_master"
-                android:summary="@string/logging_level_description"
-                android:title="@string/logging_level"
-                />
-        </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/debugging">
 
-        <PreferenceCategory
-            android:title="@string/obd_options">
+        <ListPreference
+            android:defaultValue="INFO"
+            android:dialogTitle="@string/logging_level"
+            android:entries="@array/logging_options"
+            android:entryValues="@array/logging_options"
+            android:key="log_master"
+            android:summary="@string/logging_level_description"
+            android:title="@string/logging_level"
+            android:layout="@layout/preference_indented"
+            />
 
-            <MultiSelectListPreference
-                android:defaultValue="@array/empty"
-                android:dialogTitle="@string/disable_elm_cmds"
-                android:entries="@array/empty"
-                android:entryValues="@array/empty"
-                android:icon="@android:drawable/ic_dialog_alert"
-                android:key="elm_cmd_disable"
-                android:summary="@string/disable_elm_cmds_descr"
-                android:title="@string/disable_elm_cmds"
-                />
-
-        </PreferenceCategory>
-
-    </PreferenceScreen>
+    </PreferenceCategory>
 
 
 </PreferenceScreen>

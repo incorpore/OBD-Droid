@@ -142,7 +142,6 @@ public class MainActivity extends ListActivity
      */
     private static final int DISPLAY_UPDATE_TIME = 250;
     private static final String LOG_MASTER = "log_master";
-    private static final String KEEP_SCREEN_ON = "keep_screen_on";
     private static final String ELM_CUSTOM_INIT_CMDS = "elm_custom_init_cmds";
     /**
      * Logging
@@ -590,22 +589,15 @@ public class MainActivity extends ListActivity
                     }
                     else
                     {
-                        // last device to be auto-connected?
-                        if(istRestoreWanted(PRESELECT.LAST_DEV_ADDRESS))
-                        {
-                            // auto-connect ...
-                            setMode(MODE.ONLINE);
-                        }
-                        else
-                        {
-                            // leave "connect" action to the user
-                        }
+                        // Don't auto-connect on startup - leave "connect" action to the user
+                        // App should always start on the main screen
                     }
                 }
                 break;
 
             case USB:
             case NETWORK:
+                // Auto-connect for USB and Network connections
                 setMode(MODE.ONLINE);
                 break;
         }
@@ -847,6 +839,16 @@ public class MainActivity extends ListActivity
                 clearObdFaultCodes();
                 setObdService(ObdProt.OBD_SVC_READ_CODES, item.getTitle());
                 return true;
+
+            case R.id.demo_mode:
+                // Toggle demo mode
+                if (getMode() == MODE.DEMO) {
+                    stopDemoService();
+                    setMode(MODE.OFFLINE);
+                } else {
+                    setMode(MODE.DEMO);
+                }
+                return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -992,18 +994,16 @@ public class MainActivity extends ListActivity
     @Override
     public void onSharedPreferenceChanged(SharedPreferences prefs, String key)
     {
-        // keep main display on?
-        if (key == null || KEEP_SCREEN_ON.equals(key))
+        // Always keep main display on for vehicle diagnostics
+        if (key == null)
         {
-            getWindow().addFlags(prefs.getBoolean(KEEP_SCREEN_ON, false)
-                    ? WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                    : 0);
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
 
         // FULL SCREEN operation based on preference settings
         if (key == null || PREF_FULLSCREEN.equals(key))
         {
-            getWindow().setFlags(prefs.getBoolean(PREF_FULLSCREEN, true)
+            getWindow().setFlags(prefs.getBoolean(PREF_FULLSCREEN, false)
                             ? WindowManager.LayoutParams.FLAG_FULLSCREEN : 0,
                     WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
@@ -1652,22 +1652,12 @@ public class MainActivity extends ListActivity
                                 mode = MODE.OFFLINE;
                             } else
                             {
-                                // if pre-settings shall be used ...
-                                String address = prefs.getString(PRESELECT.LAST_DEV_ADDRESS.toString(), null);
-                                if (istRestoreWanted(PRESELECT.LAST_DEV_ADDRESS)
-                                        && address != null)
-                                {
-                                    // ... connect with previously connected device
-                                    connectBtDevice(address, prefs.getBoolean("bt_secure_connection", false));
-                                } else
-                                {
-                                    // ... otherwise launch the BtDeviceListActivity to see devices and do scan
-                                    Intent serverIntent = new Intent(this, BtDeviceListActivity.class);
-                                    startActivityForResult(serverIntent,
-                                            prefs.getBoolean("bt_secure_connection", false)
-                                                    ? REQUEST_CONNECT_DEVICE_SECURE
-                                                    : REQUEST_CONNECT_DEVICE_INSECURE);
-                                }
+                                // Always show device selection screen when connect is pressed
+                                Intent serverIntent = new Intent(this, BtDeviceListActivity.class);
+                                startActivityForResult(serverIntent,
+                                        prefs.getBoolean("bt_secure_connection", false)
+                                                ? REQUEST_CONNECT_DEVICE_SECURE
+                                                : REQUEST_CONNECT_DEVICE_INSECURE);
                             }
                             break;
 

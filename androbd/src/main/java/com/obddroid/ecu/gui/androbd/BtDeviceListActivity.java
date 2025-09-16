@@ -74,7 +74,7 @@ public class BtDeviceListActivity extends Activity
 
 		// Get preferences for fullscreen mode
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		boolean fullScreenMode = prefs.getBoolean(MainActivity.PREF_FULLSCREEN, true);
+		boolean fullScreenMode = prefs.getBoolean(MainActivity.PREF_FULLSCREEN, false);
 
 		// Apply fullscreen mode if enabled
 		if (fullScreenMode) {
