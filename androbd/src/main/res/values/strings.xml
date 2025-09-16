@@ -159,12 +159,12 @@ period of time while the ECU recalibrates itself.
     <string name="day_night_mode">Day/Night view mode</string>
     <string name="night_mode_description">Set display to dark background</string>
     <string name="night_mode">Night mode</string>
-    <string name="disable_elm_cmds">Disabled ELM commands</string>
-    <string name="disable_elm_cmds_descr">enable/disable ELM commands</string>
+    <string name="disable_elm_cmds">Disabled adapter commands</string>
+    <string name="disable_elm_cmds_descr">Advanced: Specific adapter commands to disable</string>
     <string name="elm_adaptive_timing">ELM adaptive timing</string>
     <string name="elm_adaptive_timing_descr">Allow adaptive timing handling in ELM drivers?</string>
-    <string name="elm_reset_on_nrc">Reset on NRC</string>
-    <string name="elm_reset_on_nrc_descr">Reset ELM adapter on NRC error?</string>
+    <string name="elm_reset_on_nrc">Reset adapter on errors</string>
+    <string name="elm_reset_on_nrc_descr">Automatically reset adapter when errors occur</string>
     <string name="select_ecu_addr">Select ECU address …</string>
     <string name="disconnect">Disconnect</string>
     <string name="reset_preselections">Clear saved startup preferences</string>
@@ -174,8 +174,8 @@ period of time while the ECU recalibrates itself.
     <string name="secure_connect">Secure connection</string>
     <string name="secure_connect_description">Use encrypted Bluetooth connection</string>
     <string name="elm_options">ELM options</string>
-    <string name="elm_custom_init">ELM custom init</string>
-    <string name="elm_custom_init_descr">ELM custom initialisation commands</string>
+    <string name="elm_custom_init">Custom initialization commands</string>
+    <string name="elm_custom_init_descr">Advanced commands sent to adapter on startup</string>
     <!-- ELM communication states -->
     <string name="UNDEFINED">Undefined</string>
     <string name="INITIALIZING">Initializing…</string>
@@ -196,8 +196,8 @@ period of time while the ECU recalibrates itself.
     <string name="device_address">ELM IP address</string>
     <string name="device_port_description">ELM device network IP port</string>
     <string name="device_port">ELM IP port</string>
-    <string name="data_disable_max">Data item disable limit</string>
-    <string name="data_disable_max_description">Number of invalid consecutive data responses before item will be disabled</string>
+    <string name="data_disable_max">Error tolerance</string>
+    <string name="data_disable_max_description">How many errors before disabling a sensor reading</string>
     <string name="autohide_toolbar">Hide toolbar</string>
     <string name="autohide_toolbar_description">Automatically hide toolbar after delay w/o activity</string>
     <string name="autohide_delay">Hide toolbar delay [s]</string>

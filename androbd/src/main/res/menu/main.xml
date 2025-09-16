@@ -29,10 +29,6 @@
         android:icon="@android:drawable/ic_menu_delete"
         android:title="@string/reset_preselections"/>
     <item
-        android:id="@+id/plugin_manager"
-        android:icon="@android:drawable/ic_menu_manage"
-        android:title="@string/plugin_manager" />
-    <item
         android:id="@+id/settings"
         android:icon="@android:drawable/ic_menu_preferences"
         android:title="@string/settings" />

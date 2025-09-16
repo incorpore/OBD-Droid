@@ -810,12 +810,6 @@ public class MainActivity extends ListActivity
                 startActivityForResult(settingsIntent, REQUEST_SETTINGS);
                 return true;
 
-            case R.id.plugin_manager:
-                // Launch plugin manager
-                Intent pluginIntent = new Intent(this, PluginManagerActivity.class);
-                startActivity(pluginIntent);
-                return true;
-
             case R.id.save:
                 // save recorded data (threaded)
                 fileHelper.saveDataThreaded();
@@ -1299,7 +1293,8 @@ public class MainActivity extends ListActivity
      */
     private boolean istRestoreWanted(PRESELECT preselect)
     {
-        return prefs.getStringSet(PREF_USE_LAST, emptyStringSet).contains(preselect.toString());
+        // Simple checkbox now controls all restore options
+        return prefs.getBoolean("use_last_settings_simple", true);
     }
 
     /**
