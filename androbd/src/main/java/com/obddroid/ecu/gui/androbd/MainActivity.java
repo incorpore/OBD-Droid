@@ -801,6 +801,11 @@ public class MainActivity extends AppCompatActivity
 
 
 
+            case R.id.service_home:
+                // Return to home/startup screen
+                setContentView(R.layout.startup_layout);
+                return true;
+
             case R.id.service_none:
                 setObdService(ObdProt.OBD_SVC_NONE, item.getTitle());
                 return true;
@@ -2211,24 +2216,41 @@ public class MainActivity extends AppCompatActivity
      */
     private void clearObdFaultCodes()
     {
-        new AlertDialog.Builder(this)
-                .setIcon(android.R.drawable.ic_dialog_info)
-                .setTitle(R.string.obd_clearcodes)
-                .setMessage(R.string.obd_clear_info)
-                .setPositiveButton(android.R.string.yes,
-                        new DialogInterface.OnClickListener()
-                        {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which)
-                            {
-                                // set service CLEAR_CODES to clear the codes
-                                CommService.elm.setService(ObdProt.OBD_SVC_CLEAR_CODES);
-                                // set service READ_CODES to re-read the codes
-                                CommService.elm.setService(ObdProt.OBD_SVC_READ_CODES);
-                            }
-                        })
-                .setNegativeButton(android.R.string.no, null)
-                .show();
+        // Create custom dialog view
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_clear_codes, null);
+
+        // Create the dialog
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        // Set up button click handlers
+        Button cancelButton = dialogView.findViewById(R.id.btn_cancel);
+        Button confirmButton = dialogView.findViewById(R.id.btn_confirm);
+
+        if (cancelButton != null) {
+            cancelButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+            });
+        }
+
+        if (confirmButton != null) {
+            confirmButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // set service CLEAR_CODES to clear the codes
+                    CommService.elm.setService(ObdProt.OBD_SVC_CLEAR_CODES);
+                    // set service READ_CODES to re-read the codes
+                    CommService.elm.setService(ObdProt.OBD_SVC_READ_CODES);
+                    dialog.dismiss();
+                }
+            });
+        }
+
+        dialog.show();
     }
 
     /**
