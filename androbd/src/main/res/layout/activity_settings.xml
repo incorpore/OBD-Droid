@@ -38,7 +38,7 @@
                 android:layout_marginEnd="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                android:src="@drawable/abc_ic_ab_back_material"
+                android:src="@drawable/ic_arrow_back_24"
                 android:tint="@android:color/white" />
 
         </RelativeLayout>
