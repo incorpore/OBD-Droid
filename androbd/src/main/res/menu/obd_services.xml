@@ -3,7 +3,7 @@
     <item
         android:id="@+id/service_home"
         android:title="Home"
-        android:icon="@drawable/ic_home_menu"/>
+        android:icon="@android:drawable/ic_menu_revert"/>
     <item
         android:id="@+id/service_none"
         android:title="@string/obd_none"
