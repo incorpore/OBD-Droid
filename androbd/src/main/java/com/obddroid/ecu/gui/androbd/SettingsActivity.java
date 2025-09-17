@@ -3,9 +3,9 @@
 package com.obddroid.ecu.gui.androbd;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
@@ -14,8 +14,15 @@ import android.preference.MultiSelectListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.view.MenuItem;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageButton;
 import android.widget.Toast;
+
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import com.obddroid.ecu.EcuDataItem;
 import com.obddroid.ecu.prot.obd.ElmProt;
@@ -28,7 +35,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class SettingsActivity
-	extends Activity
+	extends AppCompatActivity
 {
 	/** The logger object */
 	private static final Logger log = Logger.getLogger(SettingsActivity.class.getName());
@@ -77,7 +84,7 @@ public class SettingsActivity
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		setTheme(R.style.AppTheme);
+		setTheme(R.style.AppTheme_NoActionBar);
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
 		// Apply full screen based on preference
@@ -86,9 +93,52 @@ public class SettingsActivity
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		}
 
-		// Display the fragment as the main content.
-		getFragmentManager().beginTransaction().replace(android.R.id.content,
+		// Set status bar and navigation bar colors to match the toolbar
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			getWindow().setStatusBarColor(Color.parseColor("#212121"));
+			getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+		}
+
+		// Set the custom layout
+		setContentView(R.layout.activity_settings);
+
+		// Set up custom toolbar
+		Toolbar toolbar = findViewById(R.id.toolbar);
+		setSupportActionBar(toolbar);
+
+		// Hide the default title since we have a custom one
+		ActionBar actionBar = getSupportActionBar();
+		if (actionBar != null)
+		{
+			actionBar.setDisplayShowTitleEnabled(false);
+			actionBar.setDisplayHomeAsUpEnabled(false);
+		}
+
+		// Set up the back button on the right
+		ImageButton backButton = findViewById(R.id.back_button);
+		backButton.setOnClickListener(new View.OnClickListener()
+		{
+			@Override
+			public void onClick(View v)
+			{
+				finish();
+			}
+		});
+
+		// Display the fragment in the container
+		getFragmentManager().beginTransaction().replace(R.id.settings_container,
 		                                                new PrefsFragment()).commit();
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item)
+	{
+		if (item.getItemId() == android.R.id.home)
+		{
+			finish();
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
 	}
 
 	@SuppressLint("ValidFragment")

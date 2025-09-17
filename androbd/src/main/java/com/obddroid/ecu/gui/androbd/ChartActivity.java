@@ -1,8 +1,8 @@
 package com.obddroid.ecu.gui.androbd;
-
-import android.app.ActionBar;
-import android.app.Activity;
 import android.graphics.Color;
+
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import android.graphics.Paint.Align;
 import android.os.Bundle;
 import android.os.Handler;
@@ -37,7 +37,7 @@ import java.util.TreeSet;
  * passes in the number of the <code>Sensor</code>(s) to display. If none is
  * passed, the first available <code>Sensor</code> is used.
  */
-public class ChartActivity extends Activity
+public class ChartActivity extends AppCompatActivity
 {
 
 	/**
@@ -139,7 +139,7 @@ public class ChartActivity extends Activity
 		wakeLock.acquire();
 
 		// Hide the action bar completely
-		ActionBar actionBar = getActionBar();
+		ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null)
 		{
 			actionBar.hide();
@@ -205,7 +205,7 @@ public class ChartActivity extends Activity
 				// set toolbar visibility
 				case MainActivity.MESSAGE_TOOLBAR_VISIBLE:
 					// Always keep action bar hidden
-					ActionBar ab = getActionBar();
+					ActionBar ab = getSupportActionBar();
 					if(ab != null)
 					{
 						ab.hide();

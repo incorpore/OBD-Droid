@@ -131,7 +131,6 @@ class FileHelper
 			oStr.writeObject(ObdProt.PidPvs);
 			oStr.writeObject(ObdProt.VidPvs);
 			oStr.writeObject(ObdProt.tCodes);
-			oStr.writeObject(MainActivity.mPluginPvs);
 
 			oStr.close();
 			fStr.close();
@@ -208,7 +207,12 @@ class FileHelper
 			ObdProt.PidPvs = (PvList) oIn.readObject();
 			ObdProt.VidPvs = (PvList) oIn.readObject();
 			ObdProt.tCodes = (PvList) oIn.readObject();
-			MainActivity.mPluginPvs = (PvList) oIn.readObject();
+			// Plugin data removed - try to skip if present in old files
+			try {
+				oIn.readObject(); // Skip plugin data if present
+			} catch (Exception ignored) {
+				// Ignore if no plugin data in file
+			}
 
 			oIn.close();
 

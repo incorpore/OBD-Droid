@@ -239,8 +239,6 @@ class ObdItemAdapter extends ArrayAdapter<Object>
 
                     }
                 }
-
-                // Plugin handler removed - no longer needed
             }
         }
     };
@@ -250,7 +248,6 @@ class ObdItemAdapter extends ArrayAdapter<Object>
      */
     protected synchronized void addAllDataSeries()
     {
-        StringBuilder pluginStr = new StringBuilder();
         for (int pos = 0; pos < getCount(); pos++)
         {
             IndexedProcessVar pv = (IndexedProcessVar)getItem(pos);
@@ -261,18 +258,7 @@ class ObdItemAdapter extends ArrayAdapter<Object>
                 pv.put(FID_DATA_SERIES, series);
                 pv.addPvChangeListener(dataChangeHandler, PvChangeEvent.PV_MODIFIED);
             }
-
-            // assemble data items for plugin notification
-            pluginStr.append(String.format("%s;%s;%s;%s\n",
-                                           pv.get(EcuDataPv.FID_MNEMONIC),
-                                           pv.get(EcuDataPv.FID_DESCRIPT),
-                                           String.valueOf(pv.get(EcuDataPv.FID_VALUE)),
-                                           pv.get(EcuDataPv.FID_UNITS)
-            ));
         }
-
-        // notify plugins
-        // Plugin handler removed - no longer needed
     }
 
     @Override

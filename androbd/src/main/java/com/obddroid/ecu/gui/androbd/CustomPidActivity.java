@@ -1,6 +1,6 @@
 package com.obddroid.ecu.gui.androbd;
 
-import android.app.Activity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
@@ -27,7 +27,7 @@ import com.obddroid.ecu.EcuDataPv;
  * - Re-use preference values at further runs
  */
 public class CustomPidActivity
-    extends Activity
+    extends AppCompatActivity
 {
     /** Data item to be customized */
     static EcuDataItem item;

@@ -1,8 +1,8 @@
 package com.obddroid.ecu.gui.androbd;
-
-import android.app.ActionBar;
-import android.app.Activity;
 import android.content.Intent;
+
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
@@ -30,7 +30,7 @@ import java.util.Objects;
 /**
  * Display selected data items as dashboard
  */
-public class DashBoardActivity extends Activity
+public class DashBoardActivity extends AppCompatActivity
 		implements PvChangeListener, AdapterView.OnItemLongClickListener
 {
 	/**
@@ -176,7 +176,7 @@ public class DashBoardActivity extends Activity
 		// Always keep main display on for vehicle diagnostics
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		// hide the action bar
-		ActionBar actionBar = getActionBar();
+		ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null) actionBar.hide();
 
 		// prevent activity from falling asleep

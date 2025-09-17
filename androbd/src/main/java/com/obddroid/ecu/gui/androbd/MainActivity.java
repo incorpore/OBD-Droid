@@ -2,9 +2,7 @@ package com.obddroid.ecu.gui.androbd;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
 import android.app.Activity;
-import android.app.ListActivity;
 import android.app.AlertDialog;
 import android.app.SearchManager;
 import android.bluetooth.BluetoothAdapter;
@@ -38,6 +36,8 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
 import com.obddroid.ecu.EcuCodeItem;
@@ -73,7 +73,7 @@ import java.util.logging.SimpleFormatter;
 /**
  * Main Activity for AndrOBD app
  */
-public class MainActivity extends ListActivity
+public class MainActivity extends AppCompatActivity
         implements PvChangeListener,
         AdapterView.OnItemLongClickListener,
         PropertyChangeListener,
@@ -97,17 +97,6 @@ public class MainActivity extends ListActivity
     public static final int MESSAGE_TOAST = 5;
     public static final int MESSAGE_UPDATE_VIEW = 7;
     public static final int MESSAGE_TOOLBAR_VISIBLE = 12;
-    /**
-     * Mapping list from Plugin.CsvField to EcuDataPv.key
-     */
-    static final Object[] csvFidMap =
-    {
-        EcuDataPv.FID_MNEMONIC,
-        EcuDataPv.FIELDS[EcuDataPv.FID_DESCRIPT],
-        EcuDataPv.FID_MIN,
-        EcuDataPv.FID_MAX,
-        EcuDataPv.FIELDS[EcuDataPv.FID_UNITS]
-    };
     private static final String DEVICE_ADDRESS = "device_address";
     private static final String DEVICE_PORT = "device_port";
     private static final String MEASURE_SYSTEM = "measure_system";
@@ -157,10 +146,6 @@ public class MainActivity extends ListActivity
      */
     private static final Set<String> emptyStringSet = new HashSet<>();
     /**
-     * Container for Plugin-provided data
-     */
-    public static PvList mPluginPvs = new PvList();
-    /**
      * app preferences ...
      */
     static SharedPreferences prefs;
@@ -186,7 +171,6 @@ public class MainActivity extends ListActivity
     private static VehicleInfoAdapter mVidAdapter;
     private static TestResultAdapter mTidAdapter;
     private static FaultCodeAdapter mDfcAdapter;
-    private static PluginDataAdapter mPluginDataAdapter;
     private static ObdItemAdapter currDataAdapter;
     /**
      * initial state of bluetooth adapter
@@ -237,6 +221,20 @@ public class MainActivity extends ListActivity
      * the local list view
      */
     private View mListView;
+    /**
+     * ListView for list functionality
+     */
+    private ListView listView;
+
+    /**
+     * Get the list view (compatibility method)
+     */
+    private ListView getListView() {
+        if (listView == null) {
+            listView = findViewById(android.R.id.list);
+        }
+        return listView;
+    }
     /**
      * current data view mode
      */
@@ -345,8 +343,6 @@ public class MainActivity extends ListActivity
                                 {
                                     if (event.getSource() == ObdProt.PidPvs)
                                     {
-                                        // append plugin measurements to data list
-                                        currDataAdapter.addAll(mPluginPvs.values());
                                         // Check if last data selection shall be restored
                                         checkToRestoreLastDataSelection();
                                         // Don't restore view mode after connection - stay on main page
@@ -365,7 +361,9 @@ public class MainActivity extends ListActivity
                         break;
 
                     case MESSAGE_UPDATE_VIEW:
-                        getListView().invalidateViews();
+                        if (listView != null) {
+                            listView.invalidateViews();
+                        }
                         break;
 
                     // handle state change in OBD protocol
@@ -452,7 +450,7 @@ public class MainActivity extends ListActivity
 
                     // set toolbar visibility
                     case MESSAGE_TOOLBAR_VISIBLE:
-                        ActionBar ab = getActionBar();
+                        ActionBar ab = getSupportActionBar();
                         if (ab != null && (Boolean) msg.obj)
                         {
                             ab.show();
@@ -526,7 +524,6 @@ public class MainActivity extends ListActivity
         mVidAdapter = new VehicleInfoAdapter(this, R.layout.obd_item, ObdProt.VidPvs);
         mTidAdapter = new TestResultAdapter(this, R.layout.obd_item, ObdProt.VidPvs);
         mDfcAdapter = new FaultCodeAdapter(this, R.layout.obd_item, ObdProt.tCodes);
-        mPluginDataAdapter = new PluginDataAdapter(this, R.layout.obd_item, mPluginPvs);
         currDataAdapter = mPidAdapter;
 
         // get list view
@@ -551,7 +548,7 @@ public class MainActivity extends ListActivity
         CommService.elm.addPropertyChangeListener(this);
 
         // Initialize action bar
-        ActionBar actionBar = getActionBar();
+        ActionBar actionBar = getSupportActionBar();
         if (actionBar != null)
         {
             actionBar.show();
@@ -708,7 +705,10 @@ public class MainActivity extends ListActivity
     public void setContentView(View view)
     {
         super.setContentView(view);
-        getListView().setOnTouchListener(toolbarAutoHider);
+        listView = findViewById(android.R.id.list);
+        if (listView != null) {
+            listView.setOnTouchListener(toolbarAutoHider);
+        }
     }
 
     /**
@@ -1212,11 +1212,11 @@ public class MainActivity extends ListActivity
              * ->Long click on an item starts the single item dashboard activity
              */
             case ObdProt.OBD_SVC_DATA:
-                pv = (EcuDataPv) getListAdapter().getItem(position);
+                pv = (EcuDataPv) currDataAdapter.getItem(position);
                 /* only numeric values may be shown as graph/dashboard */
                 if (pv.get(EcuDataPv.FID_VALUE) instanceof Number)
                 {
-                    DashBoardActivity.setAdapter(getListAdapter());
+                    DashBoardActivity.setAdapter(currDataAdapter);
                     intent = new Intent(this, DashBoardActivity.class);
                     intent.putExtra(DashBoardActivity.POSITIONS, new int[]{position});
                     startActivity(intent);
@@ -1232,7 +1232,7 @@ public class MainActivity extends ListActivity
                 try
                 {
                     intent = new Intent(Intent.ACTION_WEB_SEARCH);
-                    EcuCodeItem dfc = (EcuCodeItem) getListAdapter().getItem(position);
+                    EcuCodeItem dfc = (EcuCodeItem) currDataAdapter.getItem(position);
                     intent.putExtra(SearchManager.QUERY,
                             "OBD " + String.valueOf(dfc.get(EcuCodeItem.FID_CODE)));
                     startActivity(intent);
@@ -1245,7 +1245,7 @@ public class MainActivity extends ListActivity
 
             case ObdProt.OBD_SVC_VEH_INFO:
                 // copy VID content to clipboard ...
-                pv = (EcuDataPv) getListAdapter().getItem(position);
+                pv = (EcuDataPv) currDataAdapter.getItem(position);
                 ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
                 ClipData clip = ClipData.newPlainText(String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT)),
                         String.valueOf(pv.get(EcuDataPv.FID_VALUE)));
@@ -1255,7 +1255,7 @@ public class MainActivity extends ListActivity
                 break;
 
             case ObdProt.OBD_SVC_CTRL_MODE:
-                pv = (EcuDataPv) getListAdapter().getItem(position);
+                pv = (EcuDataPv) currDataAdapter.getItem(position);
                 // Confirm & perform OBD test control ...
                 confirmObdTestControl(pv.get(EcuDataPv.FID_DESCRIPT).toString(),
                         ObdProt.OBD_SVC_CTRL_MODE,
@@ -1441,7 +1441,7 @@ public class MainActivity extends ListActivity
      */
     private void unHideActionBar()
     {
-        final ActionBar actionBar = getActionBar();
+        final ActionBar actionBar = getSupportActionBar();
         if (actionBar != null)
         {
             runOnUiThread(new Runnable()
@@ -1584,10 +1584,6 @@ public class MainActivity extends ListActivity
                 PvChangeEvent.PV_ADDED
                         | PvChangeEvent.PV_CLEARED
         );
-        mPluginPvs.addPvChangeListener(this,
-                PvChangeEvent.PV_ADDED
-                        | PvChangeEvent.PV_CLEARED
-        );
     }
 
     /**
@@ -1599,7 +1595,6 @@ public class MainActivity extends ListActivity
         ObdProt.PidPvs.removePvChangeListener(this);
         ObdProt.VidPvs.removePvChangeListener(this);
         ObdProt.tCodes.removePvChangeListener(this);
-        mPluginPvs.removePvChangeListener(this);
     }
 
     /**
@@ -1843,7 +1838,7 @@ public class MainActivity extends ListActivity
      */
     private void setStatus(CharSequence subTitle)
     {
-        final ActionBar actionBar = getActionBar();
+        final ActionBar actionBar = getSupportActionBar();
         if (actionBar != null)
         {
             actionBar.setSubtitle(subTitle);
@@ -1907,9 +1902,12 @@ public class MainActivity extends ListActivity
 
         // set list view
         setContentView(mListView);
-        getListView().setOnItemLongClickListener(this);
-        getListView().setMultiChoiceModeListener(this);
-        getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        listView = findViewById(android.R.id.list);
+        if (listView != null) {
+            listView.setOnItemLongClickListener(this);
+            listView.setMultiChoiceModeListener(this);
+            listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        }
 
         // Hide clear codes button by default (will be shown for fault codes)
         Button clearCodesBtn = findViewById(R.id.clear_codes_button);
@@ -1918,7 +1916,7 @@ public class MainActivity extends ListActivity
         }
 
         // Set action bar title if provided
-        ActionBar ab = getActionBar();
+        ActionBar ab = getSupportActionBar();
         if (ab != null)
         {
             ab.show();
@@ -1943,7 +1941,9 @@ public class MainActivity extends ListActivity
         switch (newObdService)
         {
             case ObdProt.OBD_SVC_DATA:
-                getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+                if (listView != null) {
+                    listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+                }
                 // no break here
             case ObdProt.OBD_SVC_FREEZEFRAME:
                 currDataAdapter = mPidAdapter;
@@ -1985,7 +1985,9 @@ public class MainActivity extends ListActivity
         // un-filter display
         setFiltered(false);
 
-        setListAdapter(currDataAdapter);
+        if (listView != null) {
+            listView.setAdapter(currDataAdapter);
+        }
 
         // remember this as last selected service
         if (newObdService > ObdProt.OBD_SVC_NONE)
@@ -2021,14 +2023,10 @@ public class MainActivity extends ListActivity
             if (currDataAdapter == mPidAdapter)
             {
                 currDataAdapter.setPvList(ObdProt.PidPvs);
-                // append plugin measurements to data list
-                currDataAdapter.addAll(mPluginPvs.values());
             } else if (currDataAdapter == mVidAdapter)
                 currDataAdapter.setPvList(ObdProt.VidPvs);
             else if (currDataAdapter == mDfcAdapter)
                 currDataAdapter.setPvList(ObdProt.tCodes);
-            else if (currDataAdapter == mPluginDataAdapter)
-                currDataAdapter.setPvList(mPluginPvs);
 
         }
     }
@@ -2042,9 +2040,9 @@ public class MainActivity extends ListActivity
     {
         int[] selectedPositions;
         // SparseBoolArray - what a garbage data type to return ...
-        final SparseBooleanArray checkedItems = getListView().getCheckedItemPositions();
+        final SparseBooleanArray checkedItems = listView != null ? listView.getCheckedItemPositions() : new SparseBooleanArray();
         // get number of items
-        int checkedItemsCount = getListView().getCheckedItemCount();
+        int checkedItemsCount = listView != null ? listView.getCheckedItemCount() : 0;
         // dimension array
         selectedPositions = new int[checkedItemsCount];
         if (checkedItemsCount > 0)
@@ -2084,7 +2082,7 @@ public class MainActivity extends ListActivity
 
         Arrays.sort(positions);
         max = positions.length > 0 ? positions[positions.length - 1] : 0;
-        count = getListAdapter().getCount();
+        count = currDataAdapter != null ? currDataAdapter.getCount() : 0;
         positionsValid = (max < count);
         // if all positions are valid for current list ...
         if (positionsValid)
@@ -2273,24 +2271,29 @@ public class MainActivity extends ListActivity
             {
                 case LIST:
                     setFiltered(false);
-                    getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+                    ListView lv = getListView();
+                    if (lv != null) {
+                        lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+                    }
                     this.dataViewMode = dataViewMode;
                     break;
 
                 case FILTERED:
-                    if (getListView().getCheckedItemCount() > 0)
+                    ListView lv2 = getListView();
+                    if (lv2 != null && lv2.getCheckedItemCount() > 0)
                     {
                         setFiltered(true);
-                        getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+                        lv2.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
                         this.dataViewMode = dataViewMode;
                     }
                     break;
 
                 case HEADUP:
                 case DASHBOARD:
-                    if (getListView().getCheckedItemCount() > 0)
+                    ListView lv3 = getListView();
+                    if (lv3 != null && lv3.getCheckedItemCount() > 0)
                     {
-                        DashBoardActivity.setAdapter(getListAdapter());
+                        DashBoardActivity.setAdapter(currDataAdapter);
                         Intent intent = new Intent(this, DashBoardActivity.class);
                         intent.putExtra(DashBoardActivity.POSITIONS, getSelectedPositions());
                         intent.putExtra(DashBoardActivity.RES_ID,
@@ -2303,9 +2306,10 @@ public class MainActivity extends ListActivity
                     break;
 
                 case CHART:
-                    if (getListView().getCheckedItemCount() > 0)
+                    ListView lv4 = getListView();
+                    if (lv4 != null && lv4.getCheckedItemCount() > 0)
                     {
-                        ChartActivity.setAdapter(getListAdapter());
+                        ChartActivity.setAdapter(currDataAdapter);
                         Intent intent = new Intent(this, ChartActivity.class);
                         intent.putExtra(ChartActivity.POSITIONS, getSelectedPositions());
                         startActivityForResult(intent, REQUEST_GRAPH_DISPLAY_DONE);
@@ -2322,13 +2326,6 @@ public class MainActivity extends ListActivity
             }
         }
     }
-
-    // Plugin methods removed - no longer needed
-
-
-    /*
-     * Implementations of PluginManager data interface callbacks
-     */
 
     /**
      * operating modes

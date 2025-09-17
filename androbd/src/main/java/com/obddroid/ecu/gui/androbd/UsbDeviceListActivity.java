@@ -4,6 +4,7 @@ package com.obddroid.ecu.gui.androbd;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.usb.UsbDevice;
@@ -36,7 +37,7 @@ import java.util.logging.Logger;
  *
  * @author mike wakerly (opensource@hoho.com)
  */
-public final class UsbDeviceListActivity extends Activity
+public final class UsbDeviceListActivity extends AppCompatActivity
 {
 	private static final String TAG = UsbDeviceListActivity.class.getSimpleName();
 	private static final Logger log = Logger.getLogger(TAG);

@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -28,6 +29,9 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +44,7 @@ import java.util.logging.Logger;
  * by the user, the MAC address of the device is sent back to the parent
  * Activity in the result Intent.
  */
-public class BtDeviceListActivity extends Activity
+public class BtDeviceListActivity extends AppCompatActivity
 {
 	// Debugging
 	private static final String TAG = BtDeviceListActivity.class.getSimpleName();
@@ -68,8 +72,8 @@ public class BtDeviceListActivity extends Activity
 		super.onCreate(savedInstanceState);
 
 		// Also hide action bar if present
-		if (getActionBar() != null) {
-			getActionBar().hide();
+		if (getSupportActionBar() != null) {
+			getSupportActionBar().hide();
 		}
 
 		// Get preferences for fullscreen mode
@@ -84,11 +88,11 @@ public class BtDeviceListActivity extends Activity
 		// Set window background color
 		getWindow().getDecorView().setBackgroundColor(Color.WHITE);
 
-		// Set status bar color to black to match the header
+		// Set status bar color to match the header
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			getWindow().setStatusBarColor(Color.BLACK);
-			// Also set navigation bar to black if supported
-			getWindow().setNavigationBarColor(Color.BLACK);
+			getWindow().setStatusBarColor(Color.parseColor("#212121"));
+			// Also set navigation bar to match if supported
+			getWindow().setNavigationBarColor(Color.parseColor("#212121"));
 		}
 
 		// Set result CANCELED in case the user backs out

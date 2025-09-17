@@ -11,7 +11,6 @@ Android OBD-II diagnostics app for ELM327 Bluetooth/WiFi/USB adapters
 - **Data logging** - Record and export diagnostic data
 - **Customizable displays** - Dashboard views, charts, and gauges
 - **Multi-language** - Support for 40+ languages
-- **Plugin framework** - Extend functionality with plugins
 - **Custom vehicle support** - Add custom PIDs and conversions
 
 ### Version 1.2.x Features
@@ -168,111 +167,6 @@ OBDroid allows you to add support for non-standard PIDs and custom data conversi
 2. PID: `0x01,0x67,0,1,0,8,0xFF,TURBO_BOOST_PSI,%.1f,-14.7,30,turbo_boost,Turbo Boost`
 3. Copy to device and restart app
 
-## Plugin System
-
-OBDroid features an extensible plugin architecture that allows third-party developers to add functionality without modifying the core app.
-
-### Plugin Manager
-
-Access the Plugin Manager from the main menu to:
-- View installed OBDroid compatible plugins
-- See plugin capabilities and features
-- Configure plugin settings (when supported)
-- Enable/disable individual plugins
-
-### How Plugins Work
-
-Plugins are separate Android apps that:
-- Register to handle the `com.obddroid.androbd.plugin.IDENTIFY` intent
-- Cannot run standalone - they extend OBDroid functionality
-- Communicate with OBDroid via Android intents
-- Handle their own data storage and configuration
-
-### Plugin Capabilities
-
-Plugins declare their features using a bitmask system:
-
-| Bit | Feature | Description |
-|-----|---------|-------------|
-| 0 | CONFIG | Has configuration interface |
-| 1 | ACTION | Supports manual trigger actions |
-| 2 | DATA | Receives OBD data updates |
-| 3 | DATA_PROVIDER | Provides data to OBDroid |
-
-### Creating a Plugin
-
-#### 1. Basic Plugin Structure
-
-Create a new Android app with an Activity that handles the IDENTIFY intent:
-
-```xml
-<!-- AndroidManifest.xml -->
-<activity android:name=".PluginActivity">
-    <intent-filter>
-        <action android:name="com.obddroid.androbd.plugin.IDENTIFY" />
-        <category android:name="android.intent.category.DEFAULT" />
-    </intent-filter>
-</activity>
-```
-
-#### 2. Respond to Identification
-
-When OBDroid queries for plugins, respond with your plugin's information:
-
-```java
-// In your plugin's activity
-Intent response = new Intent();
-response.putExtra("NAME", "My OBD Plugin");
-response.putExtra("VERSION", "1.0");
-response.putExtra("FEATURES", 0x05); // CONFIG + DATA
-response.putExtra("DESCRIPTION", "Logs OBD data to CSV");
-setResult(RESULT_OK, response);
-```
-
-#### 3. Handle Data Updates
-
-If your plugin has the DATA feature, register to receive OBD data:
-
-```java
-<receiver android:name=".DataReceiver">
-    <intent-filter>
-        <action android:name="com.obddroid.androbd.plugin.DATA" />
-    </intent-filter>
-</receiver>
-```
-
-#### 4. Provide Custom Data (Optional)
-
-Plugins with DATA_PROVIDER can inject custom sensor data back to OBDroid.
-
-### Example Plugin Ideas
-
-- **CSV Logger** - Save OBD data to CSV files for analysis
-- **Cloud Sync** - Upload driving data to cloud services
-- **MQTT Bridge** - Stream real-time data to IoT platforms
-- **Performance Analyzer** - Calculate 0-60 times, quarter mile, etc.
-- **Fuel Tracker** - Monitor fuel economy and costs
-- **Maintenance Reminder** - Track service intervals
-- **Custom Gauges** - Additional visualization options
-- **Voice Alerts** - Spoken warnings for parameters
-
-### Plugin Development Tips
-
-1. **Test with Plugin Manager** - Ensure your plugin appears in the list
-2. **Handle permissions** - Request necessary Android permissions
-3. **Respect battery** - Don't drain battery with excessive processing
-4. **Follow conventions** - Use the intent structure documented above
-5. **Provide settings** - Let users configure plugin behavior
-
-### Available Plugin Examples
-
-Check the `/plugin` directory for the plugin framework structure. While full plugin examples are coming soon, the framework provides:
-- Intent definitions
-- Data exchange protocols
-- Communication patterns
-
-Visit the [OBDroid GitHub](https://github.com/Wal33D/OBDroid) for plugin examples and templates
-
 ## Permissions
 
 Required permissions:
@@ -290,9 +184,7 @@ Required permissions:
 OBDroid/
 ├── androbd/          # Main Android application
 ├── library/          # Core OBD library
-├── plugin/           # Plugin framework
-├── custom-pids/      # Custom PID template files
-└── desktop-launcher/ # Desktop Java test scripts (development only)
+└── custom-pids/      # Custom PID template files
 ```
 
 ### Technologies
@@ -326,7 +218,6 @@ OBDroid/
 
 ## Support
 - Check template files in `/custom-pids/` for examples
-- Review plugin examples for extending functionality
 
 ---
 

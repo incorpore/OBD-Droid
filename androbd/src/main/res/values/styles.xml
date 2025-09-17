@@ -1,17 +1,28 @@
 <resources>
     <!-- Application theme. -->
-    <style name="AppTheme" parent="@android:style/Theme.DeviceDefault.Light.DarkActionBar" >
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar" >
         <item name="android:activatedBackgroundIndicator">@drawable/activated_background</item>
-        <item name="android:actionMenuTextAppearance">@style/MenuTextAppearance</item>
+        <item name="actionMenuTextAppearance">@style/MenuTextAppearance</item>
         <item name="android:dropDownListViewStyle">@style/PopupMenuListView</item>
+        <item name="windowActionBarOverlay">false</item>
     </style>
 
-    <style name="MenuTextAppearance" parent="@android:style/TextAppearance.DeviceDefault.Widget.ActionBar.Menu">
+    <style name="MenuTextAppearance" parent="TextAppearance.AppCompat.Widget.ActionBar.Menu">
         <item name="android:textSize">16sp</item>
     </style>
 
-    <style name="PopupMenuListView" parent="@android:style/Widget.DeviceDefault.ListView.DropDown">
+    <style name="PopupMenuListView" parent="Widget.AppCompat.ListView.DropDown">
         <item name="android:divider">@android:color/transparent</item>
         <item name="android:dividerHeight">0dp</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:activatedBackgroundIndicator">@drawable/activated_background</item>
+        <item name="actionMenuTextAppearance">@style/MenuTextAppearance</item>
+        <item name="android:dropDownListViewStyle">@style/PopupMenuListView</item>
+        <item name="windowActionBarOverlay">false</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
     </style>
 </resources>
