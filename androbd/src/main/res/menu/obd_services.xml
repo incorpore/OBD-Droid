@@ -25,8 +25,4 @@
         android:id="@+id/service_codes"
         android:title="@string/obd_codes"
         android:icon="@android:drawable/ic_menu_myplaces"/>
-    <item
-        android:id="@+id/service_clearcodes"
-        android:title="@string/obd_clearcodes"
-        android:icon="@android:drawable/ic_menu_delete"/>
 </menu>

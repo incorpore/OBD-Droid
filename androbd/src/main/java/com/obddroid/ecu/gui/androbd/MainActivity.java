@@ -33,6 +33,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -258,6 +259,10 @@ public class MainActivity extends ListActivity
      */
     private MODE mode = MODE.OFFLINE;
     /**
+     * current ECU connection state
+     */
+    private ElmProt.STAT ecuConnectionState = ElmProt.STAT.UNDEFINED;
+    /**
      * Handle message requests
      */
     @SuppressLint("HandlerLeak")
@@ -368,12 +373,19 @@ public class MainActivity extends ListActivity
                     case MESSAGE_OBD_STATE_CHANGED:
                         evt = (PropertyChangeEvent) msg.obj;
                         ElmProt.STAT state = (ElmProt.STAT) evt.getNewValue();
+                        ecuConnectionState = state; // Track ECU connection state
+
                         /* Show ELM status only in ONLINE mode */
                         if (getMode() != MODE.DEMO)
                         {
                             setStatus(getResources().getStringArray(R.array.elmcomm_states)[state
                                     .ordinal()]);
                         }
+
+                        // Enable OBD services only when ECU is detected
+                        setMenuItemEnable(R.id.obd_services,
+                            state == ElmProt.STAT.ECU_DETECTED ||
+                            state == ElmProt.STAT.CONNECTED);
                         // Don't automatically restore last service - stay on main screen
                         // if last selection shall be restored ...
                         // if (istRestoreWanted(PRESELECT.LAST_SERVICE))
@@ -773,6 +785,8 @@ public class MainActivity extends ListActivity
                     mCommService.stop();
                 }
                 setMode(MODE.OFFLINE);
+                // Reset ECU connection state
+                ecuConnectionState = ElmProt.STAT.UNDEFINED;
                 // Return to main screen
                 setObdService(ObdProt.OBD_SVC_NONE, null);
                 return true;
@@ -791,28 +805,48 @@ public class MainActivity extends ListActivity
                 return true;
 
             case R.id.service_data:
-                setObdService(ObdProt.OBD_SVC_DATA, item.getTitle());
+                if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
+                    ecuConnectionState == ElmProt.STAT.CONNECTED) {
+                    setObdService(ObdProt.OBD_SVC_DATA, item.getTitle());
+                } else {
+                    Toast.makeText(this, "Please wait for ECU connection to complete", Toast.LENGTH_LONG).show();
+                }
                 return true;
 
             case R.id.service_vid_data:
-                setObdService(ObdProt.OBD_SVC_VEH_INFO, item.getTitle());
+                if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
+                    ecuConnectionState == ElmProt.STAT.CONNECTED) {
+                    setObdService(ObdProt.OBD_SVC_VEH_INFO, item.getTitle());
+                } else {
+                    Toast.makeText(this, "Please wait for ECU connection to complete", Toast.LENGTH_LONG).show();
+                }
                 return true;
 
             case R.id.service_freezeframes:
-                setObdService(ObdProt.OBD_SVC_FREEZEFRAME, item.getTitle());
+                if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
+                    ecuConnectionState == ElmProt.STAT.CONNECTED) {
+                    setObdService(ObdProt.OBD_SVC_FREEZEFRAME, item.getTitle());
+                } else {
+                    Toast.makeText(this, "Please wait for ECU connection to complete", Toast.LENGTH_LONG).show();
+                }
                 return true;
 
             case R.id.service_testcontrol:
-                setObdService(ObdProt.OBD_SVC_CTRL_MODE, item.getTitle());
+                if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
+                    ecuConnectionState == ElmProt.STAT.CONNECTED) {
+                    setObdService(ObdProt.OBD_SVC_CTRL_MODE, item.getTitle());
+                } else {
+                    Toast.makeText(this, "Please wait for ECU connection to complete", Toast.LENGTH_LONG).show();
+                }
                 return true;
 
             case R.id.service_codes:
-                setObdService(ObdProt.OBD_SVC_READ_CODES, item.getTitle());
-                return true;
-
-            case R.id.service_clearcodes:
-                clearObdFaultCodes();
-                setObdService(ObdProt.OBD_SVC_READ_CODES, item.getTitle());
+                if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
+                    ecuConnectionState == ElmProt.STAT.CONNECTED) {
+                    setObdService(ObdProt.OBD_SVC_READ_CODES, item.getTitle());
+                } else {
+                    Toast.makeText(this, "Please wait for ECU connection to complete", Toast.LENGTH_LONG).show();
+                }
                 return true;
 
         }
@@ -1878,6 +1912,12 @@ public class MainActivity extends ListActivity
         getListView().setMultiChoiceModeListener(this);
         getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
+        // Hide clear codes button by default (will be shown for fault codes)
+        Button clearCodesBtn = findViewById(R.id.clear_codes_button);
+        if (clearCodesBtn != null) {
+            clearCodesBtn.setVisibility(View.GONE);
+        }
+
         // Set action bar title if provided
         ActionBar ab = getActionBar();
         if (ab != null)
@@ -1917,6 +1957,18 @@ public class MainActivity extends ListActivity
                 ignoreNrcs = true;
                 currDataAdapter = mDfcAdapter;
                 Toast.makeText(this, getString(R.string.long_press_dfc_hint), Toast.LENGTH_LONG).show();
+
+                // Show clear codes button for fault codes screen
+                Button clearBtn = findViewById(R.id.clear_codes_button);
+                if (clearBtn != null) {
+                    clearBtn.setVisibility(View.VISIBLE);
+                    clearBtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            clearObdFaultCodes();
+                        }
+                    });
+                }
                 break;
 
             case ObdProt.OBD_SVC_CTRL_MODE:
@@ -2081,6 +2133,8 @@ public class MainActivity extends ListActivity
     {
         // handle further initialisations
         setMode(MODE.OFFLINE);
+        // Reset ECU connection state
+        ecuConnectionState = ElmProt.STAT.UNDEFINED;
         // Return to main screen
         setObdService(ObdProt.OBD_SVC_NONE, null);
     }
