@@ -77,7 +77,7 @@ public class SettingsActivity
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		setTheme(MainActivity.nightMode ? R.style.AppTheme_Dark : R.style.AppTheme);
+		setTheme(R.style.AppTheme);
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
 		// Apply full screen based on preference

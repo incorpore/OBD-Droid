@@ -157,9 +157,6 @@ period of time while the ECU recalibrates itself.
     <string name="unabletoconnect">Unable to connect device</string>
     <string name="connectionlost">Device connection was lost</string>
     <string name="elm_timeout_descr">Minimum timeout in [ms] to wait for ELM responses</string>
-    <string name="day_night_mode">Night Mode</string>
-    <string name="night_mode_description">Set display to dark background</string>
-    <string name="night_mode">Night mode</string>
     <string name="disable_elm_cmds">Disabled Adapter Commands</string>
     <string name="disable_elm_cmds_descr">Advanced: Disable specific adapter commands if causing issues</string>
     <string name="elm_adaptive_timing">Adaptive Timing</string>

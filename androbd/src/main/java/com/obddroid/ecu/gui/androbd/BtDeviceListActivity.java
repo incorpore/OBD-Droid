@@ -59,8 +59,8 @@ public class BtDeviceListActivity extends Activity
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
-		// Set theme based on night mode setting (must be before super.onCreate)
-		setTheme(MainActivity.nightMode ? R.style.AppTheme_Dark : R.style.AppTheme);
+		// Set theme
+		setTheme(R.style.AppTheme);
 
 		// Hide the title bar for this activity (must be before super.onCreate)
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -81,8 +81,8 @@ public class BtDeviceListActivity extends Activity
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		}
 
-		// Set window background color based on night mode
-		getWindow().getDecorView().setBackgroundColor(MainActivity.nightMode ? Color.BLACK : Color.WHITE);
+		// Set window background color
+		getWindow().getDecorView().setBackgroundColor(Color.WHITE);
 
 		// Set status bar color to black to match the header
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -113,6 +113,7 @@ public class BtDeviceListActivity extends Activity
 		// Get references to UI elements
 		emptyState = findViewById(R.id.empty_state);
 		ImageButton bluetoothSettingsButton = findViewById(R.id.btn_bluetooth_settings);
+		ImageButton demoModeButton = findViewById(R.id.btn_demo_mode);
 		Button settingsButton = findViewById(R.id.btn_open_settings);
 
 		// Set up button listeners
@@ -122,6 +123,17 @@ public class BtDeviceListActivity extends Activity
 			bluetoothSettingsButton.setOnClickListener(v -> {
 				Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
 				startActivity(intent);
+			});
+		}
+
+		// Demo mode button
+		if (demoModeButton != null) {
+			demoModeButton.setOnClickListener(v -> {
+				// Return demo mode as the selected "device"
+				Intent intent = new Intent();
+				intent.putExtra(EXTRA_DEVICE_ADDRESS, "DEMO_MODE");
+				setResult(Activity.RESULT_OK, intent);
+				finish();
 			});
 		}
 

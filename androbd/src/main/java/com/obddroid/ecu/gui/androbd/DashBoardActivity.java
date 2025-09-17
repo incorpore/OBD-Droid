@@ -166,7 +166,7 @@ public class DashBoardActivity extends Activity
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		setTheme(MainActivity.nightMode ? R.style.AppTheme_Dark : R.style.AppTheme);
+		setTheme(R.style.AppTheme);
 		// Apply full screen based on preference
 		if(MainActivity.prefs.getBoolean(MainActivity.PREF_FULLSCREEN, false))
 		{

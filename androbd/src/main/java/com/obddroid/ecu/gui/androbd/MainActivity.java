@@ -110,7 +110,6 @@ public class MainActivity extends ListActivity
     private static final String DEVICE_ADDRESS = "device_address";
     private static final String DEVICE_PORT = "device_port";
     private static final String MEASURE_SYSTEM = "measure_system";
-    private static final String NIGHT_MODE = "night_mode";
     private static final String ELM_ADAPTIVE_TIMING = "adaptive_timing_mode";
     private static final String ELM_RESET_ON_NRC = "elm_reset_on_nrc";
     private static final String PREF_USE_LAST = "USE_LAST_SETTINGS";
@@ -160,10 +159,6 @@ public class MainActivity extends ListActivity
      * Container for Plugin-provided data
      */
     public static PvList mPluginPvs = new PvList();
-    /**
-     * current status of night mode
-     */
-    public static boolean nightMode = false;
     /**
      * app preferences ...
      */
@@ -317,7 +312,8 @@ public class MainActivity extends ListActivity
                         if (obdService == ObdProt.OBD_SVC_DATA)
                         {
                             checkToRestoreLastDataSelection();
-                            checkToRestoreLastViewMode();
+                            // Don't restore view mode after connection - stay on main page
+                            // checkToRestoreLastViewMode();
                         }
                         break;
 
@@ -349,7 +345,8 @@ public class MainActivity extends ListActivity
                                         currDataAdapter.addAll(mPluginPvs.values());
                                         // Check if last data selection shall be restored
                                         checkToRestoreLastDataSelection();
-                                        checkToRestoreLastViewMode();
+                                        // Don't restore view mode after connection - stay on main page
+                                        // checkToRestoreLastViewMode();
                                     }
                                 } catch (Exception e)
                                 {
@@ -773,19 +770,11 @@ public class MainActivity extends ListActivity
     {
         switch (item.getItemId())
         {
-            case R.id.day_night_mode:
-                // toggle night mode setting
-                prefs.edit().putBoolean(NIGHT_MODE, !nightMode).apply();
-                return true;
 
             case R.id.secure_connect_scan:
                 setMode(MODE.ONLINE);
                 return true;
 
-            case R.id.reset_preselections:
-                clearPreselections();
-                recreate();
-                return true;
 
             case R.id.disconnect:
                 // stop communication service
@@ -796,20 +785,8 @@ public class MainActivity extends ListActivity
                 setMode(MODE.OFFLINE);
                 return true;
 
-            case R.id.settings:
-                // Launch the BtDeviceListActivity to see devices and do scan
-                Intent settingsIntent = new Intent(this, SettingsActivity.class);
-                startActivityForResult(settingsIntent, REQUEST_SETTINGS);
-                return true;
 
-            case R.id.save:
-                // save recorded data (threaded)
-                fileHelper.saveDataThreaded();
-                return true;
 
-            case R.id.load:
-                setMode(MODE.FILE);
-                return true;
 
             case R.id.service_none:
                 setObdService(ObdProt.OBD_SVC_NONE, item.getTitle());
@@ -840,15 +817,6 @@ public class MainActivity extends ListActivity
                 setObdService(ObdProt.OBD_SVC_READ_CODES, item.getTitle());
                 return true;
 
-            case R.id.demo_mode:
-                // Toggle demo mode
-                if (getMode() == MODE.DEMO) {
-                    stopDemoService();
-                    setMode(MODE.OFFLINE);
-                } else {
-                    setMode(MODE.DEMO);
-                }
-                return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -925,9 +893,16 @@ public class MainActivity extends ListActivity
                     // Get the device MAC address
                     String address = Objects.requireNonNull(data.getExtras()).getString(
                             BtDeviceListActivity.EXTRA_DEVICE_ADDRESS);
-                    // save reported address as last setting
-                    prefs.edit().putString(PRESELECT.LAST_DEV_ADDRESS.toString(), address).apply();
-                    connectBtDevice(address, secureConnection);
+
+                    // Check if demo mode was selected
+                    if ("DEMO_MODE".equals(address)) {
+                        // Start demo mode
+                        setMode(MODE.DEMO);
+                    } else {
+                        // save reported address as last setting
+                        prefs.edit().putString(PRESELECT.LAST_DEV_ADDRESS.toString(), address).apply();
+                        connectBtDevice(address, secureConnection);
+                    }
                 } else
                 {
                     setMode(MODE.OFFLINE);
@@ -1008,11 +983,6 @@ public class MainActivity extends ListActivity
                     WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
 
-        // night mode
-        if (key == null || NIGHT_MODE.equals(key))
-        {
-            setNightMode(prefs.getBoolean(NIGHT_MODE, false));
-        }
 
         // set default comm medium
         if (key == null || SettingsActivity.KEY_COMM_MEDIUM.equals(key))
@@ -1448,18 +1418,6 @@ public class MainActivity extends ListActivity
         }
     }
 
-    protected void setNightMode(boolean nightMode)
-    {
-        // store last mode selection
-        MainActivity.nightMode = nightMode;
-
-        // Set display theme based on specified mode
-        setTheme(nightMode ? R.style.AppTheme_Dark : R.style.AppTheme);
-        getWindow().getDecorView().setBackgroundColor(nightMode ? Color.BLACK : Color.WHITE);
-
-        // Trigger screen update to get immediate reaction
-        setObdService(obdService, null);
-    }
 
     private void setNumCodes(int newNumCodes)
     {
@@ -1825,6 +1783,9 @@ public class MainActivity extends ListActivity
             /* The Thread object for processing the demo mode loop */
             Thread demoThread = new Thread(CommService.elm);
             demoThread.start();
+
+            // Ensure we stay on the main list view after starting demo mode
+            setDataViewMode(DATA_VIEW_MODE.LIST);
         }
     }
 
@@ -2117,6 +2078,9 @@ public class MainActivity extends ListActivity
         setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
         // send RESET to Elm adapter
         CommService.elm.reset();
+
+        // Ensure we stay on the main list view after connection
+        setDataViewMode(DATA_VIEW_MODE.LIST);
     }
 
     /**

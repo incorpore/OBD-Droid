@@ -34,8 +34,8 @@ public class PluginManagerActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Set theme based on night mode
-        setTheme(MainActivity.nightMode ? R.style.AppTheme_Dark : R.style.AppTheme);
+        // Set theme
+        setTheme(R.style.AppTheme);
 
         // Apply full screen based on preference
         if(PreferenceManager.getDefaultSharedPreferences(this).getBoolean(MainActivity.PREF_FULLSCREEN, false))
