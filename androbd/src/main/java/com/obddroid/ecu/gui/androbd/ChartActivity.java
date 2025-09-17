@@ -138,11 +138,11 @@ public class ChartActivity extends Activity
 			getString(R.string.app_name));
 		wakeLock.acquire();
 
-		// set up action bar
+		// Hide the action bar completely
 		ActionBar actionBar = getActionBar();
 		if (actionBar != null)
 		{
-			actionBar.setDisplayShowTitleEnabled(true);
+			actionBar.hide();
 		}
 
 		setTitle(R.string.chart);
@@ -204,18 +204,11 @@ public class ChartActivity extends Activity
 
 				// set toolbar visibility
 				case MainActivity.MESSAGE_TOOLBAR_VISIBLE:
-					Boolean visible = (Boolean)msg.obj;
-					// set action bar visibility
+					// Always keep action bar hidden
 					ActionBar ab = getActionBar();
 					if(ab != null)
 					{
-						if(visible)
-						{
-							ab.show();
-						} else
-						{
-							ab.hide();
-						}
+						ab.hide();
 					}
 					break;
 			}

@@ -374,15 +374,16 @@ public class MainActivity extends ListActivity
                             setStatus(getResources().getStringArray(R.array.elmcomm_states)[state
                                     .ordinal()]);
                         }
+                        // Don't automatically restore last service - stay on main screen
                         // if last selection shall be restored ...
-                        if (istRestoreWanted(PRESELECT.LAST_SERVICE))
-                        {
-                            if (state == ElmProt.STAT.ECU_DETECTED)
-                            {
-                                setObdService(prefs.getInt(PRESELECT.LAST_SERVICE.toString(), 0),
-                                        null);
-                            }
-                        }
+                        // if (istRestoreWanted(PRESELECT.LAST_SERVICE))
+                        // {
+                        //     if (state == ElmProt.STAT.ECU_DETECTED)
+                        //     {
+                        //         setObdService(prefs.getInt(PRESELECT.LAST_SERVICE.toString(), 0),
+                        //                 null);
+                        //     }
+                        // }
                         break;
 
                     // handle change in number of fault codes
@@ -440,20 +441,10 @@ public class MainActivity extends ListActivity
 
                     // set toolbar visibility
                     case MESSAGE_TOOLBAR_VISIBLE:
-                        Boolean visible = (Boolean) msg.obj;
-                        // log action
-                        log.fine(String.format("ActionBar: %s", visible ? "show" : "hide"));
-                        // set action bar visibility
                         ActionBar ab = getActionBar();
-                        if (ab != null)
+                        if (ab != null && (Boolean) msg.obj)
                         {
-                            if (visible)
-                            {
-                                ab.show();
-                            } else
-                            {
-                                ab.hide();
-                            }
+                            ab.show();
                         }
                         break;
                 }
@@ -548,12 +539,11 @@ public class MainActivity extends ListActivity
         // automate elm status display
         CommService.elm.addPropertyChangeListener(this);
 
-        // set up action bar
+        // Initialize action bar
         ActionBar actionBar = getActionBar();
         if (actionBar != null)
         {
-            actionBar.setDisplayShowTitleEnabled(true);
-            actionBar.setSubtitle("Connect a Device");
+            actionBar.show();
         }
         // start automatic toolbar hider
         setAutoHider(prefs.getBoolean(PREF_AUTOHIDE, false));
@@ -783,6 +773,8 @@ public class MainActivity extends ListActivity
                     mCommService.stop();
                 }
                 setMode(MODE.OFFLINE);
+                // Return to main screen
+                setObdService(ObdProt.OBD_SVC_NONE, null);
                 return true;
 
             case R.id.settings:
@@ -1416,9 +1408,17 @@ public class MainActivity extends ListActivity
      */
     private void unHideActionBar()
     {
-        if (toolbarAutoHider != null)
+        final ActionBar actionBar = getActionBar();
+        if (actionBar != null)
         {
-            toolbarAutoHider.showComponent();
+            runOnUiThread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    actionBar.show();
+                }
+            });
         }
     }
 
@@ -1814,8 +1814,6 @@ public class MainActivity extends ListActivity
         if (actionBar != null)
         {
             actionBar.setSubtitle(subTitle);
-            // show action bar to make state change visible
-            unHideActionBar();
         }
     }
 
@@ -1880,21 +1878,18 @@ public class MainActivity extends ListActivity
         getListView().setMultiChoiceModeListener(this);
         getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
-        // set title
+        // Set action bar title if provided
         ActionBar ab = getActionBar();
         if (ab != null)
         {
-            // title specified ... show it
+            ab.show();
             if (menuTitle != null)
             {
-                ab.setTitle(menuTitle);
-            } else
+                ab.setTitle(menuTitle.toString());
+            }
+            else if (newObdService == ElmProt.OBD_SVC_NONE)
             {
-                // no title specified, set to app name if no service set
-                if (newObdService == ElmProt.OBD_SVC_NONE)
-                {
-                    ab.setTitle(getString(R.string.app_name));
-                }
+                ab.setTitle(getString(R.string.app_name));
             }
         }
         // set protocol service
@@ -2073,6 +2068,8 @@ public class MainActivity extends ListActivity
         // send RESET to Elm adapter
         CommService.elm.reset();
 
+        // Stay on main screen after connection (don't auto-select service)
+        setObdService(ObdProt.OBD_SVC_NONE, null);
         // Ensure we stay on the main list view after connection
         setDataViewMode(DATA_VIEW_MODE.LIST);
     }
@@ -2084,6 +2081,8 @@ public class MainActivity extends ListActivity
     {
         // handle further initialisations
         setMode(MODE.OFFLINE);
+        // Return to main screen
+        setObdService(ObdProt.OBD_SVC_NONE, null);
     }
 
     /**
