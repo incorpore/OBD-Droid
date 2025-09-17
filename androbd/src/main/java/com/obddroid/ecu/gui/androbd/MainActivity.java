@@ -1402,6 +1402,9 @@ public class MainActivity extends AppCompatActivity
             {
                 // NO match with preference -> allow selection
 
+                // Set status to show ECU selection is in progress
+                setStatus("Selecting ECU");
+
                 // .. allow selection of single ECU address ...
                 final CharSequence[] entries = new CharSequence[ecuAdresses.size()];
                 // create list of entries
@@ -1411,7 +1414,7 @@ public class MainActivity extends AppCompatActivity
                     entries[i++] = String.format("0x%X", addr);
                 }
                 // show dialog ...
-                new AlertDialog.Builder(this)
+                AlertDialog dialog = new AlertDialog.Builder(this)
                         .setTitle(R.string.select_ecu_addr)
                         .setItems(entries, new DialogInterface.OnClickListener()
                         {
@@ -1425,6 +1428,21 @@ public class MainActivity extends AppCompatActivity
                                 // set this as preference (preference change will trigger ELM command)
                                 prefs.edit().putInt(PRESELECT.LAST_ECU_ADDRESS.toString(), address)
                                         .apply();
+                                // Update status after ECU selection
+                                setStatus("ECU Selected");
+                            }
+                        })
+                        .setOnCancelListener(new DialogInterface.OnCancelListener()
+                        {
+                            @Override
+                            public void onCancel(DialogInterface dialog)
+                            {
+                                // If user cancels, revert to connected status
+                                if (mConnectedDeviceName != null) {
+                                    setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
+                                } else {
+                                    setStatus("Connected");
+                                }
                             }
                         })
                         .show();
@@ -1945,6 +1963,12 @@ public class MainActivity extends AppCompatActivity
             clearCodesBtn.setVisibility(View.GONE);
         }
 
+        // Hide MIL status card by default (only show for fault codes pages)
+        View milStatusCard = findViewById(R.id.mil_status_card);
+        if (milStatusCard != null) {
+            milStatusCard.setVisibility(View.GONE);
+        }
+
         // Set action bar title if provided
         ActionBar ab = getSupportActionBar();
         if (ab != null)
@@ -1997,6 +2021,12 @@ public class MainActivity extends AppCompatActivity
                             clearObdFaultCodes();
                         }
                     });
+                }
+
+                // Show MIL status card only for fault codes screens
+                View statusCard = findViewById(R.id.mil_status_card);
+                if (statusCard != null) {
+                    statusCard.setVisibility(View.VISIBLE);
                 }
                 break;
 
