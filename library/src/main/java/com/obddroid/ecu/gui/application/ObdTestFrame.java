@@ -555,16 +555,24 @@ public class ObdTestFrame extends javax.swing.JFrame
 					}
 					else
 					{
-						// Create a serial handler wrapper for jSerialComm
-						JSerialCommHandler handler = new JSerialCommHandler(port);
-						handler.setMessageHandler(prt);
-						prt.addTelegramWriter(handler);
-						handler.start();
+						try {
+							// Create a serial handler wrapper for jSerialComm
+							JSerialCommHandler handler = new JSerialCommHandler(port);
+							handler.setMessageHandler(prt);
+							prt.addTelegramWriter(handler);
+							handler.start();
 
-						JOptionPane.showMessageDialog(frm,
-							"Connected to: " + args[0],
-							"Connected",
-							JOptionPane.INFORMATION_MESSAGE);
+							JOptionPane.showMessageDialog(frm,
+								"Connected to: " + args[0],
+								"Connected",
+								JOptionPane.INFORMATION_MESSAGE);
+						} catch (IOException e) {
+							port.closePort();
+							JOptionPane.showMessageDialog(frm,
+								"Failed to initialize serial streams: " + e.getMessage(),
+								"Connection Error",
+								JOptionPane.ERROR_MESSAGE);
+						}
 					}
 				}
 			} catch (Exception ex)

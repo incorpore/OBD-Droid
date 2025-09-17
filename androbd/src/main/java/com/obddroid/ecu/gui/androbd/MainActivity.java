@@ -32,8 +32,10 @@ import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
@@ -1458,16 +1460,39 @@ public class MainActivity extends AppCompatActivity
 
     private void setNumCodes(int newNumCodes)
     {
-        // set list background based on MIL status
-        View list = findViewById(R.id.obd_list);
-        if (list != null)
-        {
-            list.setBackgroundResource((newNumCodes & 0x80) != 0
-                    ? R.drawable.mil_on
-                    : R.drawable.mil_off);
+        // Extract MIL status and code count
+        boolean milOn = (newNumCodes & 0x80) != 0;
+        int numCodes = newNumCodes & 0x7F; // Get actual code count (lower 7 bits)
+
+        // Only update the status card if we're on the fault codes screen
+        if (obdService == ObdProt.OBD_SVC_READ_CODES ||
+            obdService == ObdProt.OBD_SVC_PENDINGCODES ||
+            obdService == ObdProt.OBD_SVC_PERMACODES) {
+
+            // Update status card if it exists
+            ImageView statusIcon = (ImageView) findViewById(R.id.mil_status_icon);
+            TextView statusText = (TextView) findViewById(R.id.mil_status_text);
+            TextView statusSubtitle = (TextView) findViewById(R.id.mil_status_subtitle);
+
+            if (statusIcon != null && statusText != null && statusSubtitle != null) {
+                if (milOn || numCodes > 0) {
+                    // MIL is ON - show warning status
+                    statusIcon.setColorFilter(Color.parseColor("#FFC107"));
+                    statusText.setText(numCodes + " Fault Code" + (numCodes != 1 ? "s" : "") + " Detected");
+                    statusSubtitle.setText("Check engine light is ON");
+                    statusSubtitle.setTextColor(Color.parseColor("#F57C00"));
+                } else {
+                    // MIL is OFF - show normal status
+                    statusIcon.setColorFilter(Color.parseColor("#4CAF50"));
+                    statusText.setText("No Fault Codes");
+                    statusSubtitle.setText("Engine running normally");
+                    statusSubtitle.setTextColor(Color.parseColor("#757575"));
+                }
+            }
         }
+
         // enable / disable freeze frames based on number of codes
-        setMenuItemEnable(R.id.service_freezeframes, (newNumCodes != 0));
+        setMenuItemEnable(R.id.service_freezeframes, (numCodes != 0));
     }
 
     /**
