@@ -835,14 +835,6 @@ public class MainActivity extends AppCompatActivity
                 }
                 return true;
 
-            case R.id.service_freezeframes:
-                if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
-                    ecuConnectionState == ElmProt.STAT.CONNECTED) {
-                    setObdService(ObdProt.OBD_SVC_FREEZEFRAME, item.getTitle());
-                } else {
-                    Toast.makeText(this, "Please wait for ECU connection to complete", Toast.LENGTH_LONG).show();
-                }
-                return true;
 
             case R.id.service_testcontrol:
                 if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
@@ -1275,23 +1267,13 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             /* If we are in DFC mode of any kind
-             * -> Long click leads to a web search for selected DFC
+             * -> Long click now also shows the options modal (same as tap)
              */
             case ObdProt.OBD_SVC_READ_CODES:
             case ObdProt.OBD_SVC_PERMACODES:
             case ObdProt.OBD_SVC_PENDINGCODES:
-                try
-                {
-                    intent = new Intent(Intent.ACTION_WEB_SEARCH);
-                    EcuCodeItem dfc = (EcuCodeItem) currDataAdapter.getItem(position);
-                    intent.putExtra(SearchManager.QUERY,
-                            "OBD " + String.valueOf(dfc.get(EcuCodeItem.FID_CODE)));
-                    startActivity(intent);
-                } catch (Exception e)
-                {
-                    log.log(Level.SEVERE, "WebSearch DFC", e);
-                    Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-                }
+                // Show the same modal as regular tap for consistency
+                showFaultCodeOptionsModal(position);
                 break;
 
             case ObdProt.OBD_SVC_VEH_INFO:
@@ -1387,11 +1369,21 @@ public class MainActivity extends AppCompatActivity
             View copyOption = dialogView.findViewById(R.id.option_copy_code);
             Button closeButton = dialogView.findViewById(R.id.btn_close);
 
-            // Freeze frame option - always enabled for fault codes
-            freezeFrameOption.setOnClickListener(v -> {
-                dialog.dismiss();
-                viewFreezeFrameForCode(position, dfc);
-            });
+            // Freeze frame option - check if we're connected and have data
+            boolean canViewFreezeFrames = (ecuConnectionState == ElmProt.STAT.CONNECTED ||
+                                          ecuConnectionState == ElmProt.STAT.ECU_DETECTED);
+
+            if (!canViewFreezeFrames) {
+                freezeFrameOption.setAlpha(0.5f);
+                freezeFrameOption.setEnabled(false);
+                TextView freezeStatus = dialogView.findViewById(R.id.freeze_frame_status);
+                freezeStatus.setText("Connect to vehicle first");
+            } else {
+                freezeFrameOption.setOnClickListener(v -> {
+                    dialog.dismiss();
+                    viewFreezeFrameForCode(position, dfc);
+                });
+            }
 
             searchOption.setOnClickListener(v -> {
                 dialog.dismiss();
@@ -1418,9 +1410,31 @@ public class MainActivity extends AppCompatActivity
      */
     private void viewFreezeFrameForCode(int position, EcuCodeItem dfc)
     {
-        // Switch to freeze frame service with selected code
-        CommService.elm.setFreezeFrame_Id(position);
-        setObdService(ObdProt.OBD_SVC_FREEZEFRAME, "Freeze Frame: " + dfc.get(EcuCodeItem.FID_CODE));
+        try {
+            // Save current service to return to
+            final int returnService = CommService.elm.getService();
+
+            // Find the actual DTC index in the fault code list
+            // This is needed because freeze frames are indexed by DTC order, not adapter position
+            int dtcIndex = 0;
+            for (int i = 0; i < currDataAdapter.getCount(); i++) {
+                if (currDataAdapter.getItem(i) == dfc) {
+                    dtcIndex = i;
+                    break;
+                }
+            }
+
+            // Switch to freeze frame service with selected code
+            CommService.elm.setFreezeFrame_Id(dtcIndex);
+            setObdService(ObdProt.OBD_SVC_FREEZEFRAME, "Freeze Frame: " + dfc.get(EcuCodeItem.FID_CODE));
+
+            // Show helpful navigation info
+            Toast.makeText(this, "Viewing freeze frame for " + dfc.get(EcuCodeItem.FID_CODE), Toast.LENGTH_SHORT).show();
+
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "View freeze frame", e);
+            Toast.makeText(this, "Error viewing freeze frame: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     /**
@@ -1692,8 +1706,7 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
-        // enable / disable freeze frames based on number of codes
-        setMenuItemEnable(R.id.service_freezeframes, (numCodes != 0));
+        // Freeze frames are now accessed through fault code modal - no menu item needed
     }
 
     /**

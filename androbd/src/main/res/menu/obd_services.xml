@@ -17,11 +17,6 @@
         android:title="@string/obd_data"
         android:icon="@android:drawable/ic_menu_view"/>
     <item
-        android:id="@+id/service_freezeframes"
-        android:enabled="false"
-        android:title="@string/service_freezeframes"
-        android:icon="@android:drawable/ic_menu_recent_history"/>
-    <item
         android:id="@+id/service_testcontrol"
         android:title="@string/service_testcontrol"
         android:icon="@android:drawable/ic_menu_slideshow"/>
