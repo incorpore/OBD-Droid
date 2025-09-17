@@ -2,8 +2,7 @@ package com.obddroid.ecu;
 
 /**
  * VAG data conversions (used by Kw1281 ...)
- *
- Scheuch-Heilig
+
  */
 public class VagConversion extends NumericConversion
 {

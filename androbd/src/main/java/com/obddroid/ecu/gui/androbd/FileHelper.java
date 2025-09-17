@@ -24,8 +24,7 @@ import java.util.logging.Logger;
 
 /**
  * Task to save measurements
- *
- Scheuch-Heilig
+
  */
 class FileHelper
 {

@@ -1898,9 +1898,9 @@ public class MainActivity extends AppCompatActivity
             setStatus(getString(R.string.demo));
             Toast.makeText(this, getString(R.string.demo_started), Toast.LENGTH_SHORT).show();
 
-            boolean allowConnect = mBluetoothAdapter != null && mBluetoothAdapter.isEnabled();
-            setMenuItemVisible(R.id.secure_connect_scan, allowConnect);
-            setMenuItemVisible(R.id.disconnect, !allowConnect);
+            // Show disconnect button (green) since we're "connected" to demo
+            setMenuItemVisible(R.id.secure_connect_scan, false);
+            setMenuItemVisible(R.id.disconnect, true);
 
             setMenuItemEnable(R.id.obd_services, true);
             /* The Thread object for processing the demo mode loop */

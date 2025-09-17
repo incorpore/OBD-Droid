@@ -3,13 +3,13 @@
       xmlns:app="http://schemas.android.com/apk/res-auto" >
     <item
         android:id="@+id/secure_connect_scan"
-        android:icon="@drawable/action_connect"
+        android:icon="@drawable/ic_device_connect"
         app:showAsAction="always"
         android:title="@string/action_connect"
         android:visible="true"/>
     <item
         android:id="@+id/disconnect"
-        android:icon="@drawable/action_disconnect"
+        android:icon="@drawable/ic_device_connected"
         app:showAsAction="always"
         android:title="@string/disconnect"
         android:visible="false"/>

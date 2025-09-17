@@ -24,8 +24,7 @@ import java.util.logging.Logger;
 
 /**
  * Builds the CSV dump for sharing.
- *
- Scheuch-Heilig
+
  */
 class ExportTask extends AsyncTask<XYMultipleSeriesDataset, Integer, String>
 {
