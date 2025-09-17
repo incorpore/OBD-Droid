@@ -165,9 +165,8 @@ public class MainActivity extends ListActivity
      */
     static SharedPreferences prefs;
     /**
-     * dialog builder
+     * dialog builder - removed static to prevent state persistence issues
      */
-    private static AlertDialog.Builder dlgBuilder;
     /**
      * Local Bluetooth adapter
      */
@@ -421,20 +420,20 @@ public class MainActivity extends ListActivity
                             switch (nrc.disp)
                             {
                                 case ERROR:
-                                    dlgBuilder
+                                    new AlertDialog.Builder(MainActivity.this)
                                         .setIcon(android.R.drawable.ic_dialog_alert)
                                         .setTitle(R.string.obd_error)
                                         .setMessage(nrcMsg)
-                                        .setPositiveButton(null, null)
+                                        .setPositiveButton(android.R.string.ok, null)
                                         .show();
                                     break;
                                 // Display warning (with confirmation)
                                 case WARN:
-                                    dlgBuilder
+                                    new AlertDialog.Builder(MainActivity.this)
                                         .setIcon(android.R.drawable.ic_dialog_info)
                                         .setTitle(R.string.obd_error)
                                         .setMessage(nrcMsg)
-                                        .setPositiveButton(null, null)
+                                        .setPositiveButton(android.R.string.ok, null)
                                         .show();
                                     break;
                                 // Display notification (no confirmation)
@@ -508,7 +507,7 @@ public class MainActivity extends ListActivity
             StrictMode.setVmPolicy(builder.build());
         }
 
-        dlgBuilder = new AlertDialog.Builder(this);
+        // Removed global dlgBuilder initialization - creating fresh instances for each dialog
 
         // get preferences
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -1405,7 +1404,7 @@ public class MainActivity extends ListActivity
                     entries[i++] = String.format("0x%X", addr);
                 }
                 // show dialog ...
-                dlgBuilder
+                new AlertDialog.Builder(this)
                         .setTitle(R.string.select_ecu_addr)
                         .setItems(entries, new DialogInterface.OnClickListener()
                         {
@@ -2189,7 +2188,7 @@ public class MainActivity extends ListActivity
      */
     private void clearObdFaultCodes()
     {
-        dlgBuilder
+        new AlertDialog.Builder(this)
                 .setIcon(android.R.drawable.ic_dialog_info)
                 .setTitle(R.string.obd_clearcodes)
                 .setMessage(R.string.obd_clear_info)
@@ -2215,7 +2214,7 @@ public class MainActivity extends ListActivity
      */
     private void confirmObdTestControl(String testControlName, int service, int tid)
     {
-        dlgBuilder
+        new AlertDialog.Builder(this)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setTitle(testControlName)
                 .setMessage(R.string.obd_test_confirm)
@@ -2243,7 +2242,7 @@ public class MainActivity extends ListActivity
         CommService.elm.writeTelegram(emptyBuffer, service, tid);
 
         // Show test progress message
-        dlgBuilder
+        new AlertDialog.Builder(this)
                 .setIcon(android.R.drawable.ic_dialog_info)
                 .setTitle(testControlName)
                 .setMessage(R.string.obd_test_progress)
@@ -2255,7 +2254,6 @@ public class MainActivity extends ListActivity
                             {
                             }
                         })
-                .setNegativeButton(null, null)
                 .show();
     }
 
