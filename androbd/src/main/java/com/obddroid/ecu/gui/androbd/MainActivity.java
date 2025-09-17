@@ -1406,34 +1406,139 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     * View freeze frame data for the selected fault code
+     * View freeze frame data for the selected fault code in a modal
      */
     private void viewFreezeFrameForCode(int position, EcuCodeItem dfc)
     {
         try {
-            // Save current service to return to
-            final int returnService = CommService.elm.getService();
+            // Create and show freeze frame modal
+            View dialogView = getLayoutInflater().inflate(R.layout.dialog_freeze_frame_data, null);
 
-            // Find the actual DTC index in the fault code list
-            // This is needed because freeze frames are indexed by DTC order, not adapter position
-            int dtcIndex = 0;
-            for (int i = 0; i < currDataAdapter.getCount(); i++) {
-                if (currDataAdapter.getItem(i) == dfc) {
-                    dtcIndex = i;
-                    break;
+            // Set header info
+            TextView codeText = dialogView.findViewById(R.id.freeze_frame_code);
+            String codeInfo = dfc.get(EcuCodeItem.FID_CODE) + " - " + dfc.get(EcuCodeItem.FID_DESCRIPT);
+            codeText.setText(codeInfo);
+
+            // Get UI elements
+            View loadingContainer = dialogView.findViewById(R.id.loading_container);
+            View dataContainer = dialogView.findViewById(R.id.data_container);
+            View noDataContainer = dialogView.findViewById(R.id.no_data_container);
+            LinearLayout dataList = dialogView.findViewById(R.id.freeze_frame_data_list);
+            Button closeButton = dialogView.findViewById(R.id.btn_close);
+            Button refreshButton = dialogView.findViewById(R.id.btn_refresh);
+
+            AlertDialog freezeDialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+            // Close button handler
+            closeButton.setOnClickListener(v -> freezeDialog.dismiss());
+
+            // Function to load freeze frame data
+            Runnable loadFreezeFrameData = () -> {
+                // Show loading
+                runOnUiThread(() -> {
+                    loadingContainer.setVisibility(View.VISIBLE);
+                    dataContainer.setVisibility(View.GONE);
+                    noDataContainer.setVisibility(View.GONE);
+                    dataList.removeAllViews();
+                });
+
+                // Store current service to restore later
+                final int currentService = CommService.elm.getService();
+
+                // Find the DTC index
+                int dtcIndex = 0;
+                for (int i = 0; i < currDataAdapter.getCount(); i++) {
+                    if (currDataAdapter.getItem(i) == dfc) {
+                        dtcIndex = i;
+                        break;
+                    }
                 }
+
+                // Request freeze frame data
+                CommService.elm.setFreezeFrame_Id(dtcIndex);
+                CommService.elm.setService(ObdProt.OBD_SVC_FREEZEFRAME, true);
+
+                // Wait a bit for data to load
+                try {
+                    Thread.sleep(2000); // Give it 2 seconds to get some data
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                // Collect the freeze frame data
+                runOnUiThread(() -> {
+                    try {
+                        // Check if we have PID data
+                        if (mPidAdapter != null && mPidAdapter.getCount() > 0) {
+                            // Add each PID as a data item
+                            for (int i = 0; i < mPidAdapter.getCount(); i++) {
+                                EcuDataPv pv = (EcuDataPv) mPidAdapter.getItem(i);
+
+                                View itemView = getLayoutInflater().inflate(R.layout.freeze_frame_data_item, null);
+                                TextView label = itemView.findViewById(R.id.data_label);
+                                TextView value = itemView.findViewById(R.id.data_value);
+
+                                label.setText(String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT)));
+
+                                // Format value with units
+                                Object dataValue = pv.get(EcuDataPv.FID_VALUE);
+                                Object units = pv.get(EcuDataPv.FID_UNITS);
+                                String displayValue = dataValue != null ? dataValue.toString() : "N/A";
+                                if (units != null && !units.toString().isEmpty()) {
+                                    displayValue += " " + units;
+                                }
+                                value.setText(displayValue);
+
+                                dataList.addView(itemView);
+                            }
+
+                            // Show data container
+                            loadingContainer.setVisibility(View.GONE);
+                            dataContainer.setVisibility(View.VISIBLE);
+                            refreshButton.setVisibility(View.VISIBLE);
+                        } else {
+                            // No data available
+                            loadingContainer.setVisibility(View.GONE);
+                            noDataContainer.setVisibility(View.VISIBLE);
+                        }
+
+                        // Restore original service
+                        if (currentService != ObdProt.OBD_SVC_FREEZEFRAME) {
+                            CommService.elm.setService(currentService, true);
+                        }
+
+                    } catch (Exception e) {
+                        log.log(Level.WARNING, "Error displaying freeze frame data", e);
+                        loadingContainer.setVisibility(View.GONE);
+                        noDataContainer.setVisibility(View.VISIBLE);
+                    }
+                });
+            };
+
+            // Refresh button handler
+            refreshButton.setOnClickListener(v -> {
+                new Thread(loadFreezeFrameData).start();
+            });
+
+            // Start loading data
+            new Thread(loadFreezeFrameData).start();
+
+            // Show the dialog
+            freezeDialog.show();
+
+            // Make dialog wider
+            if (freezeDialog.getWindow() != null) {
+                freezeDialog.getWindow().setLayout(
+                    (int) (getResources().getDisplayMetrics().widthPixels * 0.9),
+                    (int) (getResources().getDisplayMetrics().heightPixels * 0.7)
+                );
             }
 
-            // Switch to freeze frame service with selected code
-            CommService.elm.setFreezeFrame_Id(dtcIndex);
-            setObdService(ObdProt.OBD_SVC_FREEZEFRAME, "Freeze Frame: " + dfc.get(EcuCodeItem.FID_CODE));
-
-            // Show helpful navigation info
-            Toast.makeText(this, "Viewing freeze frame for " + dfc.get(EcuCodeItem.FID_CODE), Toast.LENGTH_SHORT).show();
-
         } catch (Exception e) {
-            log.log(Level.SEVERE, "View freeze frame", e);
-            Toast.makeText(this, "Error viewing freeze frame: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            log.log(Level.SEVERE, "Show freeze frame modal", e);
+            Toast.makeText(this, "Error showing freeze frame data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
