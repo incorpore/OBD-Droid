@@ -1,6 +1,6 @@
 # Desktop Launcher - Java Desktop Testing Tool
 
-This directory contains scripts for running OBD-Droid's diagnostic core on desktop computers using Java Swing GUI (not Android).
+This directory contains scripts for running OBDroid's diagnostic core on desktop computers using Java Swing GUI (not Android).
 
 ## What It Does
 

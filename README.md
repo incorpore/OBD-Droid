@@ -1,4 +1,4 @@
-# OBD-Droid
+# OBDroid
 
 Android OBD-II diagnostics app for ELM327 Bluetooth/WiFi/USB adapters
 
@@ -34,8 +34,8 @@ Android OBD-II diagnostics app for ELM327 Bluetooth/WiFi/USB adapters
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/Wal33D/OBD-Droid.git
-cd OBD-Droid
+git clone https://github.com/Wal33D/OBDroid.git
+cd OBDroid
 ```
 
 2. Set up local SDK path:
@@ -70,7 +70,7 @@ adb shell am start -n com.obddroid.ecu.gui.androbd/.MainActivity
 ## Usage
 
 1. **Pair your adapter** - Connect your ELM327 adapter via Bluetooth/WiFi
-2. **Launch OBD-Droid** - Start the application
+2. **Launch OBDroid** - Start the application
 3. **Select adapter** - Choose your adapter from the connection menu
 4. **Connect to vehicle** - With engine running or in ACC mode
 5. **Access OBD services** - View data, codes, and diagnostics
@@ -79,7 +79,7 @@ adb shell am start -n com.obddroid.ecu.gui.androbd/.MainActivity
 
 ### Data Model Structure
 
-OBD-Droid uses a CSV-based configuration system with three main components:
+OBDroid uses a CSV-based configuration system with three main components:
 
 #### 1. Code Lists
 Simple mapping of diagnostic fault codes to descriptions:
@@ -125,7 +125,7 @@ Configure how data is extracted from OBD responses:
 
 ### Custom Vehicle PIDs & Data Conversions
 
-OBD-Droid allows you to add support for non-standard PIDs and custom data conversions that are specific to your vehicle. This is useful for:
+OBDroid allows you to add support for non-standard PIDs and custom data conversions that are specific to your vehicle. This is useful for:
 - Manufacturer-specific PIDs not in the OBD-II standard
 - Aftermarket sensors and modifications
 - Custom calculated values from existing PIDs
@@ -170,12 +170,12 @@ OBD-Droid allows you to add support for non-standard PIDs and custom data conver
 
 ## Plugin System
 
-OBD-Droid features an extensible plugin architecture that allows third-party developers to add functionality without modifying the core app.
+OBDroid features an extensible plugin architecture that allows third-party developers to add functionality without modifying the core app.
 
 ### Plugin Manager
 
 Access the Plugin Manager from the main menu to:
-- View installed OBD-Droid compatible plugins
+- View installed OBDroid compatible plugins
 - See plugin capabilities and features
 - Configure plugin settings (when supported)
 - Enable/disable individual plugins
@@ -184,8 +184,8 @@ Access the Plugin Manager from the main menu to:
 
 Plugins are separate Android apps that:
 - Register to handle the `com.obddroid.androbd.plugin.IDENTIFY` intent
-- Cannot run standalone - they extend OBD-Droid functionality
-- Communicate with OBD-Droid via Android intents
+- Cannot run standalone - they extend OBDroid functionality
+- Communicate with OBDroid via Android intents
 - Handle their own data storage and configuration
 
 ### Plugin Capabilities
@@ -197,7 +197,7 @@ Plugins declare their features using a bitmask system:
 | 0 | CONFIG | Has configuration interface |
 | 1 | ACTION | Supports manual trigger actions |
 | 2 | DATA | Receives OBD data updates |
-| 3 | DATA_PROVIDER | Provides data to OBD-Droid |
+| 3 | DATA_PROVIDER | Provides data to OBDroid |
 
 ### Creating a Plugin
 
@@ -217,7 +217,7 @@ Create a new Android app with an Activity that handles the IDENTIFY intent:
 
 #### 2. Respond to Identification
 
-When OBD-Droid queries for plugins, respond with your plugin's information:
+When OBDroid queries for plugins, respond with your plugin's information:
 
 ```java
 // In your plugin's activity
@@ -243,7 +243,7 @@ If your plugin has the DATA feature, register to receive OBD data:
 
 #### 4. Provide Custom Data (Optional)
 
-Plugins with DATA_PROVIDER can inject custom sensor data back to OBD-Droid.
+Plugins with DATA_PROVIDER can inject custom sensor data back to OBDroid.
 
 ### Example Plugin Ideas
 
@@ -271,7 +271,7 @@ Check the `/plugin` directory for the plugin framework structure. While full plu
 - Data exchange protocols
 - Communication patterns
 
-Visit the [OBD-Droid GitHub](https://github.com/Wal33D/OBD-Droid) for plugin examples and templates
+Visit the [OBDroid GitHub](https://github.com/Wal33D/OBDroid) for plugin examples and templates
 
 ## Permissions
 
@@ -287,7 +287,7 @@ Required permissions:
 ### Project Structure
 
 ```
-OBD-Droid/
+OBDroid/
 ├── androbd/          # Main Android application
 ├── library/          # Core OBD library
 ├── plugin/           # Plugin framework
@@ -330,4 +330,4 @@ OBD-Droid/
 
 ---
 
-*Keep on hacking... OBD-Droid Team*
+*Keep on hacking... OBDroid Team*

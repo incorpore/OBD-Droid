@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--  OBD-Droid -->
+    <!--  OBDroid -->
     <string name="translation_credits">Traduction par obddroid</string>
     <string name="app_description">Application Android de diagnostic des véhicules OBD pour adaptateurs ELM327</string>
     <string name="title_connecting">Connexion en cours…</string>

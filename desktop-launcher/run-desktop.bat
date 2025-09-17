@@ -1,7 +1,7 @@
 @echo off
-REM Desktop launcher script for OBD-Droid (Windows)
+REM Desktop launcher script for OBDroid (Windows)
 
-echo Starting OBD-Droid Desktop Application...
+echo Starting OBDroid Desktop Application...
 
 REM Check if Java is installed
 java -version >nul 2>&1

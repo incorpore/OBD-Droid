@@ -785,6 +785,12 @@ public class MainActivity extends ListActivity
                 setMode(MODE.OFFLINE);
                 return true;
 
+            case R.id.settings:
+                // Launch the Settings Activity
+                Intent settingsIntent = new Intent(this, SettingsActivity.class);
+                startActivityForResult(settingsIntent, REQUEST_SETTINGS);
+                return true;
+
 
 
 
@@ -945,18 +951,14 @@ public class MainActivity extends ListActivity
                     log.info("Load content: " + uri);
                     // load data ...
                     fileHelper.loadDataThreaded(uri, mHandler);
-                    // don't allow saving it again
-                    setMenuItemEnable(R.id.save, false);
                     setMenuItemEnable(R.id.obd_services, true);
                 }
                 break;
 
             // settings finished
             case REQUEST_SETTINGS:
-            {
                 // change handling done by callbacks
-            }
-            break;
+                break;
 
             // graphical data view finished
             case REQUEST_GRAPH_DISPLAY_DONE:
@@ -1025,17 +1027,24 @@ public class MainActivity extends ListActivity
                             CommService.elm.mAdaptiveTiming.getElmTimeoutMin()));
         }
 
+        // ... preferred protocol
+        if (key == null || SettingsActivity.KEY_PROT_SELECT.equals(key))
+        {
+            ElmProt.setPreferredProtocol(getPrefsInt(SettingsActivity.KEY_PROT_SELECT, 0));
+        }
+
+        // set disabled ELM commands
+        if (key == null || SettingsActivity.ELM_CMD_DISABLE.equals(key))
+        {
+            ElmProt.disableCommands(prefs.getStringSet(SettingsActivity.ELM_CMD_DISABLE, null));
+        }
+
         // ... measurement system
         if (key == null || MEASURE_SYSTEM.equals(key))
         {
             setConversionSystem(getPrefsInt(MEASURE_SYSTEM, EcuDataItem.SYSTEM_METRIC));
         }
 
-        // ... preferred protocol
-        if (key == null || SettingsActivity.KEY_PROT_SELECT.equals(key))
-        {
-            ElmProt.setPreferredProtocol(getPrefsInt(SettingsActivity.KEY_PROT_SELECT, 0));
-        }
 
         // log levels
         if (key == null || LOG_MASTER.equals(key))
@@ -1049,11 +1058,6 @@ public class MainActivity extends ListActivity
             loadPreferredExtensions();
         }
 
-        // set disabled ELM commands
-        if (key == null || SettingsActivity.ELM_CMD_DISABLE.equals(key))
-        {
-            ElmProt.disableCommands(prefs.getStringSet(SettingsActivity.ELM_CMD_DISABLE, null));
-        }
 
         // AutoHide ToolBar
         if (key == null || PREF_AUTOHIDE.equals(key) || PREF_AUTOHIDE_DELAY.equals(key))
@@ -1830,16 +1834,6 @@ public class MainActivity extends ListActivity
         startActivityForResult(intent, REQUEST_SELECT_FILE);
     }
 
-    /**
-     * clear all preselections
-     */
-    private void clearPreselections()
-    {
-        for (PRESELECT selection : PRESELECT.values())
-        {
-            prefs.edit().remove(selection.toString()).apply();
-        }
-    }
 
     /**
      * Initiate a connect to the selected bluetooth device

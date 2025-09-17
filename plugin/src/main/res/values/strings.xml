@@ -3,10 +3,10 @@
     <string name="configure">Configure</string>
     <string name="perform_action">Perform action</string>
     <string name="identify_plugins">Identify plugins</string>
-    <string name="app_name" translatable="false">OBD-Droid plugin framework</string>
+    <string name="app_name" translatable="false">OBDroid plugin framework</string>
     <string name="copyright_obddroid" translatable="false">Copyright © 2019 by obddroid</string>
-    <string name="url_app_mainpage" translatable="false">https://github.com/obddroid/OBD-Droid-Plugin</string>
+    <string name="url_app_mainpage" translatable="false">https://github.com/obddroid/OBDroid-Plugin</string>
     <string name="release_history">Release history …</string>
-    <string name="url_app_releases" translatable="false">https://github.com/obddroid/OBD-Droid-Plugin/releases</string>
+    <string name="url_app_releases" translatable="false">https://github.com/obddroid/OBDroid-Plugin/releases</string>
     <string name="donation">Support project …</string>
 </resources>

@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * Plugin Manager Activity
  *
- * Discovers and displays installed OBD-Droid plugins.
+ * Discovers and displays installed OBDroid plugins.
  * Plugins are separate APKs that respond to the
  * com.obddroid.androbd.plugin.IDENTIFY intent
  */
@@ -70,9 +70,9 @@ public class PluginManagerActivity extends Activity {
         List<String> pluginNames = new ArrayList<>();
 
         if (plugins.isEmpty()) {
-            pluginNames.add("No OBD-Droid plugins installed");
+            pluginNames.add("No OBDroid plugins installed");
             pluginNames.add("");
-            pluginNames.add("Plugins extend OBD-Droid with:");
+            pluginNames.add("Plugins extend OBDroid with:");
             pluginNames.add("• Data logging (CSV, cloud sync)");
             pluginNames.add("• Real-time streaming (MQTT, APIs)");
             pluginNames.add("• Performance analysis");
@@ -112,7 +112,7 @@ public class PluginManagerActivity extends Activity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(appName);
         builder.setMessage("Package: " + packageName + "\n\n" +
-                          "This plugin extends OBD-Droid functionality.\n" +
+                          "This plugin extends OBDroid functionality.\n" +
                           "Check plugin's own settings for configuration.");
         builder.setPositiveButton("OK", null);
 

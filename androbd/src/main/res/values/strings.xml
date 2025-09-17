@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--  OBD-Droid -->
-    <string name="app_name" translatable="false">OBD-Droid</string>
+    <!--  OBDroid -->
+    <string name="app_name" translatable="false">OBDroid</string>
     <string name="copyright_obddroid" translatable="false">© 2015-2025 obddroid</string>
     <string name="app_description">Android OBD vehicle diagnostics app for ELM327 Bluetooth adapter</string>
     <string name="copied_to_clipboard">Copied to clipboard</string>
@@ -242,9 +242,9 @@ period of time while the ECU recalibrates itself.
         Connect to your car\'s OBD system\n
         * GNU General Public License v3.0
     </string>
-    <string name="url_app_license" translatable="false">https://github.com/obddroid/OBD-Droid/blob/master/LICENSE</string>
-    <string name="url_app_mainpage" translatable="false">https://github.com/obddroid/OBD-Droid/</string>
-    <string name="url_app_releases" translatable="false">https://github.com/obddroid/OBD-Droid/releases/</string>
+    <string name="url_app_license" translatable="false">https://github.com/obddroid/OBDroid/blob/master/LICENSE</string>
+    <string name="url_app_mainpage" translatable="false">https://github.com/obddroid/OBDroid/</string>
+    <string name="url_app_releases" translatable="false">https://github.com/obddroid/OBDroid/releases/</string>
     <string name="url_app_translation" translatable="false">https://hosted.weblate.org/projects/androbd/strings/</string>
     <string name="lib_usb_serial" translatable="false">usb-serial-for-android</string>
     <string name="lib_usb_serial_sum" translatable="false">

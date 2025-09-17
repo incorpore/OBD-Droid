@@ -1,6 +1,6 @@
 # Custom PIDs Templates
 
-This directory contains template files for adding custom PIDs (Parameter IDs) to OBD-Droid.
+This directory contains template files for adding custom PIDs (Parameter IDs) to OBDroid.
 
 ## Files Overview
 

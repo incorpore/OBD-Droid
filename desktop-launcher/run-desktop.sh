@@ -1,7 +1,7 @@
 #!/bin/bash
-# Desktop launcher script for OBD-Droid
+# Desktop launcher script for OBDroid
 
-echo "Starting OBD-Droid Desktop Application..."
+echo "Starting OBDroid Desktop Application..."
 
 # Check if Java is installed
 if ! command -v java &> /dev/null; then

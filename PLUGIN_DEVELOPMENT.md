@@ -1,21 +1,21 @@
-# OBD-Droid Plugin Development Guide
+# OBDroid Plugin Development Guide
 
 ## Overview
 
-OBD-Droid plugins are Android apps that extend the functionality of OBD-Droid without modifying the core application. Plugins can log data, provide visualizations, sync to cloud services, or add any custom functionality.
+OBDroid plugins are Android apps that extend the functionality of OBDroid without modifying the core application. Plugins can log data, provide visualizations, sync to cloud services, or add any custom functionality.
 
 ## Quick Start
 
 ### Minimum Requirements
 
 1. Android Studio
-2. Android SDK (same minimum version as OBD-Droid)
+2. Android SDK (same minimum version as OBDroid)
 3. Basic knowledge of Android development
 
 ### Step 1: Create a New Android Project
 
 Create a new Android application with:
-- Minimum SDK: API 17 (same as OBD-Droid)
+- Minimum SDK: API 17 (same as OBDroid)
 - No launcher activity needed (plugins don't run standalone)
 
 ### Step 2: Configure AndroidManifest.xml
@@ -83,7 +83,7 @@ public class PluginActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Respond to OBD-Droid's query
+        // Respond to OBDroid's query
         Intent response = new Intent();
 
         // Basic plugin information
@@ -194,7 +194,7 @@ Receives real-time OBD data:
 
 ### DATA_PROVIDER Feature (Bit 3)
 
-Provides custom data to OBD-Droid:
+Provides custom data to OBDroid:
 - Inject calculated values
 - Add GPS data
 - Provide sensor readings
@@ -202,9 +202,9 @@ Provides custom data to OBD-Droid:
 
 ## Testing Your Plugin
 
-1. **Install OBD-Droid** on your device/emulator
+1. **Install OBDroid** on your device/emulator
 2. **Install your plugin** APK
-3. **Open OBD-Droid** and go to Plugin Manager
+3. **Open OBDroid** and go to Plugin Manager
 4. **Verify your plugin appears** in the list
 5. **Test features**:
    - Tap plugin for details
@@ -260,7 +260,7 @@ Provides custom data to OBD-Droid:
 ### Not receiving OBD data
 - Check DATA feature flag is set
 - Verify BroadcastReceiver registration
-- Ensure OBD-Droid has active connection
+- Ensure OBDroid has active connection
 
 ### Configuration not working
 - Set CONFIG feature flag
@@ -292,7 +292,7 @@ Provides custom data to OBD-Droid:
 
 ## Resources
 
-- [OBD-Droid GitHub](https://github.com/Wal33D/OBD-Droid)
+- [OBDroid GitHub](https://github.com/Wal33D/OBDroid)
 - [Android Developer Documentation](https://developer.android.com)
 - [OBD-II PID Reference](https://en.wikipedia.org/wiki/OBD-II_PIDs)
 
