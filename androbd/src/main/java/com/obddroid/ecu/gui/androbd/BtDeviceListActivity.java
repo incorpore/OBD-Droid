@@ -220,82 +220,52 @@ public class BtDeviceListActivity extends AppCompatActivity
 			final String originalName = deviceName;
 
 			// Get saved nickname if exists
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(BtDeviceListActivity.this);
+			final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(BtDeviceListActivity.this);
 			String savedNickname = prefs.getString("device_nickname_" + address, "");
 			final String[] currentNickname = {savedNickname}; // Use array to allow modification in inner class
 
-			// Create custom layout for dialog
-			LinearLayout mainLayout = new LinearLayout(BtDeviceListActivity.this);
-			mainLayout.setOrientation(LinearLayout.VERTICAL);
-			mainLayout.setPadding(60, 40, 60, 40);
+			// Inflate custom layout for dialog
+			View dialogView = getLayoutInflater().inflate(R.layout.dialog_device_details, null);
 
-			// Device Information Section
-			LinearLayout infoContainer = new LinearLayout(BtDeviceListActivity.this);
-			infoContainer.setOrientation(LinearLayout.VERTICAL);
+			// Get references to views
+			final TextView nicknameDisplay = dialogView.findViewById(R.id.device_nickname);
+			LinearLayout infoContainer = dialogView.findViewById(R.id.device_info_container);
+			TextView statusIndicator = dialogView.findViewById(R.id.status_indicator);
+			Button cancelButton = dialogView.findViewById(R.id.btn_cancel);
+			Button connectButton = dialogView.findViewById(R.id.btn_connect);
 
-			// Add nickname/name as first item (editable)
-			TextView nicknameLabel = new TextView(BtDeviceListActivity.this);
-			nicknameLabel.setText("Nickname");
-			nicknameLabel.setTextSize(12);
-			nicknameLabel.setTextColor(Color.parseColor("#757575"));
-			nicknameLabel.setPadding(0, 0, 0, 5);
-			infoContainer.addView(nicknameLabel);
-
-			// Add device name/nickname as editable TextView
-			final TextView nameDisplay = new TextView(BtDeviceListActivity.this);
+			// Set nickname/name
 			String displayName = !savedNickname.isEmpty() ? savedNickname : originalName;
-			nameDisplay.setText(displayName);
-			nameDisplay.setTextSize(16);
-			nameDisplay.setTextColor(Color.parseColor("#2196F3")); // Material Blue for editable field
-			nameDisplay.setTypeface(null, android.graphics.Typeface.BOLD);
-			nameDisplay.setPadding(0, 0, 0, 0);
+			nicknameDisplay.setText(displayName);
 
-			// Add hint text below the name
-			TextView hintText = new TextView(BtDeviceListActivity.this);
-			hintText.setText("(Long press to edit)");
-			hintText.setTextSize(10);
-			hintText.setTextColor(Color.parseColor("#9E9E9E")); // Light grey
-			hintText.setPadding(0, 2, 0, 0);
-
-			infoContainer.addView(nameDisplay);
-			infoContainer.addView(hintText);
-
-			// Add each info item with better formatting
+			// Add device info rows
 			if (!savedNickname.isEmpty()) {
 				addInfoRow(infoContainer, "Original Name", originalName);
 			}
 			addInfoRow(infoContainer, "Device Type", getDeviceType(device));
 			addInfoRow(infoContainer, "MAC Address", address);
 
-			// Status with color coding
-			TextView statusLabel = new TextView(BtDeviceListActivity.this);
-			statusLabel.setText("Status");
-			statusLabel.setTextSize(12);
-			statusLabel.setTextColor(Color.parseColor("#757575"));
-			statusLabel.setPadding(0, 15, 0, 5);
-			infoContainer.addView(statusLabel);
-
-			TextView statusValue = new TextView(BtDeviceListActivity.this);
+			// Set status
 			if (isLastUsedDevice(address)) {
-				statusValue.setText("● Recently Connected");
-				statusValue.setTextColor(Color.parseColor("#4CAF50")); // Green
+				statusIndicator.setText("● Recently Connected");
+				statusIndicator.setTextColor(Color.parseColor("#4CAF50")); // Green
 			} else {
-				statusValue.setText("● Ready to Connect");
-				statusValue.setTextColor(Color.parseColor("#FF9800")); // Orange
+				statusIndicator.setText("● Ready to Connect");
+				statusIndicator.setTextColor(Color.parseColor("#FF9800")); // Orange
 			}
-			statusValue.setTextSize(14);
-			statusValue.setTypeface(null, android.graphics.Typeface.BOLD);
-			infoContainer.addView(statusValue);
 
-			mainLayout.addView(infoContainer);
+			// Create and configure dialog
+			final AlertDialog dialog = new AlertDialog.Builder(BtDeviceListActivity.this)
+					.setView(dialogView)
+					.create();
 
-			// Create and show dialog with custom view
-			AlertDialog.Builder builder = new AlertDialog.Builder(BtDeviceListActivity.this);
-			builder.setTitle("Device Details");
-			builder.setView(mainLayout);
+			// Remove default background to show our rounded corners
+			if (dialog.getWindow() != null) {
+				dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+			}
 
 			// Make name editable on long press
-			nameDisplay.setOnLongClickListener(new View.OnLongClickListener() {
+			nicknameDisplay.setOnLongClickListener(new View.OnLongClickListener() {
 				@Override
 				public boolean onLongClick(View v) {
 					// Show input dialog for nickname
@@ -324,10 +294,10 @@ public class BtDeviceListActivity extends AppCompatActivity
 
 							// Update display
 							if (!newNickname.isEmpty()) {
-								nameDisplay.setText(newNickname);
+								nicknameDisplay.setText(newNickname);
 								prefs.edit().putString("device_nickname_" + address, newNickname).apply();
 							} else {
-								nameDisplay.setText(originalName);
+								nicknameDisplay.setText(originalName);
 								prefs.edit().remove("device_nickname_" + address).apply();
 							}
 
@@ -351,36 +321,39 @@ public class BtDeviceListActivity extends AppCompatActivity
 				}
 			});
 
-			// Add Connect button
-			builder.setPositiveButton("Connect", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					// Cancel discovery because it's costly and we're about to connect
-					if (mBtAdapter != null) {
-						mBtAdapter.cancelDiscovery();
+			// Set up button click handlers
+			if (connectButton != null) {
+				connectButton.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						// Cancel discovery because it's costly and we're about to connect
+						if (mBtAdapter != null) {
+							mBtAdapter.cancelDiscovery();
+						}
+
+						// Create the result Intent and include the MAC address
+						Intent intent = new Intent();
+						intent.putExtra(EXTRA_DEVICE_ADDRESS, address);
+
+						// Set result and finish this Activity
+						setResult(Activity.RESULT_OK, intent);
+						log.log(Level.FINE, "Sending Result...");
+						dialog.dismiss();
+						finish();
 					}
+				});
+			}
 
-					// Create the result Intent and include the MAC address
-					Intent intent = new Intent();
-					intent.putExtra(EXTRA_DEVICE_ADDRESS, address);
-
-					// Set result and finish this Activity
-					setResult(Activity.RESULT_OK, intent);
-					log.log(Level.FINE, "Sending Result...");
-					finish();
-				}
-			});
-
-			// Add Cancel button
-			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					dialog.dismiss();
-				}
-			});
+			if (cancelButton != null) {
+				cancelButton.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						dialog.dismiss();
+					}
+				});
+			}
 
 			// Show the dialog
-			AlertDialog dialog = builder.create();
 			dialog.show();
 		}
 	};

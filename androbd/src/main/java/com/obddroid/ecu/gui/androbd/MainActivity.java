@@ -802,8 +802,8 @@ public class MainActivity extends AppCompatActivity
 
 
             case R.id.service_home:
-                // Return to home/startup screen
-                setContentView(R.layout.startup_layout);
+                // Return to home/startup screen - properly reset to NONE service
+                setObdService(ObdProt.OBD_SVC_NONE, getString(R.string.app_name));
                 return true;
 
             case R.id.service_none:
