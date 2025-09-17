@@ -1128,11 +1128,11 @@ public class ElmProt
 								handleTelegram("490054000000".toCharArray());
 							}
 							
-							// send VIN "0123456789ABCDEFG"
+							// send VIN "4JGDA5HB7JB158144"
 							handleTelegram("014".toCharArray());
-							handleTelegram("1:49020130313233".toCharArray());
-							handleTelegram("2:343536373839".toCharArray());
-							handleTelegram("3:41424344454647".toCharArray());
+							handleTelegram("1:490201344A4744".toCharArray()); // "4JGD"
+							handleTelegram("2:41354842374A42".toCharArray()); // "A5HB7JB"
+							handleTelegram("3:31353831343434".toCharArray()); // "158144"
 							
 							// send 2 CAL-IDs "GSPA..." without length id
 							handleTelegram("0:490402475350".toCharArray());
