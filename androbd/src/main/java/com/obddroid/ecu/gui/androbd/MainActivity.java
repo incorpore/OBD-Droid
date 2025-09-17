@@ -78,6 +78,7 @@ import java.util.logging.SimpleFormatter;
 public class MainActivity extends AppCompatActivity
         implements PvChangeListener,
         AdapterView.OnItemLongClickListener,
+        AdapterView.OnItemClickListener,
         PropertyChangeListener,
         SharedPreferences.OnSharedPreferenceChangeListener,
         AbsListView.MultiChoiceModeListener
@@ -1316,6 +1317,140 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
+     * Handle clicks on OBD data list items
+     */
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+    {
+        switch (CommService.elm.getService())
+        {
+            // If we are in DFC mode, show fault code options modal
+            case ObdProt.OBD_SVC_READ_CODES:
+            case ObdProt.OBD_SVC_PERMACODES:
+            case ObdProt.OBD_SVC_PENDINGCODES:
+                showFaultCodeOptionsModal(position);
+                break;
+        }
+    }
+
+    /**
+     * Show modal with options for the selected fault code
+     */
+    private void showFaultCodeOptionsModal(int position)
+    {
+        try {
+            EcuCodeItem dfc = (EcuCodeItem) currDataAdapter.getItem(position);
+
+            View dialogView = getLayoutInflater().inflate(R.layout.dialog_fault_code_options, null);
+
+            // Set fault code info
+            TextView codeNumber = dialogView.findViewById(R.id.fault_code_number);
+            TextView codeDesc = dialogView.findViewById(R.id.fault_code_description);
+            TextView codeType = dialogView.findViewById(R.id.fault_code_type);
+            ImageView statusIcon = dialogView.findViewById(R.id.fault_code_status_icon);
+
+            String code = String.valueOf(dfc.get(EcuCodeItem.FID_CODE));
+            String description = String.valueOf(dfc.get(EcuCodeItem.FID_DESCRIPT));
+
+            codeNumber.setText(code);
+            codeDesc.setText(description);
+
+            // Set code type based on service
+            Integer svc = (Integer) dfc.get(EcuCodeItem.FID_STATUS);
+            if (svc != null) {
+                switch (svc) {
+                    case ObdProt.OBD_SVC_PENDINGCODES:
+                        codeType.setText("Pending Code");
+                        statusIcon.setImageResource(android.R.drawable.ic_menu_recent_history);
+                        statusIcon.setColorFilter(Color.parseColor("#FF9800"));
+                        break;
+                    case ObdProt.OBD_SVC_PERMACODES:
+                        codeType.setText("Permanent Code");
+                        statusIcon.setImageResource(android.R.drawable.ic_dialog_alert);
+                        statusIcon.setColorFilter(Color.parseColor("#F44336"));
+                        break;
+                    default:
+                        codeType.setText("Confirmed Code");
+                        statusIcon.setImageResource(android.R.drawable.ic_menu_myplaces);
+                        statusIcon.setColorFilter(Color.parseColor("#F57C00"));
+                        break;
+                }
+            }
+
+            AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+            // Set up click handlers
+            View freezeFrameOption = dialogView.findViewById(R.id.option_freeze_frame);
+            View searchOption = dialogView.findViewById(R.id.option_search_web);
+            View copyOption = dialogView.findViewById(R.id.option_copy_code);
+            Button closeButton = dialogView.findViewById(R.id.btn_close);
+
+            // Freeze frame option - always enabled for fault codes
+            freezeFrameOption.setOnClickListener(v -> {
+                dialog.dismiss();
+                viewFreezeFrameForCode(position, dfc);
+            });
+
+            searchOption.setOnClickListener(v -> {
+                dialog.dismiss();
+                searchFaultCodeOnWeb(dfc);
+            });
+
+            copyOption.setOnClickListener(v -> {
+                copyFaultCodeToClipboard(code, description);
+                dialog.dismiss();
+            });
+
+            closeButton.setOnClickListener(v -> dialog.dismiss());
+
+            dialog.show();
+
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "Show fault code modal", e);
+            Toast.makeText(this, "Error showing options: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * View freeze frame data for the selected fault code
+     */
+    private void viewFreezeFrameForCode(int position, EcuCodeItem dfc)
+    {
+        // Switch to freeze frame service with selected code
+        CommService.elm.setFreezeFrame_Id(position);
+        setObdService(ObdProt.OBD_SVC_FREEZEFRAME, "Freeze Frame: " + dfc.get(EcuCodeItem.FID_CODE));
+    }
+
+    /**
+     * Search fault code on the web
+     */
+    private void searchFaultCodeOnWeb(EcuCodeItem dfc)
+    {
+        try {
+            Intent intent = new Intent(Intent.ACTION_WEB_SEARCH);
+            intent.putExtra(SearchManager.QUERY, "OBD " + String.valueOf(dfc.get(EcuCodeItem.FID_CODE)));
+            startActivity(intent);
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "WebSearch DFC", e);
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Copy fault code to clipboard
+     */
+    private void copyFaultCodeToClipboard(String code, String description)
+    {
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        String text = code + " - " + description;
+        ClipData clip = ClipData.newPlainText("OBD Fault Code", text);
+        clipboard.setPrimaryClip(clip);
+        Toast.makeText(this, "Copied: " + code, Toast.LENGTH_SHORT).show();
+    }
+
+    /**
      * Handler for PV change events This handler just forwards the PV change
      * events to the android handler, since all adapter / GUI actions have to be
      * performed from the main handler
@@ -1996,6 +2131,7 @@ public class MainActivity extends AppCompatActivity
         listView = findViewById(android.R.id.list);
         if (listView != null) {
             listView.setOnItemLongClickListener(this);
+            listView.setOnItemClickListener(this);
             listView.setMultiChoiceModeListener(this);
             listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         }
