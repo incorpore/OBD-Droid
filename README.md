@@ -4,27 +4,30 @@ Android OBD-II diagnostics app for ELM327 Bluetooth/WiFi/USB adapters
 
 ## Features
 
-- **Real-time OBD data** - Read live sensor data from your vehicle
-- **Diagnostic trouble codes** - Read and clear DTCs with descriptions
+### Core Diagnostics
+- **Real-time OBD data** - Monitor live sensor data from your vehicle's ECU
+- **Diagnostic trouble codes** - Read and clear DTCs with detailed descriptions and MIL status
 - **Freeze frame data** - View snapshot data when codes were set
+- **Vehicle information** - Read VIN, calibration IDs, and ECU information
+- **Test control mode** - Execute OBD test procedures
+
+### Connectivity & Display
 - **Multi-connection support** - Bluetooth, WiFi, and USB ELM327 adapters
-- **Data logging** - Record and export diagnostic data
-- **Customizable displays** - Dashboard views, charts, and gauges
-- **Multi-language** - Support for 40+ languages
-- **Custom vehicle support** - Add custom PIDs and conversions
+- **Demo Mode** - Built-in OBD simulator for testing without hardware
+- **Multiple display modes** - Dashboard gauges, charts, lists, and HUD views
+- **Full screen mode** - Immersive experience with status bar integration
+- **Data logging** - Record and export diagnostic data to CSV
 
-### Version 1.2.x Features
-
-- **CSV based control data** for PIDs, conversions, and code lists
-- **New conversion types** - Bitmap and hash conversions for state messages
-- **Bar gauge display** in data screen
-- **Consistent coloring** across all display modes
-- **Advanced configuration** via user-defined CSV files
+### Customization
+- **Custom PIDs** - Add manufacturer-specific parameters
+- **User-defined conversions** - Create custom data transformations
+- **Multi-language support** - Available in 40+ languages
+- **Configurable displays** - Customize colors, ranges, and update rates
 
 ## Requirements
 
-- Android device running Android 4.4+
-- ELM327 compatible OBD-II adapter
+- Android device running Android 4.2+ (API 17)
+- ELM327 compatible OBD-II adapter (or use Demo Mode)
 - Vehicle with OBD-II support (most cars manufactured after 1996)
 
 ## Quick Start
@@ -33,21 +36,22 @@ Android OBD-II diagnostics app for ELM327 Bluetooth/WiFi/USB adapters
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/Wal33D/OBDroid.git
-cd OBDroid
+git clone https://github.com/Wal33D/OBD-Droid.git
+cd OBD-Droid
 ```
 
-2. Set up local SDK path:
-```bash
-echo "sdk.dir=$HOME/Library/Android/sdk" > local.properties
-```
-
-3. Build the app:
+2. Build the app:
 ```bash
 ./gradlew assembleDebug
 ```
 
 ### Installing on Device
+
+#### Quick Deploy (One Command)
+```bash
+# Build and deploy
+./gradlew assembleDebug && adb install -r ./androbd/build/outputs/apk/debug/androbd-debug.apk && adb shell am start -n com.obddroid.ecu.gui.androbd/.MainActivity
+```
 
 #### WiFi Installation (Wireless ADB)
 ```bash
@@ -66,158 +70,145 @@ adb install -r ./androbd/build/outputs/apk/debug/androbd-debug.apk
 adb shell am start -n com.obddroid.ecu.gui.androbd/.MainActivity
 ```
 
-## Usage
+## Usage Guide
 
-1. **Pair your adapter** - Connect your ELM327 adapter via Bluetooth/WiFi
-2. **Launch OBDroid** - Start the application
-3. **Select adapter** - Choose your adapter from the connection menu
-4. **Connect to vehicle** - With engine running or in ACC mode
+### Getting Started
+1. **Launch OBDroid** - Start the application
+2. **Select connection type** - Choose Bluetooth, USB, or Demo Mode
+3. **Pair adapter** (if using hardware) - Select your ELM327 adapter
+4. **Connect to vehicle** - With engine running or ignition on
 5. **Access OBD services** - View data, codes, and diagnostics
 
-## Configuration & Customization
+### Demo Mode
+Try the app without hardware! Demo Mode provides:
+- Simulated OBD data and responses
+- All app features available for testing
+- Perfect for learning the interface
+- Access via "Demo Mode" in device selection
 
-### Data Model Structure
+### Navigation
+- **Home button** - Quick return to main menu
+- **Full screen mode** - Toggle in settings for immersive view
+- **Service selection** - Access different OBD services from main screen
+- **Clear codes** - Built-in dialog with safety confirmation
 
-OBDroid uses a CSV-based configuration system with three main components:
+## Custom PIDs & Data Conversions
 
-#### 1. Code Lists
-Simple mapping of diagnostic fault codes to descriptions:
-
-| Column | Description |
-|--------|-------------|
-| 1 | DFC number |
-| 2 | DFC description |
-
-#### 2. Data Conversions
-Define how raw OBD data is converted to meaningful values:
-
-| Type | Description |
-|------|-------------|
-| LINEAR | Linear numeric conversion for physical values |
-| HASH | Convert numeric values to state messages |
-| BITMAP | Convert bit masks to descriptive states |
-| PCODELIST | Convert OBD fault codes to descriptions |
-| CODELIST | Convert any code number to description |
-| ASCII | Convert protocol buffer to ASCII string |
-
-**Linear Conversion Formula:**
-```
-physicalValue = ((rawValue + OFFS) * FACT / DIV) + PhOf
-```
-
-#### 3. Data Items / PIDs
-Configure how data is extracted from OBD responses:
-
-| Field | Description |
-|-------|-------------|
-| svc | OBD service(s) (comma-separated HEX) |
-| pid | OBD PID number (HEX) |
-| ofs | Byte offset in response |
-| len | Length in bytes |
-| bit_ofs | Bit offset within extracted value |
-| bit_len | Length in bits |
-| bit_mask | Bit mask for extraction |
-| formula | Conversion ID to use |
-| format | Display format (printf syntax) |
-| min/max | Value limits |
-| label | Display label |
-
-### Custom Vehicle PIDs & Data Conversions
-
-OBDroid allows you to add support for non-standard PIDs and custom data conversions that are specific to your vehicle. This is useful for:
-- Manufacturer-specific PIDs not in the OBD-II standard
+OBDroid supports custom vehicle-specific PIDs and data conversions for:
+- Manufacturer-specific parameters
 - Aftermarket sensors and modifications
-- Custom calculated values from existing PIDs
+- Custom calculated values
 
-#### How to Add Custom PIDs:
+### Adding Custom PIDs
 
-1. **Start with template files** in `/custom-pids/` directory:
-   - **For beginners**: Use `example_basic_*` files as a starting point
-   - **For advanced users**: See `example_advanced_*` files for complex examples
-   - **Blank templates**: Use `template_blank_*` files to start from scratch
+1. **Use template files** from `/custom-pids/`:
+   - `example_basic_*` - Simple examples (turbo boost, oil temp)
+   - `example_advanced_*` - Complex examples (bitmaps, state mappings)
+   - `template_blank_*` - Empty templates to start fresh
 
-2. **Copy your customized files** to your Android device:
+2. **Copy to device**:
    - Store in `/sdcard/com.obddroid.ecu.gui.androbd/custom/`
-   - Or select files via app settings menu
+   - Or select via app settings
 
-3. **Files automatically load** when the app starts
+3. **Files auto-load** on app start
 
-#### Understanding the CSV Files:
+### Configuration Files
 
-**cust_pids.csv** - Defines custom PIDs:
-- `svc`: Service mode (0x01, 0x02, etc.)
-- `pid`: Parameter ID in hex (e.g., 0x5F)
-- `formula`: Links to conversion formula name
-- `label`: Display name in the app
-- `min/max`: Expected value range
+#### cust_pids.csv - Define custom PIDs
+| Field | Description | Example |
+|-------|-------------|---------|
+| svc | Service mode | 0x01 |
+| pid | Parameter ID | 0x5F |
+| formula | Conversion name | TURBO_BOOST_PSI |
+| label | Display name | Turbo Boost |
+| min/max | Value range | -14.7/30 |
 
-**cust_conversions.csv** - Defines data conversion formulas:
-- `LINEAR`: Mathematical conversions (multiply/divide/offset)
-- `HASH`: Map numeric values to text (1="Running", 2="Stopped")
-- `BITMAP`: Decode bit flags for status indicators
-- Supports both METRIC and IMPERIAL units
+#### cust_conversions.csv - Data transformations
+| Type | Use Case | Example |
+|------|----------|---------|
+| LINEAR | Math conversions | Temperature, pressure |
+| HASH | Value to text mapping | 1="Running", 2="Stopped" |
+| BITMAP | Decode bit flags | Status indicators |
+| ASCII | Protocol to text | VIN decoding |
 
-**Example Files Included**:
-- `example_basic_*` - Simple examples (turbo boost, oil temp, transmission temp)
-- `example_advanced_*` - Complex examples (hash states, bitmaps, multi-unit conversions)
-- `template_blank_*` - Empty templates ready for your custom PIDs
+## Project Structure
 
-**Quick Example**: Adding turbo boost pressure (see example_basic files):
-1. Conversion: `TURBO_BOOST_PSI,LINEAR,0,IMPERIAL,0.145,1,0,-14.7,psi`
-2. PID: `0x01,0x67,0,1,0,8,0xFF,TURBO_BOOST_PSI,%.1f,-14.7,30,turbo_boost,Turbo Boost`
-3. Copy to device and restart app
+```
+OBD-Droid/
+├── androbd/          # Main Android application
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/     # Application source code
+│   │   │   └── res/      # Resources (layouts, strings)
+│   │   └── build.gradle  # App configuration
+├── library/          # Core OBD protocol library
+│   ├── src/
+│   │   └── main/java/    # Protocol implementation
+│   └── build.gradle      # Library configuration
+├── custom-pids/      # Custom PID examples
+└── CLAUDE.md        # Development instructions
+```
 
-## Permissions
+## Technical Details
 
-Required permissions:
+### Build Configuration
+- **Compile SDK**: 34 (Android 14)
+- **Minimum SDK**: 17 (Android 4.2)
+- **Target SDK**: 25 (for compatibility)
+- **Java Version**: 17
+- **Gradle**: Modern Android build system
+
+### Key Dependencies
+- **USB Serial Library**: 3.9.0 - USB adapter support
+- **SpeedView**: 1.6.1 - Gauge displays
+- **AndroidX**: Modern support libraries
+
+### Permissions Required
 - **Bluetooth** - For Bluetooth adapters
-- **Internet** - For WiFi adapters and online features
+- **Internet** - For WiFi adapters
 - **Storage** - For data logging and custom files
 - **Location** - Required for Bluetooth on Android 6.0+
-- **Wake Lock** - Keep connection active with screen off
-
-## Development
-
-### Project Structure
-
-```
-OBDroid/
-├── androbd/          # Main Android application
-├── library/          # Core OBD library
-└── custom-pids/      # Custom PID template files
-```
-
-### Technologies
-
-- **Build System**: Gradle
-- **Language**: Java
-- **Min SDK**: API 19 (Android 4.4)
-- **Target SDK**: Latest stable
-
-### Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+- **Wake Lock** - Keep connection active
 
 ## Troubleshooting
 
 ### Connection Issues
-- Ensure adapter is properly paired
-- Check vehicle compatibility
-- Try different connection protocols
-- Verify adapter firmware is up to date
+- Ensure adapter is paired in Android Bluetooth settings
+- Try Demo Mode to test app functionality
+- Verify adapter is ELM327 compatible
+- Check vehicle ignition is ON
 
 ### Data Issues
-- Clear stored DTCs after repairs
-- Check custom PID configurations
-- Verify measurement system settings
-- Review log files for errors
+- Clear fault codes after vehicle repairs
+- Verify custom PID syntax in CSV files
+- Check measurement units in settings
+- Review logs for protocol errors
 
-## Support
-- Check template files in `/custom-pids/` for examples
+### Common Problems
+- **No data**: Ensure vehicle is OBD-II compliant
+- **Connection drops**: Check adapter power and range
+- **Wrong values**: Verify unit settings (metric/imperial)
+- **Missing PIDs**: Not all vehicles support all parameters
+
+## Development
+
+### Setting Up Development Environment
+1. Install Android Studio
+2. Clone repository
+3. Open project in Android Studio
+4. Sync Gradle files
+5. Run on device or emulator
+
+### Contributing
+1. Fork the repository
+2. Create feature branch
+3. Make changes following existing code style
+4. Test on multiple devices
+5. Submit pull request
+
+### Author
+**Waleed Judah (Wal33D)**
+Email: aquataze@yahoo.com
 
 ---
 
