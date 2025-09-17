@@ -9,15 +9,19 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="12dp">
 
         <Spinner
             android:id="@+id/ff_selector"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
             android:prompt="@string/select_fault_code"
             android:spinnerMode="dialog"
             android:visibility="visible"
+            android:background="@android:drawable/btn_dropdown"
+            android:padding="12dp"
             />
 
         <ListView
@@ -26,8 +30,13 @@
             android:layout_height="match_parent"
             android:layout_gravity="center_horizontal"
             android:choiceMode="multipleChoice"
-            android:dividerHeight="2dp"
-            android:fastScrollEnabled="true" />
+            android:dividerHeight="1dp"
+            android:divider="#E0E0E0"
+            android:fastScrollEnabled="true"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:clipToPadding="false"
+            android:scrollbarStyle="outsideOverlay" />
 
     </LinearLayout>
 
@@ -36,13 +45,20 @@
         android:id="@+id/clear_codes_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="24dp"
         android:text="@string/obd_clearcodes"
-        android:drawableLeft="@android:drawable/ic_menu_delete"
-        android:drawablePadding="8dp"
-        android:padding="12dp"
-        android:background="@android:drawable/btn_default"
+        android:drawableLeft="@drawable/ic_delete_24"
+        android:drawablePadding="12dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp"
+        android:background="@drawable/button_clear_codes"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:elevation="4dp"
         android:visibility="gone" />
 
 </FrameLayout>
