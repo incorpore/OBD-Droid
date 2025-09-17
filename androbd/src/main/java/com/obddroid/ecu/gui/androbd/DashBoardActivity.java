@@ -1,9 +1,11 @@
 package com.obddroid.ecu.gui.androbd;
 import android.content.Intent;
+import android.graphics.Color;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -167,10 +169,24 @@ public class DashBoardActivity extends AppCompatActivity
 	{
 		super.onCreate(savedInstanceState);
 		setTheme(R.style.AppTheme);
+
+		// Set status bar and navigation bar colors to match our theme
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			getWindow().setStatusBarColor(Color.parseColor("#212121"));
+			getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+		}
+
 		// Apply full screen based on preference
 		if(MainActivity.prefs.getBoolean(MainActivity.PREF_FULLSCREEN, false))
 		{
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+				getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+				getWindow().getDecorView().setSystemUiVisibility(
+					View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+					View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+				);
+			}
 		}
 
 		// Always keep main display on for vehicle diagnostics

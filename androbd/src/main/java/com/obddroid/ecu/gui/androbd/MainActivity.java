@@ -492,6 +492,12 @@ public class MainActivity extends AppCompatActivity
 
         requestWindowFeature(Window.FEATURE_PROGRESS);
 
+        // Set status bar and navigation bar colors to match our theme right away
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(Color.parseColor("#212121"));
+            getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+        }
+
         // get additional permissions
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
         {
@@ -1012,26 +1018,45 @@ public class MainActivity extends AppCompatActivity
         // FULL SCREEN operation based on preference settings
         if (key == null || PREF_FULLSCREEN.equals(key))
         {
+            ActionBar actionBar = getSupportActionBar();
             if (prefs.getBoolean(PREF_FULLSCREEN, false))
             {
-                // Hide the status bar and use the space
+                // Ultra-dark mode: hide status bar and make everything black
                 getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    // Make the app content draw behind the status bar
-                    getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+                    getWindow().setNavigationBarColor(Color.BLACK);
+                    // Also hide navigation bar for true full screen
                     getWindow().getDecorView().setSystemUiVisibility(
-                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
-                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+                        View.SYSTEM_UI_FLAG_FULLSCREEN
                     );
+                }
+                // Make the action bar black too
+                if (actionBar != null) {
+                    actionBar.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.BLACK));
                 }
             }
             else
             {
+                // Show the status bar and restore dark grey theme
                 getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+                    getWindow().setNavigationBarColor(Color.parseColor("#212121"));
                     getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
                 }
+                // Restore the action bar color
+                if (actionBar != null) {
+                    actionBar.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.parseColor("#212121")));
+                }
+            }
+        }
+
+        // Always set default colors in regular mode
+        if (!prefs.getBoolean(PREF_FULLSCREEN, false)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                getWindow().setStatusBarColor(Color.parseColor("#212121"));
+                getWindow().setNavigationBarColor(Color.parseColor("#212121"));
             }
         }
 

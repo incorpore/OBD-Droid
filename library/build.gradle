@@ -11,15 +11,6 @@ compileJava {
 
 sourceSets {
     main {
-        java {
-            exclude(
-                    'com/obddroid/common/res',
-                    'com/obddroid/pvs/gui',
-                    'com/obddroid/prot/gui',
-                    'com/obddroid/ecu/gui',
-                    'com/obddroid/ecu/prot/vag',
-            )
-        }
         resources {
             srcDirs("src/main/java")
             include('com/obddroid/ecu/prot/obd/res/*')

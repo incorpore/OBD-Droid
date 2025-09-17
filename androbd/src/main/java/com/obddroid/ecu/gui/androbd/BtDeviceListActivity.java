@@ -83,6 +83,13 @@ public class BtDeviceListActivity extends AppCompatActivity
 		// Apply fullscreen mode if enabled
 		if (fullScreenMode) {
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+				getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+				getWindow().getDecorView().setSystemUiVisibility(
+					View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+					View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+				);
+			}
 		}
 
 		// Set window background color

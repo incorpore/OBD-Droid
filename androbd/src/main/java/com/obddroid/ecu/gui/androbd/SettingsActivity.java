@@ -87,31 +87,43 @@ public class SettingsActivity
 		setTheme(R.style.AppTheme_NoActionBar);
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-		// Apply full screen based on preference
-		if(prefs.getBoolean(MainActivity.PREF_FULLSCREEN, false))
-		{
-			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-				getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-				getWindow().getDecorView().setSystemUiVisibility(
-					View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
-					View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-				);
-			}
-		}
-
-		// Set status bar and navigation bar colors to match the toolbar
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			getWindow().setStatusBarColor(Color.parseColor("#212121"));
-			getWindow().setNavigationBarColor(Color.parseColor("#212121"));
-		}
-
-		// Set the custom layout
+		// Set the custom layout first so we can access the toolbar
 		setContentView(R.layout.activity_settings);
 
 		// Set up custom toolbar
 		Toolbar toolbar = findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
+
+		// Apply full screen based on preference
+		if(prefs.getBoolean(MainActivity.PREF_FULLSCREEN, false))
+		{
+			// Ultra-dark mode
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+				getWindow().setNavigationBarColor(Color.BLACK);
+				getWindow().getDecorView().setSystemUiVisibility(
+					View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+					View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+					View.SYSTEM_UI_FLAG_FULLSCREEN
+				);
+			}
+			// Make the toolbar black
+			if (toolbar != null) {
+				toolbar.setBackgroundColor(Color.BLACK);
+			}
+		}
+		else
+		{
+			// Set status bar and navigation bar colors to match the toolbar
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+				getWindow().setStatusBarColor(Color.parseColor("#212121"));
+				getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+			}
+			// Ensure toolbar is dark grey
+			if (toolbar != null) {
+				toolbar.setBackgroundColor(Color.parseColor("#212121"));
+			}
+		}
 
 		// Configure ActionBar - hide default title since we have custom TextView
 		ActionBar actionBar = getSupportActionBar();
@@ -413,23 +425,34 @@ public class SettingsActivity
 			// Apply full screen changes instantly
 			if(MainActivity.PREF_FULLSCREEN.equals(key))
 			{
+				Toolbar toolbar = getActivity().findViewById(R.id.toolbar);
 				if(sharedPreferences.getBoolean(MainActivity.PREF_FULLSCREEN, false))
 				{
+					// Ultra-dark mode
 					getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-						getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+						getActivity().getWindow().setNavigationBarColor(Color.BLACK);
 						getActivity().getWindow().getDecorView().setSystemUiVisibility(
-							View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
-							View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+							View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+							View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+							View.SYSTEM_UI_FLAG_FULLSCREEN
 						);
+					}
+					// Make the toolbar black
+					if (toolbar != null) {
+						toolbar.setBackgroundColor(Color.BLACK);
 					}
 				}
 				else
 				{
 					getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-						getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+						getActivity().getWindow().setNavigationBarColor(Color.parseColor("#212121"));
 						getActivity().getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+					}
+					// Restore toolbar color
+					if (toolbar != null) {
+						toolbar.setBackgroundColor(Color.parseColor("#212121"));
 					}
 				}
 			}

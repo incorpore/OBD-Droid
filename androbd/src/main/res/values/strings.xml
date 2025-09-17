@@ -286,8 +286,8 @@ period of time while the ECU recalibrates itself.
     </string-array>
     <string name="comm_baudrate">Baud Rate</string>
     <string name="comm_baudrate_description">USB serial communication speed (bits per second)</string>
-    <string name="full_screen_display">Full Screen Mode</string>
-    <string name="full_screen_display_description">Hide system status bar for maximum screen space</string>
+    <string name="full_screen_display">Immersive Mode</string>
+    <string name="full_screen_display_description">Hide system bars for ultra-dark immersive experience</string>
     <string name="display_color">Display color</string>
     <string name="customize_display">Customize data display</string>
     <string name="display_range">Display range</string>
