@@ -60,8 +60,8 @@ period of time while the ECU recalibrates itself.
     <string name="share">share</string>
     <string name="time">Time [s]</string>
     <string name="chart">Chart</string>
-    <string name="demo_stopped">DEMO mode stopped</string>
-    <string name="demo_started">DEMO mode started</string>
+    <string name="demo_stopped">Device connection was lost</string>
+    <string name="demo_started">Connected to Demo Adapter</string>
     <string name="demo_mode">Demo Mode</string>
     <string name="snapshot">snapshot</string>
     <string name="save">Save Data</string>
