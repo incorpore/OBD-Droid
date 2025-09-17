@@ -14,9 +14,9 @@
     <string name="obd_none">NO service</string>
     <string name="obd_services">Services</string>
     <string name="obd_veh_info">Vehicle Info</string>
-    <string name="obd_data">Data</string>
+    <string name="obd_data">Live Data</string>
     <string name="service_freezeframes">Freeze Frames</string>
-    <string name="service_testcontrol">Test Control</string>
+    <string name="service_testcontrol">Test Suite</string>
     <string name="obd_codes">Fault Codes</string>
     <string name="obd_permanentcodes">Fault Codes (Permanent)</string>
     <string name="obd_pendingcodes">Fault Codes (Pending)</string>
