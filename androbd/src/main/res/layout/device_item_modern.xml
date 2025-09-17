@@ -14,7 +14,7 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:src="@android:drawable/stat_sys_data_bluetooth"
-        android:tint="?android:attr/colorAccent"
+        android:tint="#2196F3"
         android:layout_marginEnd="16dp"
         android:layout_gravity="center_vertical"/>
 

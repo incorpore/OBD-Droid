@@ -5,53 +5,38 @@
     android:orientation="vertical"
     android:background="@drawable/dialog_background">
 
-    <!-- Header with device icon -->
-    <LinearLayout
+    <!-- Subtle header -->
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="#2196F3"
-        android:padding="20dp"
-        android:gravity="center_vertical">
-
-        <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/action_connect"
-            android:tint="@android:color/white"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Device Details"
-            android:textColor="@android:color/white"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginStart="16dp"/>
-
-    </LinearLayout>
+        android:text="Device Details"
+        android:textColor="#212121"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:padding="16dp"
+        android:paddingBottom="8dp"/>
 
     <!-- Device info content -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="12dp">
 
-        <!-- Nickname section with card background -->
+        <!-- Nickname section - more prominent -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="#F5F5F5"
-            android:padding="12dp"
             android:layout_marginBottom="16dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Device Nickname"
-                android:textSize="12sp"
+                android:text="Nickname"
+                android:textSize="14sp"
                 android:textColor="#757575"
                 android:layout_marginBottom="4dp"/>
 
@@ -60,17 +45,17 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Device Name"
-                android:textSize="18sp"
-                android:textColor="#2196F3"
+                android:textSize="20sp"
+                android:textColor="#424242"
                 android:textStyle="bold"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Long press to edit"
-                android:textSize="10sp"
-                android:textColor="#9E9E9E"
-                android:layout_marginTop="2dp"/>
+                android:textSize="12sp"
+                android:textColor="#757575"
+                android:fontFamily="sans-serif-light"/>
 
         </LinearLayout>
 
@@ -83,57 +68,54 @@
             <!-- Info rows will be added programmatically -->
         </LinearLayout>
 
-        <!-- Status section -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- Status section - more subtle -->
+        <TextView
+            android:id="@+id/status_indicator"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="16dp"
-            android:padding="12dp"
-            android:background="#F5F5F5">
-
-            <TextView
-                android:id="@+id/status_indicator"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="● Ready to Connect"
-                android:textSize="14sp"
-                android:textColor="#FF9800"
-                android:textStyle="bold"/>
-
-        </LinearLayout>
+            android:text="● Ready to Connect"
+            android:textSize="13sp"
+            android:textColor="#757575"
+            android:layout_marginTop="8dp"/>
 
     </LinearLayout>
 
-    <!-- Button bar with centered buttons -->
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"/>
+
+    <!-- Button bar - more compact and subtle -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center"
-        android:padding="16dp"
-        android:paddingBottom="20dp">
+        android:gravity="end"
+        android:padding="8dp">
 
         <Button
             android:id="@+id/btn_cancel"
-            android:layout_width="120dp"
-            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
             android:text="Cancel"
             android:textColor="#757575"
+            android:textSize="14sp"
             android:background="?android:attr/selectableItemBackground"
-            android:padding="12dp"
-            android:layout_marginEnd="16dp"/>
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginEnd="8dp"/>
 
         <Button
             android:id="@+id/btn_connect"
-            android:layout_width="120dp"
-            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
             android:text="Connect"
             android:textColor="@android:color/white"
-            android:textStyle="bold"
-            android:background="@drawable/button_primary"
-            android:padding="12dp"/>
+            android:textSize="14sp"
+            android:background="@drawable/button_subtle"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"/>
 
     </LinearLayout>
 

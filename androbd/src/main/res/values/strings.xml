@@ -79,10 +79,10 @@ period of time while the ECU recalibrates itself.
     <!-- Settings -->
     <string name="settings">Settings</string>
     <string name="common_settings">General Settings</string>
-    <string name="measure_system_description">Choose between metric and imperial units</string>
+    <string name="measure_system_description">Controls units for speed, temperature, pressure, distance, and air flow</string>
     <string name="measure_system">Measurement Units</string>
-    <string name="metric">metric</string>
-    <string name="imperial">imperial</string>
+    <string name="metric">Metric (km/h, °C, kPa, km)</string>
+    <string name="imperial">Imperial (mph, °F, PSI, miles)</string>
     <string-array name="measure_options" translatable="false">
         <item>@string/metric</item>
         <item>@string/imperial</item>
