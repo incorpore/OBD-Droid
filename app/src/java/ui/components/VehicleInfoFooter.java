@@ -10,10 +10,12 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.obddroid.api.nhtsa.VehicleData;
+import com.obddroid.utils.CarLogoHelper;
 import com.obddroid.vehicle.VehicleManager;
 
 /**
@@ -25,6 +27,8 @@ public class VehicleInfoFooter extends LinearLayout
     private static final String TAG = "VehicleInfoFooter";
 
     private TextView manufacturerIcon;
+    private ImageView manufacturerLogo;
+    private LinearLayout iconContainer;
     private TextView vehicleInfo;
     private TextView connectionStatus;
     private View divider;
@@ -35,6 +39,7 @@ public class VehicleInfoFooter extends LinearLayout
     private boolean isExpanded = false;
     private VehicleData currentVehicleData;
     private View expandIndicator;
+    private View statusDot;
 
     public VehicleInfoFooter(Context context)
     {
@@ -81,7 +86,7 @@ public class VehicleInfoFooter extends LinearLayout
         addView(contentLayout, contentParams);
 
         // Create manufacturer icon container with circular background
-        LinearLayout iconContainer = new LinearLayout(getContext());
+        iconContainer = new LinearLayout(getContext());
         iconContainer.setGravity(Gravity.CENTER);
         iconContainer.setBackgroundResource(android.R.drawable.ic_menu_compass);
         iconContainer.getBackground().setTint(Color.parseColor("#2C2C2C"));
@@ -91,13 +96,25 @@ public class VehicleInfoFooter extends LinearLayout
         );
         iconContainerParams.rightMargin = dpToPx(12);
 
-        // Create manufacturer icon text
+        // Create manufacturer logo ImageView
+        manufacturerLogo = new ImageView(getContext());
+        manufacturerLogo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        manufacturerLogo.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+        manufacturerLogo.setVisibility(View.GONE);
+
+        // Create manufacturer icon text (fallback when no logo)
         manufacturerIcon = new TextView(getContext());
         manufacturerIcon.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
         manufacturerIcon.setTextColor(Color.parseColor("#00ACC1")); // Cyan accent
         manufacturerIcon.setTypeface(Typeface.DEFAULT_BOLD);
         manufacturerIcon.setGravity(Gravity.CENTER);
         manufacturerIcon.setText("?");
+
+        // Add both to container (we'll show one at a time)
+        iconContainer.addView(manufacturerLogo, new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.MATCH_PARENT
+        ));
         iconContainer.addView(manufacturerIcon, new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.MATCH_PARENT
@@ -149,9 +166,10 @@ public class VehicleInfoFooter extends LinearLayout
         expandParams.gravity = Gravity.CENTER_VERTICAL;
         contentLayout.addView(expandIndicator, expandParams);
 
-        // Create status indicator dot
-        View statusDot = new View(getContext());
+        // Create status indicator dot (green circle for connectivity)
+        statusDot = new View(getContext());
         statusDot.setBackgroundResource(android.R.drawable.presence_offline);
+        statusDot.getBackground().setTint(Color.parseColor("#888888")); // Gray when disconnected
         LinearLayout.LayoutParams dotParams = new LinearLayout.LayoutParams(
             dpToPx(8),
             dpToPx(8)
@@ -199,6 +217,9 @@ public class VehicleInfoFooter extends LinearLayout
                     vehicleInfo.setText("VIN: " + vin);
                     connectionStatus.setText("Decoding vehicle information...");
                     connectionStatus.setTextColor(Color.parseColor("#FFA726")); // Orange for loading
+                    if (statusDot != null) {
+                        statusDot.getBackground().setTint(Color.parseColor("#FFA726")); // Orange while loading
+                    }
                 });
             }
 
@@ -222,12 +243,18 @@ public class VehicleInfoFooter extends LinearLayout
                         expandedContentLayout.setVisibility(View.GONE);
                     }
 
+                    // Reset logo/icon
+                    manufacturerLogo.setVisibility(View.GONE);
+                    manufacturerIcon.setVisibility(View.VISIBLE);
                     manufacturerIcon.setText("?");
                     manufacturerIcon.setTextColor(Color.parseColor("#666666"));
                     vehicleInfo.setText("No Vehicle Connected");
                     connectionStatus.setText("Waiting for OBD connection...");
                     connectionStatus.setTextColor(Color.parseColor("#888888"));
                     expandIndicator.setVisibility(View.GONE);
+                    if (statusDot != null) {
+                        statusDot.getBackground().setTint(Color.parseColor("#888888")); // Gray when disconnected
+                    }
                 });
             }
         };
@@ -454,12 +481,16 @@ public class VehicleInfoFooter extends LinearLayout
             currentVehicleData = vehicleData;
             expandIndicator.setVisibility(View.VISIBLE);
 
-            // Set manufacturer icon (first letter of make)
+            // Try to set manufacturer logo first
             String make = vehicleData.make;
-            if (make != null && !make.isEmpty())
-            {
+
+            // For now, just show the first letter until logos are properly integrated
+            if (make != null && !make.isEmpty()) {
+                // Show first letter
                 manufacturerIcon.setText(make.substring(0, 1).toUpperCase());
                 manufacturerIcon.setTextColor(Color.parseColor("#00ACC1")); // Cyan when connected
+                manufacturerIcon.setVisibility(View.VISIBLE);
+                manufacturerLogo.setVisibility(View.GONE);
             }
 
             // Build vehicle info text
@@ -498,6 +529,11 @@ public class VehicleInfoFooter extends LinearLayout
                 connectionStatus.setText("Connected • VIN: " + vin.substring(vin.length() - 6));
             }
             connectionStatus.setTextColor(Color.parseColor("#4CAF50")); // Green when connected
+
+            // Update status dot to green when connected
+            if (statusDot != null) {
+                statusDot.getBackground().setTint(Color.parseColor("#4CAF50")); // Green when connected
+            }
 
             // Update expanded content if currently expanded
             if (isExpanded) {
