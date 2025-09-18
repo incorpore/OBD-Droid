@@ -393,15 +393,16 @@ public class MainActivity extends AppCompatActivity
                         evt = (PropertyChangeEvent) msg.obj;
                         ElmProt.STAT state = (ElmProt.STAT) evt.getNewValue();
 
-                        // Don't update status for NODATA/CONNECTING states when in fault codes mode
-                        // as "NO DATA" is normal response when there are no fault codes
+                        // Check if we should skip status updates for fault codes mode
+                        boolean skipStatusUpdate = false;
                         if (CommService.elm != null &&
                             (CommService.elm.getService() == ObdProt.OBD_SVC_READ_CODES ||
                              CommService.elm.getService() == ObdProt.OBD_SVC_PENDINGCODES ||
                              CommService.elm.getService() == ObdProt.OBD_SVC_PERMACODES) &&
                             (state == ElmProt.STAT.NODATA || state == ElmProt.STAT.CONNECTING)) {
                             // Skip status update for these states in fault codes mode
-                            return;
+                            // as "NO DATA" is normal response when there are no fault codes
+                            skipStatusUpdate = true;
                         }
 
                         ecuConnectionState = state; // Track ECU connection state
@@ -410,7 +411,7 @@ public class MainActivity extends AppCompatActivity
                         VehicleManager.getInstance().setECUConnectionState(state);
 
                         /* Show ELM status only in ONLINE mode */
-                        if (getMode() != MODE.DEMO)
+                        if (getMode() != MODE.DEMO && !skipStatusUpdate)
                         {
                             // Don't overwrite "ECU selected" status when state changes to CONNECTED
                             if (!(ecuUserSelected && state == ElmProt.STAT.CONNECTED)) {
