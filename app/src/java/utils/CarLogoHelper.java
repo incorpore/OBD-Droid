@@ -3,6 +3,7 @@ package com.obddroid.utils;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -79,36 +80,52 @@ public class CarLogoHelper {
      */
     public static Bitmap getLogoBitmap(Context context, String manufacturer) {
         if (manufacturer == null || manufacturer.isEmpty()) {
+            Log.d("CarLogoHelper", "Manufacturer is null or empty");
             return null;
         }
 
         // Convert to uppercase for case-insensitive lookup
         String upperMake = manufacturer.toUpperCase().trim();
+        Log.d("CarLogoHelper", "Looking for logo for: " + upperMake);
 
         // Direct lookup
         String logoFile = LOGO_MAP.get(upperMake);
+        Log.d("CarLogoHelper", "Direct lookup result: " + logoFile);
 
-        // Try partial matches if no direct match
+        // Try partial matches if no direct match - be less strict
         if (logoFile == null) {
+            // Remove common suffixes and special characters for better matching
+            String cleanedMake = upperMake.replaceAll("[-\\s]", "");  // Remove hyphens and spaces
+
             for (Map.Entry<String, String> entry : LOGO_MAP.entrySet()) {
-                if (upperMake.contains(entry.getKey()) || entry.getKey().contains(upperMake)) {
+                String cleanedKey = entry.getKey().replaceAll("[-\\s]", "");
+
+                // Check if either contains the other (after cleaning)
+                if (cleanedMake.contains(cleanedKey) || cleanedKey.contains(cleanedMake) ||
+                    upperMake.contains(entry.getKey()) || entry.getKey().contains(upperMake)) {
                     logoFile = entry.getValue();
+                    Log.d("CarLogoHelper", "Found partial match: " + entry.getKey() + " -> " + logoFile);
                     break;
                 }
             }
         }
 
         if (logoFile == null) {
+            Log.d("CarLogoHelper", "No logo mapping found for: " + upperMake);
             return null;
         }
 
         // Load bitmap from assets
         try {
+            Log.d("CarLogoHelper", "Loading logo file: car_logos/" + logoFile);
             InputStream is = context.getAssets().open("car_logos/" + logoFile);
             Bitmap bitmap = BitmapFactory.decodeStream(is);
             is.close();
+            Log.d("CarLogoHelper", "Logo loaded successfully, size: " +
+                (bitmap != null ? bitmap.getWidth() + "x" + bitmap.getHeight() : "null"));
             return bitmap;
         } catch (IOException e) {
+            Log.e("CarLogoHelper", "Error loading logo: " + logoFile, e);
             e.printStackTrace();
             return null;
         }

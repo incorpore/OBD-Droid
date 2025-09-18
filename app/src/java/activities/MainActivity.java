@@ -2330,7 +2330,14 @@ public class MainActivity extends AppCompatActivity
             listView.setOnItemLongClickListener(this);
             listView.setOnItemClickListener(this);
             listView.setMultiChoiceModeListener(this);
-            listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+            // Use CHOICE_MODE_NONE for fault codes to prevent greyed-out selection state
+            if (newObdService == ObdProt.OBD_SVC_READ_CODES ||
+                newObdService == ObdProt.OBD_SVC_PERMACODES ||
+                newObdService == ObdProt.OBD_SVC_PENDINGCODES) {
+                listView.setChoiceMode(ListView.CHOICE_MODE_NONE);
+            } else {
+                listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+            }
         }
 
         // Hide clear codes button by default (will be shown for fault codes)

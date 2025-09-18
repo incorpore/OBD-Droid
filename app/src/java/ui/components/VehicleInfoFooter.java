@@ -89,8 +89,8 @@ public class VehicleInfoFooter extends LinearLayout
         // Create manufacturer icon container with circular background
         iconContainer = new LinearLayout(getContext());
         iconContainer.setGravity(Gravity.CENTER);
-        iconContainer.setBackgroundResource(android.R.drawable.ic_menu_compass);
-        iconContainer.getBackground().setTint(Color.parseColor("#2C2C2C"));
+        // Simple dark background - no compass drawable
+        iconContainer.setBackgroundColor(Color.parseColor("#2C2C2C"));
         LinearLayout.LayoutParams iconContainerParams = new LinearLayout.LayoutParams(
             dpToPx(40),
             dpToPx(40)
@@ -100,7 +100,7 @@ public class VehicleInfoFooter extends LinearLayout
         // Create manufacturer logo ImageView
         manufacturerLogo = new ImageView(getContext());
         manufacturerLogo.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        manufacturerLogo.setPadding(dpToPx(3), dpToPx(3), dpToPx(3), dpToPx(3));
+        manufacturerLogo.setPadding(dpToPx(5), dpToPx(5), dpToPx(5), dpToPx(5));
         manufacturerLogo.setVisibility(View.GONE);
 
         // Create manufacturer icon text (fallback when no logo)
@@ -492,7 +492,7 @@ public class VehicleInfoFooter extends LinearLayout
                 manufacturerLogo.setVisibility(View.VISIBLE);
                 manufacturerIcon.setVisibility(View.GONE);
                 // Make background white for better logo visibility
-                iconContainer.getBackground().setTint(Color.parseColor("#FFFFFF"));
+                iconContainer.setBackgroundColor(Color.parseColor("#FFFFFF"));
             } else if (make != null && !make.isEmpty()) {
                 // No logo - show first letter as fallback
                 manufacturerIcon.setText(make.substring(0, 1).toUpperCase());
