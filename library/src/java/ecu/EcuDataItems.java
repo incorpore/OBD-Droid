@@ -1,6 +1,6 @@
 package ecu;
 
-import com.obddroid.prot.Messages;
+import prot.Messages;
 
 import java.io.BufferedReader;
 import java.io.IOException;

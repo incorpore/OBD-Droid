@@ -1,6 +1,6 @@
 package ecu;
 
-import com.obddroid.prot.Messages;
+import prot.Messages;
 
 import java.util.Map;
 import java.util.TreeMap;

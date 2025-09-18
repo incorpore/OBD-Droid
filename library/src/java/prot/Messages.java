@@ -1,6 +1,6 @@
 package prot;
 
-import com.obddroid.common.UTF8Bundle;
+import common.UTF8Bundle;
 
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;

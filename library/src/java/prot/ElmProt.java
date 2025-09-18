@@ -1,8 +1,8 @@
 package prot;
 
-import com.obddroid.prot.TelegramListener;
-import com.obddroid.prot.TelegramWriter;
-import com.obddroid.ecu.ObdCodeItem;
+import prot.TelegramListener;
+import prot.TelegramWriter;
+import ecu.ObdCodeItem;
 
 import java.beans.PropertyChangeEvent;
 import java.util.Arrays;

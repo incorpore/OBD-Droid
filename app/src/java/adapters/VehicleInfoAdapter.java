@@ -6,11 +6,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.obddroid.ecu.EcuDataPv;
+import ecu.EcuDataPv;
 import com.obddroid.api.nhtsa.VINDecoderService;
 import com.obddroid.api.nhtsa.VehicleData;
 import com.obddroid.vehicle.VehicleManager;
-import com.obddroid.pvs.PvList;
+import pvs.PvList;
 
 import java.util.Collection;
 import java.util.HashMap;

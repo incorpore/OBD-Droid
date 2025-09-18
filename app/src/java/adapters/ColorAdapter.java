@@ -6,7 +6,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.obddroid.ecu.EcuDataPv;
+import ecu.EcuDataPv;
 
 /**
  * Adapter to handle display colors of data items

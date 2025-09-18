@@ -1,7 +1,7 @@
 package ecu;
 
-import com.obddroid.common.UTF8Bundle;
-import com.obddroid.prot.Messages;
+import common.UTF8Bundle;
+import prot.Messages;
 
 import java.util.HashSet;
 import java.util.MissingResourceException;

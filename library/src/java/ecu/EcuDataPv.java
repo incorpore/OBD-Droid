@@ -1,6 +1,6 @@
 package ecu;
 
-import com.obddroid.pvs.IndexedProcessVar;
+import pvs.IndexedProcessVar;
 
 /**
  * Process variable which contains a single OBD data item

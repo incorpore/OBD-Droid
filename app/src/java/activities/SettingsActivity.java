@@ -24,9 +24,9 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.obddroid.ecu.EcuDataItem;
-import com.obddroid.prot.ElmProt;
-import com.obddroid.prot.ObdProt;
+import ecu.EcuDataItem;
+import prot.ElmProt;
+import prot.ObdProt;
 import com.obddroid.services.CommService;
 import com.obddroid.R;
 

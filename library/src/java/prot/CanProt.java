@@ -1,9 +1,9 @@
 package prot;
 
-import com.obddroid.ecu.Conversions;
-import com.obddroid.ecu.EcuDataPv;
-import com.obddroid.prot.ProtoHeader;
-import com.obddroid.pvs.PvList;
+import ecu.Conversions;
+import ecu.EcuDataPv;
+import prot.ProtoHeader;
+import pvs.PvList;
 
 import java.util.HashMap;
 import java.util.Iterator;

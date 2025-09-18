@@ -17,8 +17,8 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ListAdapter;
 
-import com.obddroid.ecu.EcuDataPv;
-import com.obddroid.prot.ObdProt;
+import ecu.EcuDataPv;
+import prot.ObdProt;
 
 import com.obddroid.ui.components.AutoHider;
 import com.obddroid.utils.ExportTask;

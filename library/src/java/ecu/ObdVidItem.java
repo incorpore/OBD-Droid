@@ -1,6 +1,6 @@
 package ecu;
 
-import com.obddroid.pvs.IndexedProcessVar;
+import pvs.IndexedProcessVar;
 
 /**
  * OBD Vehicle identification Item

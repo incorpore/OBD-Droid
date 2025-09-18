@@ -6,10 +6,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.obddroid.ecu.EcuCodeItem;
-import com.obddroid.prot.ObdProt;
-import com.obddroid.pvs.IndexedProcessVar;
-import com.obddroid.pvs.PvList;
+import ecu.EcuCodeItem;
+import prot.ObdProt;
+import pvs.IndexedProcessVar;
+import pvs.PvList;
 
 import java.util.Collection;
 import java.util.Objects;

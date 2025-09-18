@@ -1,6 +1,6 @@
 package ecu;
 
-import com.obddroid.pvs.PvLimits;
+import pvs.PvLimits;
 
 /**
  * Definition of a single OBD data conversion

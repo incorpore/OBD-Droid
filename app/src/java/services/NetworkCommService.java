@@ -5,7 +5,7 @@ package com.obddroid.services;
 import android.content.Context;
 import android.os.Handler;
 
-import com.obddroid.prot.StreamHandler;
+import prot.StreamHandler;
 
 import java.net.InetSocketAddress;
 import java.net.Socket;

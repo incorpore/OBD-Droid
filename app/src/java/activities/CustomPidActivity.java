@@ -13,8 +13,8 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.obddroid.ecu.EcuDataItem;
-import com.obddroid.ecu.EcuDataPv;
+import ecu.EcuDataItem;
+import ecu.EcuDataPv;
 
 import com.obddroid.adapters.ColorAdapter;
 import com.obddroid.R;

@@ -1,8 +1,8 @@
 package prot;
 
-import com.obddroid.ecu.EcuCodeItem;
-import com.obddroid.ecu.EcuDataPv;
-import com.obddroid.pvs.PvList;
+import ecu.EcuCodeItem;
+import ecu.EcuDataPv;
+import pvs.PvList;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;

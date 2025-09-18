@@ -1,6 +1,6 @@
 package prot;
 
-import com.obddroid.ecu.Conversions;
+import ecu.Conversions;
 
 /**
  * CAN protocol definition for Ford Focus 1.8 TDI (Experimental)

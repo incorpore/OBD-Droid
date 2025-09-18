@@ -11,13 +11,13 @@ import android.widget.ArrayAdapter;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.obddroid.ecu.Conversion;
-import com.obddroid.ecu.EcuDataItem;
-import com.obddroid.ecu.EcuDataPv;
-import com.obddroid.pvs.IndexedProcessVar;
-import com.obddroid.pvs.PvChangeEvent;
-import com.obddroid.pvs.PvChangeListener;
-import com.obddroid.pvs.PvList;
+import ecu.Conversion;
+import ecu.EcuDataItem;
+import ecu.EcuDataPv;
+import pvs.IndexedProcessVar;
+import pvs.PvChangeEvent;
+import pvs.PvChangeListener;
+import pvs.PvList;
 
 import org.achartengine.model.XYSeries;
 

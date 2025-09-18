@@ -1,15 +1,15 @@
-package com.obddroid.services;
+package services;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
-import com.obddroid.pvs.PvList;
-import com.obddroid.pvs.PvChangeEvent;
-import com.obddroid.pvs.PvChangeListener;
-import com.obddroid.prot.ObdProt;
-import com.obddroid.ecu.EcuDataPv;
+import pvs.PvList;
+import pvs.PvChangeEvent;
+import pvs.PvChangeListener;
+import prot.ObdProt;
+import ecu.EcuDataPv;
 
 /**
  * Service layer for managing OBD data independently of protocol state

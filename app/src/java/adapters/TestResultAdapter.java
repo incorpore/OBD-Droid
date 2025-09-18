@@ -6,8 +6,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.obddroid.ecu.EcuDataPv;
-import com.obddroid.pvs.PvList;
+import ecu.EcuDataPv;
+import pvs.PvList;
 
 import java.util.Collection;
 

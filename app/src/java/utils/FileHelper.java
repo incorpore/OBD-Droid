@@ -9,9 +9,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
 
-import com.obddroid.prot.ElmProt;
-import com.obddroid.prot.ObdProt;
-import com.obddroid.pvs.PvList;
+import prot.ElmProt;
+import prot.ObdProt;
+import pvs.PvList;
 
 import java.io.File;
 import java.io.FileOutputStream;
