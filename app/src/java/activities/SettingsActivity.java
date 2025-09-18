@@ -8,12 +8,12 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.EditTextPreference;
-import android.preference.ListPreference;
-import android.preference.MultiSelectListPreference;
-import android.preference.Preference;
-import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
+import androidx.preference.EditTextPreference;
+import androidx.preference.ListPreference;
+import androidx.preference.MultiSelectListPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceManager;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
@@ -147,7 +147,7 @@ public class SettingsActivity
 		});
 
 		// Display the fragment in the container
-		getFragmentManager().beginTransaction().replace(R.id.settings_container,
+		getSupportFragmentManager().beginTransaction().replace(R.id.settings_container,
 		                                                new PrefsFragment()).commit();
 	}
 
@@ -162,21 +162,24 @@ public class SettingsActivity
 		return super.onOptionsItemSelected(item);
 	}
 
-	@SuppressLint("ValidFragment")
-	public class PrefsFragment
-		extends PreferenceFragment
+	public static class PrefsFragment
+		extends PreferenceFragmentCompat
 		implements Preference.OnPreferenceClickListener,
 		SharedPreferences.OnSharedPreferenceChangeListener
 	{
 		Vector<EcuDataItem> items;
 
 		@Override
+		public void onCreatePreferences(Bundle savedInstanceState, String rootKey)
+		{
+			// Load the preferences from an XML resource
+			setPreferencesFromResource(R.xml.settings, rootKey);
+		}
+
+		@Override
 		public void onCreate(Bundle savedInstanceState)
 		{
 			super.onCreate(savedInstanceState);
-
-			// Load the preferences from an XML resource
-			addPreferencesFromResource(R.xml.settings);
 
 			// set up communication media selection
 			setupCommMediaSelection();
