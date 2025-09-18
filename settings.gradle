@@ -5,5 +5,5 @@ pluginManagement {
         maven { url 'https://jitpack.io' }
     }
 }
-include ':androbd', ':library'
+include ':app', ':library', ':library-enhanced'
 

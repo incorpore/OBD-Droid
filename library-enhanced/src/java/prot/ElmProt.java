@@ -1,8 +1,8 @@
-package com.obddroid.ecu.prot.obd;
+package com.obddroid.prot;
 
-import com.obddroid.ecu.prot.obd.DemoDataProvider;
 import com.obddroid.prot.TelegramListener;
 import com.obddroid.prot.TelegramWriter;
+import com.obddroid.ecu.ObdCodeItem;
 
 import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
@@ -1025,9 +1025,9 @@ public class ElmProt
 	
 	// switch to exit the demo thread
 	public static boolean runDemo;
-	// Demo data provider for realistic demo mode
-	private DemoDataProvider demoProvider;
-	
+	// flag to track if demo codes have been cleared
+	private static boolean demoCodesCleared = false;
+
 	/**
 	 * run threaded loop to simulate incoming telegrams
 	 */
@@ -1036,10 +1036,7 @@ public class ElmProt
 		int value = 0;
 		Integer pid;
 		runDemo = true;
-
-		// Initialize demo data provider
-		demoProvider = DemoDataProvider.getInstance();
-		demoProvider.reset();  // Reset on connection
+		demoCodesCleared = false; // Reset cleared state when demo starts
 
 		log.info("ELM DEMO thread started");
 		while (runDemo)
@@ -1070,21 +1067,48 @@ public class ElmProt
 					{
 						// read any kinds of trouble codes
 						case OBD_SVC_READ_CODES:
-						case OBD_SVC_PENDINGCODES:
-						case OBD_SVC_PERMACODES:
-							// Use DemoDataProvider for realistic fault codes
-							String[] faultResponses = demoProvider.getFaultCodesResponse(service);
-							for (String response : faultResponses) {
-								handleTelegram(response.toCharArray());
+							if (demoCodesCleared) {
+								// If codes were cleared, report 0 codes + MIL OFF
+								handleTelegram("4300".toCharArray());
+							} else {
+								// Remove P0000 when we have actual codes
+								ObdProt.tCodes.remove(0);
+								// Simulate 5 fault codes + MIL ON
+								// Format: 43 05 (service + count) followed by codes
+								// P0171, P0301, P0420, P0442, P0128
+								handleTelegram("430501710301042004420128".toCharArray());
 							}
 							Thread.sleep(500);
 							break;
 
+						case OBD_SVC_PENDINGCODES:
+							if (demoCodesCleared) {
+								// When cleared, respond with 0 codes
+								handleTelegram("4700".toCharArray());
+								Thread.sleep(500);
+							}
+							// When codes exist, skip this service entirely
+							break;
+
+						case OBD_SVC_PERMACODES:
+							if (demoCodesCleared) {
+								// When cleared, respond with 0 codes
+								handleTelegram("4A00".toCharArray());
+								Thread.sleep(500);
+							}
+							// When codes exist, skip this service entirely
+							break;
+
+						// handle clear codes request
 						case OBD_SVC_CLEAR_CODES:
-							// Handle clear codes in demo mode
-							String clearResponse = demoProvider.handleClearCodes();
-							handleTelegram(clearResponse.toCharArray());
-							log.info("DEMO: Fault codes cleared");
+							// Mark codes as cleared in demo mode
+							demoCodesCleared = true;
+							// Clear the codes list immediately
+							ObdProt.tCodes.clear();
+							// Add "no codes" message
+							ObdProt.tCodes.put(0, new ObdCodeItem(0, "No trouble codes set"));
+							// Send positive response for clear codes
+							handleTelegram("44".toCharArray());
 							Thread.sleep(500);
 							break;
 						
@@ -1094,25 +1118,29 @@ public class ElmProt
 							pid = getNextSupportedPid();
 							if (pid != 0)
 							{
-								// Use DemoDataProvider for realistic PID values
-								String pidResponse = demoProvider.getPidValue(pid, service);
-								handleTelegram(pidResponse.toCharArray());
+								value++;
+								value &= 0xFF;
+								// format new data message and handle it as new reception
+								handleTelegram(String.format(
+									service == OBD_SVC_DATA ? "4%X%02X%02X%02X%02X%02X"
+									                        : "4%X%02X00%02X%02X%02X%02X",
+									service, pid, value, value, value, value).toCharArray());
 							}
 							else
 							{
-								// simulate "ALL PIDs supported"
+								// simulate "ALL PIDs supported" for both services
 								int i;
 								for (i = 0; i < 0xE0; i += 0x20)
 								{
 									handleTelegram(String.format(
 										service == OBD_SVC_DATA ? "4%X%02XFFFFFFFF"
-										                        : "4%X%02X00FFFFFFFF", service, i)
-										               .toCharArray());
+										                        : "4%X%02X00FFFFFFFF",
+										service, i).toCharArray());
 								}
 								handleTelegram(String.format(
 									service == OBD_SVC_DATA ? "4%X%02XFFFFFFFE"
-									                        : "4%X%02X00FFFFFFFE", service, i)
-									               .toCharArray());
+									                        : "4%X%02X00FFFFFFFE",
+									service, i).toCharArray());
 							}
 							break;
 						
@@ -1164,10 +1192,6 @@ public class ElmProt
 			{
 				log.severe(ex.getLocalizedMessage());
 			}
-		}
-		// Reset demo provider when disconnecting
-		if (demoProvider != null) {
-			demoProvider.reset();
 		}
 		log.info("ELM DEMO thread finished");
 	}

@@ -1,0 +1,72 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+android {
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.obddroid'
+        minSdkVersion 17
+        //noinspection ExpiredTargetSdkVersion
+        targetSdkVersion 25
+        versionCode 20616
+        versionName 'OBDroid'
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        lintOptions {
+            // Override lint error on targetSdkVersion
+            abortOnError false
+        }
+
+        compileOptions {
+            sourceCompatibility JavaVersion.VERSION_17
+            targetCompatibility JavaVersion.VERSION_17
+        }
+
+        kotlinOptions {
+            jvmTarget = "17" // Ensure consistency with JavaVersion.VERSION_17
+        }
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs = ['src/java']
+            res.srcDirs = ['src/res']
+            manifest.srcFile 'src/AndroidManifest.xml'
+        }
+    }
+
+    applicationVariants.configureEach { variant ->
+        variant.resValue "string", "app_version", variant.versionName
+    }
+
+    buildTypes {
+        release {
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+
+    productFlavors {
+    }
+    lint {
+        abortOnError false
+    }
+    namespace 'com.obddroid'
+}
+
+dependencies {
+    // Use enhanced library instead of original
+    // implementation project(':library')
+    implementation project(':library-enhanced')
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.github.mik3y:usb-serial-for-android:3.9.0'
+    implementation 'com.github.anastr:speedviewlib:1.6.1'
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+
+    // NHTSA VIN Decoder API dependencies
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
+}
