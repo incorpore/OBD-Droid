@@ -62,10 +62,19 @@ public class FileHelper
 	 */
 	public static String getPath(Context context)
 	{
-		// generate file name
-		return Environment.getExternalStorageDirectory()
-			+ File.separator
-			+ context.getPackageName();
+		// Use app-specific external directory for Android 10+ (no permissions needed)
+		File documentsDir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
+		if (documentsDir != null)
+		{
+			return documentsDir.getAbsolutePath();
+		}
+		else
+		{
+			// Fallback to internal storage if external not available
+			File internalDir = new File(context.getFilesDir(), "documents");
+			internalDir.mkdirs();
+			return internalDir.getAbsolutePath();
+		}
 	}
 
 	/**

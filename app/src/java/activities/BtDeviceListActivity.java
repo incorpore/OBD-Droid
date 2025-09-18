@@ -1,5 +1,7 @@
 package com.obddroid.activities;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -7,6 +9,7 @@ import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Build;
@@ -34,6 +37,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.obddroid.adapters.ModernDeviceAdapter;
 import com.obddroid.R;
+import com.obddroid.utils.PermissionManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -113,6 +117,12 @@ public class BtDeviceListActivity extends AppCompatActivity
 		// Get the local Bluetooth adapter
 		mBtAdapter = BluetoothAdapter.getDefaultAdapter();
 
+		// Check if we have Bluetooth permissions for Android 12+
+		if (!PermissionManager.hasBluetoothPermissions(this)) {
+			// Request permissions
+			PermissionManager.requestBluetoothPermissions(this);
+		}
+
 		// Initialize modern adapter
 		modernAdapter = new ModernDeviceAdapter(this);
 
@@ -167,7 +177,23 @@ public class BtDeviceListActivity extends AppCompatActivity
 		}
 
 		// Get a set of currently paired devices
-		Set<BluetoothDevice> pairedDevices = mBtAdapter.getBondedDevices();
+		Set<BluetoothDevice> pairedDevices = null;
+		try {
+			// Android 12+ requires BLUETOOTH_CONNECT permission
+			if (PermissionManager.hasBluetoothPermissions(this)) {
+				@SuppressLint("MissingPermission")
+				Set<BluetoothDevice> devices = mBtAdapter.getBondedDevices();
+				pairedDevices = devices;
+			} else {
+				log.log(Level.WARNING, "No Bluetooth permissions to get bonded devices");
+				showEmptyState();
+				return;
+			}
+		} catch (SecurityException e) {
+			log.log(Level.WARNING, "SecurityException getting bonded devices - missing BLUETOOTH_CONNECT", e);
+			showEmptyState();
+			return;
+		}
 
 		// If there are paired devices, add each one to the ArrayAdapter
 		if (pairedDevices.size() > 0)
@@ -337,8 +363,14 @@ public class BtDeviceListActivity extends AppCompatActivity
 					@Override
 					public void onClick(View v) {
 						// Cancel discovery because it's costly and we're about to connect
-						if (mBtAdapter != null) {
-							mBtAdapter.cancelDiscovery();
+						if (mBtAdapter != null && PermissionManager.hasBluetoothPermissions(BtDeviceListActivity.this)) {
+							try {
+								@SuppressLint("MissingPermission")
+								boolean cancelled = mBtAdapter.cancelDiscovery();
+								log.log(Level.FINE, "Discovery cancelled: " + cancelled);
+							} catch (SecurityException e) {
+								log.log(Level.WARNING, "Cannot cancel discovery - missing BLUETOOTH_SCAN permission", e);
+							}
 						}
 
 						// Create the result Intent and include the MAC address
@@ -439,5 +471,26 @@ public class BtDeviceListActivity extends AppCompatActivity
 		valueView.setTextColor(Color.parseColor("#424242"));
 		valueView.setPadding(0, 0, 0, 0);
 		container.addView(valueView);
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+		if (requestCode == PermissionManager.PERMISSION_REQUEST_BLUETOOTH) {
+			if (PermissionManager.handlePermissionResult(requestCode, permissions, grantResults)) {
+				// Permissions granted, refresh the device list
+				recreate();
+			} else {
+				// Permissions denied
+				Toast.makeText(this, "Bluetooth permissions are required to scan for devices", Toast.LENGTH_LONG).show();
+				if (PermissionManager.shouldShowBluetoothRationale(this)) {
+					PermissionManager.showBluetoothRationale(this);
+				} else if (PermissionManager.isBluetoothPermissionPermanentlyDenied(this)) {
+					PermissionManager.showSettingsDialog(this,
+						"Bluetooth permission is required to connect to OBD adapters");
+				}
+			}
+		}
 	}
 }

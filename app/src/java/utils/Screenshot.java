@@ -1,9 +1,14 @@
 package com.obddroid.utils;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Toast;
 
@@ -21,7 +26,7 @@ public class Screenshot
 	
 	/**
 	 * Take a screenshot of selected view in selected context and save on external
-	 * storage as filename <AppName>_<TimeStamp>.jpeg
+	 * storage as filename <AppName>_<TimeStamp>.png
 	 *
 	 * @param context context of view
 	 * @param view    view to be saved
@@ -30,31 +35,70 @@ public class Screenshot
 	{
 		// get Bitmap from the view
 		Bitmap bitmap = loadBitmapFromView(view);
-		// generate file name
-		String mPath = Environment.getExternalStorageDirectory()
-			+ File.separator
-			+ context.getPackageName() + "."
-			+ System.currentTimeMillis()
-			+ ".png";
-		File imageFile = new File(mPath);
+		String fileName = context.getPackageName() + "." + System.currentTimeMillis() + ".png";
+		String savedPath = null;
 
 		try
 		{
-			// compress the bitmap to PNG file
-			OutputStream fout = new FileOutputStream(imageFile);
-			bitmap.compress(Bitmap.CompressFormat.PNG, 90, fout);
-			// show notification
-			Toast.makeText(context, "Screenshot saved: " + mPath, Toast.LENGTH_SHORT).show();
-			log.info("Screenshot saved: " + mPath);
+			OutputStream fout;
 
-			fout.flush();
-			fout.close();
-		} catch (FileNotFoundException e)
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+			{
+				// Android 10+ - Use MediaStore API for public Pictures directory
+				ContentResolver resolver = context.getContentResolver();
+				ContentValues contentValues = new ContentValues();
+				contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+				contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/png");
+				contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/" + context.getPackageName());
+
+				Uri imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+				if (imageUri != null)
+				{
+					fout = resolver.openOutputStream(imageUri);
+					savedPath = "Pictures/" + context.getPackageName() + "/" + fileName;
+				}
+				else
+				{
+					throw new IOException("Failed to create MediaStore entry");
+				}
+			}
+			else
+			{
+				// Android 9 and below - Use app-specific external storage
+				File picturesDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+				if (picturesDir != null)
+				{
+					File imageFile = new File(picturesDir, fileName);
+					fout = new FileOutputStream(imageFile);
+					savedPath = imageFile.getAbsolutePath();
+				}
+				else
+				{
+					throw new IOException("External storage not available");
+				}
+			}
+
+			// compress the bitmap to PNG file
+			if (fout != null)
+			{
+				bitmap.compress(Bitmap.CompressFormat.PNG, 90, fout);
+				fout.flush();
+				fout.close();
+
+				// show notification
+				Toast.makeText(context, "Screenshot saved: " + savedPath, Toast.LENGTH_SHORT).show();
+				log.info("Screenshot saved: " + savedPath);
+			}
+		}
+		catch (FileNotFoundException e)
 		{
 			log.log(Level.SEVERE, "ScreenShot", e);
-		} catch (IOException e)
+			Toast.makeText(context, "Failed to save screenshot: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+		}
+		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "ScreenShot", e);
+			Toast.makeText(context, "Failed to save screenshot: " + e.getMessage(), Toast.LENGTH_SHORT).show();
 		}
 	}
 

@@ -5,10 +5,12 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
+import android.os.Build;
 import android.os.Handler;
 import android.os.ParcelUuid;
 
 import com.obddroid.prot.StreamHandler;
+import com.obddroid.utils.PermissionManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,15 +41,34 @@ public class BluetoothCommService extends CommService
 	 * @param context The UI Activity Context
 	 * @param handler A Handler to send messages back to the UI Activity
 	 */
+	@SuppressLint("MissingPermission")
 	public BluetoothCommService(Context context, Handler handler)
 	{
 		super(context, handler);
 
-		// Always cancel discovery because it will slow down a connection
-		// Member fields
-		BluetoothAdapter mAdapter = BluetoothAdapter.getDefaultAdapter();
-		mAdapter.cancelDiscovery();
-		
+		// Check if we have Bluetooth permissions
+		if (!PermissionManager.hasBluetoothPermissions(context)) {
+			log.log(Level.WARNING, "Bluetooth permissions not granted");
+			// Still continue setup but operations will fail
+		}
+
+		try {
+			// Always cancel discovery because it will slow down a connection
+			BluetoothAdapter mAdapter = BluetoothAdapter.getDefaultAdapter();
+			if (mAdapter != null && PermissionManager.hasBluetoothPermissions(context)) {
+				// Only cancel discovery if we have permission
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+					// Android 12+ requires BLUETOOTH_SCAN permission
+					mAdapter.cancelDiscovery();
+				} else {
+					// Older versions can cancel without runtime permission
+					mAdapter.cancelDiscovery();
+				}
+			}
+		} catch (SecurityException e) {
+			log.log(Level.WARNING, "Cannot cancel discovery - missing Bluetooth permission", e);
+		}
+
 		// set up protocol handlers
 		elm.addTelegramWriter(ser);
 		ser.setMessageHandler(elm);
@@ -204,6 +225,7 @@ public class BluetoothCommService extends CommService
 		private BluetoothSocket mmSocket;
 		private final String mSocketType;
 
+		@SuppressLint("MissingPermission")
 		BtConnectThread(BluetoothDevice device, boolean secure)
 		{
 			mmDevice = device;
@@ -213,11 +235,12 @@ public class BluetoothCommService extends CommService
 			// Modified to work with SPP Devices
 			final UUID SPP_UUID = UUID
 				.fromString("00001101-0000-1000-8000-00805F9B34FB");
-			
+
 			// Get a BluetoothSocket for a connection with the
 			// given BluetoothDevice
 			try
 			{
+				// Android 12+ requires BLUETOOTH_CONNECT permission
 				if (secure)
 				{
 					tmp = device.createRfcommSocketToServiceRecord(SPP_UUID);
@@ -228,6 +251,9 @@ public class BluetoothCommService extends CommService
 			} catch (IOException e)
 			{
 				log.log(Level.SEVERE, "Socket Type: " + mSocketType + "create() failed", e);
+			} catch (SecurityException e)
+			{
+				log.log(Level.SEVERE, "Missing BLUETOOTH_CONNECT permission", e);
 			}
 			mmSocket = tmp;
 
@@ -239,26 +265,32 @@ public class BluetoothCommService extends CommService
 		 * @param socket Socket to log
 		 * @param msg Message to prepend the UUIDs
 		 */
+		@SuppressLint("MissingPermission")
 		private void logSocketUuids(BluetoothSocket socket, String msg)
 		{
 			if(log.isLoggable(Level.INFO))
 			{
-				StringBuilder message = new StringBuilder(msg);
-				// dump supported UUID's
-				message.append(" - UUIDs:");
-				ParcelUuid[] uuids = socket.getRemoteDevice().getUuids();
-				if(uuids != null)
-				{
-					for (ParcelUuid uuid: uuids)
+				try {
+					StringBuilder message = new StringBuilder(msg);
+					// dump supported UUID's
+					message.append(" - UUIDs:");
+					// Android 12+ requires BLUETOOTH_CONNECT permission
+					ParcelUuid[] uuids = socket.getRemoteDevice().getUuids();
+					if(uuids != null)
 					{
-						message.append(uuid.getUuid().toString()).append(",");
+						for (ParcelUuid uuid: uuids)
+						{
+							message.append(uuid.getUuid().toString()).append(",");
+						}
 					}
+					else
+					{
+						message.append("NONE (Invalid BT implementation)");
+					}
+					log.log(Level.INFO, message.toString());
+				} catch (SecurityException e) {
+					log.log(Level.WARNING, "Cannot get UUIDs - missing BLUETOOTH_CONNECT permission");
 				}
-				else
-				{
-					message.append("NONE (Invalid BT implementation)");
-				}
-				log.log(Level.INFO, message.toString());
 			}
 		}
 		

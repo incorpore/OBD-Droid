@@ -5,9 +5,8 @@ android {
     compileSdk 34
     defaultConfig {
         applicationId 'com.obddroid'
-        minSdkVersion 17
-        //noinspection ExpiredTargetSdkVersion
-        targetSdkVersion 25
+        minSdkVersion 21
+        targetSdkVersion 34
         versionCode 20616
         versionName 'OBDroid'
 

@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
+    <!-- Legacy external storage for backward compatibility -->
     <external-path path="." name="external_storage_root" />
+
+    <!-- App-specific external storage (Documents) for data export -->
+    <external-files-path path="Documents/" name="documents" />
+
+    <!-- App-specific external storage (Pictures) for screenshots -->
+    <external-files-path path="Pictures/" name="pictures" />
+
+    <!-- App-specific external storage root -->
+    <external-files-path path="." name="external_files" />
+
+    <!-- Internal app storage -->
+    <files-path path="." name="internal_files" />
+
+    <!-- Internal cache for temporary files -->
+    <cache-path path="." name="cache" />
+
+    <!-- External cache -->
+    <external-cache-path path="." name="external_cache" />
 </paths>
