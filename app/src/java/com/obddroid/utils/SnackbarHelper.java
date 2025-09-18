@@ -10,8 +10,8 @@ import android.widget.TextView;
 import com.google.android.material.snackbar.Snackbar;
 
 /**
- * Helper class for displaying Snackbars at the top of the screen
- * to avoid conflict with VehicleInfoFooter at the bottom
+ * Helper class for displaying Snackbars positioned above the VehicleInfoFooter
+ * Appears at the bottom of the screen with proper margin to avoid overlapping the footer
  */
 public class SnackbarHelper {
 
@@ -33,12 +33,12 @@ public class SnackbarHelper {
     }
 
     /**
-     * Show a Snackbar at the TOP of the screen
+     * Show a Snackbar positioned above the VehicleInfoFooter
      * @param activity The current activity
      * @param message The message to display
      * @param type The type of message (affects color)
      */
-    public static void showTopSnackbar(Activity activity, String message, MessageType type) {
+    public static void showSnackbar(Activity activity, String message, MessageType type) {
         if (activity == null || activity.isFinishing()) {
             return;
         }
@@ -53,9 +53,6 @@ public class SnackbarHelper {
         // Style the Snackbar
         View snackbarView = snackbar.getView();
 
-        // Set background color based on type
-        snackbarView.setBackgroundColor(type.getColor());
-
         // Get the TextView and style it
         TextView textView = snackbarView.findViewById(com.google.android.material.R.id.snackbar_text);
         if (textView != null) {
@@ -63,11 +60,21 @@ public class SnackbarHelper {
             textView.setMaxLines(3);
         }
 
-        // Position at the TOP of the screen
+        // Position at the BOTTOM but above the VehicleInfoFooter
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) snackbarView.getLayoutParams();
-        params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-        params.setMargins(16, 80, 16, 0); // Top margin to avoid status bar
+        params.gravity = Gravity.BOTTOM;
+        params.width = FrameLayout.LayoutParams.MATCH_PARENT;
+        // Add bottom margin to appear above the VehicleInfoFooter (approximately 72dp + some padding)
+        float scale = activity.getResources().getDisplayMetrics().density;
+        int bottomMargin = (int) (72 * scale + 0.5f); // 72dp in pixels to sit flush on top of footer
+        params.setMargins(0, 0, 0, bottomMargin); // No side margins for full width
         snackbarView.setLayoutParams(params);
+
+        // Remove the default Snackbar rounded corners for flush appearance
+        snackbarView.setBackgroundResource(android.R.color.transparent);
+
+        // Create a rectangle background with the message type color
+        snackbarView.setBackgroundColor(type.getColor());
 
         // Add subtle elevation for modern look
         snackbarView.setElevation(6f);
@@ -80,27 +87,27 @@ public class SnackbarHelper {
      * Show an error message
      */
     public static void showError(Activity activity, String message) {
-        showTopSnackbar(activity, message, MessageType.ERROR);
+        showSnackbar(activity, message, MessageType.ERROR);
     }
 
     /**
      * Show a warning message
      */
     public static void showWarning(Activity activity, String message) {
-        showTopSnackbar(activity, message, MessageType.WARNING);
+        showSnackbar(activity, message, MessageType.WARNING);
     }
 
     /**
      * Show an info message
      */
     public static void showInfo(Activity activity, String message) {
-        showTopSnackbar(activity, message, MessageType.INFO);
+        showSnackbar(activity, message, MessageType.INFO);
     }
 
     /**
      * Show a success message
      */
     public static void showSuccess(Activity activity, String message) {
-        showTopSnackbar(activity, message, MessageType.SUCCESS);
+        showSnackbar(activity, message, MessageType.SUCCESS);
     }
 }

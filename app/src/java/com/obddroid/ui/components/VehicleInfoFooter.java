@@ -269,7 +269,7 @@ public class VehicleInfoFooter extends LinearLayout
                     // Clear connected flag since we don't have VIN
                     isConnected = false;
                     currentVehicleData = null;
-                    // Only now show Mode 9 not supported message
+                    // Update display without showing repeated notifications
                     updateConnectionDisplay();
                 });
             }

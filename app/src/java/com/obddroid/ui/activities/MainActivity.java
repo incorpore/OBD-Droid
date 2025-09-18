@@ -445,8 +445,11 @@ public class MainActivity extends AppCompatActivity
 
                             // Check if this is a Mode 9 (Vehicle Info) failure
                             if (nrc.code == 0x12 && CommService.elm.getService() == ObdProt.OBD_SVC_VEH_INFO) {
-                                // Mode 9 not supported - notify VehicleManager
-                                VehicleManager.getInstance().setVIN(null);
+                                // Mode 9 not supported - notify VehicleManager only if not already attempted
+                                VehicleManager vm = VehicleManager.getInstance();
+                                if (!vm.hasVINRetrievalFailed()) {
+                                    vm.setVIN(null);
+                                }
                             }
                             switch (nrc.disp)
                             {
