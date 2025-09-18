@@ -392,6 +392,18 @@ public class MainActivity extends AppCompatActivity
                     case MESSAGE_OBD_STATE_CHANGED:
                         evt = (PropertyChangeEvent) msg.obj;
                         ElmProt.STAT state = (ElmProt.STAT) evt.getNewValue();
+
+                        // Don't update status for NODATA/CONNECTING states when in fault codes mode
+                        // as "NO DATA" is normal response when there are no fault codes
+                        if (CommService.elm != null &&
+                            (CommService.elm.getService() == ObdProt.OBD_SVC_READ_CODES ||
+                             CommService.elm.getService() == ObdProt.OBD_SVC_PENDINGCODES ||
+                             CommService.elm.getService() == ObdProt.OBD_SVC_PERMACODES) &&
+                            (state == ElmProt.STAT.NODATA || state == ElmProt.STAT.CONNECTING)) {
+                            // Skip status update for these states in fault codes mode
+                            return;
+                        }
+
                         ecuConnectionState = state; // Track ECU connection state
 
                         // Update VehicleManager with ECU connection state
@@ -2452,6 +2464,18 @@ public class MainActivity extends AppCompatActivity
                 // NOT all DFC modes are supported by all vehicles, disable NRC handling for this request
                 ignoreNrcs = true;
                 currDataAdapter = mDfcAdapter;
+
+                // Update status to show proper ECU state for fault codes view
+                // Don't show NODATA or CONNECTING states as they are transient in fault codes mode
+                if (ecuUserSelected && ecuConnectionState == ElmProt.STAT.ECU_DETECTED) {
+                    setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
+                } else if (ecuConnectionState == ElmProt.STAT.CONNECTED ||
+                           ecuConnectionState == ElmProt.STAT.ECU_DETECTED) {
+                    setStatus(getResources().getStringArray(R.array.elmcomm_states)[ecuConnectionState.ordinal()]);
+                } else {
+                    // Default to "ECU selected" if we have a connection
+                    setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
+                }
 
                 // Show clear codes button for fault codes screen
                 Button clearBtn = findViewById(R.id.clear_codes_button);
