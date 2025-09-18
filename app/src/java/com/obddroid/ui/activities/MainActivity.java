@@ -443,21 +443,30 @@ public class MainActivity extends AppCompatActivity
                             ObdProt.NRC nrc = (ObdProt.NRC) evt.getOldValue();
                             String nrcMsg = (String) evt.getNewValue();
 
-                            // Check if this is a Mode 9 (Vehicle Info) failure
-                            if (nrc.code == 0x12 && CommService.elm.getService() == ObdProt.OBD_SVC_VEH_INFO) {
-                                // Mode 9 not supported - notify VehicleManager only if not already attempted
-                                VehicleManager vm = VehicleManager.getInstance();
-                                if (!vm.hasVINRetrievalFailed()) {
-                                    vm.setVIN(null);
-                                    // Auto-switch to live data since Mode 9 isn't supported
-                                    new Handler().postDelayed(() -> {
-                                        if (CommService.elm != null && CommService.elm.getService() == ObdProt.OBD_SVC_VEH_INFO) {
-                                            setObdService(ObdProt.OBD_SVC_DATA, "Live Data");
-                                        }
-                                    }, 500);
+                            // Special handling for "Feature not available" errors (0x12)
+                            if (nrc.code == 0x12) {
+                                // For Mode 9 (Vehicle Info) - complete service failure
+                                if (CommService.elm.getService() == ObdProt.OBD_SVC_VEH_INFO) {
+                                    // Mode 9 not supported - notify VehicleManager only if not already attempted
+                                    VehicleManager vm = VehicleManager.getInstance();
+                                    if (!vm.hasVINRetrievalFailed()) {
+                                        vm.setVIN(null);
+                                        // Auto-switch to live data since Mode 9 isn't supported
+                                        new Handler().postDelayed(() -> {
+                                            if (CommService.elm != null && CommService.elm.getService() == ObdProt.OBD_SVC_VEH_INFO) {
+                                                setObdService(ObdProt.OBD_SVC_DATA, "Live Data");
+                                            }
+                                        }, 500);
+                                    }
+                                    // Don't show error snackbar - VehicleInfoFooter handles display
+                                    return;
                                 }
-                                // Don't show error snackbar for Mode 9 - VehicleInfoFooter handles display
-                                return;
+                                // For Mode 1 (Live Data) - individual PID not supported is normal
+                                // Don't show error for individual unsupported PIDs
+                                if (CommService.elm.getService() == ObdProt.OBD_SVC_DATA) {
+                                    // Silently ignore - some PIDs aren't supported by all vehicles
+                                    return;
+                                }
                             }
                             switch (nrc.disp)
                             {
