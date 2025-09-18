@@ -34,6 +34,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -387,6 +388,9 @@ public class MainActivity extends AppCompatActivity
                         setMenuItemEnable(R.id.obd_services,
                             state == ElmProt.STAT.ECU_DETECTED ||
                             state == ElmProt.STAT.CONNECTED);
+
+                        // Don't auto-switch here - wait for ECU selection to complete
+
                         // Don't automatically restore last service - stay on main screen
                         // if last selection shall be restored ...
                         // if (istRestoreWanted(PRESELECT.LAST_SERVICE))
@@ -1680,14 +1684,47 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
+     * Trigger VIN retrieval after ECU is selected
+     */
+    private void triggerVinRetrieval()
+    {
+        // Only switch if we haven't already retrieved VIN
+        String currentVin = com.obddroid.ecu.gui.androbd.vehicle.VehicleManager.getInstance().getCurrentVIN();
+        if (currentVin == null || currentVin.isEmpty())
+        {
+            log.info("ECU Selected, switching to Vehicle Info to get VIN");
+            // Delay slightly to let ECU selection complete
+            new Handler().postDelayed(() -> {
+                // Switch to Vehicle Info service to populate VIN and stay there
+                log.info("Switching to Vehicle Info page");
+                setObdService(ObdProt.OBD_SVC_VEH_INFO, getString(R.string.obd_veh_info));
+                // Stay on Vehicle Info page - user can navigate elsewhere if they want
+            }, 1000); // Wait 1 second for ECU selection to settle
+        }
+    }
+
+    /**
      * Prompt for selection of a single ECU from list of available ECUs
      *
      * @param ecuAdresses List of available ECUs
      */
     private void selectEcu(final Set<Integer> ecuAdresses)
     {
+        // if only one ECU available, auto-select it
+        if (ecuAdresses.size() == 1)
+        {
+            Integer address = ecuAdresses.iterator().next();
+            // set address
+            CommService.elm.setEcuAddress(address);
+            // save as preference
+            prefs.edit().putInt(PRESELECT.LAST_ECU_ADDRESS.toString(), address).apply();
+            // Update status
+            setStatus("ECU Selected");
+            // Trigger VIN retrieval
+            triggerVinRetrieval();
+        }
         // if more than one ECUs available ...
-        if (ecuAdresses.size() > 1)
+        else if (ecuAdresses.size() > 1)
         {
             int preferredAddress = prefs.getInt(PRESELECT.LAST_ECU_ADDRESS.toString(), 0);
             // check if last preferred address matches any of the reported addresses
@@ -1728,6 +1765,8 @@ public class MainActivity extends AppCompatActivity
                                         .apply();
                                 // Update status after ECU selection
                                 setStatus("ECU Selected");
+                                // Now trigger VIN retrieval
+                                triggerVinRetrieval();
                             }
                         })
                         .setOnCancelListener(new DialogInterface.OnCancelListener()
@@ -2307,7 +2346,6 @@ public class MainActivity extends AppCompatActivity
                 // NOT all DFC modes are supported by all vehicles, disable NRC handling for this request
                 ignoreNrcs = true;
                 currDataAdapter = mDfcAdapter;
-                Toast.makeText(this, getString(R.string.long_press_dfc_hint), Toast.LENGTH_LONG).show();
 
                 // Show clear codes button for fault codes screen
                 Button clearBtn = findViewById(R.id.clear_codes_button);

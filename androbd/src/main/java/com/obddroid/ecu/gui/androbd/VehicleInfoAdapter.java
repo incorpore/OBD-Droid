@@ -62,72 +62,20 @@ public class VehicleInfoAdapter extends ObdItemAdapter
 				{
 					String vinString = vinValue.toString().trim();
 
-					// Only decode valid VINs (17 characters or partial VINs)
-					if (vinString.length() >= 3)  // Minimum for WMI (World Manufacturer Identifier)
+					// Just display the raw VIN - decoding is handled by the footer bar
+					TextView tvValue = convertView.findViewById(R.id.obd_value);
+					if (tvValue != null)
 					{
-						TextView tvValue = convertView.findViewById(R.id.obd_value);
-						TextView tvUnits = convertView.findViewById(R.id.obd_units);
-
-						// Check if we already have this VIN decoded in cache
-						if (decodedVins.containsKey(vinString))
-						{
-							VehicleData vehicleData = decodedVins.get(vinString);
-							updateVINDisplay(tvValue, tvUnits, vinString, vehicleData);
-						}
-						else
-						{
-							// Show VIN while decoding
-							if (tvValue != null)
-							{
-								tvValue.setText(vinString + "\nDecoding...");
-								tvValue.setMaxLines(2);
-								tvValue.setSingleLine(false);
-							}
-
-							// Start async VIN decoding
-							final View finalView = convertView;
-							final String finalVin = vinString;
-
-							vinDecoder.decodeVIN(vinString, new VINDecoderService.VINDecoderCallback() {
-								@Override
-								public void onSuccess(VehicleData vehicleData) {
-									// Cache the result
-									decodedVins.put(finalVin, vehicleData);
-
-									// Update UI on main thread
-									finalView.post(() -> {
-										TextView value = finalView.findViewById(R.id.obd_value);
-										TextView units = finalView.findViewById(R.id.obd_units);
-										updateVINDisplay(value, units, finalVin, vehicleData);
-									});
-
-									Log.d(TAG, "VIN decoded: " + vehicleData.getDisplayName());
-								}
-
-								@Override
-								public void onError(String error) {
-									Log.e(TAG, "VIN decode error: " + error);
-
-									// Show just the VIN on error
-									finalView.post(() -> {
-										TextView value = finalView.findViewById(R.id.obd_value);
-										if (value != null) {
-											value.setText(finalVin);
-											value.setMaxLines(1);
-										}
-									});
-								}
-							});
-						}
+						tvValue.setText(vinString);
+						tvValue.setMaxLines(1);
+						tvValue.setSingleLine(true);
 					}
-					else
+
+					// Notify VehicleManager about the VIN (for the footer bar)
+					// Only for valid 17-character VINs
+					if (vinString.length() == 17)
 					{
-						// Invalid VIN length, just display as-is
-						TextView tvValue = convertView.findViewById(R.id.obd_value);
-						if (tvValue != null)
-						{
-							tvValue.setText(vinString);
-						}
+						com.obddroid.ecu.gui.androbd.vehicle.VehicleManager.getInstance().setVIN(vinString);
 					}
 				}
 			}
