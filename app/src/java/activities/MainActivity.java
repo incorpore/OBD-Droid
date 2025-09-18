@@ -63,6 +63,7 @@ import com.obddroid.services.BluetoothCommService;
 import com.obddroid.services.CommService;
 import com.obddroid.services.NetworkCommService;
 import com.obddroid.services.UsbCommService;
+import com.obddroid.services.ObdDataService;
 import com.obddroid.ui.components.AutoHider;
 import com.obddroid.utils.ExportTask;
 import com.obddroid.utils.FileHelper;
@@ -1470,46 +1471,108 @@ public class MainActivity extends AppCompatActivity
                 CommService.elm.setFreezeFrame_Id(dtcIndex);
                 CommService.elm.setService(ObdProt.OBD_SVC_FREEZEFRAME, true);
 
-                // Wait a bit for data to load
-                try {
-                    Thread.sleep(2000); // Give it 2 seconds to get some data
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                // Get freeze frame data from data service
+                ObdDataService dataService = ObdProt.getDataService();
+
+                // Poll for data with proper timeout based on serial analysis
+                // Freeze frame requires 3-5 seconds for ~10 PIDs at ~4-5 PIDs/second
+                int maxWaitTime = 8000; // 8 seconds max (conservative)
+                int pollInterval = 500;  // Check every 500ms
+                int elapsed = 0;
+                PvList freezeData = null;
+
+                log.info("Freeze Frame: Starting data collection for DTC index " + dtcIndex);
+
+                while (elapsed < maxWaitTime) {
+                    try {
+                        Thread.sleep(pollInterval);
+                        elapsed += pollInterval;
+
+                        // Get latest freeze frame data
+                        freezeData = dataService.getFreezeFrameData(dtcIndex);
+
+                        // Log progress
+                        int dataCount = (freezeData != null) ? freezeData.size() : 0;
+                        log.info("Freeze Frame: After " + elapsed + "ms, have " + dataCount + " PIDs");
+
+                        // Break if we have meaningful data (at least 5 PIDs)
+                        if (dataCount >= 5) {
+                            log.info("Freeze Frame: Sufficient data collected, proceeding to display");
+                            break;
+                        }
+                    } catch (InterruptedException e) {
+                        log.warning("Freeze Frame: Data collection interrupted");
+                        break;
+                    }
                 }
+
+                // Final data fetch
+                freezeData = dataService.getFreezeFrameData(dtcIndex);
+                final PvList finalFreezeData = freezeData;
+                log.info("Freeze Frame: Final data count = " + (finalFreezeData != null ? finalFreezeData.size() : 0));
 
                 // Collect the freeze frame data
                 runOnUiThread(() -> {
                     try {
-                        // Check if we have PID data
-                        if (mPidAdapter != null && mPidAdapter.getCount() > 0) {
-                            // Add each PID as a data item
-                            for (int i = 0; i < mPidAdapter.getCount(); i++) {
-                                EcuDataPv pv = (EcuDataPv) mPidAdapter.getItem(i);
+                        // Check if we have freeze frame data
+                        if (finalFreezeData != null && finalFreezeData.size() > 0) {
+                            log.info("Freeze Frame: Displaying " + finalFreezeData.size() + " data items");
+
+                            // Iterate through the actual freeze frame data (not adapter count)
+                            for (Object key : finalFreezeData.keySet()) {
+                                // Skip PID support messages (0x00, 0x20, 0x40, etc.)
+                                if (key instanceof Integer) {
+                                    int pid = ((Integer) key).intValue();
+                                    // PID support messages are at 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xE0
+                                    if (pid % 0x20 == 0 && pid <= 0xE0) {
+                                        log.fine("Freeze Frame: Skipping PID support message " + String.format("0x%02X", pid));
+                                        continue;
+                                    }
+                                }
+
+                                Object item = finalFreezeData.get(key);
+                                if (item instanceof EcuDataPv) {
+                                    EcuDataPv pv = (EcuDataPv) item;
 
                                 View itemView = getLayoutInflater().inflate(R.layout.freeze_frame_data_item, null);
                                 TextView label = itemView.findViewById(R.id.data_label);
                                 TextView value = itemView.findViewById(R.id.data_value);
 
-                                label.setText(String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT)));
+                                    // Get description or use PID as fallback
+                                    Object descr = pv.get(EcuDataPv.FID_DESCRIPT);
+                                    String labelText = (descr != null && !descr.toString().isEmpty())
+                                        ? descr.toString()
+                                        : "PID " + key;
+                                    label.setText(labelText);
 
-                                // Format value with units
-                                Object dataValue = pv.get(EcuDataPv.FID_VALUE);
-                                Object units = pv.get(EcuDataPv.FID_UNITS);
-                                String displayValue = dataValue != null ? dataValue.toString() : "N/A";
-                                if (units != null && !units.toString().isEmpty()) {
-                                    displayValue += " " + units;
+                                    // Format value with units
+                                    Object dataValue = pv.get(EcuDataPv.FID_VALUE);
+                                    Object units = pv.get(EcuDataPv.FID_UNITS);
+                                    String displayValue = dataValue != null ? dataValue.toString() : "N/A";
+                                    if (units != null && !units.toString().isEmpty()) {
+                                        displayValue += " " + units;
+                                    }
+                                    value.setText(displayValue);
+
+                                    dataList.addView(itemView);
                                 }
-                                value.setText(displayValue);
-
-                                dataList.addView(itemView);
                             }
 
-                            // Show data container
-                            loadingContainer.setVisibility(View.GONE);
-                            dataContainer.setVisibility(View.VISIBLE);
-                            refreshButton.setVisibility(View.VISIBLE);
+                            // Check if we have at least one actual data item (not just PID support)
+                            if (dataList.getChildCount() > 0) {
+                                // Show data container
+                                loadingContainer.setVisibility(View.GONE);
+                                dataContainer.setVisibility(View.VISIBLE);
+                                refreshButton.setVisibility(View.VISIBLE);
+                            } else {
+                                // Only had PID support messages, no actual data
+                                log.warning("Freeze Frame: Only PID support messages, no actual data");
+                                loadingContainer.setVisibility(View.GONE);
+                                noDataContainer.setVisibility(View.VISIBLE);
+                            }
                         } else {
                             // No data available
+                            log.warning("Freeze Frame: No data available after waiting");
                             loadingContainer.setVisibility(View.GONE);
                             noDataContainer.setVisibility(View.VISIBLE);
                         }

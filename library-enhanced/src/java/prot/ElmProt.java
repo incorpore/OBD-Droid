@@ -1027,6 +1027,8 @@ public class ElmProt
 	public static boolean runDemo;
 	// flag to track if demo codes have been cleared
 	private static boolean demoCodesCleared = false;
+	// flag to track if freeze frame has been initialized in demo
+	private boolean freezeFrameInitialized = false;
 
 	/**
 	 * run threaded loop to simulate incoming telegrams
@@ -1115,6 +1117,42 @@ public class ElmProt
 						// otherwise send data ...
 						case OBD_SVC_DATA:
 						case OBD_SVC_FREEZEFRAME:
+							// Special handling for freeze frame in demo mode
+							if (service == OBD_SVC_FREEZEFRAME && !freezeFrameInitialized) {
+								log.info("DEMO: Initializing freeze frame with full data");
+
+								// First send PID support for all PIDs
+								int i;
+								for (i = 0; i < 0xE0; i += 0x20) {
+									handleTelegram(String.format("42%02X00FFFFFFFF", i).toCharArray());
+								}
+								handleTelegram(String.format("42%02X00FFFFFFFE", i).toCharArray());
+
+								// Wait for messages to be processed
+								try { Thread.sleep(100); } catch (Exception e) {}
+
+								freezeFrameInitialized = true;
+								log.info("DEMO: Freeze frame initialization complete");
+								// Don't break - continue to send actual data
+							}
+
+							// For freeze frame, always send a cycle of common PIDs with frozen values
+							if (service == OBD_SVC_FREEZEFRAME && freezeFrameInitialized) {
+								// Common PIDs with realistic frozen values
+								handleTelegram("42040064".toCharArray());       // Engine load 39%
+								handleTelegram("420500B4".toCharArray());       // Coolant temp 60°C
+								handleTelegram("420C001234".toCharArray());     // Engine RPM ~1165
+								handleTelegram("420D0038".toCharArray());       // Vehicle speed 56 km/h
+								handleTelegram("420E00B0".toCharArray());       // Timing advance 22°
+								handleTelegram("420F0050".toCharArray());       // Intake temp 40°C
+								handleTelegram("421000015E".toCharArray());     // MAF rate
+								handleTelegram("42110080".toCharArray());       // Throttle position 50%
+								handleTelegram("421F000078".toCharArray());     // Run time 120 seconds
+								handleTelegram("42210001F4".toCharArray());     // Distance with MIL
+								break; // Done for this cycle
+							}
+
+							// Normal live data processing
 							pid = getNextSupportedPid();
 							if (pid != 0)
 							{
@@ -1226,6 +1264,11 @@ public class ElmProt
 		{
 			log.info("OBD Service: " + this.service + "->" + service);
 			this.service = service;
+
+			// Reset freeze frame flag when switching to freeze frame service
+			if (service == OBD_SVC_FREEZEFRAME) {
+				freezeFrameInitialized = false;
+			}
 			
 			// send corresponding command(s)
 			switch (service)

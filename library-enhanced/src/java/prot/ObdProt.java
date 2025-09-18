@@ -15,6 +15,8 @@ import com.obddroid.prot.TelegramListener;
 import com.obddroid.prot.TelegramWriter;
 import com.obddroid.pvs.PvChangeEvent;
 import com.obddroid.pvs.PvList;
+import com.obddroid.services.ObdDataService;
+import com.obddroid.services.IDataManager;
 
 import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
@@ -247,16 +249,76 @@ public class ObdProt extends ProtoHeader
     /** new style data items */
     public static final EcuDataItems dataItems = new EcuDataItems();
 
-    /** OBD data items */
-    public static PvList PidPvs = new PvList();
-    /** OBD vehicle identification items */
-    public static PvList VidPvs = new PvList();
-    /** current fault codes */
-    public static PvList tCodes = new PvList();
+    // Data service for managing all OBD data
+    private static final ObdDataService dataService = ObdDataService.getInstance();
+
+    /**
+     * OBD data items
+     * @deprecated Use getDataService().getDataForService(OBD_SVC_DATA) instead
+     */
+    @Deprecated
+    public static PvList PidPvs = createServiceBackedPvList(OBD_SVC_DATA);
+
+    /**
+     * OBD vehicle identification items
+     * @deprecated Use getDataService().getDataForService(OBD_SVC_VEH_INFO) instead
+     */
+    @Deprecated
+    public static PvList VidPvs = createServiceBackedPvList(OBD_SVC_VEH_INFO);
+
+    /**
+     * current fault codes
+     * @deprecated Use getDataService().getDataForService(OBD_SVC_READ_CODES) instead
+     */
+    @Deprecated
+    public static PvList tCodes = createServiceBackedPvList(OBD_SVC_READ_CODES);
     /** list of known fault codes */
     private static final EcuCodeList knownCodes = EcuConversions.codeList;
     /** queue of ELM commands to be sent */
     static final Vector<String> cmdQueue = new Vector<String>();
+
+    /**
+     * Get the data service instance
+     * @return ObdDataService instance
+     */
+    public static ObdDataService getDataService() {
+        return dataService;
+    }
+
+    /**
+     * Create a PvList that is backed by the data service
+     * This maintains backward compatibility while routing data through the service
+     */
+    private static PvList createServiceBackedPvList(final int service) {
+        return new PvList() {
+            @Override
+            public void clear() {
+                super.clear();
+                dataService.clearService(service);
+            }
+
+            @Override
+            public Object put(Object key, Object value) {
+                Object result = super.put(key, value);
+                // Also update data service
+                PvList serviceData = dataService.getDataForService(service);
+                if (serviceData != null && serviceData != this) {
+                    serviceData.put(key, value);
+                }
+                return result;
+            }
+
+            @Override
+            public void putAll(Map m) {
+                super.putAll(m);
+                // Also update data service
+                PvList serviceData = dataService.getDataForService(service);
+                if (serviceData != null && serviceData != this) {
+                    serviceData.putAll(m);
+                }
+            }
+        };
+    }
     /** freeze frame ID to request */
     private int freezeFrame_Id = 0;
     /** perform reset on NRC reception */
@@ -634,6 +696,29 @@ public class ObdProt extends ProtoHeader
                     case OBD_SVC_FREEZEFRAME:
                     case OBD_SVC_DATA:
                         msgPid = (Integer) getParamValue(ID_OBD_PID, buffer);
+
+                        // Special handling for freeze frame to populate data service
+                        if (msgService == OBD_SVC_FREEZEFRAME) {
+                            // Get frame ID for freeze frame data
+                            Integer frameId = (Integer) getParamValue(ID_OBD_FRAMEID, buffer);
+                            if (frameId == null) frameId = 0;
+
+                            // Notify data service about freeze frame data
+                            char[] charPayload = getPayLoad(buffer);
+                            byte[] payload = new byte[charPayload.length];
+                            for (int i = 0; i < charPayload.length; i++) {
+                                payload[i] = (byte) charPayload[i];
+                            }
+                            dataService.onDataReceived(msgService, msgPid, payload);
+
+                            // Store in freeze frame specific storage
+                            PvList freezeData = dataService.getFreezeFrameData(frameId);
+                            if (msgPid > 0 && !freezeData.containsKey(msgPid)) {
+                                EcuDataPv pv = new EcuDataPv();
+                                pv.put(EcuDataPv.FID_PID, Integer.valueOf(msgPid));
+                                freezeData.put(msgPid, pv);
+                            }
+                        }
                         switch (msgPid)
                         {
                             case 0x00:
@@ -648,7 +733,15 @@ public class ObdProt extends ProtoHeader
                                 int offset = (buffer.length % 4 == 0) ? 4 : 6;
                                 // get payload data and mark the indicated supported PIDs
                                 long msgPayload = Long.valueOf(new String(buffer, offset, 8), 16);
-                                markSupportedPids(msgService, msgPid, msgPayload, PidPvs);
+                                // For freeze frame, use the right PvList
+                                if (msgService == OBD_SVC_FREEZEFRAME) {
+                                    // Mark PIDs and also populate the data service
+                                    markSupportedPids(msgService, msgPid, msgPayload, PidPvs);
+                                    // Ensure freeze frame data is initialized
+                                    dataService.initializeFreezeFrameData();
+                                } else {
+                                    markSupportedPids(msgService, msgPid, msgPayload, PidPvs);
+                                }
                                 break;
 
                             // OBD number of fault codes
@@ -664,6 +757,43 @@ public class ObdProt extends ProtoHeader
                                                             msgPid,
                                                             hexToBytes(String.valueOf(
                                                                     getPayLoad(buffer))));
+
+                                // Special handling for freeze frame - ensure data is properly stored
+                                if (msgService == OBD_SVC_FREEZEFRAME) {
+                                    // Get the frame ID (usually 0)
+                                    Integer frameId = (Integer) getParamValue(ID_OBD_FRAMEID, buffer);
+                                    if (frameId == null) frameId = 0;
+
+                                    // Get the freeze frame store from data service
+                                    PvList freezeStore = dataService.getFreezeFrameData(frameId);
+
+                                    // Get the data items for this PID
+                                    Vector<EcuDataItem> items = dataItems.getPidDataItems(OBD_SVC_DATA, msgPid);
+                                    if (items != null && !items.isEmpty()) {
+                                        for (EcuDataItem item : items) {
+                                            // Create or update the PV for this item
+                                            EcuDataPv pv = (EcuDataPv) freezeStore.get(item);
+                                            if (pv == null) {
+                                                pv = new EcuDataPv();
+                                                pv.put(EcuDataPv.FID_PID, Integer.valueOf(msgPid));
+                                                freezeStore.put(item, pv);
+                                            }
+                                            // Update the PV with the actual data from the item
+                                            pv.put(EcuDataPv.FID_DESCRIPT, item.label);
+                                            if (item.pv != null) {
+                                                pv.put(EcuDataPv.FID_VALUE, item.pv.get(EcuDataPv.FID_VALUE));
+                                                Object units = item.pv.get(EcuDataPv.FID_UNITS);
+                                                if (units != null) {
+                                                    pv.put(EcuDataPv.FID_UNITS, units);
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Store the updated freeze frame data
+                                    dataService.storeFreezeFrameData(frameId, freezeStore);
+                                }
+
                                 /* Update expected request timestamp for PID */
                                 for( ObdPid pid : pidSupported)
                                 {
@@ -766,6 +896,10 @@ public class ObdProt extends ProtoHeader
                             tCodes.put(0, new ObdCodeItem(0, Messages.getString(
                                     "no.trouble.codes.set")));
                         }
+                        // When fault codes are detected, pre-populate freeze frame data
+                        if (nCodes > 0) {
+                            dataService.initializeFreezeFrameData();
+                        }
                         break;
 
                     // clear code response
@@ -852,6 +986,12 @@ public class ObdProt extends ProtoHeader
      */
     private void clearDataLists(int obdService)
     {
+        // Don't clear freeze frame data when switching services
+        if (obdService == OBD_SVC_FREEZEFRAME) {
+            log.fine("Not clearing freeze frame data to preserve it");
+            return;
+        }
+
         // ENHANCED: Cache data before clearing
         cacheDataBeforeClearing(obdService);
 
