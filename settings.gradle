@@ -5,5 +5,5 @@ pluginManagement {
         maven { url 'https://jitpack.io' }
     }
 }
-include ':app', ':library'
+include ':app'
 
