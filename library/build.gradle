@@ -11,9 +11,16 @@ compileJava {
 
 sourceSets {
     main {
+        java {
+            srcDirs = ['src/java']
+        }
         resources {
-            srcDirs("src/main/java")
-            include('com/obddroid/ecu/prot/obd/res/*')
+            srcDirs = ['src/resources']
+        }
+    }
+    test {
+        java {
+            srcDirs = ['src/test/java']
         }
     }
 }
