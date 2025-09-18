@@ -449,7 +449,15 @@ public class MainActivity extends AppCompatActivity
                                 VehicleManager vm = VehicleManager.getInstance();
                                 if (!vm.hasVINRetrievalFailed()) {
                                     vm.setVIN(null);
+                                    // Auto-switch to live data since Mode 9 isn't supported
+                                    new Handler().postDelayed(() -> {
+                                        if (CommService.elm != null && CommService.elm.getService() == ObdProt.OBD_SVC_VEH_INFO) {
+                                            setObdService(ObdProt.OBD_SVC_DATA, "Live Data");
+                                        }
+                                    }, 500);
                                 }
+                                // Don't show error snackbar for Mode 9 - VehicleInfoFooter handles display
+                                return;
                             }
                             switch (nrc.disp)
                             {
@@ -847,7 +855,19 @@ public class MainActivity extends AppCompatActivity
             case R.id.service_vid_data:
                 if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
                     ecuConnectionState == ElmProt.STAT.CONNECTED) {
-                    setObdService(ObdProt.OBD_SVC_VEH_INFO, item.getTitle());
+                    // Check if Mode 9 already failed
+                    VehicleManager vm = VehicleManager.getInstance();
+                    if (vm.hasVINRetrievalFailed()) {
+                        // Don't set service, just show info
+                        SnackbarHelper.showInfo(this, "Vehicle Info not available (Mode 9 not supported by this adapter)");
+                        // Stay on current service or go to live data
+                        if (CommService.elm != null && CommService.elm.getService() == ObdProt.OBD_SVC_NONE) {
+                            setObdService(ObdProt.OBD_SVC_DATA, "Live Data");
+                        }
+                    } else {
+                        // Try to get vehicle info
+                        setObdService(ObdProt.OBD_SVC_VEH_INFO, item.getTitle());
+                    }
                 } else {
                     SnackbarHelper.showWarning(this, "Please wait for ECU connection to complete");
                 }
