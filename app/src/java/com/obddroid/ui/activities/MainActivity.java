@@ -2777,6 +2777,15 @@ public class MainActivity extends AppCompatActivity
                             // set service READ_CODES to re-read the codes
                             CommService.elm.setService(ObdProt.OBD_SVC_READ_CODES);
 
+                            // Update status immediately after switching to READ_CODES
+                            // to avoid showing transient "Connecting..." status
+                            if (ecuUserSelected) {
+                                setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
+                            } else if (ecuConnectionState == ElmProt.STAT.CONNECTED ||
+                                       ecuConnectionState == ElmProt.STAT.ECU_DETECTED) {
+                                setStatus(getResources().getStringArray(R.array.elmcomm_states)[ecuConnectionState.ordinal()]);
+                            }
+
                             // After another delay, check if codes were cleared successfully and restore service
                             new Handler().postDelayed(() -> {
                                 if (ObdProt.tCodes.size() <= 1) {
@@ -2790,6 +2799,18 @@ public class MainActivity extends AppCompatActivity
                                     if (CommService.elm != null && previousService != ObdProt.OBD_SVC_CLEAR_CODES) {
                                         // Return to the previous service (usually OBD_SVC_DATA for live data)
                                         CommService.elm.setService(previousService);
+
+                                        // Update status to show proper state after clearing codes
+                                        // Use the stable ECU state, not transient states
+                                        if (ecuUserSelected && ecuConnectionState == ElmProt.STAT.ECU_DETECTED) {
+                                            setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
+                                        } else if (ecuConnectionState == ElmProt.STAT.CONNECTED ||
+                                                   ecuConnectionState == ElmProt.STAT.ECU_DETECTED) {
+                                            setStatus(getResources().getStringArray(R.array.elmcomm_states)[ecuConnectionState.ordinal()]);
+                                        } else {
+                                            // Default to ECU selected if we're connected
+                                            setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
+                                        }
                                     }
                                 }, 500);
                             }, 2000);
