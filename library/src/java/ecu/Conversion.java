@@ -1,4 +1,4 @@
-package com.obddroid.ecu;
+package ecu;
 
 import java.io.Serializable;
 

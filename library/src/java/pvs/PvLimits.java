@@ -1,4 +1,4 @@
-package com.obddroid.pvs;
+package pvs;
 
 /**
  * Range check to allow checking a process var to be within certain range

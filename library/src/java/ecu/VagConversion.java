@@ -1,4 +1,4 @@
-package com.obddroid.ecu;
+package ecu;
 
 /**
  * VAG data conversions (used by Kw1281 ...)

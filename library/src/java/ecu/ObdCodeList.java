@@ -1,4 +1,4 @@
-package com.obddroid.ecu;
+package ecu;
 
 /**
  * List of all known OBD failure codes

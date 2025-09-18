@@ -1,4 +1,4 @@
-package com.obddroid.ecu;
+package ecu;
 
 /**
  * Internal int-based conversion for hex display

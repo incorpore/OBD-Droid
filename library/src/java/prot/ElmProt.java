@@ -1,4 +1,4 @@
-package com.obddroid.prot;
+package prot;
 
 import com.obddroid.prot.TelegramListener;
 import com.obddroid.prot.TelegramWriter;

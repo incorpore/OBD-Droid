@@ -1,4 +1,4 @@
-package com.obddroid.common;
+package common;
 
 import java.io.IOException;
 import java.io.InputStream;

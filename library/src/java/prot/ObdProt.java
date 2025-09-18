@@ -1,5 +1,5 @@
 
-package com.obddroid.prot;
+package prot;
 
 import com.obddroid.ecu.Conversion;
 import com.obddroid.ecu.EcuCodeItem;

@@ -1,4 +1,4 @@
-package com.obddroid.prot;
+package prot;
 
 import java.util.Iterator;
 import java.util.Vector;

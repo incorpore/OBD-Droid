@@ -1,4 +1,4 @@
-package com.obddroid.prot;
+package prot;
 
 import com.obddroid.common.UTF8Bundle;
 

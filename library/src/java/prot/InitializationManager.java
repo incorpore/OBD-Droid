@@ -1,4 +1,4 @@
-package com.obddroid.prot;
+package prot;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;

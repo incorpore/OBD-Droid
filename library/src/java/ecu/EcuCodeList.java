@@ -1,4 +1,4 @@
-package com.obddroid.ecu;
+package ecu;
 
 import com.obddroid.common.UTF8Bundle;
 import com.obddroid.prot.Messages;

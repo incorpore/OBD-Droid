@@ -1,4 +1,4 @@
-package com.obddroid.prot;
+package prot;
 
 /**
  * Listener interface for comprehensive initialization progress

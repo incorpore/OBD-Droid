@@ -3,4 +3,4 @@
  *
  * @author OBD-Droid
  */
-package com.obddroid.common;
+package common;

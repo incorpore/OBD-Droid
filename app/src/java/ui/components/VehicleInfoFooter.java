@@ -2,6 +2,7 @@ package com.obddroid.ui.components;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
@@ -99,7 +100,7 @@ public class VehicleInfoFooter extends LinearLayout
         // Create manufacturer logo ImageView
         manufacturerLogo = new ImageView(getContext());
         manufacturerLogo.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        manufacturerLogo.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+        manufacturerLogo.setPadding(dpToPx(3), dpToPx(3), dpToPx(3), dpToPx(3));
         manufacturerLogo.setVisibility(View.GONE);
 
         // Create manufacturer icon text (fallback when no logo)
@@ -483,10 +484,17 @@ public class VehicleInfoFooter extends LinearLayout
 
             // Try to set manufacturer logo first
             String make = vehicleData.make;
+            Bitmap logoBitmap = CarLogoHelper.getLogoBitmap(getContext(), make);
 
-            // For now, just show the first letter until logos are properly integrated
-            if (make != null && !make.isEmpty()) {
-                // Show first letter
+            if (logoBitmap != null) {
+                // We have a logo - show it
+                manufacturerLogo.setImageBitmap(logoBitmap);
+                manufacturerLogo.setVisibility(View.VISIBLE);
+                manufacturerIcon.setVisibility(View.GONE);
+                // Make background white for better logo visibility
+                iconContainer.getBackground().setTint(Color.parseColor("#FFFFFF"));
+            } else if (make != null && !make.isEmpty()) {
+                // No logo - show first letter as fallback
                 manufacturerIcon.setText(make.substring(0, 1).toUpperCase());
                 manufacturerIcon.setTextColor(Color.parseColor("#00ACC1")); // Cyan when connected
                 manufacturerIcon.setVisibility(View.VISIBLE);

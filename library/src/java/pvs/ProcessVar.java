@@ -1,4 +1,4 @@
-package com.obddroid.pvs;
+package pvs;
 
 import java.io.Serializable;
 import java.util.Collections;

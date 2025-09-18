@@ -1,4 +1,4 @@
-package com.obddroid.pvs;
+package pvs;
 
 /**
  * Process variable @see ProcessVar which allows indexed access
