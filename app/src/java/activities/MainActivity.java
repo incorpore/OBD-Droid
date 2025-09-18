@@ -2639,10 +2639,41 @@ public class MainActivity extends AppCompatActivity
             confirmButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    // Show feedback that clear codes is in progress
+                    Toast.makeText(MainActivity.this, "Clearing fault codes...", Toast.LENGTH_SHORT).show();
+
                     // set service CLEAR_CODES to clear the codes
                     CommService.elm.setService(ObdProt.OBD_SVC_CLEAR_CODES);
-                    // set service READ_CODES to re-read the codes
-                    CommService.elm.setService(ObdProt.OBD_SVC_READ_CODES);
+
+                    // Wait for clear codes operation to complete, then re-read
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            // Show feedback that we're re-reading codes
+                            Toast.makeText(MainActivity.this, "Re-reading fault codes...", Toast.LENGTH_SHORT).show();
+
+                            // Clear the current codes display first
+                            runOnUiThread(() -> {
+                                ObdProt.tCodes.clear();
+                                if (mDfcAdapter != null) {
+                                    mDfcAdapter.notifyDataSetChanged();
+                                }
+                            });
+
+                            // set service READ_CODES to re-read the codes
+                            CommService.elm.setService(ObdProt.OBD_SVC_READ_CODES);
+
+                            // After another delay, check if codes were cleared successfully
+                            new Handler().postDelayed(() -> {
+                                if (ObdProt.tCodes.size() <= 1) {
+                                    Toast.makeText(MainActivity.this, "Fault codes cleared successfully", Toast.LENGTH_LONG).show();
+                                } else {
+                                    Toast.makeText(MainActivity.this, "Codes cleared. Found " + (ObdProt.tCodes.size() - 1) + " code(s) still present", Toast.LENGTH_LONG).show();
+                                }
+                            }, 2000);
+                        }
+                    }, 1500); // Wait 1.5 seconds for clear codes to complete
+
                     dialog.dismiss();
                 }
             });
