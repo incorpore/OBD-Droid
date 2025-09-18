@@ -1,5 +1,6 @@
 package com.obddroid.ui.components;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -8,6 +9,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -27,8 +29,12 @@ public class VehicleInfoFooter extends LinearLayout
     private TextView connectionStatus;
     private View divider;
     private LinearLayout contentLayout;
+    private LinearLayout expandedContentLayout;
     private VehicleManager.VehicleChangeListener vehicleListener;
     private boolean isConnected = false;
+    private boolean isExpanded = false;
+    private VehicleData currentVehicleData;
+    private View expandIndicator;
 
     public VehicleInfoFooter(Context context)
     {
@@ -130,6 +136,19 @@ public class VehicleInfoFooter extends LinearLayout
         contentLayout.addView(iconContainer, iconContainerParams);
         contentLayout.addView(infoContainer, infoParams);
 
+        // Create expand indicator (arrow)
+        expandIndicator = new TextView(getContext());
+        ((TextView)expandIndicator).setText("▼");
+        ((TextView)expandIndicator).setTextColor(Color.parseColor("#888888"));
+        ((TextView)expandIndicator).setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        LinearLayout.LayoutParams expandParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        expandParams.leftMargin = dpToPx(8);
+        expandParams.gravity = Gravity.CENTER_VERTICAL;
+        contentLayout.addView(expandIndicator, expandParams);
+
         // Create status indicator dot
         View statusDot = new View(getContext());
         statusDot.setBackgroundResource(android.R.drawable.presence_offline);
@@ -140,6 +159,32 @@ public class VehicleInfoFooter extends LinearLayout
         dotParams.leftMargin = dpToPx(8);
         dotParams.gravity = Gravity.CENTER_VERTICAL;
         contentLayout.addView(statusDot, dotParams);
+
+        // Create expanded content layout (initially hidden)
+        expandedContentLayout = new LinearLayout(getContext());
+        expandedContentLayout.setOrientation(LinearLayout.VERTICAL);
+        expandedContentLayout.setPadding(dpToPx(16), 0, dpToPx(16), dpToPx(12));
+        expandedContentLayout.setVisibility(View.GONE);
+        LinearLayout.LayoutParams expandedParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        addView(expandedContentLayout, expandedParams);
+
+        // Make content layout clickable to expand/collapse
+        contentLayout.setClickable(true);
+        contentLayout.setFocusable(true);
+        contentLayout.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isConnected && currentVehicleData != null) {
+                    // Add subtle press feedback
+                    v.setAlpha(0.8f);
+                    v.animate().alpha(1f).setDuration(200).start();
+                    toggleExpanded();
+                }
+            }
+        });
 
         // Always visible
         setVisibility(View.VISIBLE);
@@ -168,11 +213,21 @@ public class VehicleInfoFooter extends LinearLayout
                 Log.d(TAG, "Vehicle disconnected");
                 post(() -> {
                     isConnected = false;
+                    currentVehicleData = null;
+
+                    // Collapse if expanded
+                    if (isExpanded) {
+                        isExpanded = false;
+                        ((TextView)expandIndicator).setRotation(0f);
+                        expandedContentLayout.setVisibility(View.GONE);
+                    }
+
                     manufacturerIcon.setText("?");
                     manufacturerIcon.setTextColor(Color.parseColor("#666666"));
                     vehicleInfo.setText("No Vehicle Connected");
                     connectionStatus.setText("Waiting for OBD connection...");
                     connectionStatus.setTextColor(Color.parseColor("#888888"));
+                    expandIndicator.setVisibility(View.GONE);
                 });
             }
         };
@@ -216,6 +271,172 @@ public class VehicleInfoFooter extends LinearLayout
         }
     }
 
+    private void toggleExpanded() {
+        isExpanded = !isExpanded;
+
+        // Animate arrow rotation
+        ((TextView)expandIndicator).animate()
+            .rotation(isExpanded ? 180f : 0f)
+            .setDuration(300)
+            .start();
+
+        if (isExpanded) {
+            updateExpandedContent();
+            expandedContentLayout.setVisibility(View.VISIBLE);
+            expandedContentLayout.setAlpha(0f);
+            expandedContentLayout.animate()
+                .alpha(1f)
+                .setDuration(300)
+                .start();
+        } else {
+            expandedContentLayout.animate()
+                .alpha(0f)
+                .setDuration(300)
+                .withEndAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        expandedContentLayout.setVisibility(View.GONE);
+                    }
+                })
+                .start();
+        }
+    }
+
+    private void updateExpandedContent() {
+        if (currentVehicleData == null) return;
+
+        expandedContentLayout.removeAllViews();
+
+        // Add VIN section
+        addSectionHeader("Vehicle Identification");
+        addDetailRow("VIN", currentVehicleData.vin);
+        addDetailRow("Manufacturer", currentVehicleData.manufacturer);
+        if (currentVehicleData.series != null && !currentVehicleData.series.equals("Not Applicable")) {
+            addDetailRow("Series", currentVehicleData.series);
+        }
+        if (currentVehicleData.trim != null && !currentVehicleData.trim.equals("Not Applicable")) {
+            addDetailRow("Trim", currentVehicleData.trim);
+        }
+
+        // Add Body/Structure section
+        addSectionHeader("Body & Structure");
+        addDetailRow("Body Class", currentVehicleData.bodyClass);
+        addDetailRow("Vehicle Type", currentVehicleData.vehicleType);
+        addDetailRow("Doors", currentVehicleData.doors);
+        if (currentVehicleData.wheelBase != null && !currentVehicleData.wheelBase.isEmpty()) {
+            addDetailRow("Wheelbase", currentVehicleData.wheelBase + " inches");
+        }
+
+        // Add Engine section
+        addSectionHeader("Engine & Performance");
+        if (currentVehicleData.engineModel != null && !currentVehicleData.engineModel.isEmpty()) {
+            addDetailRow("Engine Model", currentVehicleData.engineModel);
+        }
+        if (currentVehicleData.displacementL != null) {
+            String displacement = currentVehicleData.displacementL + "L";
+            if (currentVehicleData.displacementCC != null) {
+                displacement += " (" + currentVehicleData.displacementCC + "cc)";
+            }
+            addDetailRow("Displacement", displacement);
+        }
+        addDetailRow("Cylinders", currentVehicleData.engineCylinders);
+        addDetailRow("Fuel Type", currentVehicleData.fuelTypePrimary);
+
+        // Add Drivetrain section
+        addSectionHeader("Drivetrain");
+        addDetailRow("Drive Type", currentVehicleData.driveType);
+        addDetailRow("Transmission", currentVehicleData.transmissionStyle);
+        if (currentVehicleData.transmissionSpeeds != null && !currentVehicleData.transmissionSpeeds.isEmpty()) {
+            addDetailRow("Speeds", currentVehicleData.transmissionSpeeds);
+        }
+
+        // Add Manufacturing section
+        addSectionHeader("Manufacturing");
+        String plantLocation = buildPlantLocation(currentVehicleData);
+        if (!plantLocation.isEmpty()) {
+            addDetailRow("Plant Location", plantLocation);
+        }
+
+        // Add Weight section if available
+        if (currentVehicleData.gvwr != null || currentVehicleData.curbWeight != null) {
+            addSectionHeader("Weight");
+            if (currentVehicleData.curbWeight != null && !currentVehicleData.curbWeight.isEmpty()) {
+                addDetailRow("Curb Weight", currentVehicleData.curbWeight + " lbs");
+            }
+            if (currentVehicleData.gvwr != null && !currentVehicleData.gvwr.isEmpty()) {
+                addDetailRow("GVWR", currentVehicleData.gvwr + " lbs");
+            }
+        }
+    }
+
+    private String buildPlantLocation(VehicleData data) {
+        StringBuilder location = new StringBuilder();
+        if (data.plantCity != null && !data.plantCity.isEmpty()) {
+            location.append(data.plantCity);
+        }
+        if (data.plantState != null && !data.plantState.isEmpty()) {
+            if (location.length() > 0) location.append(", ");
+            location.append(data.plantState);
+        }
+        if (data.plantCountry != null && !data.plantCountry.isEmpty()) {
+            if (location.length() > 0) location.append(", ");
+            location.append(data.plantCountry);
+        }
+        return location.toString();
+    }
+
+    private void addSectionHeader(String title) {
+        TextView header = new TextView(getContext());
+        header.setText(title);
+        header.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        header.setTextColor(Color.parseColor("#00ACC1"));
+        header.setTypeface(Typeface.DEFAULT_BOLD);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.topMargin = dpToPx(12);
+        params.bottomMargin = dpToPx(4);
+        expandedContentLayout.addView(header, params);
+    }
+
+    private void addDetailRow(String label, String value) {
+        if (value == null || value.isEmpty() || value.equals("Not Applicable")) {
+            return;
+        }
+
+        LinearLayout row = new LinearLayout(getContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        rowParams.topMargin = dpToPx(2);
+
+        TextView labelView = new TextView(getContext());
+        labelView.setText(label + ":");
+        labelView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        labelView.setTextColor(Color.parseColor("#888888"));
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
+            dpToPx(110),
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+
+        TextView valueView = new TextView(getContext());
+        valueView.setText(value);
+        valueView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        valueView.setTextColor(Color.parseColor("#FFFFFF"));
+        LinearLayout.LayoutParams valueParams = new LinearLayout.LayoutParams(
+            0,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            1.0f
+        );
+
+        row.addView(labelView, labelParams);
+        row.addView(valueView, valueParams);
+        expandedContentLayout.addView(row, rowParams);
+    }
+
     private void updateVehicleDisplay(String vin, VehicleData vehicleData)
     {
         if (vehicleData == null)
@@ -224,11 +445,14 @@ public class VehicleInfoFooter extends LinearLayout
             vehicleInfo.setText("VIN: " + vin);
             connectionStatus.setText("Unable to decode vehicle details");
             connectionStatus.setTextColor(Color.parseColor("#888888"));
+            expandIndicator.setVisibility(View.GONE);
             return;
         }
 
         try {
             isConnected = true;
+            currentVehicleData = vehicleData;
+            expandIndicator.setVisibility(View.VISIBLE);
 
             // Set manufacturer icon (first letter of make)
             String make = vehicleData.make;
@@ -275,11 +499,17 @@ public class VehicleInfoFooter extends LinearLayout
             }
             connectionStatus.setTextColor(Color.parseColor("#4CAF50")); // Green when connected
 
+            // Update expanded content if currently expanded
+            if (isExpanded) {
+                updateExpandedContent();
+            }
+
         } catch (Exception e) {
             Log.e(TAG, "Error updating vehicle display", e);
             vehicleInfo.setText("Error reading vehicle data");
             connectionStatus.setText("Please reconnect");
             connectionStatus.setTextColor(Color.parseColor("#F44336")); // Red for error
+            expandIndicator.setVisibility(View.GONE);
         }
     }
 

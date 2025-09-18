@@ -123,6 +123,14 @@ public class VehicleManager {
             listener.onDecodingStarted();
         }
 
+        // Check if this is the demo VIN
+        if (vin.equals("4JGDA5HB7JB158144")) {
+            // Create comprehensive demo data for Mercedes GLE
+            VehicleData demoData = createDemoVehicleData(vin);
+            handleDecodedVehicle(demoData);
+            return;
+        }
+
         // Check if already cached in decoder service
         VehicleData cached = vinDecoder.getCached(vin);
         if (cached != null) {
@@ -142,6 +150,66 @@ public class VehicleManager {
                 handleDecodingError(error);
             }
         });
+    }
+
+    /**
+     * Create demo VehicleData for testing
+     */
+    private VehicleData createDemoVehicleData(String vin) {
+        VehicleData data = new VehicleData();
+
+        // Core info
+        data.vin = vin;
+        data.make = "MERCEDES-BENZ";
+        data.manufacturer = "Mercedes-Benz (Daimler AG)";
+        data.model = "GLE-Class";
+        data.modelYear = "2018";
+
+        // Body and Structure
+        data.bodyClass = "Sport Utility Vehicle (SUV)";
+        data.doors = "4";
+        data.vehicleType = "Multipurpose Passenger Vehicle (MPV)";
+        data.wheelBase = "114.8";
+
+        // Engine Information
+        data.engineCylinders = "6";
+        data.displacementCC = "3498";
+        data.displacementCI = "213.5";
+        data.displacementL = "3.50";
+        data.engineModel = "M276 DE35";
+        data.engineManufacturer = "Mercedes-Benz";
+        data.fuelTypePrimary = "Gasoline";
+
+        // Drivetrain
+        data.driveType = "All Wheel Drive (AWD)";
+        data.transmissionStyle = "Automatic";
+        data.transmissionSpeeds = "9";
+
+        // Manufacturing
+        data.plantCity = "Tuscaloosa";
+        data.plantState = "Alabama";
+        data.plantCountry = "United States";
+
+        // Weight
+        data.gvwr = "6062";
+        data.curbWeight = "4630";
+
+        // Trim/Series
+        data.series = "GLE 350";
+        data.trim = "4MATIC";
+
+        // Safety (some examples)
+        data.abs = "Standard";
+        data.airBagLocFront = "1st Row (Driver and Passenger)";
+        data.airBagLocSide = "1st and 2nd Rows";
+        data.airBagLocCurtain = "All Rows";
+
+        // Set as valid
+        data.errorCode = "0";
+        data.errorText = "";
+
+        Log.d(TAG, "Created demo vehicle data for Mercedes GLE");
+        return data;
     }
 
     /**
