@@ -1540,15 +1540,38 @@ public class MainActivity extends AppCompatActivity
 
                                     // Get description or use PID as fallback
                                     Object descr = pv.get(EcuDataPv.FID_DESCRIPT);
-                                    String labelText = (descr != null && !descr.toString().isEmpty())
-                                        ? descr.toString()
-                                        : "PID " + key;
+                                    String labelText;
+                                    if (descr != null && !descr.toString().isEmpty()) {
+                                        labelText = descr.toString();
+                                    } else if (key instanceof Integer) {
+                                        // Format as hex for integer PIDs
+                                        labelText = String.format("PID 0x%02X", (Integer) key);
+                                    } else {
+                                        // Fallback for other key types
+                                        labelText = "PID " + key;
+                                    }
                                     label.setText(labelText);
 
                                     // Format value with units
                                     Object dataValue = pv.get(EcuDataPv.FID_VALUE);
                                     Object units = pv.get(EcuDataPv.FID_UNITS);
-                                    String displayValue = dataValue != null ? dataValue.toString() : "N/A";
+
+                                    // Convert value to string, handling byte arrays
+                                    String displayValue;
+                                    if (dataValue == null) {
+                                        displayValue = "N/A";
+                                    } else if (dataValue instanceof byte[]) {
+                                        // Convert byte array to hex string
+                                        byte[] bytes = (byte[]) dataValue;
+                                        StringBuilder hex = new StringBuilder("0x");
+                                        for (byte b : bytes) {
+                                            hex.append(String.format("%02X", b & 0xFF));
+                                        }
+                                        displayValue = hex.toString();
+                                    } else {
+                                        displayValue = dataValue.toString();
+                                    }
+
                                     if (units != null && !units.toString().isEmpty()) {
                                         displayValue += " " + units;
                                     }

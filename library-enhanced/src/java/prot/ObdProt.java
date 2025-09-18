@@ -781,13 +781,38 @@ public class ObdProt extends ProtoHeader
                                             // Update the PV with the actual data from the item
                                             pv.put(EcuDataPv.FID_DESCRIPT, item.label);
                                             if (item.pv != null) {
-                                                pv.put(EcuDataPv.FID_VALUE, item.pv.get(EcuDataPv.FID_VALUE));
+                                                Object value = item.pv.get(EcuDataPv.FID_VALUE);
+                                                // Check if value is a byte array and convert to hex string
+                                                if (value instanceof byte[]) {
+                                                    byte[] bytes = (byte[]) value;
+                                                    StringBuilder hex = new StringBuilder();
+                                                    for (byte b : bytes) {
+                                                        hex.append(String.format("%02X", b & 0xFF));
+                                                    }
+                                                    pv.put(EcuDataPv.FID_VALUE, hex.toString());
+                                                } else if (value != null) {
+                                                    pv.put(EcuDataPv.FID_VALUE, value);
+                                                }
                                                 Object units = item.pv.get(EcuDataPv.FID_UNITS);
                                                 if (units != null) {
                                                     pv.put(EcuDataPv.FID_UNITS, units);
                                                 }
                                             }
                                         }
+                                    } else {
+                                        // No data item definition - create basic PID entry with hex value
+                                        EcuDataPv pv = (EcuDataPv) freezeStore.get(msgPid);
+                                        if (pv == null) {
+                                            pv = new EcuDataPv();
+                                            pv.put(EcuDataPv.FID_PID, Integer.valueOf(msgPid));
+                                            freezeStore.put(msgPid, pv);
+                                        }
+                                        // Set description based on known PIDs
+                                        String description = getPidDescription(msgPid);
+                                        pv.put(EcuDataPv.FID_DESCRIPT, description);
+                                        // Convert payload to hex string
+                                        char[] payload = getPayLoad(buffer);
+                                        pv.put(EcuDataPv.FID_VALUE, String.valueOf(payload));
                                     }
 
                                     // Store the updated freeze frame data
@@ -950,6 +975,82 @@ public class ObdProt extends ProtoHeader
                                                    PROP_NUM_CODES,
                                                    Integer.valueOf(old),
                                                    Integer.valueOf(numCodes)));
+    }
+
+    /**
+     * Get human-readable description for a PID
+     *
+     * @param pid The PID number
+     * @return Description string for the PID
+     */
+    private static String getPidDescription(int pid) {
+        switch (pid) {
+            case 0x01: return "Monitor status";
+            case 0x02: return "Freeze DTC";
+            case 0x03: return "Fuel system status";
+            case 0x04: return "Calculated engine load";
+            case 0x05: return "Engine coolant temperature";
+            case 0x06: return "Short term fuel trim—Bank 1";
+            case 0x07: return "Long term fuel trim—Bank 1";
+            case 0x08: return "Short term fuel trim—Bank 2";
+            case 0x09: return "Long term fuel trim—Bank 2";
+            case 0x0A: return "Fuel pressure";
+            case 0x0B: return "Intake manifold pressure";
+            case 0x0C: return "Engine speed";
+            case 0x0D: return "Vehicle speed";
+            case 0x0E: return "Timing advance";
+            case 0x0F: return "Intake air temperature";
+            case 0x10: return "Mass air flow rate";
+            case 0x11: return "Throttle position";
+            case 0x12: return "Commanded secondary air status";
+            case 0x13: return "Oxygen sensors present";
+            case 0x14: return "Oxygen sensor 1";
+            case 0x15: return "Oxygen sensor 2";
+            case 0x16: return "Oxygen sensor 3";
+            case 0x17: return "Oxygen sensor 4";
+            case 0x18: return "Oxygen sensor 5";
+            case 0x19: return "Oxygen sensor 6";
+            case 0x1A: return "Oxygen sensor 7";
+            case 0x1B: return "Oxygen sensor 8";
+            case 0x1C: return "OBD standards";
+            case 0x1D: return "Oxygen sensors present (4 banks)";
+            case 0x1E: return "Auxiliary input status";
+            case 0x1F: return "Run time since engine start";
+            case 0x21: return "Distance traveled with MIL";
+            case 0x22: return "Fuel rail pressure";
+            case 0x23: return "Fuel rail gauge pressure";
+            case 0x2C: return "Commanded EGR";
+            case 0x2D: return "EGR Error";
+            case 0x2E: return "Commanded evaporative purge";
+            case 0x2F: return "Fuel tank level input";
+            case 0x30: return "Warm-ups since codes cleared";
+            case 0x31: return "Distance since codes cleared";
+            case 0x33: return "Absolute barometric pressure";
+            case 0x42: return "Control module voltage";
+            case 0x43: return "Absolute load value";
+            case 0x44: return "Commanded fuel-air ratio";
+            case 0x45: return "Relative throttle position";
+            case 0x46: return "Ambient air temperature";
+            case 0x47: return "Absolute throttle position B";
+            case 0x48: return "Absolute throttle position C";
+            case 0x49: return "Accelerator pedal position D";
+            case 0x4A: return "Accelerator pedal position E";
+            case 0x4B: return "Accelerator pedal position F";
+            case 0x4C: return "Commanded throttle actuator";
+            case 0x4D: return "Time run with MIL on";
+            case 0x4E: return "Time since trouble codes cleared";
+            case 0x51: return "Fuel Type";
+            case 0x52: return "Ethanol fuel %";
+            case 0x53: return "Absolute evap vapor pressure";
+            case 0x54: return "Evap vapor pressure";
+            case 0x59: return "Fuel rail absolute pressure";
+            case 0x5A: return "Relative accelerator position";
+            case 0x5B: return "Hybrid battery remaining life";
+            case 0x5C: return "Engine oil temperature";
+            case 0x5D: return "Fuel injection timing";
+            case 0x5E: return "Engine fuel rate";
+            default: return String.format("PID 0x%02X", pid);
+        }
     }
 
     /**
