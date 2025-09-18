@@ -79,28 +79,29 @@ public class VehicleInfoFooter extends LinearLayout
         contentLayout = new LinearLayout(getContext());
         contentLayout.setOrientation(LinearLayout.HORIZONTAL);
         contentLayout.setGravity(Gravity.CENTER_VERTICAL);
-        contentLayout.setPadding(dpToPx(16), dpToPx(10), dpToPx(16), dpToPx(10));
+        contentLayout.setPadding(dpToPx(16), dpToPx(6), dpToPx(16), dpToPx(6));
         LinearLayout.LayoutParams contentParams = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         );
         addView(contentLayout, contentParams);
 
-        // Create manufacturer icon container with circular background
+        // Create manufacturer icon container
         iconContainer = new LinearLayout(getContext());
         iconContainer.setGravity(Gravity.CENTER);
-        // Simple dark background - no compass drawable
-        iconContainer.setBackgroundColor(Color.parseColor("#2C2C2C"));
+        // No background - transparent for PNG logos
+        iconContainer.setBackground(null);
         LinearLayout.LayoutParams iconContainerParams = new LinearLayout.LayoutParams(
-            dpToPx(40),
-            dpToPx(40)
+            dpToPx(72),
+            dpToPx(72)
         );
         iconContainerParams.rightMargin = dpToPx(12);
 
         // Create manufacturer logo ImageView
         manufacturerLogo = new ImageView(getContext());
         manufacturerLogo.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        manufacturerLogo.setPadding(dpToPx(5), dpToPx(5), dpToPx(5), dpToPx(5));
+        manufacturerLogo.setPadding(0, 0, 0, 0);
+        manufacturerLogo.setBackground(null);
         manufacturerLogo.setVisibility(View.GONE);
 
         // Create manufacturer icon text (fallback when no logo)
@@ -491,14 +492,16 @@ public class VehicleInfoFooter extends LinearLayout
                 manufacturerLogo.setImageBitmap(logoBitmap);
                 manufacturerLogo.setVisibility(View.VISIBLE);
                 manufacturerIcon.setVisibility(View.GONE);
-                // Make background white for better logo visibility
-                iconContainer.setBackgroundColor(Color.parseColor("#FFFFFF"));
+                // Keep no background for PNG logos
+                iconContainer.setBackground(null);
             } else if (make != null && !make.isEmpty()) {
                 // No logo - show first letter as fallback
                 manufacturerIcon.setText(make.substring(0, 1).toUpperCase());
                 manufacturerIcon.setTextColor(Color.parseColor("#00ACC1")); // Cyan when connected
                 manufacturerIcon.setVisibility(View.VISIBLE);
                 manufacturerLogo.setVisibility(View.GONE);
+                // Add background for text icon
+                iconContainer.setBackgroundColor(Color.parseColor("#2C2C2C"));
             }
 
             // Build vehicle info text

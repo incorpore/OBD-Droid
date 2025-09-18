@@ -806,6 +806,8 @@ public class MainActivity extends AppCompatActivity
                 setMode(MODE.OFFLINE);
                 // Reset ECU connection state
                 ecuConnectionState = ElmProt.STAT.UNDEFINED;
+                // Clear vehicle data
+                VehicleManager.getInstance().clearVehicle();
                 // Return to main screen
                 setObdService(ObdProt.OBD_SVC_NONE, null);
                 return true;
