@@ -7,6 +7,12 @@
     <string name="copied_to_clipboard">Copied to clipboard</string>
     <string name="title_connecting">Connecting…</string>
     <string name="title_connected_to">Connected %s</string>
+    <string name="status_connected">Connected</string>
+    <string name="status_connect_device">Connect a Device</string>
+    <string name="status_online">Online</string>
+    <string name="status_demo_mode">Demo Mode</string>
+    <string name="status_viewing_saved">Viewing Saved Data</string>
+    <string name="status_selecting_ecu">Selecting ECU</string>
     <string name="logo">Logo</string>
     <string name="back_again_to_exit">Press back again to close this app</string>
     <!-- menu  -->
@@ -179,7 +185,8 @@ period of time while the ECU recalibrates itself.
     <string name="INITIALIZING">Initializing…</string>
     <string name="INITIALIZED">Initialized</string>
     <string name="ECU_DETECT">ECU detect…</string>
-    <string name="ECU_DETECTED">ECU Selected</string>
+    <string name="ECU_DETECTED">ECU detected</string>
+    <string name="ECU_SELECTED">ECU selected</string>
     <string name="CONNECTING">Connecting…</string>
     <string name="CONNECTED">Connected</string>
     <string name="NODATA">No data</string>
@@ -207,6 +214,7 @@ period of time while the ECU recalibrates itself.
         <item>@string/INITIALIZED</item>
         <item>@string/ECU_DETECT</item>
         <item>@string/ECU_DETECTED</item>
+        <item>@string/ECU_SELECTED</item>
         <item>@string/CONNECTING</item>
         <item>@string/CONNECTED</item>
         <item>@string/NODATA</item>

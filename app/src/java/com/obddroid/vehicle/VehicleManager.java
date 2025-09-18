@@ -3,6 +3,7 @@ package com.obddroid.vehicle;
 import android.util.Log;
 import com.obddroid.api.nhtsa.VINDecoderService;
 import com.obddroid.api.nhtsa.VehicleData;
+import com.obddroid.core.obd.ElmProt;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +27,10 @@ public class VehicleManager {
     private String currentVIN = null;
     private VehicleData currentVehicleData = null;
     private boolean isDecoding = false;
+    private ElmProt.STAT ecuConnectionState = ElmProt.STAT.UNDEFINED;
+    private boolean ecuSelected = false;
+    private boolean vinRetrievalAttempted = false;
+    private boolean vinRetrievalFailed = false;
 
     // Listeners for vehicle changes
     private final List<VehicleChangeListener> listeners = new ArrayList<>();
@@ -40,6 +45,8 @@ public class VehicleManager {
         void onVINChanged(String vin);
         void onVehicleDecoded(VehicleData vehicleData);
         void onVehicleDisconnected();
+        void onECUConnectionChanged(ElmProt.STAT state);
+        void onVINRetrievalFailed();
         void onDecodingStarted();
         void onDecodingError(String error);
     }
@@ -51,6 +58,8 @@ public class VehicleManager {
         @Override public void onVINChanged(String vin) {}
         @Override public void onVehicleDecoded(VehicleData vehicleData) {}
         @Override public void onVehicleDisconnected() {}
+        @Override public void onECUConnectionChanged(ElmProt.STAT state) {}
+        @Override public void onVINRetrievalFailed() {}
         @Override public void onDecodingStarted() {}
         @Override public void onDecodingError(String error) {}
     }
@@ -101,11 +110,20 @@ public class VehicleManager {
      */
     public void setVIN(String vin) {
         if (vin == null || vin.trim().isEmpty()) {
-            clearVehicle();
+            // VIN retrieval failed (Mode 9 not supported)
+            vinRetrievalAttempted = true;
+            vinRetrievalFailed = true;
+
+            // Notify listeners of failure
+            for (VehicleChangeListener listener : listeners) {
+                listener.onVINRetrievalFailed();
+            }
             return;
         }
 
         vin = vin.trim().toUpperCase();
+        vinRetrievalAttempted = true;
+        vinRetrievalFailed = false;
 
         // Check if VIN actually changed
         if (vin.equals(currentVIN)) {
@@ -250,11 +268,91 @@ public class VehicleManager {
         currentVIN = null;
         currentVehicleData = null;
         isDecoding = false;
+        ecuSelected = false;
+        vinRetrievalAttempted = false;
+        vinRetrievalFailed = false;
+        // Don't reset ECU state here - it's managed separately
 
         // Notify all listeners
         for (VehicleChangeListener listener : listeners) {
             listener.onVehicleDisconnected();
         }
+    }
+
+    /**
+     * Update ECU connection state
+     */
+    public void setECUConnectionState(ElmProt.STAT state) {
+        Log.d(TAG, "ECU connection state changed: " + state);
+        ElmProt.STAT oldState = ecuConnectionState;
+        ecuConnectionState = state;
+
+        // Don't notify about ECU connection until actually selected
+        // ECU_DETECTED means ECUs are found but not selected yet
+        if (state != ElmProt.STAT.ECU_DETECTED) {
+            // Notify all listeners
+            for (VehicleChangeListener listener : listeners) {
+                listener.onECUConnectionChanged(state);
+            }
+        }
+
+        // If ECU disconnected or no longer detected, clear selection state
+        if (state == ElmProt.STAT.UNDEFINED ||
+            state == ElmProt.STAT.DISCONNECTED ||
+            state == ElmProt.STAT.STOPPED ||
+            state == ElmProt.STAT.NODATA) {
+            ecuSelected = false;
+            vinRetrievalAttempted = false;
+            vinRetrievalFailed = false;
+        }
+
+        // If going from connected/initialized back to initializing, we're reconnecting
+        if ((oldState == ElmProt.STAT.CONNECTED || oldState == ElmProt.STAT.INITIALIZED) &&
+            state == ElmProt.STAT.INITIALIZING) {
+            // Clear vehicle data for new connection
+            clearVehicle();
+        }
+    }
+
+    /**
+     * Get current ECU connection state
+     */
+    public ElmProt.STAT getECUConnectionState() {
+        return ecuConnectionState;
+    }
+
+    /**
+     * Mark that ECU has been selected by user
+     */
+    public void setECUSelected(boolean selected) {
+        Log.d(TAG, "ECU selected: " + selected);
+        ecuSelected = selected;
+        vinRetrievalAttempted = false;
+        vinRetrievalFailed = false;
+
+        if (selected) {
+            // Now notify listeners that ECU is truly connected
+            // But don't assume Mode 9 failure yet
+            for (VehicleChangeListener listener : listeners) {
+                listener.onECUConnectionChanged(ElmProt.STAT.CONNECTED);
+            }
+        }
+    }
+
+    /**
+     * Check if VIN retrieval has been attempted and failed
+     */
+    public boolean hasVINRetrievalFailed() {
+        return vinRetrievalAttempted && vinRetrievalFailed;
+    }
+
+    /**
+     * Check if ECU is connected (even without VIN)
+     */
+    public boolean isECUConnected() {
+        // Only consider connected if ECU is actually selected
+        return ecuSelected && (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
+                               ecuConnectionState == ElmProt.STAT.CONNECTED);
     }
 
     /**

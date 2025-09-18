@@ -72,20 +72,54 @@ public class ObdProt extends ProtoHeader
         this.resetOnNrc = resetOnNrc;
     }
 
+    /**
+     * Get human-readable name for OBD service
+     * @param service OBD service code
+     * @return Human-readable service name
+     */
+    public static String getServiceName(int service) {
+        switch (service) {
+            case OBD_SVC_NONE:
+                return "No Service";
+            case OBD_SVC_DATA:
+                return "Live Data (Mode 1)";
+            case OBD_SVC_FREEZEFRAME:
+                return "Freeze Frame Data (Mode 2)";
+            case OBD_SVC_READ_CODES:
+                return "Fault Codes (Mode 3)";
+            case OBD_SVC_CLEAR_CODES:
+                return "Clear Fault Codes (Mode 4)";
+            case OBD_SVC_O2_RESULT:
+                return "O2 Sensor Test (Mode 5)";
+            case OBD_SVC_MON_RESULT:
+                return "Monitor Test Results (Mode 6)";
+            case OBD_SVC_PENDINGCODES:
+                return "Pending Codes (Mode 7)";
+            case OBD_SVC_CTRL_MODE:
+                return "Control Test (Mode 8)";
+            case OBD_SVC_VEH_INFO:
+                return "Vehicle Info (Mode 9)";
+            case OBD_SVC_PERMACODES:
+                return "Permanent Codes (Mode A)";
+            default:
+                return String.format("Service 0x%02X", service);
+        }
+    }
+
     /** negative response codes */
     public enum NRC
     {
 	    GR(0x10, "General reject",DISP.ERROR, REACT.RESET),
-        SNS(0x11, "Service 0x%02X not supported", DISP.ERROR, REACT.CANCEL),
-        SFNS(0x12, "Sub-Function not supported (SVC:0x%02X)", DISP.NOTIFY, REACT.SKIP),
+        SNS(0x11, "Not supported", DISP.ERROR, REACT.CANCEL),
+        SFNS(0x12, "Feature not available", DISP.NOTIFY, REACT.SKIP),
         IMLOIF(0x13, "Incorrect message length or invalid format", DISP.NOTIFY, REACT.SKIP),
         RTL(0x14, "Response too long", DISP.NOTIFY, REACT.SKIP),
         BRR(0x21, "Busy repeat request", DISP.NOTIFY, REACT.REPEAT),
-        CNC(0x22, "Conditions not correct (SVC:0x%02X)", DISP.ERROR, REACT.CANCEL),
+        CNC(0x22, "Conditions not correct", DISP.ERROR, REACT.CANCEL),
         RSE(0x24, "Request sequence error", DISP.ERROR, REACT.CANCEL),
         NRFSC(0x25, "No response from sub-net component", DISP.ERROR, REACT.RESET),
         FPEORA(0x26, "Failure prevents execution of requested action", DISP.ERROR, REACT.CANCEL),
-        ROOR(0x31, "Request out of range (SVC:0x%02X)", DISP.NOTIFY, REACT.SKIP),
+        ROOR(0x31, "Request out of range", DISP.NOTIFY, REACT.SKIP),
         SAD(0x33, "Security access denied", DISP.ERROR, REACT.CANCEL),
         IK(0x35, "Invalid key", DISP.ERROR, REACT.RESET),
         ENOA(0x36, "Exceeded number of attempts", DISP.ERROR, REACT.RESET),
@@ -94,9 +128,9 @@ public class ObdProt extends ProtoHeader
         TDS(0x71, "Transfer data suspended", DISP.NOTIFY, REACT.REPEAT),
         GPF(0x72, "General programming failure", DISP.ERROR, REACT.CANCEL),
         WBSC(0x73, "Wrong Block Sequence Counter", DISP.ERROR, REACT.CANCEL),
-        RCRRP(0x78, "Request correctly received  but response is pending", DISP.NOTIFY, REACT.IGNORE),
-        SFNSIAS(0x7E, "Sub-Function not supported in active session (SVC:0x%02X)", DISP.NOTIFY, REACT.SKIP),
-        SNSIAS(0x7F, "Service 0x%02X not supported in active session", DISP.ERROR, REACT.CANCEL);
+        RCRRP(0x78, "Request correctly received but response is pending", DISP.NOTIFY, REACT.IGNORE),
+        SFNSIAS(0x7E, "Not supported in active session", DISP.NOTIFY, REACT.SKIP),
+        SNSIAS(0x7F, "Not supported in active session", DISP.ERROR, REACT.CANCEL);
     
         /** NRC display classifiers */
         public enum DISP
@@ -152,7 +186,26 @@ public class ObdProt extends ProtoHeader
         /** return String representative */
         public String toString(int service)
         {
-            return String.format("(NRC:0x%02X) %s", code, String.format(description, service));
+            String serviceName = getServiceName(service);
+            String baseMessage = String.format(description, service);
+
+            // Provide more helpful messages for common cases
+            if (code == 0x12 && service == OBD_SVC_VEH_INFO) {
+                // Special case for Vehicle Info not supported (common with emulators)
+                return String.format("%s not available - Common with emulators or basic OBD adapters", serviceName);
+            } else if (code == 0x11) {
+                // Service not supported
+                return String.format("%s not supported by this ECU", serviceName);
+            } else if (code == 0x12) {
+                // Sub-function not supported
+                return String.format("%s: Feature not available", serviceName);
+            } else if (code == 0x7E || code == 0x7F) {
+                // Not supported in active session
+                return String.format("%s not available in current mode", serviceName);
+            }
+
+            // Default format with service name
+            return String.format("%s: %s", serviceName, baseMessage);
         }
     }
 

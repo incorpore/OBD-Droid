@@ -122,7 +122,7 @@ deploy_app() {
 
         # Launch the app
         echo -e "${YELLOW}Launching OBDroid...${NC}"
-        adb shell am start -n com.obddroid/.activities.MainActivity
+        adb shell am start -n com.obddroid/com.obddroid.ui.activities.MainActivity
 
         if [ $? -eq 0 ]; then
             echo -e "${GREEN}App launched!${NC}"

@@ -67,6 +67,7 @@ import com.obddroid.services.ObdDataService;
 import com.obddroid.ui.components.AutoHider;
 import com.obddroid.utils.ExportTask;
 import com.obddroid.utils.FileHelper;
+import com.obddroid.utils.SnackbarHelper;
 import com.obddroid.vehicle.VehicleManager;
 import com.obddroid.R;
 
@@ -203,7 +204,6 @@ public class MainActivity extends AppCompatActivity
     /**
      * toast for showing exit message
      */
-    private static Toast exitToast = null;
 
     /**
      * Flag to temporarily ignore NRCs
@@ -280,6 +280,10 @@ public class MainActivity extends AppCompatActivity
      */
     private ElmProt.STAT ecuConnectionState = ElmProt.STAT.UNDEFINED;
     /**
+     * Track if ECU has been selected by user
+     */
+    private boolean ecuUserSelected = false;
+    /**
      * Handle message requests
      */
     @SuppressLint("HandlerLeak")
@@ -342,15 +346,13 @@ public class MainActivity extends AppCompatActivity
                     case MESSAGE_DEVICE_NAME:
                         // save the connected device's name
                         mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
-                        Toast.makeText(getApplicationContext(),
-                                getString(R.string.connected_to) + mConnectedDeviceName,
-                                Toast.LENGTH_SHORT).show();
+                        SnackbarHelper.showSuccess(MainActivity.this,
+                                getString(R.string.connected_to) + mConnectedDeviceName);
                         break;
 
                     case MESSAGE_TOAST:
-                        Toast.makeText(getApplicationContext(),
-                                msg.getData().getString(TOAST),
-                                Toast.LENGTH_SHORT).show();
+                        SnackbarHelper.showInfo(MainActivity.this,
+                                msg.getData().getString(TOAST));
                         break;
 
                     case MESSAGE_DATA_ITEMS_CHANGED:
@@ -392,11 +394,22 @@ public class MainActivity extends AppCompatActivity
                         ElmProt.STAT state = (ElmProt.STAT) evt.getNewValue();
                         ecuConnectionState = state; // Track ECU connection state
 
+                        // Update VehicleManager with ECU connection state
+                        VehicleManager.getInstance().setECUConnectionState(state);
+
                         /* Show ELM status only in ONLINE mode */
                         if (getMode() != MODE.DEMO)
                         {
-                            setStatus(getResources().getStringArray(R.array.elmcomm_states)[state
-                                    .ordinal()]);
+                            // Don't overwrite "ECU selected" status when state changes to CONNECTED
+                            if (!(ecuUserSelected && state == ElmProt.STAT.CONNECTED)) {
+                                // Special handling for ECU_SELECTED state
+                                if (ecuUserSelected && state == ElmProt.STAT.ECU_DETECTED) {
+                                    // Keep showing ECU selected when we're in ECU_DETECTED but user has selected
+                                    setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
+                                } else {
+                                    setStatus(getResources().getStringArray(R.array.elmcomm_states)[state.ordinal()]);
+                                }
+                            }
                         }
 
                         // Enable OBD services only when ECU is detected
@@ -429,30 +442,24 @@ public class MainActivity extends AppCompatActivity
                             evt = (PropertyChangeEvent) msg.obj;
                             ObdProt.NRC nrc = (ObdProt.NRC) evt.getOldValue();
                             String nrcMsg = (String) evt.getNewValue();
+
+                            // Check if this is a Mode 9 (Vehicle Info) failure
+                            if (nrc.code == 0x12 && CommService.elm.getService() == ObdProt.OBD_SVC_VEH_INFO) {
+                                // Mode 9 not supported - notify VehicleManager
+                                VehicleManager.getInstance().setVIN(null);
+                            }
                             switch (nrc.disp)
                             {
                                 case ERROR:
-                                    new AlertDialog.Builder(MainActivity.this)
-                                        .setIcon(android.R.drawable.ic_dialog_alert)
-                                        .setTitle(R.string.obd_error)
-                                        .setMessage(nrcMsg)
-                                        .setPositiveButton(android.R.string.ok, null)
-                                        .show();
+                                    SnackbarHelper.showError(MainActivity.this, nrcMsg);
                                     break;
                                 // Display warning (with confirmation)
                                 case WARN:
-                                    new AlertDialog.Builder(MainActivity.this)
-                                        .setIcon(android.R.drawable.ic_dialog_info)
-                                        .setTitle(R.string.obd_error)
-                                        .setMessage(nrcMsg)
-                                        .setPositiveButton(android.R.string.ok, null)
-                                        .show();
+                                    SnackbarHelper.showWarning(MainActivity.this, nrcMsg);
                                     break;
                                 // Display notification (no confirmation)
                                 case NOTIFY:
-                                    Toast.makeText(getApplicationContext(),
-                                        nrcMsg,
-                                        Toast.LENGTH_SHORT).show();
+                                    SnackbarHelper.showInfo(MainActivity.this, nrcMsg);
                                     break;
 
                                 case HIDE:
@@ -752,16 +759,10 @@ public class MainActivity extends AppCompatActivity
             {
                 if (lastBackPressTime < System.currentTimeMillis() - EXIT_TIMEOUT)
                 {
-                    exitToast =
-                            Toast.makeText(this, R.string.back_again_to_exit, Toast.LENGTH_SHORT);
-                    exitToast.show();
+                    SnackbarHelper.showInfo(this, getString(R.string.back_again_to_exit));
                     lastBackPressTime = System.currentTimeMillis();
                 } else
                 {
-                    if (exitToast != null)
-                    {
-                        exitToast.cancel();
-                    }
                     super.onBackPressed();
                 }
             }
@@ -806,6 +807,7 @@ public class MainActivity extends AppCompatActivity
                 setMode(MODE.OFFLINE);
                 // Reset ECU connection state
                 ecuConnectionState = ElmProt.STAT.UNDEFINED;
+                ecuUserSelected = false;
                 // Clear vehicle data
                 VehicleManager.getInstance().clearVehicle();
                 // Return to main screen
@@ -835,7 +837,7 @@ public class MainActivity extends AppCompatActivity
                     ecuConnectionState == ElmProt.STAT.CONNECTED) {
                     setObdService(ObdProt.OBD_SVC_DATA, item.getTitle());
                 } else {
-                    Toast.makeText(this, "Please wait for ECU connection to complete", Toast.LENGTH_LONG).show();
+                    SnackbarHelper.showWarning(this, "Please wait for ECU connection to complete");
                 }
                 return true;
 
@@ -844,7 +846,7 @@ public class MainActivity extends AppCompatActivity
                     ecuConnectionState == ElmProt.STAT.CONNECTED) {
                     setObdService(ObdProt.OBD_SVC_VEH_INFO, item.getTitle());
                 } else {
-                    Toast.makeText(this, "Please wait for ECU connection to complete", Toast.LENGTH_LONG).show();
+                    SnackbarHelper.showWarning(this, "Please wait for ECU connection to complete");
                 }
                 return true;
 
@@ -854,7 +856,7 @@ public class MainActivity extends AppCompatActivity
                     ecuConnectionState == ElmProt.STAT.CONNECTED) {
                     setObdService(ObdProt.OBD_SVC_CTRL_MODE, item.getTitle());
                 } else {
-                    Toast.makeText(this, "Please wait for ECU connection to complete", Toast.LENGTH_LONG).show();
+                    SnackbarHelper.showWarning(this, "Please wait for ECU connection to complete");
                 }
                 return true;
 
@@ -863,7 +865,7 @@ public class MainActivity extends AppCompatActivity
                     ecuConnectionState == ElmProt.STAT.CONNECTED) {
                     setObdService(ObdProt.OBD_SVC_READ_CODES, item.getTitle());
                 } else {
-                    Toast.makeText(this, "Please wait for ECU connection to complete", Toast.LENGTH_LONG).show();
+                    SnackbarHelper.showWarning(this, "Please wait for ECU connection to complete");
                 }
                 return true;
 
@@ -1297,7 +1299,7 @@ public class MainActivity extends AppCompatActivity
                         String.valueOf(pv.get(EcuDataPv.FID_VALUE)));
                 clipboard.setPrimaryClip(clip);
                 // Show Toast message
-                Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
+                SnackbarHelper.showSuccess(this, getString(R.string.copied_to_clipboard));
                 break;
 
             case ObdProt.OBD_SVC_CTRL_MODE:
@@ -1414,7 +1416,7 @@ public class MainActivity extends AppCompatActivity
 
         } catch (Exception e) {
             log.log(Level.SEVERE, "Show fault code modal", e);
-            Toast.makeText(this, "Error showing options: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showError(this, "Error showing options: " + e.getMessage());
         }
     }
 
@@ -1636,7 +1638,7 @@ public class MainActivity extends AppCompatActivity
 
         } catch (Exception e) {
             log.log(Level.SEVERE, "Show freeze frame modal", e);
-            Toast.makeText(this, "Error showing freeze frame data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showError(this, "Error showing freeze frame data: " + e.getMessage());
         }
     }
 
@@ -1651,7 +1653,7 @@ public class MainActivity extends AppCompatActivity
             startActivity(intent);
         } catch (Exception e) {
             log.log(Level.SEVERE, "WebSearch DFC", e);
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            SnackbarHelper.showError(this, e.getMessage());
         }
     }
 
@@ -1664,7 +1666,7 @@ public class MainActivity extends AppCompatActivity
         String text = code + " - " + description;
         ClipData clip = ClipData.newPlainText("OBD Fault Code", text);
         clipboard.setPrimaryClip(clip);
-        Toast.makeText(this, "Copied: " + code, Toast.LENGTH_SHORT).show();
+        SnackbarHelper.showSuccess(this, "Copied: " + code);
     }
 
     /**
@@ -1772,8 +1774,12 @@ public class MainActivity extends AppCompatActivity
             Integer address = ecuAdresses.iterator().next();
             // set address
             CommService.elm.setEcuAddress(address);
-            // Update status
-            setStatus("ECU Selected");
+            // Mark ECU as selected
+            ecuUserSelected = true;
+            // Update status using the ECU_SELECTED state
+            setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
+            // Mark ECU as selected in VehicleManager
+            VehicleManager.getInstance().setECUSelected(true);
             // Trigger VIN retrieval
             triggerVinRetrieval();
         }
@@ -1783,7 +1789,7 @@ public class MainActivity extends AppCompatActivity
             // Always allow ECU selection - don't restore previous
 
             // Set status to show ECU selection is in progress
-            setStatus("Selecting ECU");
+            setStatus(getString(R.string.status_selecting_ecu));
 
             // .. allow selection of single ECU address ...
             final CharSequence[] entries = new CharSequence[ecuAdresses.size()];
@@ -1805,8 +1811,12 @@ public class MainActivity extends AppCompatActivity
                                     Integer.parseInt(entries[which].toString().substring(2), 16);
                             // set address
                             CommService.elm.setEcuAddress(address);
-                            // Update status after ECU selection
-                            setStatus("ECU Selected");
+                            // Mark ECU as selected
+                            ecuUserSelected = true;
+                            // Update status using the ECU_SELECTED state
+                            setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
+                            // Mark ECU as selected in VehicleManager
+                            VehicleManager.getInstance().setECUSelected(true);
                             // Now trigger VIN retrieval
                             triggerVinRetrieval();
                         }
@@ -1816,15 +1826,26 @@ public class MainActivity extends AppCompatActivity
                         @Override
                         public void onCancel(DialogInterface dialog)
                         {
-                            // If user cancels, revert to connected status
-                            if (mConnectedDeviceName != null) {
-                                setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
-                            } else {
-                                setStatus("Connected");
-                            }
+                            // Auto-select first ECU if dialog is cancelled
+                            log.info("ECU selection cancelled, auto-selecting first ECU");
+                            Integer firstAddress = ecuAdresses.iterator().next();
+                            // set address
+                            CommService.elm.setEcuAddress(firstAddress);
+                            // Mark ECU as selected
+                            ecuUserSelected = true;
+                            // Update status using the ECU_SELECTED state
+                            setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
+                            // Mark ECU as selected in VehicleManager
+                            VehicleManager.getInstance().setECUSelected(true);
+                            // Trigger VIN retrieval
+                            triggerVinRetrieval();
                         }
                     })
-                    .show();
+                    .create();
+
+            // Prevent dismissal by tapping outside
+            dialog.setCanceledOnTouchOutside(false);
+            dialog.show();
         }
     }
 
@@ -2063,7 +2084,7 @@ public class MainActivity extends AppCompatActivity
                         case BLUETOOTH:
                             if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled())
                             {
-                                Toast.makeText(this, getString(R.string.none_found), Toast.LENGTH_SHORT).show();
+                                SnackbarHelper.showWarning(this, getString(R.string.none_found));
                                 mode = MODE.OFFLINE;
                             } else
                             {
@@ -2104,16 +2125,16 @@ public class MainActivity extends AppCompatActivity
             // Set appropriate status message based on mode
             switch (mode) {
                 case OFFLINE:
-                    setStatus("Connect a Device");
+                    setStatus(getString(R.string.status_connect_device));
                     break;
                 case ONLINE:
-                    setStatus("Online");
+                    setStatus(getString(R.string.status_online));
                     break;
                 case DEMO:
-                    setStatus("Demo Mode");
+                    setStatus(getString(R.string.status_demo_mode));
                     break;
                 case FILE:
-                    setStatus("Viewing Saved Data");
+                    setStatus(getString(R.string.status_viewing_saved));
                     break;
                 default:
                     setStatus(mode.toString());
@@ -2218,7 +2239,9 @@ public class MainActivity extends AppCompatActivity
         if (getMode() == MODE.DEMO)
         {
             ElmProt.runDemo = false;
-            Toast.makeText(this, getString(R.string.demo_stopped), Toast.LENGTH_SHORT).show();
+            // Clear vehicle data when stopping demo
+            VehicleManager.getInstance().clearVehicle();
+            SnackbarHelper.showInfo(this, getString(R.string.demo_stopped));
         }
     }
 
@@ -2229,8 +2252,11 @@ public class MainActivity extends AppCompatActivity
     {
         if (getMode() != MODE.DEMO)
         {
+            // Reset ECU selection state
+            ecuUserSelected = false;
+
             setStatus(getString(R.string.demo));
-            Toast.makeText(this, getString(R.string.demo_started), Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSuccess(this, getString(R.string.demo_started));
 
             // Show disconnect button (green) since we're "connected" to demo
             setMenuItemVisible(R.id.secure_connect_scan, false);
@@ -2543,6 +2569,9 @@ public class MainActivity extends AppCompatActivity
     {
         stopDemoService();
 
+        // Reset ECU selection state for new connection
+        ecuUserSelected = false;
+
         mode = MODE.ONLINE;
         // handle further initialisations
         setMenuItemVisible(R.id.secure_connect_scan, false);
@@ -2565,10 +2594,14 @@ public class MainActivity extends AppCompatActivity
      */
     private void onDisconnect()
     {
+        // Clear vehicle data on disconnect
+        VehicleManager.getInstance().clearVehicle();
+
         // handle further initialisations
         setMode(MODE.OFFLINE);
         // Reset ECU connection state
         ecuConnectionState = ElmProt.STAT.UNDEFINED;
+        ecuUserSelected = false;
         // Return to main screen
         setObdService(ObdProt.OBD_SVC_NONE, null);
     }
@@ -2648,8 +2681,18 @@ public class MainActivity extends AppCompatActivity
             confirmButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    // Check if elm is available
+                    if (CommService.elm == null) {
+                        SnackbarHelper.showError(MainActivity.this, "OBD adapter not connected");
+                        dialog.dismiss();
+                        return;
+                    }
+
+                    // Save the current service to restore later
+                    final int previousService = CommService.elm.getService();
+
                     // Show feedback that clear codes is in progress
-                    Toast.makeText(MainActivity.this, "Clearing fault codes...", Toast.LENGTH_SHORT).show();
+                    SnackbarHelper.showInfo(MainActivity.this, "Clearing fault codes...");
 
                     // set service CLEAR_CODES to clear the codes
                     CommService.elm.setService(ObdProt.OBD_SVC_CLEAR_CODES);
@@ -2658,8 +2701,14 @@ public class MainActivity extends AppCompatActivity
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
+                            // Check if still connected
+                            if (CommService.elm == null) {
+                                SnackbarHelper.showError(MainActivity.this, "Connection lost during clear operation");
+                                return;
+                            }
+
                             // Show feedback that we're re-reading codes
-                            Toast.makeText(MainActivity.this, "Re-reading fault codes...", Toast.LENGTH_SHORT).show();
+                            SnackbarHelper.showInfo(MainActivity.this, "Re-reading fault codes...");
 
                             // Clear the current codes display first
                             runOnUiThread(() -> {
@@ -2672,13 +2721,21 @@ public class MainActivity extends AppCompatActivity
                             // set service READ_CODES to re-read the codes
                             CommService.elm.setService(ObdProt.OBD_SVC_READ_CODES);
 
-                            // After another delay, check if codes were cleared successfully
+                            // After another delay, check if codes were cleared successfully and restore service
                             new Handler().postDelayed(() -> {
                                 if (ObdProt.tCodes.size() <= 1) {
-                                    Toast.makeText(MainActivity.this, "Fault codes cleared successfully", Toast.LENGTH_LONG).show();
+                                    SnackbarHelper.showSuccess(MainActivity.this, "Fault codes cleared successfully");
                                 } else {
-                                    Toast.makeText(MainActivity.this, "Codes cleared. Found " + (ObdProt.tCodes.size() - 1) + " code(s) still present", Toast.LENGTH_LONG).show();
+                                    SnackbarHelper.showWarning(MainActivity.this, "Codes cleared. Found " + (ObdProt.tCodes.size() - 1) + " code(s) still present");
                                 }
+
+                                // Restore the previous service after a short delay
+                                new Handler().postDelayed(() -> {
+                                    if (CommService.elm != null && previousService != ObdProt.OBD_SVC_CLEAR_CODES) {
+                                        // Return to the previous service (usually OBD_SVC_DATA for live data)
+                                        CommService.elm.setService(previousService);
+                                    }
+                                }, 500);
                             }, 2000);
                         }
                     }, 1500); // Wait 1.5 seconds for clear codes to complete

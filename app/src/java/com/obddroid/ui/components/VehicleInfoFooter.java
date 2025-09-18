@@ -16,6 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.obddroid.api.nhtsa.VehicleData;
+import com.obddroid.core.obd.ElmProt;
 import com.obddroid.utils.CarLogoHelper;
 import com.obddroid.vehicle.VehicleManager;
 
@@ -37,6 +38,7 @@ public class VehicleInfoFooter extends LinearLayout
     private LinearLayout expandedContentLayout;
     private VehicleManager.VehicleChangeListener vehicleListener;
     private boolean isConnected = false;
+    private boolean isEcuConnected = false;
     private boolean isExpanded = false;
     private VehicleData currentVehicleData;
     private View expandIndicator;
@@ -245,35 +247,57 @@ public class VehicleInfoFooter extends LinearLayout
                         expandedContentLayout.setVisibility(View.GONE);
                     }
 
-                    // Reset logo/icon
-                    manufacturerLogo.setVisibility(View.GONE);
-                    manufacturerIcon.setVisibility(View.VISIBLE);
-                    manufacturerIcon.setText("?");
-                    manufacturerIcon.setTextColor(Color.parseColor("#666666"));
-                    vehicleInfo.setText("No Vehicle Connected");
-                    connectionStatus.setText("Waiting for OBD connection...");
-                    connectionStatus.setTextColor(Color.parseColor("#888888"));
-                    expandIndicator.setVisibility(View.GONE);
-                    if (statusDot != null) {
-                        statusDot.getBackground().setTint(Color.parseColor("#888888")); // Gray when disconnected
-                    }
+                    // Update display based on ECU connection
+                    updateConnectionDisplay();
+                });
+            }
+
+            @Override
+            public void onECUConnectionChanged(ElmProt.STAT state) {
+                Log.d(TAG, "ECU connection state changed: " + state);
+                post(() -> {
+                    isEcuConnected = (state == ElmProt.STAT.ECU_DETECTED ||
+                                      state == ElmProt.STAT.CONNECTED);
+                    updateConnectionDisplay();
+                });
+            }
+
+            @Override
+            public void onVINRetrievalFailed() {
+                Log.d(TAG, "VIN retrieval failed - Mode 9 not supported");
+                post(() -> {
+                    // Clear connected flag since we don't have VIN
+                    isConnected = false;
+                    currentVehicleData = null;
+                    // Only now show Mode 9 not supported message
+                    updateConnectionDisplay();
                 });
             }
         };
 
         // Register as listener with VehicleManager
         VehicleManager.getInstance().addListener(vehicleListener);
+
+        // Start with disconnected state - will be updated when ECU connects
+        isEcuConnected = false;
     }
 
     @Override
     protected void onAttachedToWindow()
     {
         super.onAttachedToWindow();
+        // Clear any stale display first to prevent flash
+        currentVehicleData = null;
+        isConnected = false;
+
+        // Immediately show "No Vehicle Connected" to prevent flash of old data
+        updateConnectionDisplay();
+
         // Re-register when attached
         if (vehicleListener != null) {
             VehicleManager.getInstance().addListener(vehicleListener);
         }
-        // Get current state
+        // Get current state (will update if actually connected)
         updateVehicleInfo();
     }
 
@@ -291,12 +315,23 @@ public class VehicleInfoFooter extends LinearLayout
     private void updateVehicleInfo()
     {
         VehicleManager vm = VehicleManager.getInstance();
+
+        // Check if ECU is connected first
+        if (!vm.isECUConnected()) {
+            // Not connected, don't show old data
+            updateConnectionDisplay();
+            return;
+        }
+
         String vin = vm.getCurrentVIN();
         VehicleData data = vm.getCurrentVehicleData();
 
         if (vin != null && data != null)
         {
             updateVehicleDisplay(vin, data);
+        } else {
+            // ECU connected but no vehicle data - update display accordingly
+            updateConnectionDisplay();
         }
     }
 
@@ -557,6 +592,58 @@ public class VehicleInfoFooter extends LinearLayout
             connectionStatus.setText("Please reconnect");
             connectionStatus.setTextColor(Color.parseColor("#F44336")); // Red for error
             expandIndicator.setVisibility(View.GONE);
+        }
+    }
+
+    private void updateConnectionDisplay() {
+        if (isConnected) {
+            // If we have VIN/Vehicle data, updateVehicleDisplay handles the display
+            return;
+        }
+
+        if (isEcuConnected) {
+            VehicleManager vm = VehicleManager.getInstance();
+
+            if (vm.hasVINRetrievalFailed()) {
+                // ECU connected but VIN retrieval failed (Service 0x09 not supported)
+                manufacturerLogo.setVisibility(View.GONE);
+                manufacturerIcon.setVisibility(View.VISIBLE);
+                manufacturerIcon.setText("OBD");
+                manufacturerIcon.setTextColor(Color.parseColor("#FFA726")); // Orange for basic connection
+                vehicleInfo.setText("ECU Connected");
+                connectionStatus.setText("Vehicle Info not available (Mode 9 not supported)");
+                connectionStatus.setTextColor(Color.parseColor("#FFA726")); // Orange
+                expandIndicator.setVisibility(View.GONE);
+                if (statusDot != null) {
+                    statusDot.getBackground().setTint(Color.parseColor("#FFA726")); // Orange for partial connection
+                }
+            } else {
+                // ECU connected, waiting for VIN retrieval
+                manufacturerLogo.setVisibility(View.GONE);
+                manufacturerIcon.setVisibility(View.VISIBLE);
+                manufacturerIcon.setText("OBD");
+                manufacturerIcon.setTextColor(Color.parseColor("#00ACC1")); // Cyan for loading
+                vehicleInfo.setText("ECU Connected");
+                connectionStatus.setText("Retrieving vehicle information...");
+                connectionStatus.setTextColor(Color.parseColor("#00ACC1")); // Cyan for loading
+                expandIndicator.setVisibility(View.GONE);
+                if (statusDot != null) {
+                    statusDot.getBackground().setTint(Color.parseColor("#00ACC1")); // Cyan for loading
+                }
+            }
+        } else {
+            // No ECU connection at all
+            manufacturerLogo.setVisibility(View.GONE);
+            manufacturerIcon.setVisibility(View.VISIBLE);
+            manufacturerIcon.setText("?");
+            manufacturerIcon.setTextColor(Color.parseColor("#666666"));
+            vehicleInfo.setText("No Vehicle Connected");
+            connectionStatus.setText("Waiting for OBD connection...");
+            connectionStatus.setTextColor(Color.parseColor("#888888"));
+            expandIndicator.setVisibility(View.GONE);
+            if (statusDot != null) {
+                statusDot.getBackground().setTint(Color.parseColor("#888888")); // Gray when disconnected
+            }
         }
     }
 

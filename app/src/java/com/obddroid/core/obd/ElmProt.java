@@ -158,6 +158,7 @@ public class ElmProt
 		INITIALIZED("Initialized"),
 		ECU_DETECT("ECU detect"),
 		ECU_DETECTED("ECU detected"),
+		ECU_SELECTED("ECU selected"),
 		CONNECTING("Connecting"),
 		CONNECTED("Connected"),
 		NODATA("No data"),
