@@ -414,7 +414,7 @@ public class ObdProt extends ProtoHeader
         paddingChr = '0';
         // prepare PID PV list
         PidPvs.put(0, new EcuDataPv());
-        VidPvs.put(0, new EcuDataPv());
+        // VidPvs doesn't need a placeholder - vehicle info items are added as discovered
         tCodes.put(0, new ObdCodeItem(0, "No trouble codes set"));
     }
 

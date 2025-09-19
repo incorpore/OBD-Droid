@@ -9,7 +9,7 @@
     <string name="title_connected_to">Connected %s</string>
     <string name="status_connected">Connected</string>
     <string name="status_connect_device">Connect a Device</string>
-    <string name="status_online">Online</string>
+    <string name="status_online">Select Device</string>
     <string name="status_demo_mode">Demo Mode</string>
     <string name="status_viewing_saved">Viewing Saved Data</string>
     <string name="status_selecting_ecu">Selecting ECU</string>
@@ -76,7 +76,7 @@ period of time while the ECU recalibrates itself.
     <string name="loaded">loaded</string>
     <string name="saved">saved</string>
     <string name="connected_to">"Connected to "</string>
-    <string name="demo">Demo…</string>
+    <string name="demo">Connected Demo Adapter</string>
     <string name="saving_data">Saving data …</string>
     <string name="loading_data">Loading data …</string>
     <string name="dashboard">Dashboard</string>
@@ -171,6 +171,8 @@ period of time while the ECU recalibrates itself.
     <string name="elm_reset_on_nrc_descr">Automatically reset the adapter when communication errors occur</string>
     <string name="select_ecu_addr">Select ECU address …</string>
     <string name="disconnect">Disconnect</string>
+    <string name="disconnect_confirm_title">Confirm Disconnect</string>
+    <string name="disconnect_confirm_message">Are you sure you want to disconnect from the adapter?</string>
     <string name="reset_preselections">Reset Preferences</string>
     <string name="use_last_settings_description">Remember adapter, ECU, and display settings between sessions</string>
     <string name="use_last_settings">Remember Last Settings</string>

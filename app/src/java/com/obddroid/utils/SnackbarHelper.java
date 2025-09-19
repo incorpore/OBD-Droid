@@ -64,9 +64,9 @@ public class SnackbarHelper {
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) snackbarView.getLayoutParams();
         params.gravity = Gravity.BOTTOM;
         params.width = FrameLayout.LayoutParams.MATCH_PARENT;
-        // Add bottom margin to appear above the VehicleInfoFooter (approximately 72dp + some padding)
+        // Add bottom margin to appear flush above the VehicleInfoFooter
         float scale = activity.getResources().getDisplayMetrics().density;
-        int bottomMargin = (int) (72 * scale + 0.5f); // 72dp in pixels to sit flush on top of footer
+        int bottomMargin = (int) (80 * scale + 0.5f); // 80dp to sit flush on top of footer
         params.setMargins(0, 0, 0, bottomMargin); // No side margins for full width
         snackbarView.setLayoutParams(params);
 
@@ -76,8 +76,12 @@ public class SnackbarHelper {
         // Create a rectangle background with the message type color
         snackbarView.setBackgroundColor(type.getColor());
 
-        // Add subtle elevation for modern look
-        snackbarView.setElevation(6f);
+        // Set elevation LOWER than VehicleInfoFooter so it slides from behind
+        // VehicleInfoFooter should have higher elevation to stay on top
+        snackbarView.setElevation(2f);  // Lower than footer's elevation
+
+        // Set the snackbar's Z translation to be behind the footer initially
+        snackbarView.setTranslationZ(-4f);
 
         // Show it
         snackbar.show();

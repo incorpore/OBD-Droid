@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.obddroid.R;
 
 /**
  * Adapter to display OBD VID items from a process variable list
@@ -45,49 +44,63 @@ public class VehicleInfoAdapter extends ObdItemAdapter
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent)
 	{
-		// Get the base view from parent
-		convertView = super.getView(position, convertView, parent);
+		// Get data PV
+		EcuDataPv currPv = (EcuDataPv) getItem(position);
+		if (currPv == null)
+			return super.getView(position, convertView, parent);
 
-		try {
-			// Get data PV
-			EcuDataPv currPv = (EcuDataPv) getItem(position);
-			if (currPv == null) {
-				return convertView;
-			}
+		// Get the value and check if it's a VIN
+		Object value = currPv.get(EcuDataPv.FID_VALUE);
+		String description = String.valueOf(currPv.get(EcuDataPv.FID_DESCRIPT));
 
-			// Check if this is the VIN field
-			String description = String.valueOf(currPv.get(EcuDataPv.FID_DESCRIPT));
-			if (description != null && description.toLowerCase().contains("vehicle identification"))
+		// Check if this is a VIN item
+		if (value != null && description != null && description.toLowerCase().contains("vehicle identification"))
+		{
+			String vin = value.toString().trim();
+			// Only process if valid VIN length
+			if (vin.length() == 17)
 			{
-				// Get the VIN value
-				Object vinValue = currPv.get(EcuDataPv.FID_VALUE);
-				if (vinValue != null)
+				// Notify VehicleManager about the VIN (for the footer bar)
+				VehicleManager.getInstance().setVIN(vin);
+
+				// Try to decode the VIN
+				if (!decodedVins.containsKey(vin))
 				{
-					String vinString = vinValue.toString().trim();
-
-					// Just display the raw VIN - decoding is handled by the footer bar
-					TextView tvValue = convertView.findViewById(R.id.obd_value);
-					if (tvValue != null)
+					vinDecoder.decodeVIN(vin, new VINDecoderService.VINDecoderCallback()
 					{
-						tvValue.setText(vinString);
-						tvValue.setMaxLines(1);
-						tvValue.setSingleLine(true);
-					}
+						@Override
+						public void onSuccess(VehicleData vehicleData)
+						{
+							decodedVins.put(vin, vehicleData);
+							// Refresh the view
+							notifyDataSetChanged();
+						}
 
-					// Notify VehicleManager about the VIN (for the footer bar)
-					// Only for valid 17-character VINs
-					if (vinString.length() == 17)
-					{
-						VehicleManager.getInstance().setVIN(vinString);
-					}
+						@Override
+						public void onError(String error)
+						{
+							Log.w(TAG, "VIN decode error: " + error);
+						}
+					});
 				}
+
+				// If we have decoded data, update the view
+				View view = super.getView(position, convertView, parent);
+				VehicleData vehicleData = decodedVins.get(vin);
+				if (vehicleData != null)
+				{
+					TextView tvValue = view.findViewById(android.R.id.text2);
+					TextView tvUnits = view.findViewById(android.R.id.text1);
+					updateVINDisplay(tvValue, tvUnits, vin, vehicleData);
+				}
+				return view;
 			}
-		} catch (Exception e) {
-			Log.e(TAG, "Error in getView", e);
 		}
 
-		return convertView;
+		// For non-VIN items, use default rendering
+		return super.getView(position, convertView, parent);
 	}
+
 
 	/**
 	 * Update the VIN display with decoded information

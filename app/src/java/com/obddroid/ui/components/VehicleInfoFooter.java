@@ -66,7 +66,10 @@ public class VehicleInfoFooter extends LinearLayout
     {
         // Set up the layout
         setOrientation(LinearLayout.VERTICAL);
-        setBackgroundColor(Color.parseColor("#1A1A1A")); // Elegant dark background
+        setBackgroundColor(Color.parseColor("#212121")); // Match navbar dark grey
+
+        // Set elevation higher than snackbars so they slide from behind
+        setElevation(8f);
 
         // Add top border line
         divider = new View(getContext());
@@ -81,7 +84,7 @@ public class VehicleInfoFooter extends LinearLayout
         contentLayout = new LinearLayout(getContext());
         contentLayout.setOrientation(LinearLayout.HORIZONTAL);
         contentLayout.setGravity(Gravity.CENTER_VERTICAL);
-        contentLayout.setPadding(dpToPx(16), dpToPx(6), dpToPx(16), dpToPx(6));
+        contentLayout.setPadding(dpToPx(16), dpToPx(4), dpToPx(16), dpToPx(4));
         LinearLayout.LayoutParams contentParams = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
@@ -192,6 +195,15 @@ public class VehicleInfoFooter extends LinearLayout
             LinearLayout.LayoutParams.WRAP_CONTENT
         );
         addView(expandedContentLayout, expandedParams);
+
+        // Add bottom border line
+        View bottomDivider = new View(getContext());
+        bottomDivider.setBackgroundColor(Color.parseColor("#333333"));
+        LinearLayout.LayoutParams bottomDividerParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            dpToPx(1)
+        );
+        addView(bottomDivider, bottomDividerParams);
 
         // Make content layout clickable to expand/collapse
         contentLayout.setClickable(true);
@@ -535,8 +547,8 @@ public class VehicleInfoFooter extends LinearLayout
                 manufacturerIcon.setTextColor(Color.parseColor("#00ACC1")); // Cyan when connected
                 manufacturerIcon.setVisibility(View.VISIBLE);
                 manufacturerLogo.setVisibility(View.GONE);
-                // Add background for text icon
-                iconContainer.setBackgroundColor(Color.parseColor("#2C2C2C"));
+                // Add background for text icon - slightly lighter than footer for contrast
+                iconContainer.setBackgroundColor(Color.parseColor("#2E2E2E"));
             }
 
             // Build vehicle info text

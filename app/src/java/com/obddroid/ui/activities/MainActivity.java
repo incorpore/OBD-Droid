@@ -425,10 +425,9 @@ public class MainActivity extends AppCompatActivity
                             }
                         }
 
-                        // Enable OBD services only when ECU is detected
-                        setMenuItemEnable(R.id.obd_services,
-                            state == ElmProt.STAT.ECU_DETECTED ||
-                            state == ElmProt.STAT.CONNECTED);
+                        // Enable individual OBD services only when ECU is detected
+                        updateServiceMenuItems(state == ElmProt.STAT.ECU_DETECTED ||
+                                               state == ElmProt.STAT.CONNECTED);
 
                         // Don't auto-switch here - wait for ECU selection to complete
 
@@ -814,6 +813,8 @@ public class MainActivity extends AppCompatActivity
         MainActivity.menu = menu;
         // update menu item status for current conversion
         setConversionSystem(EcuDataItem.cnvSystem);
+        // Initialize service menu items - disabled by default except Settings and Home
+        updateServiceMenuItems(false);
         return true;
     }
 
@@ -832,19 +833,8 @@ public class MainActivity extends AppCompatActivity
 
 
             case R.id.disconnect:
-                // stop communication service
-                if (mCommService != null)
-                {
-                    mCommService.stop();
-                }
-                setMode(MODE.OFFLINE);
-                // Reset ECU connection state
-                ecuConnectionState = ElmProt.STAT.UNDEFINED;
-                ecuUserSelected = false;
-                // Clear vehicle data
-                VehicleManager.getInstance().clearVehicle();
-                // Return to main screen
-                setObdService(ObdProt.OBD_SVC_NONE, null);
+                // Show styled confirmation dialog before disconnecting
+                showDisconnectConfirmDialog();
                 return true;
 
             case R.id.settings:
@@ -1042,7 +1032,7 @@ public class MainActivity extends AppCompatActivity
                     log.info("Load content: " + uri);
                     // load data ...
                     fileHelper.loadDataThreaded(uri, mHandler);
-                    setMenuItemEnable(R.id.obd_services, true);
+                    updateServiceMenuItems(true);
                 }
                 break;
 
@@ -2120,7 +2110,7 @@ public class MainActivity extends AppCompatActivity
                     // update menu item states
                     setMenuItemVisible(R.id.disconnect, false);
                     setMenuItemVisible(R.id.secure_connect_scan, true);
-                    setMenuItemEnable(R.id.obd_services, false);
+                    updateServiceMenuItems(false);
                     break;
 
                 case ONLINE:
@@ -2301,19 +2291,38 @@ public class MainActivity extends AppCompatActivity
             ecuUserSelected = false;
 
             setStatus(getString(R.string.demo));
-            SnackbarHelper.showSuccess(this, getString(R.string.demo_started));
+            // No snackbar - consistent with real device connection
 
             // Show disconnect button (green) since we're "connected" to demo
             setMenuItemVisible(R.id.secure_connect_scan, false);
             setMenuItemVisible(R.id.disconnect, true);
 
-            setMenuItemEnable(R.id.obd_services, true);
+            updateServiceMenuItems(true);
             /* The Thread object for processing the demo mode loop */
             Thread demoThread = new Thread(CommService.elm);
             demoThread.start();
 
             // Ensure we stay on the main list view after starting demo mode
             setDataViewMode(DATA_VIEW_MODE.LIST);
+        }
+    }
+
+    /**
+     * Enable/disable individual service menu items based on connection state
+     * Settings and Home are always enabled
+     * @param enable true to enable service items, false to disable
+     */
+    private void updateServiceMenuItems(boolean enable) {
+        if (menu != null) {
+            // These are always enabled
+            setMenuItemEnable(R.id.service_home, true);
+            setMenuItemEnable(R.id.settings, true);
+
+            // These require ECU connection
+            setMenuItemEnable(R.id.service_vid_data, enable);
+            setMenuItemEnable(R.id.service_data, enable);
+            setMenuItemEnable(R.id.service_testcontrol, enable);
+            setMenuItemEnable(R.id.service_codes, enable);
         }
     }
 
@@ -2633,7 +2642,7 @@ public class MainActivity extends AppCompatActivity
         setMenuItemVisible(R.id.secure_connect_scan, false);
         setMenuItemVisible(R.id.disconnect, true);
 
-        setMenuItemEnable(R.id.obd_services, true);
+        updateServiceMenuItems(true);
         // display connection status
         setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
         // send RESET to Elm adapter
@@ -2816,6 +2825,49 @@ public class MainActivity extends AppCompatActivity
 
                     dialog.dismiss();
                 }
+            });
+        }
+
+        dialog.show();
+    }
+
+    /**
+     * Show styled disconnect confirmation dialog
+     */
+    private void showDisconnectConfirmDialog()
+    {
+        // Create custom dialog view
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_disconnect_confirm, null);
+
+        // Create the dialog
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        // Set up button click handlers
+        Button cancelButton = dialogView.findViewById(R.id.btn_cancel);
+        Button confirmButton = dialogView.findViewById(R.id.btn_confirm);
+
+        if (cancelButton != null) {
+            cancelButton.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        if (confirmButton != null) {
+            confirmButton.setOnClickListener(v -> {
+                // stop communication service
+                if (mCommService != null)
+                {
+                    mCommService.stop();
+                }
+                setMode(MODE.OFFLINE);
+                // Reset ECU connection state
+                ecuConnectionState = ElmProt.STAT.UNDEFINED;
+                ecuUserSelected = false;
+                // Clear vehicle data
+                VehicleManager.getInstance().clearVehicle();
+                // Return to main screen
+                setObdService(ObdProt.OBD_SVC_NONE, null);
+                dialog.dismiss();
             });
         }
 
