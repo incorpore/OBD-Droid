@@ -2467,15 +2467,14 @@ public class MainActivity extends AppCompatActivity
                 currDataAdapter = mDfcAdapter;
 
                 // Update status to show proper ECU state for fault codes view
-                // Don't show NODATA or CONNECTING states as they are transient in fault codes mode
-                if (ecuUserSelected && ecuConnectionState == ElmProt.STAT.ECU_DETECTED) {
+                // Preserve "ECU Selected" if user manually selected an ECU
+                if (ecuUserSelected) {
+                    // User manually selected ECU - always show "ECU Selected"
                     setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
                 } else if (ecuConnectionState == ElmProt.STAT.CONNECTED ||
                            ecuConnectionState == ElmProt.STAT.ECU_DETECTED) {
+                    // Auto-detected ECU - show actual state
                     setStatus(getResources().getStringArray(R.array.elmcomm_states)[ecuConnectionState.ordinal()]);
-                } else {
-                    // Default to "ECU selected" if we have a connection
-                    setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
                 }
 
                 // Show clear codes button for fault codes screen
@@ -2779,7 +2778,7 @@ public class MainActivity extends AppCompatActivity
                             CommService.elm.setService(ObdProt.OBD_SVC_READ_CODES);
 
                             // Update status immediately after switching to READ_CODES
-                            // to avoid showing transient "Connecting..." status
+                            // Always preserve "ECU Selected" if user manually selected
                             if (ecuUserSelected) {
                                 setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
                             } else if (ecuConnectionState == ElmProt.STAT.CONNECTED ||
@@ -2802,15 +2801,12 @@ public class MainActivity extends AppCompatActivity
                                         CommService.elm.setService(previousService);
 
                                         // Update status to show proper state after clearing codes
-                                        // Use the stable ECU state, not transient states
-                                        if (ecuUserSelected && ecuConnectionState == ElmProt.STAT.ECU_DETECTED) {
+                                        // Always preserve "ECU Selected" if user manually selected
+                                        if (ecuUserSelected) {
                                             setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
                                         } else if (ecuConnectionState == ElmProt.STAT.CONNECTED ||
                                                    ecuConnectionState == ElmProt.STAT.ECU_DETECTED) {
                                             setStatus(getResources().getStringArray(R.array.elmcomm_states)[ecuConnectionState.ordinal()]);
-                                        } else {
-                                            // Default to ECU selected if we're connected
-                                            setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
                                         }
                                     }
                                 }, 500);
