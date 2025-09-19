@@ -1930,6 +1930,7 @@ public class MainActivity extends AppCompatActivity
             ImageView statusIcon = (ImageView) findViewById(R.id.mil_status_icon);
             TextView statusText = (TextView) findViewById(R.id.mil_status_text);
             TextView statusSubtitle = (TextView) findViewById(R.id.mil_status_subtitle);
+            View clearCodesBtn = findViewById(R.id.clear_codes_button);
 
             if (statusIcon != null && statusText != null && statusSubtitle != null) {
                 if (milOn || numCodes > 0) {
@@ -1938,12 +1939,22 @@ public class MainActivity extends AppCompatActivity
                     statusText.setText(numCodes + " Fault Code" + (numCodes != 1 ? "s" : "") + " Detected");
                     statusSubtitle.setText("Check engine light is ON");
                     statusSubtitle.setTextColor(Color.parseColor("#F57C00"));
+
+                    // Show clear codes button when there are codes
+                    if (clearCodesBtn != null) {
+                        clearCodesBtn.setVisibility(View.VISIBLE);
+                    }
                 } else {
                     // MIL is OFF - show normal status
                     statusIcon.setColorFilter(Color.parseColor("#4CAF50"));
                     statusText.setText("No Fault Codes");
                     statusSubtitle.setText("Engine running normally");
                     statusSubtitle.setTextColor(Color.parseColor("#757575"));
+
+                    // Hide clear codes button when no codes
+                    if (clearCodesBtn != null) {
+                        clearCodesBtn.setVisibility(View.GONE);
+                    }
                 }
             }
         }
@@ -2423,7 +2434,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         // Hide clear codes button by default (will be shown for fault codes)
-        Button clearCodesBtn = findViewById(R.id.clear_codes_button);
+        View clearCodesBtn = findViewById(R.id.clear_codes_button);
         if (clearCodesBtn != null) {
             clearCodesBtn.setVisibility(View.GONE);
         }
@@ -2486,10 +2497,10 @@ public class MainActivity extends AppCompatActivity
                     setStatus(getResources().getStringArray(R.array.elmcomm_states)[ecuConnectionState.ordinal()]);
                 }
 
-                // Show clear codes button for fault codes screen
-                Button clearBtn = findViewById(R.id.clear_codes_button);
+                // Setup clear codes button within the MIL status card
+                View clearBtn = findViewById(R.id.clear_codes_button);
                 if (clearBtn != null) {
-                    clearBtn.setVisibility(View.VISIBLE);
+                    // Button visibility will be controlled by updateMilStatusCard based on fault code count
                     clearBtn.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
