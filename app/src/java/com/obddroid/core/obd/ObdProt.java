@@ -604,22 +604,6 @@ public class ObdProt extends ProtoHeader
             }
         }
 
-        // For Mode 09, always ensure VIN PID (0x02) is supported
-        // Many ECUs support VIN but don't report it in the bitmask
-        if (obdService == OBD_SVC_VEH_INFO && start == 0) {
-            boolean hasVinPid = false;
-            for (ObdPid pid : pidSupported) {
-                if (pid.intValue() == 0x02) {
-                    hasVinPid = true;
-                    break;
-                }
-            }
-            if (!hasVinPid) {
-                pidSupported.add(new ObdPid(0x02));
-                log.info("Force-added VIN PID (0x02) after PID support scan");
-            }
-        }
-
         log.fine(Long.toHexString(bitmask).toUpperCase()
                      + "(" + Long.toHexString(start) + "):"
                      + pidSupported);
@@ -985,6 +969,10 @@ public class ObdProt extends ProtoHeader
                                             String vin = vinBuilder.toString();
                                             Log.i(TAG, "VIN parsed from Mode 09: " + vin);
 
+                                            // Send VIN to VehicleManager for caching and distribution
+                                            com.obddroid.vehicle.VehicleManager.getInstance().setVIN(vin);
+                                            Log.i(TAG, "Sent VIN to VehicleManager for caching");
+
                                             // Find and update the VIN PV in VidPvs
                                             for (Object obj : VidPvs.values()) {
                                                 if (!(obj instanceof EcuDataPv)) continue;
@@ -1271,12 +1259,6 @@ public class ObdProt extends ProtoHeader
                 // Clear data items
                 pidSupported.clear();
                 VidPvs.clear();
-                // Force VIN PID (0x02) to be supported for Mode 09
-                // Many ECUs support VIN but don't report it in PID 00 bitmask
-                if (obdService == OBD_SVC_VEH_INFO) {
-                    pidSupported.add(new ObdPid(0x02)); // VIN
-                    log.info("Force-added VIN PID (0x02) to Mode 09 supported PIDs");
-                }
                 break;
         }
     }
