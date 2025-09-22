@@ -1,6 +1,7 @@
 
 package com.obddroid.core.obd;
 
+import android.util.Log;
 import com.obddroid.core.ecu.Conversion;
 import com.obddroid.core.ecu.EcuCodeItem;
 import com.obddroid.core.ecu.EcuCodeList;
@@ -42,6 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ObdProt extends ProtoHeader
         implements TelegramListener, TelegramWriter
 {
+    private static final String TAG = "ObdProt";
     public static final int OBD_SVC_NONE = 0x00;
     public static final int OBD_SVC_DATA = 0x01;
     public static final int OBD_SVC_FREEZEFRAME = 0x02;
@@ -551,7 +553,7 @@ public class ObdProt extends ProtoHeader
             // if no items defined, create dummy item
             if (items == null)
             {
-                log.warning(String.format("unknown PID %02X", currPid.intValue()));
+                log.warning(String.format("unknown PID %02X for service %02X", currPid.intValue(), obdService));
 
                 // create new dummy item / OneToOne conversion
                 Conversion[] dummyCnvs = {EcuConversions.dfltCnv, EcuConversions.dfltCnv};
@@ -602,6 +604,22 @@ public class ObdProt extends ProtoHeader
             }
         }
 
+        // For Mode 09, always ensure VIN PID (0x02) is supported
+        // Many ECUs support VIN but don't report it in the bitmask
+        if (obdService == OBD_SVC_VEH_INFO && start == 0) {
+            boolean hasVinPid = false;
+            for (ObdPid pid : pidSupported) {
+                if (pid.intValue() == 0x02) {
+                    hasVinPid = true;
+                    break;
+                }
+            }
+            if (!hasVinPid) {
+                pidSupported.add(new ObdPid(0x02));
+                log.info("Force-added VIN PID (0x02) after PID support scan");
+            }
+        }
+
         log.fine(Long.toHexString(bitmask).toUpperCase()
                      + "(" + Long.toHexString(start) + "):"
                      + pidSupported);
@@ -614,6 +632,15 @@ public class ObdProt extends ProtoHeader
         }
         else
         {
+            // For Mode 09, queue all supported PIDs at once for batch processing
+            if (obdService == OBD_SVC_VEH_INFO && start == 0) {
+                log.info("Queueing all Mode 09 PIDs for batch processing");
+                // Queue all supported PIDs for rapid sequential processing
+                for (ObdPid pid : pidSupported) {
+                    cmdQueue.add(String.format("%02X%02X", obdService, pid.intValue()));
+                }
+            }
+
             // setup PID PVs
             preparePidPvs(obdService, pvList);
         }
@@ -656,6 +683,36 @@ public class ObdProt extends ProtoHeader
         Vector<ObdPid> pidsToCheck = (fixedPids.size() > 0) ? fixedPids : pidSupported;
         try
         {
+            // For Mode 09, prioritize important PIDs on first pass
+            if (service == OBD_SVC_VEH_INFO && !pidsWrapped) {
+                // Check for unprioritized critical PIDs
+                ObdPid vinPid = null;
+                ObdPid ecuNamePid = null;
+                ObdPid calIdPid = null;
+
+                for (ObdPid p : pidsToCheck) {
+                    if (p.intValue() == 0x02 && p.getNextRequest() == 0) vinPid = p;
+                    else if (p.intValue() == 0x0A && p.getNextRequest() == 0) ecuNamePid = p;
+                    else if (p.intValue() == 0x04 && p.getNextRequest() == 0) calIdPid = p;
+                }
+
+                // Request VIN first if not yet requested
+                if (vinPid != null) {
+                    vinPid.setNextRequest(System.currentTimeMillis());
+                    return vinPid.intValue();
+                }
+                // Then ECU name
+                if (ecuNamePid != null) {
+                    ecuNamePid.setNextRequest(System.currentTimeMillis());
+                    return ecuNamePid.intValue();
+                }
+                // Then Calibration ID
+                if (calIdPid != null) {
+                    calIdPid.setNextRequest(System.currentTimeMillis());
+                    return calIdPid.intValue();
+                }
+            }
+
             /* sort by next expected request */
             Collections.sort(pidsToCheck, ObdPid.requestSorter);
             ObdPid pid = pidsToCheck.firstElement();
@@ -886,7 +943,9 @@ public class ObdProt extends ProtoHeader
 
                     case OBD_SVC_CTRL_MODE: // Test control mode
                     case OBD_SVC_VEH_INFO:  // get vehicle information (mode 9)
+                        Log.i(TAG, "Mode 09 response received, service: " + msgService);
                         msgPid = (Integer) getParamValue(ID_OBD_PID, buffer);
+                        Log.i(TAG, "Mode 09 PID: 0x" + Integer.toHexString(msgPid));
                         switch (msgPid)
                         {
                             case 0x00:
@@ -905,6 +964,48 @@ public class ObdProt extends ProtoHeader
                                 break;
 
                             default:
+                                // Special handling for VIN (Mode 09, PID 02)
+                                if (msgService == OBD_SVC_VEH_INFO && msgPid == 0x02)
+                                {
+                                    try {
+                                        // Get the raw payload
+                                        String payload = String.valueOf(getPayLoad(buffer));
+                                        char[] charData = hexToBytes(payload);
+                                        byte[] data = new byte[charData.length];
+                                        for (int i = 0; i < charData.length; i++) {
+                                            data[i] = (byte) charData[i];
+                                        }
+
+                                        // Parse VIN (skip first byte, convert remaining to ASCII)
+                                        if (data != null && data.length >= 17) {
+                                            StringBuilder vinBuilder = new StringBuilder();
+                                            for (int i = 1; i <= 17 && i < data.length; i++) {
+                                                vinBuilder.append((char) data[i]);
+                                            }
+                                            String vin = vinBuilder.toString();
+                                            Log.i(TAG, "VIN parsed from Mode 09: " + vin);
+
+                                            // Find and update the VIN PV in VidPvs
+                                            for (Object obj : VidPvs.values()) {
+                                                if (!(obj instanceof EcuDataPv)) continue;
+                                                EcuDataPv pv = (EcuDataPv) obj;
+                                                String desc = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
+                                                if (desc != null && desc.toLowerCase().contains("vehicle identification")) {
+                                                    // Update the PV with the real VIN
+                                                    pv.put(EcuDataPv.FID_VALUE, vin);
+                                                    // Fire a change event to update the UI
+                                                    VidPvs.put(pv.getAsInt(EcuDataPv.FID_PID), pv, PvChangeEvent.PV_MODIFIED);
+                                                    Log.i(TAG, "Updated VIN PV with: " + vin);
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        Log.e(TAG, "Error parsing VIN: " + e.getMessage());
+                                    }
+                                }
+
+                                // Still do the normal update for other data items
                                 long updatePeriod =
                                     dataItems.updateDataItems(msgService,
                                                                 msgPid,
@@ -1170,6 +1271,12 @@ public class ObdProt extends ProtoHeader
                 // Clear data items
                 pidSupported.clear();
                 VidPvs.clear();
+                // Force VIN PID (0x02) to be supported for Mode 09
+                // Many ECUs support VIN but don't report it in PID 00 bitmask
+                if (obdService == OBD_SVC_VEH_INFO) {
+                    pidSupported.add(new ObdPid(0x02)); // VIN
+                    log.info("Force-added VIN PID (0x02) to Mode 09 supported PIDs");
+                }
                 break;
         }
     }

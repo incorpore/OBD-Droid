@@ -9,7 +9,6 @@ import android.widget.TextView;
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.api.nhtsa.VINDecoderService;
 import com.obddroid.api.nhtsa.VehicleData;
-import com.obddroid.vehicle.VehicleManager;
 import com.obddroid.core.pvs.PvList;
 
 import java.util.Collection;
@@ -53,6 +52,29 @@ public class VehicleInfoAdapter extends ObdItemAdapter
 		Object value = currPv.get(EcuDataPv.FID_VALUE);
 		String description = String.valueOf(currPv.get(EcuDataPv.FID_DESCRIPT));
 
+		// Special handling for VIN - if it's showing dummy value, look for real VIN in PV list
+		if (description != null && description.toLowerCase().contains("vehicle identification") &&
+			value != null && ("0.0".equals(value.toString()) || "0x00000000".equals(value.toString())))
+		{
+			Log.d(TAG, "Dummy VIN detected, searching for real VIN in PV list");
+			// Search through all PVs for a VIN with actual data
+			for (Object obj : pvs.values()) {
+				if (obj instanceof EcuDataPv) {
+					EcuDataPv pv = (EcuDataPv) obj;
+					String pvDesc = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
+					Object pvValue = pv.get(EcuDataPv.FID_VALUE);
+					if (pvDesc != null && pvDesc.toLowerCase().contains("vehicle identification") &&
+						pvValue != null && pvValue.toString().length() == 17) {
+						Log.d(TAG, "Found real VIN: " + pvValue);
+						// Update current PV with real VIN
+						currPv.put(EcuDataPv.FID_VALUE, pvValue);
+						value = pvValue;
+						break;
+					}
+				}
+			}
+		}
+
 		// Check if this is a VIN item
 		if (value != null && description != null && description.toLowerCase().contains("vehicle identification"))
 		{
@@ -60,9 +82,6 @@ public class VehicleInfoAdapter extends ObdItemAdapter
 			// Only process if valid VIN length
 			if (vin.length() == 17)
 			{
-				// Notify VehicleManager about the VIN (for the footer bar)
-				VehicleManager.getInstance().setVIN(vin);
-
 				// Try to decode the VIN
 				if (!decodedVins.containsKey(vin))
 				{
