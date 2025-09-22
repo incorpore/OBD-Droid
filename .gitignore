@@ -116,3 +116,6 @@ Thumbs.db
 # Claude specific files
 .claude/
 CLAUDE.md
+
+# DTC Database (copied from submodule during build)
+app/src/main/assets/dtc_codes.db

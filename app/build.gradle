@@ -54,6 +54,31 @@ android {
     namespace 'com.obddroid'
 }
 
+// Task to copy DTC database from submodule to assets
+task copyDTCDatabase(type: Copy) {
+    description = 'Copy DTC database from git submodule to assets'
+
+    // Source database from submodule
+    from '../modules/dtc-database/data/dtc_codes.db'
+
+    // Destination in assets
+    into 'src/main/assets/'
+}
+
+// Ensure database is copied before building
+preBuild.dependsOn copyDTCDatabase
+
+// Task to update submodule
+task updateDTCDatabase(type: Exec) {
+    description = 'Update DTC database submodule to latest version'
+    workingDir '../'
+    commandLine 'git', 'submodule', 'update', '--remote', 'modules/dtc-database'
+
+    doLast {
+        println 'DTC database submodule updated to latest version'
+    }
+}
+
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.fazecast:jSerialComm:2.10.4'

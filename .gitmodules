@@ -1,0 +1,3 @@
+[submodule "modules/dtc-database"]
+	path = modules/dtc-database
+	url = https://github.com/Wal33D/dtc-database.git
