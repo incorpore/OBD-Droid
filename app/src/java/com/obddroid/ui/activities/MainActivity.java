@@ -651,8 +651,9 @@ public class MainActivity extends AppCompatActivity
 
             case USB:
             case NETWORK:
-                // Auto-connect for USB and Network connections
-                setMode(MODE.ONLINE);
+                // Don't auto-connect on startup - start in offline mode
+                // User should manually connect via the menu
+                setMode(MODE.OFFLINE);
                 break;
         }
     }
