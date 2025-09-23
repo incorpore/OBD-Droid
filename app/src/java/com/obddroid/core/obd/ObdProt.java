@@ -948,52 +948,7 @@ public class ObdProt extends ProtoHeader
                                 break;
 
                             default:
-                                // Special handling for VIN (Mode 09, PID 02)
-                                if (msgService == OBD_SVC_VEH_INFO && msgPid == 0x02)
-                                {
-                                    try {
-                                        // Get the raw payload
-                                        String payload = String.valueOf(getPayLoad(buffer));
-                                        char[] charData = hexToBytes(payload);
-                                        byte[] data = new byte[charData.length];
-                                        for (int i = 0; i < charData.length; i++) {
-                                            data[i] = (byte) charData[i];
-                                        }
-
-                                        // Parse VIN (skip first byte, convert remaining to ASCII)
-                                        if (data != null && data.length >= 17) {
-                                            StringBuilder vinBuilder = new StringBuilder();
-                                            for (int i = 1; i <= 17 && i < data.length; i++) {
-                                                vinBuilder.append((char) data[i]);
-                                            }
-                                            String vin = vinBuilder.toString();
-                                            Log.i(TAG, "VIN parsed from Mode 09: " + vin);
-
-                                            // Send VIN to VehicleManager for caching and distribution
-                                            com.obddroid.vehicle.VehicleManager.getInstance().setVIN(vin);
-                                            Log.i(TAG, "Sent VIN to VehicleManager for caching");
-
-                                            // Find and update the VIN PV in VidPvs
-                                            for (Object obj : VidPvs.values()) {
-                                                if (!(obj instanceof EcuDataPv)) continue;
-                                                EcuDataPv pv = (EcuDataPv) obj;
-                                                String desc = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
-                                                if (desc != null && desc.toLowerCase().contains("vehicle identification")) {
-                                                    // Update the PV with the real VIN
-                                                    pv.put(EcuDataPv.FID_VALUE, vin);
-                                                    // Fire a change event to update the UI
-                                                    VidPvs.put(pv.getAsInt(EcuDataPv.FID_PID), pv, PvChangeEvent.PV_MODIFIED);
-                                                    Log.i(TAG, "Updated VIN PV with: " + vin);
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    } catch (Exception e) {
-                                        Log.e(TAG, "Error parsing VIN: " + e.getMessage());
-                                    }
-                                }
-
-                                // Still do the normal update for other data items
+                                // Let all Mode 09 data (including VIN) be handled uniformly
                                 long updatePeriod =
                                     dataItems.updateDataItems(msgService,
                                                                 msgPid,
