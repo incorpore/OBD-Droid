@@ -349,7 +349,7 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
     }
 
     private void updateTabStyles() {
-        int activeColor = Color.parseColor("#4CAF50");
+        int activeColor = Color.WHITE;
         int inactiveColor = Color.parseColor("#B0B0B0");
 
         tabBluetoothIcon.setColorFilter(currentTab == AdapterTab.BLUETOOTH ? activeColor : inactiveColor);
