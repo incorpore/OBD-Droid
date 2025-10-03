@@ -149,6 +149,7 @@ public class MainActivity extends AppCompatActivity
     private static final int REQUEST_SETTINGS = 5;
     private static final int REQUEST_CONNECT_DEVICE_USB = 6;
     private static final int REQUEST_GRAPH_DISPLAY_DONE = 7;
+    private static final int REQUEST_CONNECT_UNIFIED = 8;
     /**
      * app exit parameters
      */
@@ -1053,6 +1054,68 @@ public class MainActivity extends AppCompatActivity
                 }
                 break;
 
+            // Unified adapter selection
+            case REQUEST_CONNECT_UNIFIED:
+                if (resultCode == Activity.RESULT_OK && data != null)
+                {
+                    String adapterType = data.getStringExtra(UnifiedAdapterSelectionActivity.EXTRA_ADAPTER_TYPE);
+
+                    // Handle demo mode
+                    if ("DEMO".equals(adapterType)) {
+                        setMode(MODE.DEMO);
+                        break;
+                    }
+
+                    // Handle adapter types
+                    if (adapterType != null) {
+                        try {
+                            CommService.MEDIUM medium = CommService.MEDIUM.valueOf(adapterType);
+
+                            switch (medium) {
+                                case BLUETOOTH:
+                                    String btAddress = data.getStringExtra(UnifiedAdapterSelectionActivity.EXTRA_DEVICE_ADDRESS);
+                                    if (btAddress != null) {
+                                        // Save the device address
+                                        prefs.edit().putString("LAST_DEV_ADDRESS", btAddress).apply();
+                                        // Connect to Bluetooth device
+                                        connectBtDevice(btAddress, prefs.getBoolean("bt_secure_connection", false));
+                                    } else {
+                                        setMode(MODE.OFFLINE);
+                                    }
+                                    break;
+
+                                case USB:
+                                    if (UnifiedAdapterSelectionActivity.selectedUsbPort != null) {
+                                        mCommService = new UsbCommService(this, mHandler);
+                                        mCommService.connect(UnifiedAdapterSelectionActivity.selectedUsbPort, true);
+                                    } else {
+                                        setMode(MODE.OFFLINE);
+                                    }
+                                    break;
+
+                                case NETWORK:
+                                    String networkIp = data.getStringExtra(UnifiedAdapterSelectionActivity.EXTRA_NETWORK_IP);
+                                    int networkPort = data.getIntExtra(UnifiedAdapterSelectionActivity.EXTRA_NETWORK_PORT, 35000);
+                                    if (networkIp != null) {
+                                        connectNetworkDevice(networkIp, networkPort);
+                                    } else {
+                                        setMode(MODE.OFFLINE);
+                                    }
+                                    break;
+                            }
+                        } catch (IllegalArgumentException e) {
+                            log.warning("Invalid adapter type: " + adapterType);
+                            setMode(MODE.OFFLINE);
+                        }
+                    } else {
+                        setMode(MODE.OFFLINE);
+                    }
+                } else
+                {
+                    setMode(MODE.OFFLINE);
+                }
+                break;
+
             // bluetooth enabled
             case REQUEST_ENABLE_BT:
                 // When the request to enable Bluetooth returns
@@ -1942,6 +2005,11 @@ public class MainActivity extends AppCompatActivity
                 // Save current service to restore later if needed
                 final int previousService = CommService.elm.getService();
 
+                // Clear any stale cached vehicle info before requesting fresh data
+                log.info("Clearing stale vehicle info cache before VIN request");
+                ObdProt.VidPvs.clear();
+                CommService.elm.getCachedVehicleInfo().clear();
+
                 // Temporarily switch to Mode 9 to request VIN (without changing UI)
                 log.info("Requesting Mode 9 VIN data");
                 CommService.elm.setService(ObdProt.OBD_SVC_VEH_INFO, false);
@@ -1952,7 +2020,8 @@ public class MainActivity extends AppCompatActivity
                     if (VehicleManager.getInstance().getCurrentVIN() == null) {
                         log.info("VIN request timeout, switching back to previous service");
                         CommService.elm.setService(previousService, false);
-                        // Don't mark as permanently failed - just log that we timed out
+                        // Notify VehicleManager that VIN retrieval timed out
+                        VehicleManager.getInstance().handleVINTimeout();
                         log.info("VIN not retrieved within timeout - may retry later");
                     }
                 }, 8000); // 8 second timeout to allow for slower adapters
@@ -2290,34 +2359,9 @@ public class MainActivity extends AppCompatActivity
                     break;
 
                 case ONLINE:
-                    switch (CommService.medium)
-                    {
-                        case BLUETOOTH:
-                            if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled())
-                            {
-                                SnackbarHelper.showWarning(this, getString(R.string.none_found));
-                                mode = MODE.OFFLINE;
-                            } else
-                            {
-                                // Always show device selection screen when connect is pressed
-                                Intent serverIntent = new Intent(this, BtDeviceListActivity.class);
-                                launchActivityForResult(serverIntent,
-                                        prefs.getBoolean("bt_secure_connection", false)
-                                                ? REQUEST_CONNECT_DEVICE_SECURE
-                                                : REQUEST_CONNECT_DEVICE_INSECURE);
-                            }
-                            break;
-
-                        case USB:
-                            Intent enableIntent = new Intent(this, UsbDeviceListActivity.class);
-                            launchActivityForResult(enableIntent, REQUEST_CONNECT_DEVICE_USB);
-                            break;
-
-                        case NETWORK:
-                            connectNetworkDevice(prefs.getString(DEVICE_ADDRESS, null),
-                                    getPrefsInt(DEVICE_PORT, 23));
-                            break;
-                    }
+                    // Launch unified adapter selection activity
+                    Intent adapterIntent = new Intent(this, UnifiedAdapterSelectionActivity.class);
+                    launchActivityForResult(adapterIntent, REQUEST_CONNECT_UNIFIED);
                     break;
 
                 case DEMO:

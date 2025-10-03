@@ -74,6 +74,11 @@
             android:label="@string/select_device"
             android:exported="false" />
         <activity
+            android:name="com.obddroid.ui.activities.UnifiedAdapterSelectionActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/select_device"
+            android:exported="false" />
+        <activity
             android:name="com.obddroid.ui.activities.ChartActivity"
             android:configChanges="touchscreen|orientation|screenSize"
             android:label="@string/chart"
