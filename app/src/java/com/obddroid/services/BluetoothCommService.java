@@ -3,6 +3,7 @@ package com.obddroid.services;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.os.Build;
@@ -54,7 +55,8 @@ public class BluetoothCommService extends CommService
 
 		try {
 			// Always cancel discovery because it will slow down a connection
-			BluetoothAdapter mAdapter = BluetoothAdapter.getDefaultAdapter();
+			BluetoothManager bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+			BluetoothAdapter mAdapter = bluetoothManager != null ? bluetoothManager.getAdapter() : null;
 			if (mAdapter != null && PermissionManager.hasBluetoothPermissions(context)) {
 				// Only cancel discovery if we have permission
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

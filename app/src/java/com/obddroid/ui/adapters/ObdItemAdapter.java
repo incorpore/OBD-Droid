@@ -3,7 +3,8 @@ package com.obddroid.ui.adapters;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.PorterDuff;
-import android.preference.PreferenceManager;
+import android.graphics.PorterDuffColorFilter;
+import androidx.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -202,7 +203,7 @@ public class ObdItemAdapter extends ArrayAdapter<Object>
                     && colVal instanceof Number)
             {
                 pb.setVisibility(ProgressBar.VISIBLE);
-                pb.getProgressDrawable().setColorFilter(pidColor, PorterDuff.Mode.SRC_IN);
+                pb.getProgressDrawable().setColorFilter(new PorterDuffColorFilter(pidColor, PorterDuff.Mode.SRC_IN));
                 pb.setProgress((int) (100 * ((((Number) colVal).doubleValue() - min.doubleValue()) / (max.doubleValue() - min.doubleValue()))));
             } else
             {

@@ -8,11 +8,18 @@ import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
 import android.util.DisplayMetrics;
 import android.view.View;
+import android.view.WindowInsets;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
+
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ListAdapter;
@@ -98,7 +105,7 @@ public class DashBoardActivity extends AppCompatActivity
 	/**
 	 * Handle message requests
 	 */
-	protected transient final Handler mHandler = new Handler()
+	protected transient final Handler mHandler = new Handler(Looper.getMainLooper())
 	{
 		@Override
 		public void handleMessage(Message msg)
@@ -133,7 +140,14 @@ public class DashBoardActivity extends AppCompatActivity
 	void updateDashboardScaling()
 	{
 		// calculate minimum gauge size (1.6 inch) based on screen density
-		getWindowManager().getDefaultDisplay().getMetrics(metrics);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+			WindowMetrics windowMetrics = getWindowManager().getCurrentWindowMetrics();
+			metrics.widthPixels = windowMetrics.getBounds().width();
+			metrics.heightPixels = windowMetrics.getBounds().height();
+			metrics.densityDpi = getResources().getConfiguration().densityDpi;
+		} else {
+			getWindowManager().getDefaultDisplay().getMetrics(metrics);
+		}
 		MIN_GAUGE_SIZE = Math.min( metrics.densityDpi * 15 / 10,
 								   Math.min(metrics.widthPixels, metrics.heightPixels));
 
@@ -179,16 +193,16 @@ public class DashBoardActivity extends AppCompatActivity
 			getWindow().setNavigationBarColor(Color.parseColor("#212121"));
 		}
 
-		// Apply full screen based on preference
+		// Apply full screen based on preference using modern WindowInsetsController
 		if(MainActivity.prefs.getBoolean(MainActivity.PREF_FULLSCREEN, false))
 		{
-			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+			if (windowInsetsController != null) {
+				windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+				windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+			}
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 				getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-				getWindow().getDecorView().setSystemUiVisibility(
-					View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
-					View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-				);
 			}
 		}
 

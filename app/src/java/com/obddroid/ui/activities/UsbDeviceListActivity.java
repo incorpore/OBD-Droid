@@ -14,8 +14,9 @@ import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.WindowManager;
 import android.view.View;
@@ -52,7 +53,7 @@ public final class UsbDeviceListActivity extends AppCompatActivity
 	private static final long REFRESH_TIMEOUT_MILLIS = 5000;
 
 	@SuppressLint("HandlerLeak")
-	private final Handler mHandler = new Handler()
+	private final Handler mHandler = new Handler(Looper.getMainLooper())
 	{
 		@Override
 		public void handleMessage(Message msg)

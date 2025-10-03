@@ -7,6 +7,7 @@ import android.graphics.Paint.Align;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
@@ -211,7 +212,7 @@ public class ChartActivity extends AppCompatActivity
 	/**
 	 * Handle message requests
 	 */
-	private transient final Handler mHandler = new Handler()
+	private transient final Handler mHandler = new Handler(Looper.getMainLooper())
 	{
 		@Override
 		public void handleMessage(Message msg)

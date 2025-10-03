@@ -7,6 +7,7 @@ import android.app.AlertDialog;
 import android.app.SearchManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.DialogInterface;
@@ -18,9 +19,10 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.StrictMode;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.Menu;
@@ -40,9 +42,13 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.obddroid.core.ecu.EcuCodeItem;
 import com.obddroid.core.ecu.EcuDataItem;
@@ -287,7 +293,7 @@ public class MainActivity extends AppCompatActivity
      * Handle message requests
      */
     @SuppressLint("HandlerLeak")
-    private transient final Handler mHandler = new Handler()
+    private transient final Handler mHandler = new Handler(Looper.getMainLooper())
     {
         @Override
         public void handleMessage(Message msg)
@@ -363,6 +369,11 @@ public class MainActivity extends AppCompatActivity
                                 currDataAdapter.setPvList(currDataAdapter.pvs);
                                 try
                                 {
+                                    // Debug: Log event source
+                                    log.info("PV_ADDED event - source: " + event.getSource().getClass().getName() +
+                                            ", VidPvs: " + ObdProt.VidPvs.getClass().getName() +
+                                            ", match: " + (event.getSource() == ObdProt.VidPvs));
+
                                     if (event.getSource() == ObdProt.PidPvs)
                                     {
                                         // Check if last data selection shall be restored
@@ -370,9 +381,29 @@ public class MainActivity extends AppCompatActivity
                                         // Don't restore view mode after connection - stay on main page
                                         // checkToRestoreLastViewMode();
                                     }
+                                    else if (event.getSource() == ObdProt.VidPvs)
+                                    {
+                                        log.info("VidPvs match - calling checkForVinAndNotify");
+                                        // Check if this is a VIN and notify VehicleManager
+                                        checkForVinAndNotify(event);
+                                    }
                                 } catch (Exception e)
                                 {
                                     log.log(Level.FINER, "Error adding PV", e);
+                                }
+                                break;
+
+                            case PvChangeEvent.PV_MODIFIED:
+                                // Debug: Log event source
+                                log.info("PV_MODIFIED event - source: " + event.getSource().getClass().getName() +
+                                        ", VidPvs: " + ObdProt.VidPvs.getClass().getName() +
+                                        ", match: " + (event.getSource() == ObdProt.VidPvs));
+
+                                // Also check for VIN updates (when existing VIN PV gets updated with actual value)
+                                if (event.getSource() == ObdProt.VidPvs)
+                                {
+                                    log.info("VidPvs match - calling checkForVinAndNotify");
+                                    checkForVinAndNotify(event);
                                 }
                                 break;
 
@@ -464,7 +495,7 @@ public class MainActivity extends AppCompatActivity
                                     if (!vm.hasVINRetrievalFailed()) {
                                         vm.setVIN(null);
                                         // Auto-switch to live data since Mode 9 isn't supported
-                                        new Handler().postDelayed(() -> {
+                                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
                                             if (CommService.elm != null && CommService.elm.getService() == ObdProt.OBD_SVC_VEH_INFO) {
                                                 setObdService(ObdProt.OBD_SVC_DATA, "Live Data");
                                             }
@@ -540,8 +571,6 @@ public class MainActivity extends AppCompatActivity
     {
         // instantiate superclass
         super.onCreate(savedInstanceState);
-
-        requestWindowFeature(Window.FEATURE_PROGRESS);
 
         // Set status bar and navigation bar colors to match our theme right away
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -628,7 +657,8 @@ public class MainActivity extends AppCompatActivity
         {
             case BLUETOOTH:
                 // Get local Bluetooth adapter
-                mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+                BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
+                mBluetoothAdapter = bluetoothManager != null ? bluetoothManager.getAdapter() : null;
                 log.fine("Adapter: " + mBluetoothAdapter);
                 // If BT is not on, request that it be enabled.
                 if (getMode() != MODE.DEMO && mBluetoothAdapter != null)
@@ -656,6 +686,9 @@ public class MainActivity extends AppCompatActivity
                 setMode(MODE.OFFLINE);
                 break;
         }
+
+        // Setup modern back button handling
+        setupBackPressedCallback();
     }
 
     /**
@@ -740,8 +773,11 @@ public class MainActivity extends AppCompatActivity
         // if bluetooth adapter was switched OFF before ...
         if (mBluetoothAdapter != null && !initialBtStateEnabled)
         {
-            // ... turn it OFF again
-            mBluetoothAdapter.disable();
+            // ... turn it OFF again (only supported on Android 12 and below)
+            // Note: Android 13+ removed the ability for apps to disable Bluetooth
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                mBluetoothAdapter.disable();
+            }
         }
 
         log.info(String.format("%s %s finished",
@@ -772,34 +808,37 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     * handle pressing of the BACK-KEY
+     * handle pressing of the BACK-KEY using modern OnBackPressedCallback
      */
-    @Override
-    public void onBackPressed()
+    private void setupBackPressedCallback()
     {
-        {
-            if (CommService.elm.getService() != ObdProt.OBD_SVC_NONE)
-            {
-                if (dataViewMode != DATA_VIEW_MODE.LIST)
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (CommService.elm.getService() != ObdProt.OBD_SVC_NONE)
                 {
-                    setDataViewMode(DATA_VIEW_MODE.LIST);
-                    checkToRestoreLastDataSelection();
+                    if (dataViewMode != DATA_VIEW_MODE.LIST)
+                    {
+                        setDataViewMode(DATA_VIEW_MODE.LIST);
+                        checkToRestoreLastDataSelection();
+                    } else
+                    {
+                        setObdService(ObdProt.OBD_SVC_NONE, null);
+                    }
                 } else
                 {
-                    setObdService(ObdProt.OBD_SVC_NONE, null);
-                }
-            } else
-            {
-                if (lastBackPressTime < System.currentTimeMillis() - EXIT_TIMEOUT)
-                {
-                    SnackbarHelper.showInfo(this, getString(R.string.back_again_to_exit));
-                    lastBackPressTime = System.currentTimeMillis();
-                } else
-                {
-                    super.onBackPressed();
+                    if (lastBackPressTime < System.currentTimeMillis() - EXIT_TIMEOUT)
+                    {
+                        SnackbarHelper.showInfo(MainActivity.this, getString(R.string.back_again_to_exit));
+                        lastBackPressTime = System.currentTimeMillis();
+                    } else
+                    {
+                        setEnabled(false);
+                        getOnBackPressedDispatcher().onBackPressed();
+                    }
                 }
             }
-        }
+        });
     }
 
     /**
@@ -1063,19 +1102,21 @@ public class MainActivity extends AppCompatActivity
         if (key == null || PREF_FULLSCREEN.equals(key))
         {
             ActionBar actionBar = getSupportActionBar();
+            WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+
             if (prefs.getBoolean(PREF_FULLSCREEN, false))
             {
                 // Ultra-dark mode: hide status bar and make everything black
-                getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     getWindow().setNavigationBarColor(Color.BLACK);
-                    // Also hide navigation bar for true full screen
-                    getWindow().getDecorView().setSystemUiVisibility(
-                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
-                        View.SYSTEM_UI_FLAG_FULLSCREEN
-                    );
                 }
+
+                // Hide status and navigation bars using modern API
+                if (windowInsetsController != null) {
+                    windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+                    windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                }
+
                 // Make the action bar black too
                 if (actionBar != null) {
                     actionBar.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.BLACK));
@@ -1084,11 +1125,15 @@ public class MainActivity extends AppCompatActivity
             else
             {
                 // Show the status bar and restore dark grey theme
-                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     getWindow().setNavigationBarColor(Color.parseColor("#212121"));
-                    getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
                 }
+
+                // Show status and navigation bars using modern API
+                if (windowInsetsController != null) {
+                    windowInsetsController.show(WindowInsetsCompat.Type.systemBars());
+                }
+
                 // Restore the action bar color
                 if (actionBar != null) {
                     actionBar.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.parseColor("#212121")));
@@ -1778,21 +1823,135 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     * Trigger VIN retrieval after ECU is selected
+     * Check if a PvChangeEvent contains VIN data and notify VehicleManager
+     * This allows VIN detection without switching to Vehicle Info page
+     */
+    private void checkForVinAndNotify(PvChangeEvent event)
+    {
+        try {
+            // For PV_ADDED: value is the entire EcuDataPv
+            // For PV_MODIFIED: value is just the modified field, source is the EcuDataPv
+            Object eventValue = event.getValue();
+            Object eventSource = event.getSource();
+            Object eventKey = event.getKey();
+
+            log.info("checkForVinAndNotify called - eventValue type: " +
+                    (eventValue != null ? eventValue.getClass().getName() : "null") +
+                    ", eventSource type: " +
+                    (eventSource != null ? eventSource.getClass().getName() : "null") +
+                    ", eventKey: " + eventKey);
+
+            EcuDataPv dataPv = null;
+
+            // Determine how to get the EcuDataPv based on event type
+            if (eventValue instanceof EcuDataPv) {
+                // PV_ADDED case - value IS the PV
+                dataPv = (EcuDataPv) eventValue;
+                log.info("VidPvs PV_ADDED - checking for VIN");
+            } else if (eventValue instanceof Object[]) {
+                // PV_ADDED case - value is Object[] containing multiple PVs
+                // Loop through ALL items to find the VIN
+                Object[] arr = (Object[]) eventValue;
+                log.info("VidPvs PV_ADDED - array contains " + arr.length + " items");
+                for (Object item : arr) {
+                    if (item instanceof EcuDataPv) {
+                        EcuDataPv pv = (EcuDataPv) item;
+                        String desc = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
+                        Object val = pv.get(EcuDataPv.FID_VALUE);
+                        log.info("  Checking item: " + desc + ", value: " + val +
+                                ", len: " + (val != null ? val.toString().length() : 0));
+
+                        if (desc != null && desc.toLowerCase().contains("vehicle identification") &&
+                            val != null && val.toString().trim().length() == 17) {
+                            dataPv = pv;
+                            log.info("  Found VIN in array!");
+                            break;
+                        }
+                    }
+                }
+            } else if (eventSource instanceof EcuDataPv) {
+                // PV_MODIFIED case - source IS the PV
+                dataPv = (EcuDataPv) eventSource;
+                log.info("VidPvs PV_MODIFIED - checking for VIN");
+            } else {
+                // Try to get from VidPvs list using the key
+                log.info("Trying to get EcuDataPv from VidPvs using key: " + eventKey);
+                if (eventKey != null) {
+                    Object item = ObdProt.VidPvs.get(eventKey);
+                    if (item instanceof EcuDataPv) {
+                        dataPv = (EcuDataPv) item;
+                        log.info("Successfully retrieved EcuDataPv from VidPvs");
+                    }
+                }
+            }
+
+            if (dataPv != null) {
+                String description = String.valueOf(dataPv.get(EcuDataPv.FID_DESCRIPT));
+                Object vinValue = dataPv.get(EcuDataPv.FID_VALUE);
+
+                log.info("VidPvs item - desc: " + description + ", value: " + vinValue +
+                        ", valueLen: " + (vinValue != null ? vinValue.toString().length() : 0));
+
+                // Check if this is a VIN (PID description contains "vehicle identification" and value is 17 chars)
+                if (description != null && description.toLowerCase().contains("vehicle identification") &&
+                    vinValue != null && vinValue.toString().trim().length() == 17) {
+
+                    String vin = vinValue.toString().trim();
+                    VehicleManager vm = VehicleManager.getInstance();
+                    String currentVin = vm.getCurrentVIN();
+
+                    // Only notify if this is a new VIN
+                    if (currentVin == null || !currentVin.equals(vin)) {
+                        log.info("VIN DETECTED from Mode 9: " + vin);
+                        vm.setVIN(vin);
+
+                        // VIN retrieved successfully, switch back to idle mode
+                        // This stops continuous Mode 9 polling
+                        if (CommService.elm.getService() == ObdProt.OBD_SVC_VEH_INFO) {
+                            log.info("VIN retrieved successfully, switching back to idle");
+                            CommService.elm.setService(ObdProt.OBD_SVC_NONE, false);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.log(Level.WARNING, "Error checking for VIN in PvChangeEvent", e);
+        }
+    }
+
+    /**
+     * Trigger VIN retrieval after ECU is selected - requests Mode 9 data in background
+     * without switching the UI to Vehicle Info page
      */
     private void triggerVinRetrieval()
     {
-        // Only switch if we haven't already retrieved VIN
-        String currentVin = VehicleManager.getInstance().getCurrentVIN();
+        // Only request if we haven't already retrieved VIN
+        VehicleManager vm = VehicleManager.getInstance();
+        String currentVin = vm.getCurrentVIN();
+
         if (currentVin == null || currentVin.isEmpty())
         {
-            log.info("ECU Selected, switching to Vehicle Info to get VIN");
+            log.info("ECU Selected, requesting VIN in background");
+
             // Delay slightly to let ECU selection complete
-            new Handler().postDelayed(() -> {
-                // Switch to Vehicle Info service to populate VIN and stay there
-                log.info("Switching to Vehicle Info page");
-                setObdService(ObdProt.OBD_SVC_VEH_INFO, getString(R.string.obd_veh_info));
-                // Stay on Vehicle Info page - user can navigate elsewhere if they want
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                // Save current service to restore later if needed
+                final int previousService = CommService.elm.getService();
+
+                // Temporarily switch to Mode 9 to request VIN (without changing UI)
+                log.info("Requesting Mode 9 VIN data");
+                CommService.elm.setService(ObdProt.OBD_SVC_VEH_INFO, false);
+
+                // Set a timeout to switch back if VIN doesn't arrive
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    // If VIN still not retrieved after timeout, switch back
+                    if (VehicleManager.getInstance().getCurrentVIN() == null) {
+                        log.info("VIN request timeout, switching back to previous service");
+                        CommService.elm.setService(previousService, false);
+                        // Don't mark as permanently failed - just log that we timed out
+                        log.info("VIN not retrieved within timeout - may retry later");
+                    }
+                }, 8000); // 8 second timeout to allow for slower adapters
             }, 1000); // Wait 1 second for ECU selection to settle
         }
     }
@@ -2071,6 +2230,7 @@ public class MainActivity extends AppCompatActivity
         );
         ObdProt.VidPvs.addPvChangeListener(this,
                 PvChangeEvent.PV_ADDED
+                        | PvChangeEvent.PV_MODIFIED  // Also listen for updates to existing VINs
                         | PvChangeEvent.PV_CLEARED
         );
         ObdProt.tCodes.addPvChangeListener(this,
@@ -2775,7 +2935,7 @@ public class MainActivity extends AppCompatActivity
                     CommService.elm.setService(ObdProt.OBD_SVC_CLEAR_CODES);
 
                     // Wait for clear codes operation to complete, then re-read
-                    new Handler().postDelayed(new Runnable() {
+                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                         @Override
                         public void run() {
                             // Check if still connected
@@ -2808,7 +2968,7 @@ public class MainActivity extends AppCompatActivity
                             }
 
                             // After another delay, check if codes were cleared successfully and restore service
-                            new Handler().postDelayed(() -> {
+                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
                                 if (ObdProt.tCodes.size() <= 1) {
                                     SnackbarHelper.showSuccess(MainActivity.this, "Fault codes cleared successfully");
                                 } else {
@@ -2816,7 +2976,7 @@ public class MainActivity extends AppCompatActivity
                                 }
 
                                 // Restore the previous service after a short delay
-                                new Handler().postDelayed(() -> {
+                                new Handler(Looper.getMainLooper()).postDelayed(() -> {
                                     if (CommService.elm != null && previousService != ObdProt.OBD_SVC_CLEAR_CODES) {
                                         // Return to the previous service (usually OBD_SVC_DATA for live data)
                                         CommService.elm.setService(previousService);
@@ -2896,7 +3056,7 @@ public class MainActivity extends AppCompatActivity
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setTitle(testControlName)
                 .setMessage(R.string.obd_test_confirm)
-                .setPositiveButton(android.R.string.yes,
+                .setPositiveButton(R.string.yes,
                         new DialogInterface.OnClickListener()
                         {
                             @Override
@@ -2905,7 +3065,7 @@ public class MainActivity extends AppCompatActivity
                                 runObdTestControl(testControlName, service, tid);
                             }
                         })
-                .setNegativeButton(android.R.string.no, null)
+                .setNegativeButton(R.string.no, null)
                 .show();
     }
 

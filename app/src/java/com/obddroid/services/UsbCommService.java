@@ -11,7 +11,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 
 import com.obddroid.core.obd.ProtUtils;
 import com.obddroid.core.obd.TelegramWriter;
