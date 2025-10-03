@@ -1,6 +1,8 @@
 package com.obddroid.utils;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.graphics.Color;
 import android.view.Gravity;
 import android.view.View;
@@ -12,6 +14,7 @@ import com.google.android.material.snackbar.Snackbar;
 /**
  * Helper class for displaying Snackbars positioned above the VehicleInfoFooter
  * Appears at the bottom of the screen with proper margin to avoid overlapping the footer
+ * Enhanced to support non-Activity contexts, duration options, and action buttons
  */
 public class SnackbarHelper {
 
@@ -32,13 +35,50 @@ public class SnackbarHelper {
         }
     }
 
+    public enum Duration {
+        SHORT(Snackbar.LENGTH_SHORT),
+        LONG(Snackbar.LENGTH_LONG),
+        INDEFINITE(Snackbar.LENGTH_INDEFINITE);
+
+        private final int value;
+
+        Duration(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
+
     /**
-     * Show a Snackbar positioned above the VehicleInfoFooter
-     * @param activity The current activity
+     * Convert Context to Activity if possible
+     */
+    private static Activity getActivityFromContext(Context context) {
+        if (context == null) {
+            return null;
+        }
+        if (context instanceof Activity) {
+            return (Activity) context;
+        }
+        if (context instanceof ContextWrapper) {
+            return getActivityFromContext(((ContextWrapper) context).getBaseContext());
+        }
+        return null;
+    }
+
+    /**
+     * Show a Snackbar with all options
+     * @param context The context (Activity or ContextWrapper)
      * @param message The message to display
      * @param type The type of message (affects color)
+     * @param duration Duration of the Snackbar
+     * @param actionText Optional action button text (null for no action)
+     * @param actionListener Optional action button click listener
      */
-    public static void showSnackbar(Activity activity, String message, MessageType type) {
+    public static void showSnackbar(Context context, String message, MessageType type, Duration duration,
+                                     String actionText, View.OnClickListener actionListener) {
+        Activity activity = getActivityFromContext(context);
         if (activity == null || activity.isFinishing()) {
             return;
         }
@@ -48,7 +88,13 @@ public class SnackbarHelper {
             return;
         }
 
-        Snackbar snackbar = Snackbar.make(rootView, message, Snackbar.LENGTH_LONG);
+        Snackbar snackbar = Snackbar.make(rootView, message, duration.getValue());
+
+        // Add action button if provided
+        if (actionText != null && actionListener != null) {
+            snackbar.setAction(actionText, actionListener);
+            snackbar.setActionTextColor(Color.WHITE);
+        }
 
         // Style the Snackbar
         View snackbarView = snackbar.getView();
@@ -88,30 +134,79 @@ public class SnackbarHelper {
     }
 
     /**
+     * Show a Snackbar positioned above the VehicleInfoFooter
+     * @param context The context (Activity or ContextWrapper)
+     * @param message The message to display
+     * @param type The type of message (affects color)
+     */
+    public static void showSnackbar(Context context, String message, MessageType type) {
+        showSnackbar(context, message, type, Duration.LONG, null, null);
+    }
+
+    /**
+     * Show a Snackbar with custom duration
+     * @param context The context
+     * @param message The message to display
+     * @param type The type of message (affects color)
+     * @param duration Duration of the Snackbar
+     */
+    public static void showSnackbar(Context context, String message, MessageType type, Duration duration) {
+        showSnackbar(context, message, type, duration, null, null);
+    }
+
+    /**
      * Show an error message
      */
-    public static void showError(Activity activity, String message) {
-        showSnackbar(activity, message, MessageType.ERROR);
+    public static void showError(Context context, String message) {
+        showSnackbar(context, message, MessageType.ERROR);
+    }
+
+    /**
+     * Show an error message with custom duration
+     */
+    public static void showError(Context context, String message, Duration duration) {
+        showSnackbar(context, message, MessageType.ERROR, duration);
     }
 
     /**
      * Show a warning message
      */
-    public static void showWarning(Activity activity, String message) {
-        showSnackbar(activity, message, MessageType.WARNING);
+    public static void showWarning(Context context, String message) {
+        showSnackbar(context, message, MessageType.WARNING);
+    }
+
+    /**
+     * Show a warning message with custom duration
+     */
+    public static void showWarning(Context context, String message, Duration duration) {
+        showSnackbar(context, message, MessageType.WARNING, duration);
     }
 
     /**
      * Show an info message
      */
-    public static void showInfo(Activity activity, String message) {
-        showSnackbar(activity, message, MessageType.INFO);
+    public static void showInfo(Context context, String message) {
+        showSnackbar(context, message, MessageType.INFO);
+    }
+
+    /**
+     * Show an info message with custom duration
+     */
+    public static void showInfo(Context context, String message, Duration duration) {
+        showSnackbar(context, message, MessageType.INFO, duration);
     }
 
     /**
      * Show a success message
      */
-    public static void showSuccess(Activity activity, String message) {
-        showSnackbar(activity, message, MessageType.SUCCESS);
+    public static void showSuccess(Context context, String message) {
+        showSnackbar(context, message, MessageType.SUCCESS);
+    }
+
+    /**
+     * Show a success message with custom duration
+     */
+    public static void showSuccess(Context context, String message, Duration duration) {
+        showSnackbar(context, message, MessageType.SUCCESS, duration);
     }
 }

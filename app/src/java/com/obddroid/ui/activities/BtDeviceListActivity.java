@@ -32,7 +32,6 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -43,6 +42,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import com.obddroid.ui.adapters.ModernDeviceAdapter;
 import com.obddroid.R;
 import com.obddroid.utils.PermissionManager;
+import com.obddroid.utils.SnackbarHelper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -418,10 +418,9 @@ public class BtDeviceListActivity extends AppCompatActivity
 				String address = device.getAddress();
 				String name = device.getName() != null ? device.getName() : "Unknown Device";
 
-				// Show device details in a toast
-				Toast.makeText(BtDeviceListActivity.this,
-					name + "\nMAC: " + address,
-					Toast.LENGTH_LONG).show();
+				// Show device details in a snackbar
+				SnackbarHelper.showInfo(BtDeviceListActivity.this,
+					name + "\nMAC: " + address);
 			}
 
 			return true; // Consume the long click
@@ -489,7 +488,7 @@ public class BtDeviceListActivity extends AppCompatActivity
 				recreate();
 			} else {
 				// Permissions denied
-				Toast.makeText(this, "Bluetooth permissions are required to scan for devices", Toast.LENGTH_LONG).show();
+				SnackbarHelper.showWarning(this, "Bluetooth permissions are required to scan for devices");
 				if (PermissionManager.shouldShowBluetoothRationale(this)) {
 					PermissionManager.showBluetoothRationale(this);
 				} else if (PermissionManager.isBluetoothPermissionPermanentlyDenied(this)) {

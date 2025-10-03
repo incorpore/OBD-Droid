@@ -8,7 +8,6 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.preference.PreferenceManager;
-import android.widget.Toast;
 
 import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.model.XYSeries;
@@ -161,7 +160,7 @@ public class ExportTask
 								   activity.getString(R.string.saved),
 								   fileName);
 		log.log(Level.INFO, msg);
-		Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show();
+		SnackbarHelper.showSuccess(activity, msg, SnackbarHelper.Duration.SHORT);
 
 		// if export file should be sent immediately ...
 		if(prefs.getBoolean(OPT_SEND_EXPORT, false))

@@ -10,7 +10,6 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.View;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -86,19 +85,19 @@ public class Screenshot
 				fout.close();
 
 				// show notification
-				Toast.makeText(context, "Screenshot saved: " + savedPath, Toast.LENGTH_SHORT).show();
+				SnackbarHelper.showSuccess(context, "Screenshot saved: " + savedPath, SnackbarHelper.Duration.SHORT);
 				log.info("Screenshot saved: " + savedPath);
 			}
 		}
 		catch (FileNotFoundException e)
 		{
 			log.log(Level.SEVERE, "ScreenShot", e);
-			Toast.makeText(context, "Failed to save screenshot: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+			SnackbarHelper.showError(context, "Failed to save screenshot: " + e.getMessage(), SnackbarHelper.Duration.SHORT);
 		}
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "ScreenShot", e);
-			Toast.makeText(context, "Failed to save screenshot: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+			SnackbarHelper.showError(context, "Failed to save screenshot: " + e.getMessage(), SnackbarHelper.Duration.SHORT);
 		}
 	}
 

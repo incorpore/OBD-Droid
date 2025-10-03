@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.widget.Toast;
 
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
@@ -160,10 +159,10 @@ public class FileHelper
 				outFile.length(),
 				mPath);
 			log.info(msg);
-			Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+			SnackbarHelper.showSuccess(context, msg, SnackbarHelper.Duration.SHORT);
 		} catch (Exception e)
 		{
-			Toast.makeText(context, e.toString(), Toast.LENGTH_SHORT).show();
+			SnackbarHelper.showError(context, e.toString(), SnackbarHelper.Duration.SHORT);
 			e.printStackTrace();
 		}
 
@@ -240,10 +239,10 @@ public class FileHelper
 			oIn.close();
 
 			log.log(Level.INFO, msg);
-			Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+			SnackbarHelper.showSuccess(context, msg, SnackbarHelper.Duration.SHORT);
 		} catch (Exception ex)
 		{
-			Toast.makeText(context, ex.toString(), Toast.LENGTH_SHORT).show();
+			SnackbarHelper.showError(context, ex.toString(), SnackbarHelper.Duration.SHORT);
 			log.log(Level.SEVERE, uri.toString(), ex);
 		}
 		return numBytesLoaded;

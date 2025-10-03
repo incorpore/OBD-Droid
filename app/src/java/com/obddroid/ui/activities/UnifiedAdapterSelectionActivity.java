@@ -36,7 +36,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
@@ -53,6 +52,7 @@ import com.obddroid.services.CommService;
 import com.obddroid.ui.adapters.ModernDeviceAdapter;
 import com.obddroid.ui.adapters.ModernUsbDeviceAdapter;
 import com.obddroid.utils.PermissionManager;
+import com.obddroid.utils.SnackbarHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -238,11 +238,11 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
             String portStr = networkPortInput.getText().toString().trim();
 
             if (ip.isEmpty()) {
-                Toast.makeText(this, "Please enter IP address", Toast.LENGTH_SHORT).show();
+                SnackbarHelper.showError(this, "Please enter IP address", SnackbarHelper.Duration.SHORT);
                 return;
             }
             if (portStr.isEmpty()) {
-                Toast.makeText(this, "Please enter port", Toast.LENGTH_SHORT).show();
+                SnackbarHelper.showError(this, "Please enter port", SnackbarHelper.Duration.SHORT);
                 return;
             }
 
@@ -262,7 +262,7 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
                 setResult(Activity.RESULT_OK, intent);
                 finish();
             } catch (NumberFormatException e) {
-                Toast.makeText(this, "Invalid port number", Toast.LENGTH_SHORT).show();
+                SnackbarHelper.showError(this, "Invalid port number", SnackbarHelper.Duration.SHORT);
             }
         });
     }
@@ -455,7 +455,7 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
                 .putBoolean("bt_secure_connection", secureCheckbox.isChecked())
                 .putString("protocol", String.valueOf(protocolSpinner.getSelectedItemPosition()))
                 .apply();
-            Toast.makeText(this, "Bluetooth settings saved", Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSuccess(this, "Bluetooth settings saved", SnackbarHelper.Duration.SHORT);
         });
         builder.setNegativeButton("Cancel", null);
         builder.show();
@@ -526,7 +526,7 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
                 .putString("comm_baudrate", baudSpinner.getSelectedItem().toString())
                 .putString("protocol", String.valueOf(protocolSpinner.getSelectedItemPosition()))
                 .apply();
-            Toast.makeText(this, "USB settings saved", Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSuccess(this, "USB settings saved", SnackbarHelper.Duration.SHORT);
         });
         builder.setNegativeButton("Cancel", null);
         builder.show();
@@ -603,7 +603,7 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
             prefs.edit()
                 .putString("protocol", String.valueOf(protocolSpinner.getSelectedItemPosition()))
                 .apply();
-            Toast.makeText(this, "WiFi settings saved", Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSuccess(this, "WiFi settings saved", SnackbarHelper.Duration.SHORT);
         });
         builder.setNegativeButton("Cancel", null);
         builder.show();
@@ -883,9 +883,8 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
                 String address = device.getAddress();
                 String name = device.getName() != null ? device.getName() : "Unknown Device";
 
-                Toast.makeText(UnifiedAdapterSelectionActivity.this,
-                        name + "\nMAC: " + address,
-                        Toast.LENGTH_LONG).show();
+                SnackbarHelper.showInfo(UnifiedAdapterSelectionActivity.this,
+                        name + "\nMAC: " + address);
             }
 
             return true;
@@ -904,9 +903,8 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
             ModernUsbDeviceAdapter.UsbDeviceInfo deviceInfo = usbEntries.get(position);
 
             if (!deviceInfo.isCompatible || deviceInfo.port == null) {
-                Toast.makeText(UnifiedAdapterSelectionActivity.this,
-                        "This device is not a compatible USB serial adapter",
-                        Toast.LENGTH_SHORT).show();
+                SnackbarHelper.showWarning(UnifiedAdapterSelectionActivity.this,
+                        "This device is not a compatible USB serial adapter", SnackbarHelper.Duration.SHORT);
                 return;
             }
 
@@ -983,7 +981,7 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
             if (PermissionManager.handlePermissionResult(requestCode, permissions, grantResults)) {
                 recreate();
             } else {
-                Toast.makeText(this, "Bluetooth permissions are required to scan for devices", Toast.LENGTH_LONG).show();
+                SnackbarHelper.showWarning(this, "Bluetooth permissions are required to scan for devices");
                 if (PermissionManager.shouldShowBluetoothRationale(this)) {
                     PermissionManager.showBluetoothRationale(this);
                 } else if (PermissionManager.isBluetoothPermissionPermanentlyDenied(this)) {

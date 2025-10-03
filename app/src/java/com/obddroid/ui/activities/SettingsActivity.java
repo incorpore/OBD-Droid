@@ -18,7 +18,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,6 +31,7 @@ import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.services.CommService;
 import com.obddroid.R;
+import com.obddroid.utils.SnackbarHelper;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -397,7 +397,7 @@ public class SettingsActivity
 			catch(Exception e)
 			{
 				log.log(Level.SEVERE, "Settings", e);
-				Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show();
+				SnackbarHelper.showError(getActivity(), e.getMessage());
 			}
 			return true;
 		}
