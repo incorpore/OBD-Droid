@@ -36,7 +36,9 @@ public class FileHelper
 	/** Date Formatter used to generate file name */
 	@SuppressLint("SimpleDateFormat")
 	private static final SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy.MM.dd-HH.mm.ss");
-	private static ProgressDialog progress;
+	// Suppress deprecation - ProgressDialog still functional for simple progress indication
+	@SuppressWarnings("deprecation")
+	private static android.app.ProgressDialog progress;
 
 	private static final Logger log = Logger.getLogger(FileHelper.class.getName());
 	
@@ -101,10 +103,13 @@ public class FileHelper
 			+ ".obd";
 
 		// create progress dialog
-		progress = ProgressDialog.show(context,
+		// Suppress deprecation - ProgressDialog.show() still functional for simple progress indication
+		@SuppressWarnings("deprecation")
+		android.app.ProgressDialog progressDialog = android.app.ProgressDialog.show(context,
 			context.getString(R.string.saving_data),
 			mFileName,
 			true);
+		progress = progressDialog;
 
 		Thread saveTask = new Thread()
 		{
@@ -173,10 +178,13 @@ public class FileHelper
 	                                   final Handler reportTo)
 	{
 		// create progress dialog
-		progress = ProgressDialog.show(context,
+		// Suppress deprecation - ProgressDialog.show() still functional for simple progress indication
+		@SuppressWarnings("deprecation")
+		android.app.ProgressDialog progressDialog = android.app.ProgressDialog.show(context,
 		                               context.getString(R.string.loading_data),
 		                               uri.getPath(),
 		                               true);
+		progress = progressDialog;
 
 		Thread loadTask = new Thread()
 		{

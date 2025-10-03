@@ -78,9 +78,6 @@ public class ExportTask
 
 	public void execute(XYMultipleSeriesDataset... datasets)
 	{
-		// Run onPreExecute on UI thread
-		mainHandler.post(() -> activity.setProgressBarVisibility(true));
-
 		// Execute background task
 		executorService.execute(() -> {
 			String result = performExport(datasets);
@@ -146,9 +143,7 @@ public class ExportTask
 					}
 				}
 				writer.append(CSV_LINE_DELIMITER);
-				// Update progress on UI thread
-				final int progress = 10000 * i / maxCounts;
-				mainHandler.post(() -> onProgressUpdate(progress));
+				// Note: Progress tracking removed as Window.FEATURE_PROGRESS is deprecated
 			}
 			writer.close();
 		}
@@ -159,15 +154,8 @@ public class ExportTask
 		return fileName;
 	}
 
-	private void onProgressUpdate(int progress)
-	{
-		activity.setProgress(progress);
-	}
-
 	private void onPostExecute(String result)
 	{
-		activity.setProgressBarVisibility(false);
-
 		// show saved message
 		String msg = String.format("CSV %s to %s",
 								   activity.getString(R.string.saved),

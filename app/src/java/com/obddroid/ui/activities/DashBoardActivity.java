@@ -146,7 +146,10 @@ public class DashBoardActivity extends AppCompatActivity
 			metrics.heightPixels = windowMetrics.getBounds().height();
 			metrics.densityDpi = getResources().getConfiguration().densityDpi;
 		} else {
-			getWindowManager().getDefaultDisplay().getMetrics(metrics);
+			// Suppress deprecation warning - required for backward compatibility with API < 30
+			@SuppressWarnings("deprecation")
+			android.view.Display display = getWindowManager().getDefaultDisplay();
+			display.getMetrics(metrics);
 		}
 		MIN_GAUGE_SIZE = Math.min( metrics.densityDpi * 15 / 10,
 								   Math.min(metrics.widthPixels, metrics.heightPixels));

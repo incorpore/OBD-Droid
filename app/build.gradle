@@ -22,6 +22,12 @@ android {
             targetCompatibility JavaVersion.VERSION_17
         }
 
+        gradle.projectsEvaluated {
+            tasks.withType(JavaCompile).configureEach {
+                options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
+            }
+        }
+
         kotlinOptions {
             jvmTarget = "17" // Ensure consistency with JavaVersion.VERSION_17
         }
@@ -29,7 +35,7 @@ android {
 
     sourceSets {
         main {
-            java.srcDirs = ['src/java']
+            java.srcDirs = ['src/java', '../modules/nhtsa-vin-decoder/java']
             resources.srcDirs = ['src/resources']
             manifest.srcFile 'src/AndroidManifest.xml'
         }

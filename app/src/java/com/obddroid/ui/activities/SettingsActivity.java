@@ -393,7 +393,7 @@ public class SettingsActivity
 			{
 				// OPEN intents require result handling
 				intent.addCategory(Intent.CATEGORY_OPENABLE);
-				startActivityForResult(intent, preference.hashCode());
+				launchActivityForResult(intent, preference.hashCode());
 			}
 			catch(Exception e)
 			{
@@ -405,8 +405,10 @@ public class SettingsActivity
 
 		/**
 		 * Handler for result messages from other activities
+		 * Note: Extension files are no longer supported, method kept for compatibility
 		 */
 		@Override
+		@SuppressWarnings("deprecation") // onActivityResult deprecated in favor of Activity Result API
 		public void onActivityResult(int requestCode, int resultCode, Intent data)
 		{
 			// Extension files are no longer supported
@@ -475,6 +477,15 @@ public class SettingsActivity
 					.setEnabled(ElmProt.AdaptTimingMode.SOFTWARE.toString()
 						          .equals(((ListPreference)pref).getValue())
 					           );
+		}
+
+		/**
+		 * Wrapper for deprecated startActivityForResult - suppresses deprecation warning
+		 * TODO: Migrate to Activity Result API in future refactor
+		 */
+		@SuppressWarnings("deprecation")
+		private void launchActivityForResult(Intent intent, int requestCode) {
+			startActivityForResult(intent, requestCode);
 		}
 	}
 }

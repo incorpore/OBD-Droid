@@ -671,7 +671,7 @@ public class MainActivity extends AppCompatActivity
                     {
                         // request to enable bluetooth
                         Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                        startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+                        launchActivityForResult(enableIntent, REQUEST_ENABLE_BT);
                     }
                     else
                     {
@@ -778,7 +778,9 @@ public class MainActivity extends AppCompatActivity
             // ... turn it OFF again (only supported on Android 12 and below)
             // Note: Android 13+ removed the ability for apps to disable Bluetooth
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                mBluetoothAdapter.disable();
+                // Suppress deprecation - required for backward compatibility with API < 33
+                @SuppressWarnings("deprecation")
+                boolean disabled = mBluetoothAdapter.disable();
             }
         }
 
@@ -882,7 +884,7 @@ public class MainActivity extends AppCompatActivity
             case R.id.settings:
                 // Launch the Settings Activity
                 Intent settingsIntent = new Intent(this, SettingsActivity.class);
-                startActivityForResult(settingsIntent, REQUEST_SETTINGS);
+                launchActivityForResult(settingsIntent, REQUEST_SETTINGS);
                 return true;
 
 
@@ -2299,7 +2301,7 @@ public class MainActivity extends AppCompatActivity
                             {
                                 // Always show device selection screen when connect is pressed
                                 Intent serverIntent = new Intent(this, BtDeviceListActivity.class);
-                                startActivityForResult(serverIntent,
+                                launchActivityForResult(serverIntent,
                                         prefs.getBoolean("bt_secure_connection", false)
                                                 ? REQUEST_CONNECT_DEVICE_SECURE
                                                 : REQUEST_CONNECT_DEVICE_INSECURE);
@@ -2308,7 +2310,7 @@ public class MainActivity extends AppCompatActivity
 
                         case USB:
                             Intent enableIntent = new Intent(this, UsbDeviceListActivity.class);
-                            startActivityForResult(enableIntent, REQUEST_CONNECT_DEVICE_USB);
+                            launchActivityForResult(enableIntent, REQUEST_CONNECT_DEVICE_USB);
                             break;
 
                         case NETWORK:
@@ -2536,7 +2538,7 @@ public class MainActivity extends AppCompatActivity
         Uri uri = FileProvider.getUriForFile(MainActivity.this, getPackageName()+".provider", file);
         String type = "*/*";
         intent.setDataAndType(uri, type);
-        startActivityForResult(intent, REQUEST_SELECT_FILE);
+        launchActivityForResult(intent, REQUEST_SELECT_FILE);
     }
 
 
@@ -3142,7 +3144,7 @@ public class MainActivity extends AppCompatActivity
                                 dataViewMode == DATA_VIEW_MODE.DASHBOARD
                                         ? R.layout.dashboard
                                         : R.layout.head_up);
-                        startActivityForResult(intent, REQUEST_GRAPH_DISPLAY_DONE);
+                        launchActivityForResult(intent, REQUEST_GRAPH_DISPLAY_DONE);
                         this.dataViewMode = dataViewMode;
                     }
                     break;
@@ -3154,7 +3156,7 @@ public class MainActivity extends AppCompatActivity
                         ChartActivity.setAdapter(currDataAdapter);
                         Intent intent = new Intent(this, ChartActivity.class);
                         intent.putExtra(ChartActivity.POSITIONS, getSelectedPositions());
-                        startActivityForResult(intent, REQUEST_GRAPH_DISPLAY_DONE);
+                        launchActivityForResult(intent, REQUEST_GRAPH_DISPLAY_DONE);
                         this.dataViewMode = dataViewMode;
                     }
                     break;
@@ -3185,6 +3187,15 @@ public class MainActivity extends AppCompatActivity
         DASHBOARD,  //< dashboard
         HEADUP,     //< Head up display
         CHART,        //< Chart display
+    }
+
+    /**
+     * Wrapper for deprecated startActivityForResult - suppresses deprecation warning
+     * TODO: Migrate to Activity Result API in future refactor
+     */
+    @SuppressWarnings("deprecation")
+    private void launchActivityForResult(Intent intent, int requestCode) {
+        startActivityForResult(intent, requestCode);
     }
 
 }
