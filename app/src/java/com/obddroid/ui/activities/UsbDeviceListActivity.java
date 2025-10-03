@@ -14,7 +14,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -35,6 +34,8 @@ import com.hoho.android.usbserial.driver.UsbSerialProber;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 /**
@@ -53,6 +54,7 @@ public final class UsbDeviceListActivity extends AppCompatActivity
 	private UsbManager mUsbManager;
 	private static final int MESSAGE_REFRESH = 101;
 	private static final long REFRESH_TIMEOUT_MILLIS = 5000;
+	private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
 	@SuppressLint("HandlerLeak")
 	private final Handler mHandler = new Handler(Looper.getMainLooper())
@@ -175,43 +177,40 @@ public final class UsbDeviceListActivity extends AppCompatActivity
 		mHandler.removeMessages(MESSAGE_REFRESH);
 	}
 
-	@SuppressLint("StaticFieldLeak")
+	@Override
+	protected void onDestroy()
+	{
+		super.onDestroy();
+		executorService.shutdown();
+	}
+
 	private void refreshDeviceList()
 	{
-		new AsyncTask<Void, Void, List<UsbSerialPort>>()
-		{
-			@Override
-			protected List<UsbSerialPort> doInBackground(Void... params)
+		executorService.execute(() -> {
+			log.fine("Refreshing device list ...");
+			final List<UsbSerialDriver> drivers =
+				UsbSerialProber.getDefaultProber().findAllDrivers(mUsbManager);
+			final List<UsbSerialPort> result = new ArrayList<>();
+
+			for (final UsbSerialDriver driver : drivers)
 			{
-				log.fine("Refreshing device list ...");
-				final List<UsbSerialDriver> drivers =
-					UsbSerialProber.getDefaultProber().findAllDrivers(mUsbManager);
-				final List<UsbSerialPort> result = new ArrayList<>();
-
-				for (final UsbSerialDriver driver : drivers)
-				{
-					final List<UsbSerialPort> ports = driver.getPorts();
-					log.fine(String.format("+ %s: %s selectedPort%s",
-					                         driver, ports.size(),
-					                         ports.size() == 1 ? "" : "s"));
-					result.addAll(ports);
-				}
-
-				return result;
+				final List<UsbSerialPort> ports = driver.getPorts();
+				log.fine(String.format("+ %s: %s selectedPort%s",
+				                         driver, ports.size(),
+				                         ports.size() == 1 ? "" : "s"));
+				result.addAll(ports);
 			}
 
-			@SuppressLint("StringFormatInvalid")
-			@Override
-			protected void onPostExecute(List<UsbSerialPort> result)
-			{
+			// Post result to UI thread
+			mHandler.post(() -> {
 				mEntries.clear();
 				mEntries.addAll(result);
+				@SuppressLint("StringFormatInvalid")
 				TextView numFound = findViewById(R.id.num_found);
 				numFound.setText(getString(R.string.devices_found, result.size()));
 				mAdapter.notifyDataSetChanged();
 				log.fine("Done refreshing, " + mEntries.size() + " entries found.");
-			}
-
-		}.execute();
+			});
+		});
 	}
 }

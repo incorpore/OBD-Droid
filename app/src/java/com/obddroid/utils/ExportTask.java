@@ -5,7 +5,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import androidx.preference.PreferenceManager;
 import android.widget.Toast;
 
@@ -19,6 +20,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.SortedMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,9 +31,10 @@ import com.obddroid.R;
  * Builds the CSV dump for sharing.
 
  */
-public class ExportTask extends AsyncTask<XYMultipleSeriesDataset, Integer, String>
+public class ExportTask
 {
-
+	private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+	private final Handler mainHandler = new Handler(Looper.getMainLooper());
 	private final Activity activity;
 	@SuppressLint("SimpleDateFormat")
 	private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
@@ -72,8 +76,21 @@ public class ExportTask extends AsyncTask<XYMultipleSeriesDataset, Integer, Stri
 		return String.format( CSV_TEXT_QUOTED ? "\"%s\"" : "%s", string);
 	}
 
-	@Override
-	protected String doInBackground(XYMultipleSeriesDataset... params)
+	public void execute(XYMultipleSeriesDataset... datasets)
+	{
+		// Run onPreExecute on UI thread
+		mainHandler.post(() -> activity.setProgressBarVisibility(true));
+
+		// Execute background task
+		executorService.execute(() -> {
+			String result = performExport(datasets);
+
+			// Run onPostExecute on UI thread
+			mainHandler.post(() -> onPostExecute(result));
+		});
+	}
+
+	private String performExport(XYMultipleSeriesDataset... params)
 	{
 		double currX;
 		double currY;
@@ -129,7 +146,9 @@ public class ExportTask extends AsyncTask<XYMultipleSeriesDataset, Integer, Stri
 					}
 				}
 				writer.append(CSV_LINE_DELIMITER);
-				publishProgress(10000 * i / maxCounts);
+				// Update progress on UI thread
+				final int progress = 10000 * i / maxCounts;
+				mainHandler.post(() -> onProgressUpdate(progress));
 			}
 			writer.close();
 		}
@@ -140,20 +159,12 @@ public class ExportTask extends AsyncTask<XYMultipleSeriesDataset, Integer, Stri
 		return fileName;
 	}
 
-	@Override
-	public void onPreExecute()
+	private void onProgressUpdate(int progress)
 	{
-		activity.setProgressBarVisibility(true);
+		activity.setProgress(progress);
 	}
 
-	@Override
-	public void onProgressUpdate(Integer... values)
-	{
-		activity.setProgress(values[0]);
-	}
-
-	@Override
-	public void onPostExecute(String result)
+	private void onPostExecute(String result)
 	{
 		activity.setProgressBarVisibility(false);
 
@@ -175,5 +186,8 @@ public class ExportTask extends AsyncTask<XYMultipleSeriesDataset, Integer, Stri
 					Intent.createChooser(sendIntent,
 										 activity.getResources().getText(R.string.send_to)));
 		}
+
+		// Shutdown executor after task completion
+		executorService.shutdown();
 	}
 }
