@@ -1,9 +1,9 @@
 package com.obddroid.vehicle;
 
 import android.util.Log;
-import com.obddroid.api.nhtsa.VINDecoderService;
-import com.obddroid.api.nhtsa.VehicleData;
-import com.obddroid.api.offline.OfflineVINDecoder;
+import io.github.vindecoder.nhtsa.VINDecoderService;
+import io.github.vindecoder.nhtsa.VehicleData;
+import io.github.vindecoder.offline.OfflineVINDecoder;
 import com.obddroid.core.obd.ElmProt;
 import java.util.ArrayList;
 import java.util.List;
@@ -311,6 +311,22 @@ public class VehicleManager {
         // Notify all listeners
         for (VehicleChangeListener listener : listeners) {
             listener.onVehicleDisconnected();
+        }
+    }
+
+    /**
+     * Handle VIN retrieval timeout
+     */
+    public void handleVINTimeout() {
+        Log.d(TAG, "VIN retrieval timed out");
+        vinRetrievalAttempted = true;
+        // DON'T mark as permanently failed - allow manual retry via vehicle info page
+        // vinRetrievalFailed = true;
+        isDecoding = false;
+
+        // Notify listeners that decoding failed
+        for (VehicleChangeListener listener : listeners) {
+            listener.onDecodingError("VIN retrieval timed out - you can manually view vehicle info");
         }
     }
 

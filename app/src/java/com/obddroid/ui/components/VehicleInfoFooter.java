@@ -15,7 +15,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.obddroid.api.nhtsa.VehicleData;
+import io.github.vindecoder.nhtsa.VehicleData;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.utils.CarLogoHelper;
 import com.obddroid.vehicle.VehicleManager;
@@ -283,6 +283,35 @@ public class VehicleInfoFooter extends LinearLayout
                     currentVehicleData = null;
                     // Update display without showing repeated notifications
                     updateConnectionDisplay();
+                });
+            }
+
+            @Override
+            public void onDecodingStarted() {
+                Log.d(TAG, "VIN decoding started");
+                post(() -> {
+                    connectionStatus.setText("Decoding vehicle information...");
+                    connectionStatus.setTextColor(Color.parseColor("#FFA726")); // Orange for loading
+                    if (statusDot != null) {
+                        statusDot.getBackground().setTint(Color.parseColor("#FFA726")); // Orange while loading
+                    }
+                });
+            }
+
+            @Override
+            public void onDecodingError(String error) {
+                Log.e(TAG, "VIN decoding error: " + error);
+                post(() -> {
+                    isConnected = false;
+                    currentVehicleData = null;
+                    // Show error message briefly, then revert to connection display
+                    connectionStatus.setText(error);
+                    connectionStatus.setTextColor(Color.parseColor("#FF5722")); // Red for error
+                    if (statusDot != null) {
+                        statusDot.getBackground().setTint(Color.parseColor("#FF5722")); // Red for error
+                    }
+                    // After 3 seconds, update to normal connection display
+                    postDelayed(() -> updateConnectionDisplay(), 3000);
                 });
             }
         };
@@ -578,13 +607,15 @@ public class VehicleInfoFooter extends LinearLayout
 
             // Update status with engine info or VIN
             String engineDesc = vehicleData.getEngineDescription();
+            String vinSuffix = (vin != null && vin.length() >= 6) ? (" • VIN: " + vin.substring(vin.length() - 6)) : "";
+
             if (engineDesc != null && !engineDesc.isEmpty())
             {
-                connectionStatus.setText(engineDesc + " • VIN: " + vin.substring(vin.length() - 6));
+                connectionStatus.setText(engineDesc + vinSuffix);
             }
             else
             {
-                connectionStatus.setText("Connected • VIN: " + vin.substring(vin.length() - 6));
+                connectionStatus.setText("Connected" + vinSuffix);
             }
             connectionStatus.setTextColor(Color.parseColor("#4CAF50")); // Green when connected
 

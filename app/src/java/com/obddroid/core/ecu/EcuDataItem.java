@@ -251,10 +251,20 @@ public class EcuDataItem
 			}
 			else
 			{
+				// String conversion (for VIN, ECU name, etc.)
+				if (label != null && label.toLowerCase().contains("vehicle identification")) {
+					android.util.Log.i("EcuDataItem", "VIN extraction: ofs=" + ofs + " bytes=" + bytes + " buffer.length=" + buffer.length);
+					android.util.Log.i("EcuDataItem", "VIN buffer content: " + ProtUtils.hexDumpBuffer(buffer));
+				}
+
 				// get number of padding \0 characters
 				int padChars = 0; while(buffer[ofs + padChars] == 0) padChars++;
 				// copy string content after padding characters ...
 				result = String.copyValueOf(buffer, ofs + padChars, bytes);
+
+				if (label != null && label.toLowerCase().contains("vehicle identification")) {
+					android.util.Log.i("EcuDataItem", "VIN extracted: " + result);
+				}
 			}
             // decrement error counter
             currErrorCount = Math.max(0, currErrorCount -1);

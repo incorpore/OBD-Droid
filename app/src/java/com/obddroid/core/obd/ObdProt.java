@@ -928,8 +928,22 @@ public class ObdProt extends ProtoHeader
                     case OBD_SVC_CTRL_MODE: // Test control mode
                     case OBD_SVC_VEH_INFO:  // get vehicle information (mode 9)
                         Log.i(TAG, "Mode 09 response received, service: " + msgService);
+                        Log.i(TAG, "Mode 09 RAW buffer: " + new String(buffer));
+                        Log.i(TAG, "Mode 09 buffer length: " + buffer.length);
                         msgPid = (Integer) getParamValue(ID_OBD_PID, buffer);
                         Log.i(TAG, "Mode 09 PID: 0x" + Integer.toHexString(msgPid));
+                        char[] payload = getPayLoad(buffer);
+                        Log.i(TAG, "Mode 09 payload: " + new String(payload) + " (len: " + payload.length + ")");
+
+                        // Debug: Show hexToBytes conversion for PID 0x02
+                        if (msgPid == 0x02) {
+                            char[] converted = hexToBytes(String.valueOf(payload));
+                            Log.i(TAG, "PID 0x02 after hexToBytes: " + new String(converted) + " (len: " + converted.length + ")");
+                            Log.i(TAG, "PID 0x02 byte values: ");
+                            for (int i = 0; i < Math.min(converted.length, 18); i++) {
+                                Log.i(TAG, "  [" + i + "] = 0x" + Integer.toHexString((int)converted[i]) + " (" + (converted[i] >= 32 && converted[i] < 127 ? (char)converted[i] : "?") + ")");
+                            }
+                        }
                         switch (msgPid)
                         {
                             case 0x00:
@@ -954,6 +968,24 @@ public class ObdProt extends ProtoHeader
                                                                 msgPid,
                                                                 hexToBytes(String.valueOf(
                                                                         getPayLoad(buffer))));
+
+                                // CRITICAL: Manually notify VidPvs that PVs were modified
+                                // The updateDataItems() call above modifies PV objects in-place,
+                                // but VidPvs doesn't detect these changes automatically.
+                                // We need to re-put the modified PVs to trigger PV_MODIFIED events.
+                                Vector<EcuDataItem> updatedItems = dataItems.getPidDataItems(msgService, msgPid);
+                                if (updatedItems != null) {
+                                    Log.i(TAG, "Triggering PV_MODIFIED for " + updatedItems.size() + " Mode 9 PID 0x" + Integer.toHexString(msgPid) + " items");
+                                    for (EcuDataItem item : updatedItems) {
+                                        if (item != null && item.pv != null) {
+                                            String key = item.toString();
+                                            // Re-put the PV to trigger PV_MODIFIED event
+                                            VidPvs.put(key, item.pv, PvChangeEvent.PV_MODIFIED);
+                                            Log.i(TAG, "  Notified VidPvs: " + key + " = " + item.pv.get(EcuDataPv.FID_VALUE));
+                                        }
+                                    }
+                                }
+
                                 /* Update expected request timestamp for PID */
                                 for( ObdPid pid : pidSupported)
                                 {
