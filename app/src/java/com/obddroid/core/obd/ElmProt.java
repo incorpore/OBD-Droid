@@ -1187,26 +1187,40 @@ public class ElmProt
 							pid = getNextSupportedPid();
 							if (pid == 0)
 							{
-								// simulate "ALL pids supported"
-								handleTelegram("490054000000".toCharArray());
+								// Real Mercedes supported PIDs: 0x02,0x04,0x06,0x08,0x0A,0x14
+								handleTelegram("490055401000".toCharArray());
 							}
 							
-							// send VIN "4JGDA5HB7JB158144"
+							// VIN from real Mercedes-Benz GLE-Class
 							handleTelegram("014".toCharArray());
 							handleTelegram("1:490201344A4744".toCharArray()); // "4JGD"
 							handleTelegram("2:41354842374A42".toCharArray()); // "A5HB7JB"
 							handleTelegram("3:31353831343434".toCharArray()); // "158144"
 							
-							// send 2 CAL-IDs "GSPA..." without length id
+							// Real Mercedes Mode 9 data - PID-specific responses
+							// ECU Name: "ECM -EngineControl"
+						if (pid == 0x0A) {
+							handleTelegram("490A0145434D002D456E67696E65436F6E74726F6C0000".toCharArray());
+						}
+						// Calibration ID: "2769011200190170"
+						else if (pid == 0x04) {
+							handleTelegram("49040132373639303131323030313930313730".toCharArray());
+						}
+						// Performance Tracking data
+						else if (pid == 0x08) {
+							handleTelegram("49081410622E4C176910621704106215D8106213CD106220AE10620000000001B303070DFC106209CD1062".toCharArray());
+						}
+						// Auxiliary I/O Status
+						else if (pid == 0x14) {
+							handleTelegram("4914010018".toCharArray());
+						}
+						// Default CAL-ID for other requests
+						else {
 							handleTelegram("0:490402475350".toCharArray());
-							handleTelegram("1:412D3132333435".toCharArray());
-							handleTelegram("2:363738393030".toCharArray());
-							handleTelegram("3:30313233".toCharArray());
-							handleTelegram("4:343536373839".toCharArray());
-							handleTelegram("5:414243444546".toCharArray());
-							
-							// CAL-ID 01234567
-							handleTelegram("490601234567".toCharArray());
+						}
+																																										
+							// CVN (Calibration Verification Number) from Mercedes logs
+							handleTelegram("490601EB854939".toCharArray());
 							break;
 						
 						case OBD_SVC_CTRL_MODE:

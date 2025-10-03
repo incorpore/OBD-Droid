@@ -127,7 +127,8 @@ public class FileHelper
 	/**
 	 * Save all data
 	 */
-	@SuppressWarnings("ResultOfMethodCallIgnored")
+	// Suppress deprecation - Using deprecated ObdProt fields for backward-compatible serialization
+	@SuppressWarnings({"ResultOfMethodCallIgnored", "deprecation"})
 	private synchronized void saveData(String mPath, String mFileName)
 	{
 		File outFile;
@@ -205,8 +206,9 @@ public class FileHelper
 	 *
 	 * @param uri URI of file to be loaded
 	 */
+	// Suppress deprecation - Using deprecated ObdProt fields for backward-compatible deserialization
 	@SuppressLint("DefaultLocale")
-	@SuppressWarnings("UnusedReturnValue")
+	@SuppressWarnings({"UnusedReturnValue", "deprecation"})
 	private synchronized int loadData(final Uri uri)
 	{
 		int numBytesLoaded = 0;
