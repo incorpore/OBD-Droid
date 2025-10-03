@@ -1,6 +1,9 @@
 package com.obddroid.ui.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
@@ -67,10 +70,14 @@ public class CustomPidActivity
     {
         super.onCreate(savedInstanceState);
 
-        // Apply full screen based on preference
+        // Apply full screen based on preference using modern WindowInsetsController
         if(PreferenceManager.getDefaultSharedPreferences(this).getBoolean(MainActivity.PREF_FULLSCREEN, false))
         {
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (windowInsetsController != null) {
+                windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+                windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
         }
 
         setContentView(R.layout.pid_customization);

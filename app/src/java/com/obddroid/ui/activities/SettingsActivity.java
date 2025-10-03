@@ -23,6 +23,9 @@ import android.widget.Toast;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.obddroid.core.ecu.EcuDataItem;
 import com.obddroid.core.obd.ElmProt;
@@ -99,15 +102,14 @@ public class SettingsActivity
 		// Apply full screen based on preference
 		if(prefs.getBoolean(MainActivity.PREF_FULLSCREEN, false))
 		{
-			// Ultra-dark mode
-			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			// Ultra-dark mode using modern WindowInsetsController
+			WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+			if (windowInsetsController != null) {
+				windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+				windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+			}
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 				getWindow().setNavigationBarColor(Color.BLACK);
-				getWindow().getDecorView().setSystemUiVisibility(
-					View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-					View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
-					View.SYSTEM_UI_FLAG_FULLSCREEN
-				);
 			}
 			// Make the toolbar black
 			if (toolbar != null) {
@@ -433,15 +435,14 @@ public class SettingsActivity
 				Toolbar toolbar = getActivity().findViewById(R.id.toolbar);
 				if(sharedPreferences.getBoolean(MainActivity.PREF_FULLSCREEN, false))
 				{
-					// Ultra-dark mode
-					getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+					// Ultra-dark mode using modern WindowInsetsController
+					WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(getActivity().getWindow(), getActivity().getWindow().getDecorView());
+					if (windowInsetsController != null) {
+						windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+						windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+					}
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 						getActivity().getWindow().setNavigationBarColor(Color.BLACK);
-						getActivity().getWindow().getDecorView().setSystemUiVisibility(
-							View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-							View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
-							View.SYSTEM_UI_FLAG_FULLSCREEN
-						);
 					}
 					// Make the toolbar black
 					if (toolbar != null) {
@@ -450,10 +451,13 @@ public class SettingsActivity
 				}
 				else
 				{
-					getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+					// Restore normal mode
+					WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(getActivity().getWindow(), getActivity().getWindow().getDecorView());
+					if (windowInsetsController != null) {
+						windowInsetsController.show(WindowInsetsCompat.Type.systemBars());
+					}
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 						getActivity().getWindow().setNavigationBarColor(Color.parseColor("#212121"));
-						getActivity().getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
 					}
 					// Restore toolbar color
 					if (toolbar != null) {

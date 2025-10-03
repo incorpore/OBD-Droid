@@ -7,6 +7,9 @@ import com.obddroid.R;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.usb.UsbDevice;
@@ -80,10 +83,14 @@ public final class UsbDeviceListActivity extends AppCompatActivity
 	{
 		super.onCreate(savedInstanceState);
 
-		// Apply full screen based on preference
+		// Apply full screen based on preference using modern WindowInsetsController
 		if(PreferenceManager.getDefaultSharedPreferences(this).getBoolean(MainActivity.PREF_FULLSCREEN, false))
 		{
-			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+			if (windowInsetsController != null) {
+				windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+				windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+			}
 		}
 
 		setContentView(R.layout.usb_list);

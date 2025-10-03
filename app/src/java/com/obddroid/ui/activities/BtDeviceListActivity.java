@@ -36,6 +36,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.obddroid.ui.adapters.ModernDeviceAdapter;
 import com.obddroid.R;
@@ -89,15 +92,15 @@ public class BtDeviceListActivity extends AppCompatActivity
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		boolean fullScreenMode = prefs.getBoolean(MainActivity.PREF_FULLSCREEN, false);
 
-		// Apply fullscreen mode if enabled
+		// Apply fullscreen mode if enabled using modern WindowInsetsController
 		if (fullScreenMode) {
-			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+			if (windowInsetsController != null) {
+				windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+				windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+			}
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 				getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-				getWindow().getDecorView().setSystemUiVisibility(
-					View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
-					View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-				);
 			}
 		}
 
