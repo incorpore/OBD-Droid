@@ -474,7 +474,9 @@ public class MainActivity extends AppCompatActivity
                     // handle ECU detection event
                     case MESSAGE_OBD_ECUS:
                         evt = (PropertyChangeEvent) msg.obj;
-                        selectEcu((Set<Integer>) evt.getNewValue());
+                        @SuppressWarnings("unchecked") // PropertyChangeEvent.getNewValue() returns Set<Integer> for ECU addresses
+                        Set<Integer> ecuAddresses = (Set<Integer>) evt.getNewValue();
+                        selectEcu(ecuAddresses);
                         break;
 
                     // handle negative result code from OBD protocol

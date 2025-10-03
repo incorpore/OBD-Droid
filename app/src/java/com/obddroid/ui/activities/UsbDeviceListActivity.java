@@ -28,7 +28,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.TwoLineListItem;
 
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
@@ -104,16 +103,14 @@ public final class UsbDeviceListActivity extends AppCompatActivity
 			@Override
 			public View getView(int position, View convertView, ViewGroup parent)
 			{
-				final TwoLineListItem row;
-				if (convertView == null)
+				View row = convertView;
+				if (row == null)
 				{
 					final LayoutInflater inflater =
 						(LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-					row = (TwoLineListItem) (inflater != null ? inflater.inflate(
-						android.R.layout.simple_list_item_2, null) : null);
-				} else
-				{
-					row = (TwoLineListItem) convertView;
+					if (inflater != null) {
+						row = inflater.inflate(android.R.layout.simple_list_item_2, parent, false);
+					}
 				}
 
 				if (row != null)
@@ -121,17 +118,19 @@ public final class UsbDeviceListActivity extends AppCompatActivity
 					final UsbSerialPort port = mEntries.get(position);
 					final UsbSerialDriver driver = port.getDriver();
 					final UsbDevice device = driver.getDevice();
-	
+
 					final String title = String.format("USB: 0x%04x/0x%04x",
 					                                   device.getVendorId(),
 					                                   device.getProductId());
 					final String subtitle = driver.getClass().getSimpleName();
 
-					row.getText1().setText(title);
-					row.getText2().setText(subtitle);
+					TextView text1 = row.findViewById(android.R.id.text1);
+					TextView text2 = row.findViewById(android.R.id.text2);
+
+					if (text1 != null) text1.setText(title);
+					if (text2 != null) text2.setText(subtitle);
 				}
-				
-				//noinspection ConstantConditions
+
 				return row;
 			}
 

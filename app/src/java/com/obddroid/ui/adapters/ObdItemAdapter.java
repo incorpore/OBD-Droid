@@ -79,9 +79,9 @@ public class ObdItemAdapter extends ArrayAdapter<Object>
         addAll(pidPvs);
     }
 
-    @SuppressWarnings("rawtypes")
-    static final Comparator pidSorter = new Comparator()
+    static final Comparator<Object> pidSorter = new Comparator<Object>()
     {
+        @Override
         public int compare(Object lhs, Object rhs)
         {
             // criteria 1: ID string
@@ -104,6 +104,7 @@ public class ObdItemAdapter extends ArrayAdapter<Object>
      * @param pvs list of PVs to be handled
      * @return Set of filtered data items
      */
+    @SuppressWarnings("unchecked") // ProcessVar extends raw HashMap - keys are always Strings in PvList
     Collection getPreferredItems(PvList pvs)
     {
         // filter PVs with preference selections

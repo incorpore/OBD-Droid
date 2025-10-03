@@ -28,6 +28,7 @@ public class FaultCodeAdapter extends ObdItemAdapter
 	}
 
 	@Override
+	@SuppressWarnings("unchecked") // ProcessVar extends raw HashMap - values are always Objects in PvList
 	public Collection<Object> getPreferredItems(PvList pvs)
 	{
 		return pvs.values();
