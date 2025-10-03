@@ -10,6 +10,7 @@ import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.api.nhtsa.VINDecoderService;
 import com.obddroid.api.nhtsa.VehicleData;
 import com.obddroid.core.pvs.PvList;
+import com.obddroid.vehicle.VehicleManager;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -82,7 +83,15 @@ public class VehicleInfoAdapter extends ObdItemAdapter
 			// Only process if valid VIN length
 			if (vin.length() == 17)
 			{
-				// Try to decode the VIN
+				// Notify VehicleManager of the VIN - it will handle decoding and notifying all listeners
+				VehicleManager vm = VehicleManager.getInstance();
+				String currentVin = vm.getCurrentVIN();
+				if (currentVin == null || !currentVin.equals(vin)) {
+					Log.d(TAG, "Notifying VehicleManager of VIN: " + vin);
+					vm.setVIN(vin);
+				}
+
+				// Try to decode the VIN locally for display in this adapter
 				if (!decodedVins.containsKey(vin))
 				{
 					vinDecoder.decodeVIN(vin, new VINDecoderService.VINDecoderCallback()
