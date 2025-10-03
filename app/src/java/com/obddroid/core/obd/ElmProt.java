@@ -1157,13 +1157,28 @@ public class ElmProt
 							pid = getNextSupportedPid();
 							if (pid != 0)
 							{
-								value++;
-								value &= 0xFF;
-								// format new data message and handle it as new reception
-								handleTelegram(String.format(
-									service == OBD_SVC_DATA ? "4%X%02X%02X%02X%02X%02X"
-									                        : "4%X%02X00%02X%02X%02X%02X",
-									service, pid, value, value, value, value).toCharArray());
+								// Special handling for PID 0x01 (MIL status + DTC count)
+								if (service == OBD_SVC_DATA && pid == 0x01) {
+									// PID 01: Monitor status since DTCs cleared
+									// Byte A: Bit 7 = MIL status, Bits 0-6 = DTC count
+									// Bytes B-D: Readiness status (from real Mercedes data)
+									if (demoCodesCleared) {
+										// MIL OFF + 0 DTCs
+										handleTelegram("410100078500".toCharArray());
+									} else {
+										// MIL ON + 5 DTCs (matching the 5 codes in Mode 3)
+										handleTelegram("410185078500".toCharArray());
+									}
+								} else {
+									// Generic handling for other PIDs
+									value++;
+									value &= 0xFF;
+									// format new data message and handle it as new reception
+									handleTelegram(String.format(
+										service == OBD_SVC_DATA ? "4%X%02X%02X%02X%02X%02X"
+										                        : "4%X%02X00%02X%02X%02X%02X",
+										service, pid, value, value, value, value).toCharArray());
+								}
 							}
 							else
 							{

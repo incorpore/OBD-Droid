@@ -57,13 +57,13 @@
                 android:layout_marginEnd="8dp"/>
 
             <ImageButton
-                android:id="@+id/btn_bluetooth_settings"
+                android:id="@+id/btn_adapter_settings"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/ic_bluetooth_settings_24"
+                android:src="@drawable/ic_settings_24"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                android:contentDescription="Open Bluetooth Settings"
+                android:contentDescription="Adapter Settings"
                 android:tint="@android:color/white"
                 android:layout_gravity="center_vertical"/>
         </LinearLayout>

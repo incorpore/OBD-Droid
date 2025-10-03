@@ -7,8 +7,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.api.nhtsa.VINDecoderService;
-import com.obddroid.api.nhtsa.VehicleData;
+import io.github.vindecoder.nhtsa.VINDecoderService;
+import io.github.vindecoder.nhtsa.VehicleData;
 import com.obddroid.core.pvs.PvList;
 import com.obddroid.vehicle.VehicleManager;
 

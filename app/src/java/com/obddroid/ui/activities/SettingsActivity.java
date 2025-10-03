@@ -183,18 +183,17 @@ public class SettingsActivity
 		{
 			super.onCreate(savedInstanceState);
 
-			// set up communication media selection
-			setupCommMediaSelection();
-			// set up protocol selection
-			setupProtoSelection();
+			// Communication media, protocol, baudrate, IP/port moved to adapter selection screen
+			// setupCommMediaSelection(); // REMOVED - now in UnifiedAdapterSelectionActivity
+			// setupProtoSelection(); // REMOVED - now in UnifiedAdapterSelectionActivity
 			// set up ELM command selection
 			setupElmCmdSelection();
             // set up ELM adaptive timing mode selection
 			setupElmTimingSelection();
 			// set up selectable PID list
 			setupPidSelection();
-			// update network selection fields
-			updateNetworkSelections();
+			// update network selection fields - REMOVED
+			// updateNetworkSelections(); // REMOVED - now in UnifiedAdapterSelectionActivity
 			// add handler for selection update
 			prefs.registerOnSharedPreferenceChangeListener(this);
 		}
