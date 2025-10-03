@@ -3,6 +3,7 @@ package com.obddroid.vehicle;
 import android.util.Log;
 import com.obddroid.api.nhtsa.VINDecoderService;
 import com.obddroid.api.nhtsa.VehicleData;
+import com.obddroid.api.offline.OfflineVINDecoder;
 import com.obddroid.core.obd.ElmProt;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,8 +36,9 @@ public class VehicleManager {
     // Listeners for vehicle changes
     private final List<VehicleChangeListener> listeners = new ArrayList<>();
 
-    // VIN decoder service
+    // VIN decoder services
     private final VINDecoderService vinDecoder;
+    private final OfflineVINDecoder offlineDecoder;
 
     /**
      * Listener interface for vehicle changes
@@ -66,6 +68,7 @@ public class VehicleManager {
 
     private VehicleManager() {
         vinDecoder = VINDecoderService.getInstance();
+        offlineDecoder = new OfflineVINDecoder();
     }
 
     /**
@@ -141,14 +144,6 @@ public class VehicleManager {
             listener.onDecodingStarted();
         }
 
-        // Check if this is the demo VIN
-        if (vin.equals("4JGDA5HB7JB158144")) {
-            // Create comprehensive demo data for Mercedes GLE
-            VehicleData demoData = createDemoVehicleData(vin);
-            handleDecodedVehicle(demoData);
-            return;
-        }
-
         // Check if already cached in decoder service
         VehicleData cached = vinDecoder.getCached(vin);
         if (cached != null) {
@@ -156,15 +151,35 @@ public class VehicleManager {
             return;
         }
 
-        // Start async decoding
+        // For demo VIN or no internet, use offline decoder directly
+        if (vin.equals("4JGDA5HB7JB158144")) {
+            Log.d(TAG, "Demo VIN detected - using offline decoder for: " + vin);
+            try {
+                VehicleData offlineData = offlineDecoder.decode(vin);
+                offlineData.setMessage("Decoded using offline VIN database");
+                Log.d(TAG, "Offline decode successful: " + offlineData.getDisplayName());
+                handleDecodedVehicle(offlineData);
+            } catch (Exception e) {
+                Log.e(TAG, "Offline decode failed: " + e.getMessage());
+                // Fall back to hardcoded demo data if offline fails
+                VehicleData demoData = createDemoVehicleData(vin);
+                handleDecodedVehicle(demoData);
+            }
+            return;
+        }
+
+        // Start async decoding for real VINs
+        Log.d(TAG, "Starting VIN decode - trying online API first for: " + vin);
         vinDecoder.decodeVIN(vin, new VINDecoderService.VINDecoderCallback() {
             @Override
             public void onSuccess(VehicleData vehicleData) {
+                Log.d(TAG, "Online API decode successful");
                 handleDecodedVehicle(vehicleData);
             }
 
             @Override
             public void onError(String error) {
+                Log.d(TAG, "Online API decode failed: " + error);
                 handleDecodingError(error);
             }
         });
@@ -245,18 +260,38 @@ public class VehicleManager {
     }
 
     /**
-     * Handle decoding error
+     * Handle decoding error - try offline decoder as fallback
      */
     private void handleDecodingError(String error) {
-        Log.e(TAG, "Failed to decode VIN: " + error);
-        isDecoding = false;
+        Log.e(TAG, "Failed to decode VIN online: " + error);
+        Log.d(TAG, "Attempting offline VIN decode for: " + currentVIN);
 
-        // Keep the VIN but clear vehicle data
+        // Try offline decoding as fallback
+        try {
+            VehicleData offlineData = offlineDecoder.decode(currentVIN);
+
+            if (offlineData != null && offlineData.getMake() != null) {
+                // Add note that this was decoded offline
+                offlineData.setMessage("Decoded offline (no internet)");
+                Log.d(TAG, "Successfully decoded VIN offline: " + offlineData.getDisplayName());
+
+                // Handle as successful decode
+                handleDecodedVehicle(offlineData);
+                return;
+            } else {
+                Log.e(TAG, "Offline decode failed or returned incomplete data");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Exception during offline decode: " + e.getMessage());
+        }
+
+        // If offline also failed, report the error
+        isDecoding = false;
         currentVehicleData = null;
 
         // Notify listeners of error
         for (VehicleChangeListener listener : listeners) {
-            listener.onDecodingError(error);
+            listener.onDecodingError("Unable to decode VIN: " + error);
         }
     }
 
@@ -419,5 +454,54 @@ public class VehicleManager {
             return manufacturer.substring(0, 1).toUpperCase();
         }
         return "?";
+    }
+
+    /**
+     * Validate a VIN format (without decoding)
+     */
+    public boolean validateVIN(String vin) {
+        return offlineDecoder.validate(vin);
+    }
+
+    /**
+     * Force offline decoding (useful when no internet)
+     */
+    public void decodeVINOffline(String vin) {
+        if (vin == null || vin.trim().isEmpty()) {
+            return;
+        }
+
+        vin = vin.trim().toUpperCase();
+
+        // Check if VIN actually changed
+        if (vin.equals(currentVIN) && currentVehicleData != null) {
+            Log.d(TAG, "VIN unchanged and already decoded: " + vin);
+            return;
+        }
+
+        Log.d(TAG, "Forcing offline VIN decode: " + vin);
+        currentVIN = vin;
+        isDecoding = true;
+
+        // Notify listeners of VIN change
+        for (VehicleChangeListener listener : listeners) {
+            listener.onVINChanged(vin);
+            listener.onDecodingStarted();
+        }
+
+        try {
+            VehicleData offlineData = offlineDecoder.decode(vin);
+            offlineData.setMessage("Decoded offline");
+            handleDecodedVehicle(offlineData);
+        } catch (Exception e) {
+            handleDecodingError("Offline decode failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get quick manufacturer info without full decode
+     */
+    public String getQuickManufacturer(String vin) {
+        return offlineDecoder.getManufacturer(vin);
     }
 }

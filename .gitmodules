@@ -1,3 +1,3 @@
-[submodule "modules/dtc-database"]
-	path = modules/dtc-database
-	url = https://github.com/Wal33D/dtc-database.git
+[submodule "modules/nhtsa-vin-decoder"]
+	path = modules/nhtsa-vin-decoder
+	url = https://github.com/Wal33D/nhtsa-vin-decoder.git
