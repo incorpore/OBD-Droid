@@ -28,8 +28,10 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Spinner;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -46,8 +48,10 @@ import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
 import com.obddroid.R;
+import com.obddroid.core.obd.ElmProt;
 import com.obddroid.services.CommService;
 import com.obddroid.ui.adapters.ModernDeviceAdapter;
+import com.obddroid.ui.adapters.ModernUsbDeviceAdapter;
 import com.obddroid.utils.PermissionManager;
 
 import java.util.ArrayList;
@@ -85,10 +89,10 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
     private BluetoothAdapter mBtAdapter;
     private UsbManager mUsbManager;
     private ModernDeviceAdapter btAdapter;
-    private ArrayAdapter<UsbSerialPort> usbAdapter;
+    private ModernUsbDeviceAdapter usbAdapter;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    private final List<UsbSerialPort> usbEntries = new ArrayList<>();
+    private final List<ModernUsbDeviceAdapter.UsbDeviceInfo> usbEntries = new ArrayList<>();
     private final Map<String, String> deviceAddressMap = new HashMap<>();
 
     private View bluetoothContent;
@@ -115,6 +119,7 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
     private EditText networkIpInput;
     private EditText networkPortInput;
     private Button connectNetworkButton;
+    private ImageButton adapterSettingsButton;
 
     @SuppressLint("HandlerLeak")
     private final Handler mHandler = new Handler(Looper.getMainLooper()) {
@@ -212,39 +217,7 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
         pairedListView.setOnItemLongClickListener(mBtDeviceLongClickListener);
 
         ListView usbListView = findViewById(R.id.usb_devices);
-        usbAdapter = new ArrayAdapter<UsbSerialPort>(this,
-                android.R.layout.simple_list_item_2,
-                usbEntries) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                View row = convertView;
-                if (row == null) {
-                    LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                    if (inflater != null) {
-                        row = inflater.inflate(android.R.layout.simple_list_item_2, parent, false);
-                    }
-                }
-
-                if (row != null) {
-                    UsbSerialPort port = usbEntries.get(position);
-                    UsbSerialDriver driver = port.getDriver();
-                    UsbDevice device = driver.getDevice();
-
-                    String title = String.format("USB: 0x%04x/0x%04x",
-                            device.getVendorId(),
-                            device.getProductId());
-                    String subtitle = driver.getClass().getSimpleName();
-
-                    TextView text1 = row.findViewById(android.R.id.text1);
-                    TextView text2 = row.findViewById(android.R.id.text2);
-
-                    if (text1 != null) text1.setText(title);
-                    if (text2 != null) text2.setText(subtitle);
-                }
-
-                return row;
-            }
-        };
+        usbAdapter = new ModernUsbDeviceAdapter(this, usbEntries);
         usbListView.setAdapter(usbAdapter);
         usbListView.setOnItemClickListener(mUsbDeviceClickListener);
 
@@ -296,7 +269,7 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
 
     private void setupHeaderButtons() {
         ImageButton demoModeButton = findViewById(R.id.btn_demo_mode);
-        ImageButton bluetoothSettingsButton = findViewById(R.id.btn_bluetooth_settings);
+        adapterSettingsButton = findViewById(R.id.btn_adapter_settings);
         Button openBtSettingsButton = findViewById(R.id.btn_open_bt_settings);
 
         if (demoModeButton != null) {
@@ -309,12 +282,7 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
             });
         }
 
-        if (bluetoothSettingsButton != null) {
-            bluetoothSettingsButton.setOnClickListener(v -> {
-                Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
-                startActivity(intent);
-            });
-        }
+        // Settings button click handler is set dynamically in updateTabStyles()
 
         if (openBtSettingsButton != null) {
             openBtSettingsButton.setOnClickListener(v -> {
@@ -377,6 +345,268 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
         tabBluetoothIndicator.setBackgroundColor(currentTab == AdapterTab.BLUETOOTH ? activeColor : Color.TRANSPARENT);
         tabUsbIndicator.setBackgroundColor(currentTab == AdapterTab.USB ? activeColor : Color.TRANSPARENT);
         tabWifiIndicator.setBackgroundColor(currentTab == AdapterTab.WIFI ? activeColor : Color.TRANSPARENT);
+
+        // Update settings button based on current tab
+        if (adapterSettingsButton != null) {
+            adapterSettingsButton.setOnClickListener(v -> {
+                switch (currentTab) {
+                    case BLUETOOTH:
+                        showBluetoothSettingsDialog();
+                        break;
+                    case USB:
+                        showUsbSettingsDialog();
+                        break;
+                    case WIFI:
+                        showWifiSettingsDialog();
+                        break;
+                }
+            });
+        }
+    }
+
+    private void showBluetoothSettingsDialog() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean secureConnection = prefs.getBoolean("bt_secure_connection", false);
+        int protocolIndex = Integer.parseInt(prefs.getString("protocol", "0"));
+
+        View dialogView = getLayoutInflater().inflate(android.R.layout.select_dialog_multichoice, null);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Bluetooth Settings");
+
+        // Create layout for settings
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 40, 50, 10);
+
+        // Permission status and request button
+        LinearLayout permissionSection = new LinearLayout(this);
+        permissionSection.setOrientation(LinearLayout.HORIZONTAL);
+        permissionSection.setPadding(0, 0, 0, 20);
+
+        TextView permissionStatus = new TextView(this);
+        boolean hasPermission = PermissionManager.hasBluetoothPermissions(this);
+        permissionStatus.setText(hasPermission ? "✓ Bluetooth permission granted" : "⚠ Bluetooth permission needed");
+        permissionStatus.setTextSize(12);
+        permissionStatus.setTextColor(hasPermission ? Color.parseColor("#4CAF50") : Color.parseColor("#FF9800"));
+        permissionStatus.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        permissionSection.addView(permissionStatus);
+
+        if (!hasPermission) {
+            Button requestPermButton = new Button(this);
+            requestPermButton.setText("Grant");
+            requestPermButton.setTextSize(11);
+            requestPermButton.setPadding(20, 10, 20, 10);
+            requestPermButton.setOnClickListener(v -> {
+                PermissionManager.requestBluetoothPermissions(this);
+            });
+            permissionSection.addView(requestPermButton);
+        }
+        layout.addView(permissionSection);
+
+        // System Bluetooth settings button
+        Button systemBtButton = new Button(this);
+        systemBtButton.setText("Open System Bluetooth Settings");
+        systemBtButton.setTextSize(12);
+        systemBtButton.setPadding(20, 15, 20, 15);
+        systemBtButton.setOnClickListener(v -> {
+            Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
+            startActivity(intent);
+        });
+        layout.addView(systemBtButton);
+
+        // Divider
+        View divider = new View(this);
+        divider.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 2));
+        divider.setBackgroundColor(Color.parseColor("#E0E0E0"));
+        LinearLayout.LayoutParams dividerParams = (LinearLayout.LayoutParams) divider.getLayoutParams();
+        dividerParams.setMargins(0, 20, 0, 20);
+        divider.setLayoutParams(dividerParams);
+        layout.addView(divider);
+
+        // Secure connection checkbox
+        CheckBox secureCheckbox = new CheckBox(this);
+        secureCheckbox.setText("Secure Connection");
+        secureCheckbox.setChecked(secureConnection);
+        layout.addView(secureCheckbox);
+
+        // Protocol selection
+        TextView protocolLabel = new TextView(this);
+        protocolLabel.setText("OBD Protocol");
+        protocolLabel.setPadding(0, 30, 0, 10);
+        protocolLabel.setTextSize(14);
+        layout.addView(protocolLabel);
+
+        Spinner protocolSpinner = new Spinner(this);
+        ElmProt.PROT[] protocols = ElmProt.PROT.values();
+        String[] protocolNames = new String[protocols.length];
+        for (int i = 0; i < protocols.length; i++) {
+            protocolNames[i] = protocols[i].toString();
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, protocolNames);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        protocolSpinner.setAdapter(adapter);
+        protocolSpinner.setSelection(protocolIndex);
+        layout.addView(protocolSpinner);
+
+        builder.setView(layout);
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            prefs.edit()
+                .putBoolean("bt_secure_connection", secureCheckbox.isChecked())
+                .putString("protocol", String.valueOf(protocolSpinner.getSelectedItemPosition()))
+                .apply();
+            Toast.makeText(this, "Bluetooth settings saved", Toast.LENGTH_SHORT).show();
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    private void showUsbSettingsDialog() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String baudRate = prefs.getString("comm_baudrate", "38400");
+        int protocolIndex = Integer.parseInt(prefs.getString("protocol", "0"));
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("USB Settings");
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 40, 50, 10);
+
+        // USB permission info
+        TextView usbInfo = new TextView(this);
+        usbInfo.setText("ℹ USB permissions are requested when connecting to a device");
+        usbInfo.setTextSize(11);
+        usbInfo.setTextColor(Color.parseColor("#757575"));
+        usbInfo.setPadding(0, 0, 0, 20);
+        layout.addView(usbInfo);
+
+        // Baud rate selection
+        TextView baudLabel = new TextView(this);
+        baudLabel.setText("Baud Rate");
+        baudLabel.setPadding(0, 0, 0, 10);
+        baudLabel.setTextSize(14);
+        layout.addView(baudLabel);
+
+        Spinner baudSpinner = new Spinner(this);
+        String[] baudRates = {"2400", "9600", "19200", "38400", "57600", "115200", "230400", "460800", "500000", "576000", "921600", "1000000", "1152000", "1500000", "2000000", "2500000", "3000000", "3500000", "4000000"};
+        ArrayAdapter<String> baudAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, baudRates);
+        baudAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        baudSpinner.setAdapter(baudAdapter);
+        for (int i = 0; i < baudRates.length; i++) {
+            if (baudRates[i].equals(baudRate)) {
+                baudSpinner.setSelection(i);
+                break;
+            }
+        }
+        layout.addView(baudSpinner);
+
+        // Protocol selection
+        TextView protocolLabel = new TextView(this);
+        protocolLabel.setText("OBD Protocol");
+        protocolLabel.setPadding(0, 30, 0, 10);
+        protocolLabel.setTextSize(14);
+        layout.addView(protocolLabel);
+
+        Spinner protocolSpinner = new Spinner(this);
+        ElmProt.PROT[] protocols = ElmProt.PROT.values();
+        String[] protocolNames = new String[protocols.length];
+        for (int i = 0; i < protocols.length; i++) {
+            protocolNames[i] = protocols[i].toString();
+        }
+        ArrayAdapter<String> protocolAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, protocolNames);
+        protocolAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        protocolSpinner.setAdapter(protocolAdapter);
+        protocolSpinner.setSelection(protocolIndex);
+        layout.addView(protocolSpinner);
+
+        builder.setView(layout);
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            prefs.edit()
+                .putString("comm_baudrate", baudSpinner.getSelectedItem().toString())
+                .putString("protocol", String.valueOf(protocolSpinner.getSelectedItemPosition()))
+                .apply();
+            Toast.makeText(this, "USB settings saved", Toast.LENGTH_SHORT).show();
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    private void showWifiSettingsDialog() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        int protocolIndex = Integer.parseInt(prefs.getString("protocol", "0"));
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("WiFi/Network Settings");
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 40, 50, 10);
+
+        // Network permission status
+        TextView permissionStatus = new TextView(this);
+        permissionStatus.setText("✓ Network permission granted (manifest permission)");
+        permissionStatus.setTextSize(12);
+        permissionStatus.setTextColor(Color.parseColor("#4CAF50"));
+        permissionStatus.setPadding(0, 0, 0, 10);
+        layout.addView(permissionStatus);
+
+        // WiFi settings button
+        Button wifiSettingsButton = new Button(this);
+        wifiSettingsButton.setText("Open WiFi Settings");
+        wifiSettingsButton.setTextSize(12);
+        wifiSettingsButton.setPadding(20, 15, 20, 15);
+        wifiSettingsButton.setOnClickListener(v -> {
+            Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
+            startActivity(intent);
+        });
+        layout.addView(wifiSettingsButton);
+
+        // Divider
+        View divider = new View(this);
+        divider.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 2));
+        divider.setBackgroundColor(Color.parseColor("#E0E0E0"));
+        LinearLayout.LayoutParams dividerParams = (LinearLayout.LayoutParams) divider.getLayoutParams();
+        dividerParams.setMargins(0, 20, 0, 20);
+        divider.setLayoutParams(dividerParams);
+        layout.addView(divider);
+
+        // Note about IP/Port
+        TextView noteView = new TextView(this);
+        noteView.setText("IP Address and Port are configured in the Network tab above");
+        noteView.setTextSize(12);
+        noteView.setTextColor(Color.parseColor("#757575"));
+        noteView.setPadding(0, 0, 0, 10);
+        layout.addView(noteView);
+
+        // Protocol selection
+        TextView protocolLabel = new TextView(this);
+        protocolLabel.setText("OBD Protocol");
+        protocolLabel.setPadding(0, 10, 0, 10);
+        protocolLabel.setTextSize(14);
+        layout.addView(protocolLabel);
+
+        Spinner protocolSpinner = new Spinner(this);
+        ElmProt.PROT[] protocols = ElmProt.PROT.values();
+        String[] protocolNames = new String[protocols.length];
+        for (int i = 0; i < protocols.length; i++) {
+            protocolNames[i] = protocols[i].toString();
+        }
+        ArrayAdapter<String> protocolAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, protocolNames);
+        protocolAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        protocolSpinner.setAdapter(protocolAdapter);
+        protocolSpinner.setSelection(protocolIndex);
+        layout.addView(protocolSpinner);
+
+        builder.setView(layout);
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            prefs.edit()
+                .putString("protocol", String.valueOf(protocolSpinner.getSelectedItemPosition()))
+                .apply();
+            Toast.makeText(this, "WiFi settings saved", Toast.LENGTH_SHORT).show();
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
     }
 
     private void loadBluetoothDevices() {
@@ -441,20 +671,43 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
 
     private void refreshUsbDeviceList() {
         executorService.execute(() -> {
-            log.fine("Refreshing USB device list...");
-            List<UsbSerialDriver> drivers = UsbSerialProber.getDefaultProber().findAllDrivers(mUsbManager);
-            List<UsbSerialPort> result = new ArrayList<>();
+            log.info("Refreshing USB device list...");
+            List<ModernUsbDeviceAdapter.UsbDeviceInfo> result = new ArrayList<>();
 
-            for (UsbSerialDriver driver : drivers) {
-                List<UsbSerialPort> ports = driver.getPorts();
-                log.fine(String.format("+ %s: %s port%s", driver, ports.size(), ports.size() == 1 ? "" : "s"));
-                result.addAll(ports);
+            if (mUsbManager != null) {
+                HashMap<String, UsbDevice> deviceList = mUsbManager.getDeviceList();
+                log.info("UsbManager reports " + deviceList.size() + " USB devices");
+
+                List<UsbSerialDriver> drivers = UsbSerialProber.getDefaultProber().findAllDrivers(mUsbManager);
+                log.info("UsbSerialProber found " + drivers.size() + " compatible drivers");
+
+                Map<String, UsbSerialPort> compatibleDevices = new HashMap<>();
+                for (UsbSerialDriver driver : drivers) {
+                    List<UsbSerialPort> ports = driver.getPorts();
+                    for (UsbSerialPort port : ports) {
+                        compatibleDevices.put(port.getDriver().getDevice().getDeviceName(), port);
+                    }
+                }
+
+                for (UsbDevice device : deviceList.values()) {
+                    log.info(String.format("  USB Device: VID=0x%04x PID=0x%04x Name=%s",
+                            device.getVendorId(), device.getProductId(), device.getDeviceName()));
+
+                    UsbSerialPort port = compatibleDevices.get(device.getDeviceName());
+                    boolean isCompatible = port != null;
+                    result.add(new ModernUsbDeviceAdapter.UsbDeviceInfo(device, port, isCompatible));
+                }
             }
 
             mHandler.post(() -> {
                 usbEntries.clear();
                 usbEntries.addAll(result);
-                usbDeviceCount.setText(String.format("%d USB device(s) found", result.size()));
+                int compatibleCount = 0;
+                for (ModernUsbDeviceAdapter.UsbDeviceInfo info : result) {
+                    if (info.isCompatible) compatibleCount++;
+                }
+                usbDeviceCount.setText(String.format("%d USB device(s) found (%d compatible)",
+                        result.size(), compatibleCount));
                 usbAdapter.notifyDataSetChanged();
 
                 if (result.size() > 0) {
@@ -463,7 +716,7 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
                     showEmptyState(AdapterTab.USB);
                 }
 
-                log.fine("Done refreshing USB devices, " + usbEntries.size() + " entries found.");
+                log.info("Done refreshing USB devices, " + usbEntries.size() + " total, " + compatibleCount + " compatible");
             });
         });
     }
@@ -648,7 +901,16 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
                 return;
             }
 
-            selectedUsbPort = usbEntries.get(position);
+            ModernUsbDeviceAdapter.UsbDeviceInfo deviceInfo = usbEntries.get(position);
+
+            if (!deviceInfo.isCompatible || deviceInfo.port == null) {
+                Toast.makeText(UnifiedAdapterSelectionActivity.this,
+                        "This device is not a compatible USB serial adapter",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            selectedUsbPort = deviceInfo.port;
 
             Intent intent = new Intent();
             intent.putExtra(EXTRA_ADAPTER_TYPE, CommService.MEDIUM.USB.name());
