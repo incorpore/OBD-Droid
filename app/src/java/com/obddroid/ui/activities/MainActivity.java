@@ -33,6 +33,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -64,6 +65,7 @@ import com.obddroid.ui.adapters.FaultCodeAdapter;
 import com.obddroid.ui.adapters.ObdItemAdapter;
 import com.obddroid.ui.adapters.TestResultAdapter;
 import com.obddroid.ui.adapters.VehicleInfoAdapter;
+import com.obddroid.ui.adapters.ModernVehicleInfoAdapter;
 import com.obddroid.services.BluetoothCommService;
 import com.obddroid.services.CommService;
 import com.obddroid.services.NetworkCommService;
@@ -195,10 +197,10 @@ public class MainActivity extends AppCompatActivity
      * Data list adapters
      */
     private static ObdItemAdapter mPidAdapter;
-    private static VehicleInfoAdapter mVidAdapter;
+    private static ModernVehicleInfoAdapter mVidAdapter;
     private static TestResultAdapter mTidAdapter;
     private static FaultCodeAdapter mDfcAdapter;
-    private static ObdItemAdapter currDataAdapter;
+    private static BaseAdapter currDataAdapter;
     /**
      * initial state of bluetooth adapter
      */
@@ -366,7 +368,11 @@ public class MainActivity extends AppCompatActivity
                         switch (event.getType())
                         {
                             case PvChangeEvent.PV_ADDED:
-                                currDataAdapter.setPvList(currDataAdapter.pvs);
+                                if (currDataAdapter instanceof ObdItemAdapter) {
+                                    ((ObdItemAdapter) currDataAdapter).setPvList(((ObdItemAdapter) currDataAdapter).pvs);
+                                } else if (currDataAdapter instanceof ModernVehicleInfoAdapter) {
+                                    // ModernVehicleInfoAdapter handles PV changes automatically
+                                }
                                 try
                                 {
                                     // Debug: Log event source
@@ -408,7 +414,9 @@ public class MainActivity extends AppCompatActivity
                                 break;
 
                             case PvChangeEvent.PV_CLEARED:
-                                currDataAdapter.clear();
+                                if (currDataAdapter instanceof ObdItemAdapter) {
+                                    ((ObdItemAdapter) currDataAdapter).clear();
+                                }
                                 break;
                         }
                         break;
@@ -611,7 +619,7 @@ public class MainActivity extends AppCompatActivity
 
         // Set up all data adapters
         mPidAdapter = new ObdItemAdapter(this, R.layout.obd_item, ObdProt.PidPvs);
-        mVidAdapter = new VehicleInfoAdapter(this, R.layout.obd_item, ObdProt.VidPvs);
+        mVidAdapter = new ModernVehicleInfoAdapter(this, ObdProt.VidPvs);
         mTidAdapter = new TestResultAdapter(this, R.layout.obd_item, ObdProt.VidPvs);
         mDfcAdapter = new FaultCodeAdapter(this, R.layout.obd_item, ObdProt.tCodes);
         currDataAdapter = mPidAdapter;
@@ -2760,7 +2768,9 @@ public class MainActivity extends AppCompatActivity
                 EcuDataPv pv = (EcuDataPv) currDataAdapter.getItem(pos);
                 selPids.add(pv != null ? pv.getAsInt(EcuDataPv.FID_PID) : 0);
             }
-            currDataAdapter.filterPositions(selectedPositions);
+            if (currDataAdapter instanceof ObdItemAdapter) {
+                ((ObdItemAdapter) currDataAdapter).filterPositions(selectedPositions);
+            }
 
             if (currDataAdapter == mPidAdapter)
                 setFixedPids(selPids);
@@ -2772,11 +2782,12 @@ public class MainActivity extends AppCompatActivity
             /* Return to original PV list */
             if (currDataAdapter == mPidAdapter)
             {
-                currDataAdapter.setPvList(ObdProt.PidPvs);
-            } else if (currDataAdapter == mVidAdapter)
-                currDataAdapter.setPvList(ObdProt.VidPvs);
-            else if (currDataAdapter == mDfcAdapter)
-                currDataAdapter.setPvList(ObdProt.tCodes);
+                ((ObdItemAdapter) currDataAdapter).setPvList(ObdProt.PidPvs);
+            } else if (currDataAdapter == mVidAdapter) {
+                mVidAdapter.setPvList(ObdProt.VidPvs);
+            } else if (currDataAdapter == mDfcAdapter) {
+                ((ObdItemAdapter) currDataAdapter).setPvList(ObdProt.tCodes);
+            }
 
         }
     }

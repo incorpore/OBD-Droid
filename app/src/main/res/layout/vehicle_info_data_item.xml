@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:gravity="center_vertical">
+
+    <!-- Label -->
+    <TextView
+        android:id="@+id/data_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Calibration ID"
+        android:textSize="14sp"
+        android:textColor="#616161"/>
+
+    <!-- Value -->
+    <TextView
+        android:id="@+id/data_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="27690112001901170"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="#212121"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:fontFamily="monospace"/>
+
+    <!-- Copy Button -->
+    <ImageButton
+        android:id="@+id/btn_copy_value"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:src="@android:drawable/ic_menu_set_as"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:tint="#757575"
+        android:contentDescription="Copy"
+        android:visibility="gone"
+        android:padding="4dp"/>
+
+</LinearLayout>
