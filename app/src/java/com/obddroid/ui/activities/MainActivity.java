@@ -476,7 +476,23 @@ public class MainActivity extends AppCompatActivity
                         evt = (PropertyChangeEvent) msg.obj;
                         @SuppressWarnings("unchecked") // PropertyChangeEvent.getNewValue() returns Set<Integer> for ECU addresses
                         Set<Integer> ecuAddresses = (Set<Integer>) evt.getNewValue();
-                        selectEcu(ecuAddresses);
+
+                        // Log detected ECUs for diagnostics
+                        if (ecuAddresses != null && !ecuAddresses.isEmpty()) {
+                            StringBuilder ecuList = new StringBuilder("Detected ECUs: ");
+                            for (Integer addr : ecuAddresses) {
+                                ecuList.append(String.format("0x%X ", addr));
+                            }
+                            log.info(ecuList.toString());
+
+                            // Auto-proceed without ECU selection dialog
+                            // CAN bus protocol naturally routes queries to correct ECUs based on PID
+                            // No need to filter or manually select - let the bus handle it
+                            ecuUserSelected = true;
+                            setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
+                            VehicleManager.getInstance().setECUSelected(true);
+                            triggerVinRetrieval();
+                        }
                         break;
 
                     // handle negative result code from OBD protocol
@@ -2028,93 +2044,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    /**
-     * Prompt for selection of a single ECU from list of available ECUs
-     *
-     * @param ecuAdresses List of available ECUs
-     */
-    private void selectEcu(final Set<Integer> ecuAdresses)
-    {
-        // if only one ECU available, auto-select it
-        if (ecuAdresses.size() == 1)
-        {
-            Integer address = ecuAdresses.iterator().next();
-            // set address
-            CommService.elm.setEcuAddress(address);
-            // Mark ECU as selected
-            ecuUserSelected = true;
-            // Update status using the ECU_SELECTED state
-            setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
-            // Mark ECU as selected in VehicleManager
-            VehicleManager.getInstance().setECUSelected(true);
-            // Trigger VIN retrieval
-            triggerVinRetrieval();
-        }
-        // if more than one ECUs available ...
-        else if (ecuAdresses.size() > 1)
-        {
-            // Always allow ECU selection - don't restore previous
-
-            // Set status to show ECU selection is in progress
-            setStatus(getString(R.string.status_selecting_ecu));
-
-            // .. allow selection of single ECU address ...
-            final CharSequence[] entries = new CharSequence[ecuAdresses.size()];
-            // create list of entries
-            int i = 0;
-            for (Integer addr : ecuAdresses)
-            {
-                entries[i++] = String.format("0x%X", addr);
-            }
-            // show dialog ...
-            AlertDialog dialog = new AlertDialog.Builder(this)
-                    .setTitle(R.string.select_ecu_addr)
-                    .setItems(entries, new DialogInterface.OnClickListener()
-                    {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which)
-                        {
-                            int address =
-                                    Integer.parseInt(entries[which].toString().substring(2), 16);
-                            // set address
-                            CommService.elm.setEcuAddress(address);
-                            // Mark ECU as selected
-                            ecuUserSelected = true;
-                            // Update status using the ECU_SELECTED state
-                            setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
-                            // Mark ECU as selected in VehicleManager
-                            VehicleManager.getInstance().setECUSelected(true);
-                            // Now trigger VIN retrieval
-                            triggerVinRetrieval();
-                        }
-                    })
-                    .setOnCancelListener(new DialogInterface.OnCancelListener()
-                    {
-                        @Override
-                        public void onCancel(DialogInterface dialog)
-                        {
-                            // Auto-select first ECU if dialog is cancelled
-                            log.info("ECU selection cancelled, auto-selecting first ECU");
-                            Integer firstAddress = ecuAdresses.iterator().next();
-                            // set address
-                            CommService.elm.setEcuAddress(firstAddress);
-                            // Mark ECU as selected
-                            ecuUserSelected = true;
-                            // Update status using the ECU_SELECTED state
-                            setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
-                            // Mark ECU as selected in VehicleManager
-                            VehicleManager.getInstance().setECUSelected(true);
-                            // Trigger VIN retrieval
-                            triggerVinRetrieval();
-                        }
-                    })
-                    .create();
-
-            // Prevent dismissal by tapping outside
-            dialog.setCanceledOnTouchOutside(false);
-            dialog.show();
-        }
-    }
 
     /**
      * OnClick handler - Browse URL from content description

@@ -191,7 +191,7 @@ period of time while the ECU recalibrates itself.
     <string name="INITIALIZED">Initialized</string>
     <string name="ECU_DETECT">ECU detect…</string>
     <string name="ECU_DETECTED">ECU detected</string>
-    <string name="ECU_SELECTED">ECU selected</string>
+    <string name="ECU_SELECTED">Vehicle Connected</string>
     <string name="CONNECTING">Connecting…</string>
     <string name="CONNECTED">Connected</string>
     <string name="NODATA">No data</string>
