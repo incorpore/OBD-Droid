@@ -23,8 +23,10 @@ import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -593,29 +595,47 @@ public class ObdProt extends ProtoHeader
         if( start == 0)
         {
             pidSupported.clear();
+            Log.i(TAG, "Starting PID discovery for service " + getServiceName(obdService));
         }
 
+        Log.i(TAG, String.format("Processing PIDs %02X-%02X, bitmask: %08X",
+                                 start + 1, start + 0x20, bitmask));
+
         // loop through bits and mark corresponding PIDs as supported
-        for (int i = 0; i < 0x1F; i++)
+        // Process all 32 bits (0x20 = 32)
+        int addedCount = 0;
+        for (int i = 0; i < 0x20; i++)
         {
             if ((bitmask & (0x80000000L >> i)) != 0)
             {
-                pidSupported.add(new ObdPid(i + start + 1));
+                int pidCode = i + start + 1;
+                pidSupported.add(new ObdPid(pidCode));
+                addedCount++;
+                Log.d(TAG, String.format("  Found PID: %02X (%s)",
+                                        pidCode, getPidDescription(pidCode)));
             }
         }
+
+        Log.i(TAG, String.format("Added %d PIDs from block %02X", addedCount, start));
 
         log.fine(Long.toHexString(bitmask).toUpperCase()
                      + "(" + Long.toHexString(start) + "):"
                      + pidSupported);
 
-        // if next block may be requested
+        // if next block may be requested (bit 0 set means next block available)
         if ((bitmask & 1) != 0)
         {
             // request next block
-            cmdQueue.add(String.format("%02X%02X", obdService, start + 0x20));
+            int nextBlock = start + 0x20;
+            cmdQueue.add(String.format("%02X%02X", obdService, nextBlock));
+            Log.i(TAG, String.format("Requesting next PID block: %02X", nextBlock));
         }
         else
         {
+            // Discovery complete for this block
+            Log.i(TAG, "PID discovery complete for service " + getServiceName(obdService) +
+                       ". Total PIDs discovered: " + pidSupported.size());
+
             // For Mode 09, queue all supported PIDs at once for batch processing
             if (obdService == OBD_SVC_VEH_INFO && start == 0) {
                 log.info("Queueing all Mode 09 PIDs for batch processing");
@@ -627,6 +647,9 @@ public class ObdProt extends ProtoHeader
 
             // setup PID PVs
             preparePidPvs(obdService, pvList);
+
+            // Log final PID count
+            Log.i(TAG, "Total PIDs available: " + pidSupported.size());
         }
     }
 
@@ -638,10 +661,19 @@ public class ObdProt extends ProtoHeader
 
     /**
      * Set fixed PID for faster data update
+     * Fixed PIDs supplement rather than replace discovered PIDs
      * @param pidCodes the fixedPid to set
      */
     public static synchronized void setFixedPid(int[] pidCodes)
     {
+        fixedPids.clear();
+
+        if (pidCodes == null || pidCodes.length == 0) {
+            Log.i(TAG, "Clearing fixed PIDs");
+            return;
+        }
+
+        // Add fixed PIDs from supported list
         for (ObdPid currPid : pidSupported)
         {
             if (Arrays.binarySearch(pidCodes, currPid.intValue()) >= 0)
@@ -649,6 +681,8 @@ public class ObdProt extends ProtoHeader
                 fixedPids.add(currPid);
             }
         }
+
+        Log.i(TAG, "Set " + fixedPids.size() + " fixed PIDs");
     }
 
     public static synchronized void resetFixedPid()
@@ -664,7 +698,20 @@ public class ObdProt extends ProtoHeader
     {
         Integer result = 0;
         /* get corresponding PID list */
-        Vector<ObdPid> pidsToCheck = (fixedPids.size() > 0) ? fixedPids : pidSupported;
+        Vector<ObdPid> pidsToCheck;
+
+        // Use fixed PIDs if set, otherwise use all supported PIDs
+        if (fixedPids.size() > 0) {
+            pidsToCheck = fixedPids;
+        } else {
+            pidsToCheck = pidSupported;
+        }
+
+        // If no PIDs available, return 0
+        if (pidsToCheck.isEmpty()) {
+            return 0;
+        }
+
         try
         {
             // For Mode 09, prioritize important PIDs on first pass

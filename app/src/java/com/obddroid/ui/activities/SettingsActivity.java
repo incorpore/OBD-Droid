@@ -166,8 +166,7 @@ public class SettingsActivity
 
 	public static class PrefsFragment
 		extends PreferenceFragmentCompat
-		implements Preference.OnPreferenceClickListener,
-		SharedPreferences.OnSharedPreferenceChangeListener
+		implements SharedPreferences.OnSharedPreferenceChangeListener
 	{
 		Vector<EcuDataItem> items;
 
@@ -329,22 +328,6 @@ public class SettingsActivity
 		}
 
 		/**
-		 * set up preference text for extension files
-		 *
-		 * @param key preference key to be set up
-		 */
-		void setPrefsText(String key)
-		{
-			Preference prefComp = findPreference(key);
-			prefComp.setOnPreferenceClickListener(this);
-			String value = prefs.getString(key, null);
-			if (value != null)
-			{
-				prefComp.setSummary(value);
-			}
-		}
-
-		/**
 		 * Update fields for network parameters
 		 *
 		 * enable/disable elements for network parameters
@@ -382,35 +365,6 @@ public class SettingsActivity
 				Preference pref = findPreference(key);
 				pref.setEnabled(usbSelected);
 			}
-		}
-
-		@Override
-		public boolean onPreferenceClick(Preference preference)
-		{
-			Intent intent = preference.getIntent();
-			try
-			{
-				// OPEN intents require result handling
-				intent.addCategory(Intent.CATEGORY_OPENABLE);
-				launchActivityForResult(intent, preference.hashCode());
-			}
-			catch(Exception e)
-			{
-				log.log(Level.SEVERE, "Settings", e);
-				SnackbarHelper.showError(getActivity(), e.getMessage());
-			}
-			return true;
-		}
-
-		/**
-		 * Handler for result messages from other activities
-		 * Note: Extension files are no longer supported, method kept for compatibility
-		 */
-		@Override
-		@SuppressWarnings("deprecation") // onActivityResult deprecated in favor of Activity Result API
-		public void onActivityResult(int requestCode, int resultCode, Intent data)
-		{
-			// Extension files are no longer supported
 		}
 
 		@Override
@@ -476,15 +430,6 @@ public class SettingsActivity
 					.setEnabled(ElmProt.AdaptTimingMode.SOFTWARE.toString()
 						          .equals(((ListPreference)pref).getValue())
 					           );
-		}
-
-		/**
-		 * Wrapper for deprecated startActivityForResult - suppresses deprecation warning
-		 * TODO: Migrate to Activity Result API in future refactor
-		 */
-		@SuppressWarnings("deprecation")
-		private void launchActivityForResult(Intent intent, int requestCode) {
-			startActivityForResult(intent, requestCode);
 		}
 	}
 }

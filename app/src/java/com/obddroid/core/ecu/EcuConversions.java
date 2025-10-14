@@ -125,8 +125,23 @@ public class EcuConversions extends HashMap<String, Conversion[]>
 				}
 				else if (params[FLD_TYPE].equals(CNV_TYPE_BITMAP))
 				{
-					// create BitmapConversion based on CSV parameters
-					newCnv = new BitmapConversion( String.valueOf(params[FLD_PARAMETERS]).split(";") );
+					// Check if this is a special test status conversion by name
+					String conversionName = params[FLD_NAME];
+					log.info("BITMAP conversion: name='" + conversionName + "', type='" + params[FLD_TYPE] + "'");
+
+					if ("TEST_STATUS_4".equals(conversionName)) {
+						// create TestStatusConversion for 4-bit offset test status
+						log.info("Creating TestStatusConversion(4, false) for TEST_STATUS_4");
+						newCnv = new TestStatusConversion(4, false);
+					} else if ("TEST_STATUS_8".equals(conversionName)) {
+						// create TestStatusConversion for 8-bit offset test status
+						log.info("Creating TestStatusConversion(8, true) for TEST_STATUS_8");
+						newCnv = new TestStatusConversion(8, true);
+					} else {
+						// create normal BitmapConversion based on CSV parameters
+						log.fine("Creating BitmapConversion for " + conversionName);
+						newCnv = new BitmapConversion( String.valueOf(params[FLD_PARAMETERS]).split(";") );
+					}
 				}
 				else if (params[FLD_TYPE].equals(CNV_TYPE_CODELIST))
 				{

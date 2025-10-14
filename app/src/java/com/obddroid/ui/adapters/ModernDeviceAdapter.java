@@ -114,15 +114,13 @@ public class ModernDeviceAdapter extends BaseAdapter {
             holder.deviceStatus.setText("Tap to connect");
         }
 
-        // Set icon based on device type (you can customize this)
-        if (deviceName.toLowerCase().contains("obd") ||
-            deviceName.toLowerCase().contains("elm") ||
-            deviceName.toLowerCase().contains("vgate")) {
-            // OBD adapter icon (use car icon if available)
-            holder.deviceIcon.setImageResource(android.R.drawable.ic_menu_directions);
+        // Set icon based on device type
+        if (isOBDAdapter(displayName) || isOBDAdapter(deviceName)) {
+            // OBD adapter icon
+            holder.deviceIcon.setImageResource(R.drawable.ic_obd_adapter);
         } else {
             // Default Bluetooth icon
-            holder.deviceIcon.setImageResource(android.R.drawable.stat_sys_data_bluetooth);
+            holder.deviceIcon.setImageResource(R.drawable.ic_bluetooth_device);
         }
 
         return convertView;
@@ -132,5 +130,44 @@ public class ModernDeviceAdapter extends BaseAdapter {
         TextView deviceName;
         TextView deviceStatus;
         ImageView deviceIcon;
+    }
+
+    /**
+     * Check if a device name indicates it's an OBD adapter
+     * @param deviceName The name to check
+     * @return true if the name matches OBD adapter patterns
+     */
+    private boolean isOBDAdapter(String deviceName) {
+        if (deviceName == null || deviceName.isEmpty()) {
+            return false;
+        }
+
+        String nameLower = deviceName.toLowerCase();
+
+        // Check for common OBD adapter name patterns
+        return nameLower.contains("obd") ||
+               nameLower.contains("elm327") ||
+               nameLower.contains("elm") ||
+               nameLower.contains("vgate") ||
+               nameLower.contains("veepeak") ||
+               nameLower.contains("topway") ||
+               nameLower.contains("charcoal") ||
+               nameLower.contains("obdii") ||
+               nameLower.contains("obd2") ||
+               nameLower.contains("obd-ii") ||
+               nameLower.contains("car scanner") ||
+               nameLower.contains("carista") ||
+               nameLower.contains("konnwei") ||
+               nameLower.contains("foxwell") ||
+               nameLower.contains("bluedriver") ||
+               nameLower.contains("bafx") ||
+               nameLower.contains("panlong") ||
+               nameLower.contains("ancel") ||
+               nameLower.contains("autel") ||
+               nameLower.contains("launch") ||
+               nameLower.contains("thinkcar") ||
+               nameLower.contains("thinkdiag") ||
+               nameLower.contains("innova") ||
+               nameLower.contains("actron");
     }
 }

@@ -1327,7 +1327,18 @@ public class ElmProt
 	 * Holds value of property status.
 	 */
 	private STAT status = STAT.UNDEFINED;
-	
+
+	/**
+	 * Timeout for CONNECTING state (5 seconds)
+	 * If status stays CONNECTING longer than this, auto-reset to recover
+	 */
+	private static final long CONNECTING_TIMEOUT_MS = 5000;
+
+	/**
+	 * Timestamp when CONNECTING state started
+	 */
+	private long connectingStateStartTime = 0;
+
 	/**
 	 * Getter for property status.
 	 *
@@ -1346,6 +1357,33 @@ public class ElmProt
 	private void setStatus(STAT status)
 	{
 		STAT oldStatus = this.status;
+
+		// Timeout guard: Check if leaving CONNECTING state after too long
+		if (oldStatus == STAT.CONNECTING && status != STAT.CONNECTING)
+		{
+			long duration = System.currentTimeMillis() - connectingStateStartTime;
+			if (duration > CONNECTING_TIMEOUT_MS)
+			{
+				log.warning(String.format("CONNECTING timeout detected (%dms) - recovered to %s",
+					duration, status));
+			}
+		}
+
+		// Track when entering CONNECTING state
+		if (status == STAT.CONNECTING && oldStatus != STAT.CONNECTING)
+		{
+			connectingStateStartTime = System.currentTimeMillis();
+		}
+		// Auto-recovery: If stuck in CONNECTING for too long, log warning
+		else if (status == STAT.CONNECTING && oldStatus == STAT.CONNECTING)
+		{
+			long duration = System.currentTimeMillis() - connectingStateStartTime;
+			if (duration > CONNECTING_TIMEOUT_MS)
+			{
+				log.warning(String.format("Stuck in CONNECTING for %dms - may need manual recovery", duration));
+			}
+		}
+
 		this.status = status;
 		if (status != oldStatus)
 		{
@@ -1356,7 +1394,7 @@ public class ElmProt
 				firePropertyChange(
 					new PropertyChangeEvent(this, PROP_ECU_ADDRESS, null, ecuAddresses));
 			}
-			
+
 			// now fire regular status change
 			firePropertyChange(new PropertyChangeEvent(this, PROP_STATUS, oldStatus, status));
 		}

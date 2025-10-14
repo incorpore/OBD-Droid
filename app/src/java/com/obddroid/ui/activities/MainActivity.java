@@ -4,7 +4,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.SearchManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
@@ -35,8 +34,6 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -49,7 +46,6 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
-import com.obddroid.core.ecu.EcuCodeItem;
 import com.obddroid.core.ecu.EcuDataItem;
 import com.obddroid.core.ecu.EcuDataItems;
 import com.obddroid.core.ecu.EcuDataPv;
@@ -385,7 +381,7 @@ public class MainActivity extends AppCompatActivity
                                     {
                                         log.info("VidPvs match - calling checkForVinAndNotify");
                                         // Check if this is a VIN and notify VehicleManager
-                                        checkForVinAndNotify(event);
+                                        VinDataHelper.checkForVinAndNotify(event);
                                     }
                                 } catch (Exception e)
                                 {
@@ -403,7 +399,7 @@ public class MainActivity extends AppCompatActivity
                                 if (event.getSource() == ObdProt.VidPvs)
                                 {
                                     log.info("VidPvs match - calling checkForVinAndNotify");
-                                    checkForVinAndNotify(event);
+                                    VinDataHelper.checkForVinAndNotify(event);
                                 }
                                 break;
 
@@ -491,7 +487,7 @@ public class MainActivity extends AppCompatActivity
                             ecuUserSelected = true;
                             setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
                             VehicleManager.getInstance().setECUSelected(true);
-                            triggerVinRetrieval();
+                            VinDataHelper.triggerVinRetrieval();
                         }
                         break;
 
@@ -734,6 +730,12 @@ public class MainActivity extends AppCompatActivity
 
     @Override protected void onResume()
     {
+        super.onResume();
+
+        // Synchronize UI with actual connection state
+        // This prevents "Connecting..." from persisting after navigation
+        updateConnectionStatusUI();
+
         // set up data display update timer
         updateTimer = new Timer();
         final TimerTask updateTask = new TimerTask()
@@ -747,8 +749,53 @@ public class MainActivity extends AppCompatActivity
             }
         };
         updateTimer.schedule(updateTask, 0, DISPLAY_UPDATE_TIME);
+    }
 
-        super.onResume();
+    /**
+     * Synchronize UI connection status with actual CommService state
+     * Called on onResume() to prevent stuck "Connecting..." state
+     */
+    private void updateConnectionStatusUI()
+    {
+        // Check actual CommService state and update UI accordingly
+        if (mCommService != null)
+        {
+            CommService.STATE currentState = mCommService.getState();
+
+            switch (currentState)
+            {
+                case CONNECTED:
+                    // Service is connected, ensure UI reflects this
+                    if (mode != MODE.ONLINE)
+                    {
+                        onConnect();
+                    }
+                    break;
+
+                case CONNECTING:
+                    // Service is still connecting, show connecting status
+                    setStatus(R.string.title_connecting);
+                    break;
+
+                case OFFLINE:
+                case NONE:
+                default:
+                    // Service is offline, ensure UI reflects this
+                    if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
+                    {
+                        onDisconnect();
+                    }
+                    break;
+            }
+        }
+        else
+        {
+            // No CommService means offline
+            if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
+            {
+                setStatus(getString(R.string.status_connect_device));
+            }
+        }
     }
 
     /*
@@ -1298,13 +1345,6 @@ public class MainActivity extends AppCompatActivity
             setLogLevels();
         }
 
-        // update from protocol extensions
-        if (key == null || key.startsWith("ext_file-"))
-        {
-            loadPreferredExtensions();
-        }
-
-
         // AutoHide ToolBar
         if (key == null || PREF_AUTOHIDE.equals(key) || PREF_AUTOHIDE_DELAY.equals(key))
         {
@@ -1451,7 +1491,7 @@ public class MainActivity extends AppCompatActivity
             case ObdProt.OBD_SVC_PERMACODES:
             case ObdProt.OBD_SVC_PENDINGCODES:
                 // Show the same modal as regular tap for consistency
-                showFaultCodeOptionsModal(position);
+                FaultCodeUiHelper.showFaultCodeOptionsModal(this, currDataAdapter, position, ecuConnectionState);
                 break;
 
             case ObdProt.OBD_SVC_VEH_INFO:
@@ -1488,348 +1528,9 @@ public class MainActivity extends AppCompatActivity
             case ObdProt.OBD_SVC_READ_CODES:
             case ObdProt.OBD_SVC_PERMACODES:
             case ObdProt.OBD_SVC_PENDINGCODES:
-                showFaultCodeOptionsModal(position);
+                FaultCodeUiHelper.showFaultCodeOptionsModal(this, currDataAdapter, position, ecuConnectionState);
                 break;
         }
-    }
-
-    /**
-     * Show modal with options for the selected fault code
-     */
-    private void showFaultCodeOptionsModal(int position)
-    {
-        try {
-            EcuCodeItem dfc = (EcuCodeItem) currDataAdapter.getItem(position);
-
-            View dialogView = getLayoutInflater().inflate(R.layout.dialog_fault_code_options, null);
-
-            // Set fault code info
-            TextView codeNumber = dialogView.findViewById(R.id.fault_code_number);
-            TextView codeDesc = dialogView.findViewById(R.id.fault_code_description);
-            TextView codeType = dialogView.findViewById(R.id.fault_code_type);
-            ImageView statusIcon = dialogView.findViewById(R.id.fault_code_status_icon);
-
-            String code = String.valueOf(dfc.get(EcuCodeItem.FID_CODE));
-            String description = String.valueOf(dfc.get(EcuCodeItem.FID_DESCRIPT));
-
-            codeNumber.setText(code);
-            codeDesc.setText(description);
-
-            // Set code type based on service
-            Integer svc = (Integer) dfc.get(EcuCodeItem.FID_STATUS);
-            if (svc != null) {
-                switch (svc) {
-                    case ObdProt.OBD_SVC_PENDINGCODES:
-                        codeType.setText("Pending Code");
-                        statusIcon.setImageResource(android.R.drawable.ic_menu_recent_history);
-                        statusIcon.setColorFilter(Color.parseColor("#FF9800"));
-                        break;
-                    case ObdProt.OBD_SVC_PERMACODES:
-                        codeType.setText("Permanent Code");
-                        statusIcon.setImageResource(android.R.drawable.ic_dialog_alert);
-                        statusIcon.setColorFilter(Color.parseColor("#F44336"));
-                        break;
-                    default:
-                        codeType.setText("Confirmed Code");
-                        statusIcon.setImageResource(android.R.drawable.ic_menu_myplaces);
-                        statusIcon.setColorFilter(Color.parseColor("#F57C00"));
-                        break;
-                }
-            }
-
-            AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(dialogView)
-                .create();
-
-            // Set up click handlers
-            View freezeFrameOption = dialogView.findViewById(R.id.option_freeze_frame);
-            View searchOption = dialogView.findViewById(R.id.option_search_web);
-            View copyOption = dialogView.findViewById(R.id.option_copy_code);
-            Button closeButton = dialogView.findViewById(R.id.btn_close);
-
-            // Freeze frame option - check if we're connected and have data
-            boolean canViewFreezeFrames = (ecuConnectionState == ElmProt.STAT.CONNECTED ||
-                                          ecuConnectionState == ElmProt.STAT.ECU_DETECTED);
-
-            if (!canViewFreezeFrames) {
-                freezeFrameOption.setAlpha(0.5f);
-                freezeFrameOption.setEnabled(false);
-                TextView freezeStatus = dialogView.findViewById(R.id.freeze_frame_status);
-                freezeStatus.setText("Connect to vehicle first");
-            } else {
-                freezeFrameOption.setOnClickListener(v -> {
-                    dialog.dismiss();
-                    viewFreezeFrameForCode(position, dfc);
-                });
-            }
-
-            searchOption.setOnClickListener(v -> {
-                dialog.dismiss();
-                searchFaultCodeOnWeb(dfc);
-            });
-
-            copyOption.setOnClickListener(v -> {
-                copyFaultCodeToClipboard(code, description);
-                dialog.dismiss();
-            });
-
-            closeButton.setOnClickListener(v -> dialog.dismiss());
-
-            dialog.show();
-
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "Show fault code modal", e);
-            SnackbarHelper.showError(this, "Error showing options: " + e.getMessage());
-        }
-    }
-
-    /**
-     * View freeze frame data for the selected fault code in a modal
-     */
-    private void viewFreezeFrameForCode(int position, EcuCodeItem dfc)
-    {
-        try {
-            // Create and show freeze frame modal
-            View dialogView = getLayoutInflater().inflate(R.layout.dialog_freeze_frame_data, null);
-
-            // Set header info
-            TextView codeText = dialogView.findViewById(R.id.freeze_frame_code);
-            String codeInfo = dfc.get(EcuCodeItem.FID_CODE) + " - " + dfc.get(EcuCodeItem.FID_DESCRIPT);
-            codeText.setText(codeInfo);
-
-            // Get UI elements
-            View loadingContainer = dialogView.findViewById(R.id.loading_container);
-            View dataContainer = dialogView.findViewById(R.id.data_container);
-            View noDataContainer = dialogView.findViewById(R.id.no_data_container);
-            LinearLayout dataList = dialogView.findViewById(R.id.freeze_frame_data_list);
-            Button closeButton = dialogView.findViewById(R.id.btn_close);
-            Button refreshButton = dialogView.findViewById(R.id.btn_refresh);
-
-            AlertDialog freezeDialog = new AlertDialog.Builder(this)
-                .setView(dialogView)
-                .create();
-
-            // Close button handler
-            closeButton.setOnClickListener(v -> freezeDialog.dismiss());
-
-            // Function to load freeze frame data
-            Runnable loadFreezeFrameData = () -> {
-                // Show loading
-                runOnUiThread(() -> {
-                    loadingContainer.setVisibility(View.VISIBLE);
-                    dataContainer.setVisibility(View.GONE);
-                    noDataContainer.setVisibility(View.GONE);
-                    dataList.removeAllViews();
-                });
-
-                // Store current service to restore later
-                final int currentService = CommService.elm.getService();
-
-                // Find the DTC index
-                int dtcIndex = 0;
-                for (int i = 0; i < currDataAdapter.getCount(); i++) {
-                    if (currDataAdapter.getItem(i) == dfc) {
-                        dtcIndex = i;
-                        break;
-                    }
-                }
-
-                // Request freeze frame data
-                CommService.elm.setFreezeFrame_Id(dtcIndex);
-                CommService.elm.setService(ObdProt.OBD_SVC_FREEZEFRAME, true);
-
-                // Get freeze frame data from data service
-                ObdDataService dataService = ObdProt.getDataService();
-
-                // Poll for data with proper timeout based on serial analysis
-                // Freeze frame requires 3-5 seconds for ~10 PIDs at ~4-5 PIDs/second
-                int maxWaitTime = 8000; // 8 seconds max (conservative)
-                int pollInterval = 500;  // Check every 500ms
-                int elapsed = 0;
-                PvList freezeData = null;
-
-                log.info("Freeze Frame: Starting data collection for DTC index " + dtcIndex);
-
-                while (elapsed < maxWaitTime) {
-                    try {
-                        Thread.sleep(pollInterval);
-                        elapsed += pollInterval;
-
-                        // Get latest freeze frame data
-                        freezeData = dataService.getFreezeFrameData(dtcIndex);
-
-                        // Log progress
-                        int dataCount = (freezeData != null) ? freezeData.size() : 0;
-                        log.info("Freeze Frame: After " + elapsed + "ms, have " + dataCount + " PIDs");
-
-                        // Break if we have meaningful data (at least 5 PIDs)
-                        if (dataCount >= 5) {
-                            log.info("Freeze Frame: Sufficient data collected, proceeding to display");
-                            break;
-                        }
-                    } catch (InterruptedException e) {
-                        log.warning("Freeze Frame: Data collection interrupted");
-                        break;
-                    }
-                }
-
-                // Final data fetch
-                freezeData = dataService.getFreezeFrameData(dtcIndex);
-                final PvList finalFreezeData = freezeData;
-                log.info("Freeze Frame: Final data count = " + (finalFreezeData != null ? finalFreezeData.size() : 0));
-
-                // Collect the freeze frame data
-                runOnUiThread(() -> {
-                    try {
-                        // Check if we have freeze frame data
-                        if (finalFreezeData != null && finalFreezeData.size() > 0) {
-                            log.info("Freeze Frame: Displaying " + finalFreezeData.size() + " data items");
-
-                            // Iterate through the actual freeze frame data (not adapter count)
-                            for (Object key : finalFreezeData.keySet()) {
-                                // Skip PID support messages (0x00, 0x20, 0x40, etc.)
-                                if (key instanceof Integer) {
-                                    int pid = ((Integer) key).intValue();
-                                    // PID support messages are at 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xE0
-                                    if (pid % 0x20 == 0 && pid <= 0xE0) {
-                                        log.fine("Freeze Frame: Skipping PID support message " + String.format("0x%02X", pid));
-                                        continue;
-                                    }
-                                }
-
-                                Object item = finalFreezeData.get(key);
-                                if (item instanceof EcuDataPv) {
-                                    EcuDataPv pv = (EcuDataPv) item;
-
-                                View itemView = getLayoutInflater().inflate(R.layout.freeze_frame_data_item, null);
-                                TextView label = itemView.findViewById(R.id.data_label);
-                                TextView value = itemView.findViewById(R.id.data_value);
-
-                                    // Get description or use PID as fallback
-                                    Object descr = pv.get(EcuDataPv.FID_DESCRIPT);
-                                    String labelText;
-                                    if (descr != null && !descr.toString().isEmpty()) {
-                                        labelText = descr.toString();
-                                    } else if (key instanceof Integer) {
-                                        // Format as hex for integer PIDs
-                                        labelText = String.format("PID 0x%02X", (Integer) key);
-                                    } else {
-                                        // Fallback for other key types
-                                        labelText = "PID " + key;
-                                    }
-                                    label.setText(labelText);
-
-                                    // Format value with units
-                                    Object dataValue = pv.get(EcuDataPv.FID_VALUE);
-                                    Object units = pv.get(EcuDataPv.FID_UNITS);
-
-                                    // Convert value to string, handling byte arrays
-                                    String displayValue;
-                                    if (dataValue == null) {
-                                        displayValue = "N/A";
-                                    } else if (dataValue instanceof byte[]) {
-                                        // Convert byte array to hex string
-                                        byte[] bytes = (byte[]) dataValue;
-                                        StringBuilder hex = new StringBuilder("0x");
-                                        for (byte b : bytes) {
-                                            hex.append(String.format("%02X", b & 0xFF));
-                                        }
-                                        displayValue = hex.toString();
-                                    } else {
-                                        displayValue = dataValue.toString();
-                                    }
-
-                                    if (units != null && !units.toString().isEmpty()) {
-                                        displayValue += " " + units;
-                                    }
-                                    value.setText(displayValue);
-
-                                    dataList.addView(itemView);
-                                }
-                            }
-
-                            // Check if we have at least one actual data item (not just PID support)
-                            if (dataList.getChildCount() > 0) {
-                                // Show data container
-                                loadingContainer.setVisibility(View.GONE);
-                                dataContainer.setVisibility(View.VISIBLE);
-                                refreshButton.setVisibility(View.VISIBLE);
-                            } else {
-                                // Only had PID support messages, no actual data
-                                log.warning("Freeze Frame: Only PID support messages, no actual data");
-                                loadingContainer.setVisibility(View.GONE);
-                                noDataContainer.setVisibility(View.VISIBLE);
-                            }
-                        } else {
-                            // No data available
-                            log.warning("Freeze Frame: No data available after waiting");
-                            loadingContainer.setVisibility(View.GONE);
-                            noDataContainer.setVisibility(View.VISIBLE);
-                        }
-
-                        // Restore original service
-                        if (currentService != ObdProt.OBD_SVC_FREEZEFRAME) {
-                            CommService.elm.setService(currentService, true);
-                        }
-
-                    } catch (Exception e) {
-                        log.log(Level.WARNING, "Error displaying freeze frame data", e);
-                        loadingContainer.setVisibility(View.GONE);
-                        noDataContainer.setVisibility(View.VISIBLE);
-                    }
-                });
-            };
-
-            // Refresh button handler
-            refreshButton.setOnClickListener(v -> {
-                new Thread(loadFreezeFrameData).start();
-            });
-
-            // Start loading data
-            new Thread(loadFreezeFrameData).start();
-
-            // Show the dialog
-            freezeDialog.show();
-
-            // Make dialog wider
-            if (freezeDialog.getWindow() != null) {
-                freezeDialog.getWindow().setLayout(
-                    (int) (getResources().getDisplayMetrics().widthPixels * 0.9),
-                    (int) (getResources().getDisplayMetrics().heightPixels * 0.7)
-                );
-            }
-
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "Show freeze frame modal", e);
-            SnackbarHelper.showError(this, "Error showing freeze frame data: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Search fault code on the web
-     */
-    private void searchFaultCodeOnWeb(EcuCodeItem dfc)
-    {
-        try {
-            Intent intent = new Intent(Intent.ACTION_WEB_SEARCH);
-            intent.putExtra(SearchManager.QUERY, "OBD " + String.valueOf(dfc.get(EcuCodeItem.FID_CODE)));
-            startActivity(intent);
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "WebSearch DFC", e);
-            SnackbarHelper.showError(this, e.getMessage());
-        }
-    }
-
-    /**
-     * Copy fault code to clipboard
-     */
-    private void copyFaultCodeToClipboard(String code, String description)
-    {
-        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-        String text = code + " - " + description;
-        ClipData clip = ClipData.newPlainText("OBD Fault Code", text);
-        clipboard.setPrimaryClip(clip);
-        SnackbarHelper.showSuccess(this, "Copied: " + code);
     }
 
     /**
@@ -1903,147 +1604,6 @@ public class MainActivity extends AppCompatActivity
 
         return result;
     }
-
-    /**
-     * Check if a PvChangeEvent contains VIN data and notify VehicleManager
-     * This allows VIN detection without switching to Vehicle Info page
-     */
-    private void checkForVinAndNotify(PvChangeEvent event)
-    {
-        try {
-            // For PV_ADDED: value is the entire EcuDataPv
-            // For PV_MODIFIED: value is just the modified field, source is the EcuDataPv
-            Object eventValue = event.getValue();
-            Object eventSource = event.getSource();
-            Object eventKey = event.getKey();
-
-            log.info("checkForVinAndNotify called - eventValue type: " +
-                    (eventValue != null ? eventValue.getClass().getName() : "null") +
-                    ", eventSource type: " +
-                    (eventSource != null ? eventSource.getClass().getName() : "null") +
-                    ", eventKey: " + eventKey);
-
-            EcuDataPv dataPv = null;
-
-            // Determine how to get the EcuDataPv based on event type
-            if (eventValue instanceof EcuDataPv) {
-                // PV_ADDED case - value IS the PV
-                dataPv = (EcuDataPv) eventValue;
-                log.info("VidPvs PV_ADDED - checking for VIN");
-            } else if (eventValue instanceof Object[]) {
-                // PV_ADDED case - value is Object[] containing multiple PVs
-                // Loop through ALL items to find the VIN
-                Object[] arr = (Object[]) eventValue;
-                log.info("VidPvs PV_ADDED - array contains " + arr.length + " items");
-                for (Object item : arr) {
-                    if (item instanceof EcuDataPv) {
-                        EcuDataPv pv = (EcuDataPv) item;
-                        String desc = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
-                        Object val = pv.get(EcuDataPv.FID_VALUE);
-                        log.info("  Checking item: " + desc + ", value: " + val +
-                                ", len: " + (val != null ? val.toString().length() : 0));
-
-                        if (desc != null && desc.toLowerCase().contains("vehicle identification") &&
-                            val != null && val.toString().trim().length() == 17) {
-                            dataPv = pv;
-                            log.info("  Found VIN in array!");
-                            break;
-                        }
-                    }
-                }
-            } else if (eventSource instanceof EcuDataPv) {
-                // PV_MODIFIED case - source IS the PV
-                dataPv = (EcuDataPv) eventSource;
-                log.info("VidPvs PV_MODIFIED - checking for VIN");
-            } else {
-                // Try to get from VidPvs list using the key
-                log.info("Trying to get EcuDataPv from VidPvs using key: " + eventKey);
-                if (eventKey != null) {
-                    Object item = ObdProt.VidPvs.get(eventKey);
-                    if (item instanceof EcuDataPv) {
-                        dataPv = (EcuDataPv) item;
-                        log.info("Successfully retrieved EcuDataPv from VidPvs");
-                    }
-                }
-            }
-
-            if (dataPv != null) {
-                String description = String.valueOf(dataPv.get(EcuDataPv.FID_DESCRIPT));
-                Object vinValue = dataPv.get(EcuDataPv.FID_VALUE);
-
-                log.info("VidPvs item - desc: " + description + ", value: " + vinValue +
-                        ", valueLen: " + (vinValue != null ? vinValue.toString().length() : 0));
-
-                // Check if this is a VIN (PID description contains "vehicle identification" and value is 17 chars)
-                if (description != null && description.toLowerCase().contains("vehicle identification") &&
-                    vinValue != null && vinValue.toString().trim().length() == 17) {
-
-                    String vin = vinValue.toString().trim();
-                    VehicleManager vm = VehicleManager.getInstance();
-                    String currentVin = vm.getCurrentVIN();
-
-                    // Only notify if this is a new VIN
-                    if (currentVin == null || !currentVin.equals(vin)) {
-                        log.info("VIN DETECTED from Mode 9: " + vin);
-                        vm.setVIN(vin);
-
-                        // VIN retrieved successfully, switch back to idle mode
-                        // This stops continuous Mode 9 polling
-                        if (CommService.elm.getService() == ObdProt.OBD_SVC_VEH_INFO) {
-                            log.info("VIN retrieved successfully, switching back to idle");
-                            CommService.elm.setService(ObdProt.OBD_SVC_NONE, false);
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.log(Level.WARNING, "Error checking for VIN in PvChangeEvent", e);
-        }
-    }
-
-    /**
-     * Trigger VIN retrieval after ECU is selected - requests Mode 9 data in background
-     * without switching the UI to Vehicle Info page
-     */
-    private void triggerVinRetrieval()
-    {
-        // Only request if we haven't already retrieved VIN
-        VehicleManager vm = VehicleManager.getInstance();
-        String currentVin = vm.getCurrentVIN();
-
-        if (currentVin == null || currentVin.isEmpty())
-        {
-            log.info("ECU Selected, requesting VIN in background");
-
-            // Delay slightly to let ECU selection complete
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                // Save current service to restore later if needed
-                final int previousService = CommService.elm.getService();
-
-                // Clear any stale cached vehicle info before requesting fresh data
-                log.info("Clearing stale vehicle info cache before VIN request");
-                ObdProt.VidPvs.clear();
-                CommService.elm.getCachedVehicleInfo().clear();
-
-                // Temporarily switch to Mode 9 to request VIN (without changing UI)
-                log.info("Requesting Mode 9 VIN data");
-                CommService.elm.setService(ObdProt.OBD_SVC_VEH_INFO, false);
-
-                // Set a timeout to switch back if VIN doesn't arrive
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    // If VIN still not retrieved after timeout, switch back
-                    if (VehicleManager.getInstance().getCurrentVIN() == null) {
-                        log.info("VIN request timeout, switching back to previous service");
-                        CommService.elm.setService(previousService, false);
-                        // Notify VehicleManager that VIN retrieval timed out
-                        VehicleManager.getInstance().handleVINTimeout();
-                        log.info("VIN not retrieved within timeout - may retry later");
-                    }
-                }, 8000); // 8 second timeout to allow for slower adapters
-            }, 1000); // Wait 1 second for ECU selection to settle
-        }
-    }
-
 
     /**
      * OnClick handler - Browse URL from content description
@@ -2403,15 +1963,6 @@ public class MainActivity extends AppCompatActivity
 
         // set logger main level
         MainActivity.rootLogger.setLevel(level);
-    }
-
-    /**
-     * Load optional extension files which may have
-     * been defined in preferences
-     */
-    private void loadPreferredExtensions()
-    {
-        // Extension files are no longer supported - functionality removed
     }
 
     /**

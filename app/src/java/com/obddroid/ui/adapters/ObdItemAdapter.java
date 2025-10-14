@@ -107,9 +107,15 @@ public class ObdItemAdapter extends ArrayAdapter<Object>
     @SuppressWarnings("unchecked") // ProcessVar extends raw HashMap - keys are always Strings in PvList
     Collection getPreferredItems(PvList pvs)
     {
-        // filter PVs with preference selections
-        Set<String> pidsToShow = prefs.getStringSet(SettingsActivity.KEY_DATA_ITEMS,
-                                                    (Set<String>) pvs.keySet());
+        // Get preference selections
+        Set<String> pidsToShow = prefs.getStringSet(SettingsActivity.KEY_DATA_ITEMS, null);
+
+        // If no preferences set, or preferences are empty, show all available PIDs
+        if (pidsToShow == null || pidsToShow.isEmpty()) {
+            // Show all available PIDs by default
+            pidsToShow = (Set<String>) pvs.keySet();
+        }
+
         return getMatchingItems(pvs, pidsToShow);
     }
 

@@ -11,7 +11,6 @@ Android OBD-II diagnostic application for vehicle diagnostics and monitoring.
 - Support for Bluetooth, USB, and WiFi ELM327 adapters
 - Dashboard and heads-up display modes
 - Data logging and export capabilities
-- Custom PID support
 
 ## Requirements
 
@@ -44,11 +43,10 @@ OBD-Droid/
 │   └── src/
 │       ├── java/          # Application source code
 │       └── res/           # Resources (layouts, drawables, strings)
-├── library-enhanced/       # Core OBD protocol library
-│   └── src/
-│       ├── java/          # Protocol implementation
-│       └── resources/     # Protocol resources and translations
-└── custom-pids/           # Custom PID definitions
+└── library-enhanced/       # Core OBD protocol library
+    └── src/
+        ├── java/          # Protocol implementation
+        └── resources/     # Protocol resources and translations
 ```
 
 ## Supported Protocols

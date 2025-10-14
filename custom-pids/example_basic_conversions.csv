@@ -1,6 +1,0 @@
-CONVERSION_ID	TYPE	VARIANT	SYSTEM	FACT	DIV	OFFS	PhOf	UNIT	Remark	Parameters	Description
-TURBO_BOOST_PSI	LINEAR	0	IMPERIAL	0.145	1	0	-14.7	psi	Turbo boost pressure in PSI		Converts raw pressure to PSI with atmospheric correction
-TURBO_BOOST_BAR	LINEAR	0	METRIC	0.01	1	0	-1	bar	Turbo boost pressure in bar		Converts raw pressure to bar with atmospheric correction
-OIL_TEMP_C	LINEAR	0	METRIC	1	1	0	-40	°C	Oil temperature Celsius		Simple temperature conversion with offset
-OIL_TEMP_F	LINEAR	0	IMPERIAL	1.8	1	0	-40	°F	Oil temperature Fahrenheit		Temperature conversion to Fahrenheit
-TRANS_TEMP	LINEAR	0	METRIC	1	1	0	-40	°C	Transmission temperature		Direct temperature reading with offset

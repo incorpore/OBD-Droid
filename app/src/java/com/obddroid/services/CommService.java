@@ -98,7 +98,18 @@ public abstract class CommService
 		// Give the new state to the Handler so the UI Activity can update
 		mHandler.obtainMessage(MainActivity.MESSAGE_STATE_CHANGE, state).sendToTarget();
 	}
-	
+
+	/**
+	 * Get the current connection state
+	 * This allows MainActivity to query state on resume to sync UI
+	 *
+	 * @return current STATE value
+	 */
+	public synchronized STATE getState()
+	{
+		return mState;
+	}
+
 	/**
 	 * Start the chat service. Specifically start AcceptThread to begin a session
 	 * in listening (server) mode. Called by the Activity onResume()

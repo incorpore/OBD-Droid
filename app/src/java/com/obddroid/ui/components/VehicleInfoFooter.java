@@ -13,18 +13,25 @@ import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import io.github.vindecoder.nhtsa.VehicleData;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.utils.CarLogoHelper;
 import com.obddroid.vehicle.VehicleManager;
+import com.obddroid.core.ecu.EcuDataPv;
+import com.obddroid.core.pvs.PvList;
+import com.obddroid.core.obd.ObdProt;
+import com.obddroid.core.pvs.PvChangeListener;
+import com.obddroid.core.pvs.PvChangeEvent;
+import java.beans.PropertyChangeEvent;
 
 /**
  * Footer bar that displays decoded vehicle information
  * Shows manufacturer icon/letter and vehicle name when VIN is decoded
  */
-public class VehicleInfoFooter extends LinearLayout
+public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 {
     private static final String TAG = "VehicleInfoFooter";
 
@@ -35,7 +42,14 @@ public class VehicleInfoFooter extends LinearLayout
     private TextView connectionStatus;
     private View divider;
     private LinearLayout contentLayout;
+    private LinearLayout expandedContainer;
+    private ScrollView expandedScrollView;
     private LinearLayout expandedContentLayout;
+    private LinearLayout tabContainer;
+    private TextView vehicleInfoTab;
+    private TextView obdDataTab;
+    private View tabIndicator;
+    private boolean showingVehicleInfo = true;
     private VehicleManager.VehicleChangeListener vehicleListener;
     private boolean isConnected = false;
     private boolean isEcuConnected = false;
@@ -185,16 +199,97 @@ public class VehicleInfoFooter extends LinearLayout
         dotParams.gravity = Gravity.CENTER_VERTICAL;
         contentLayout.addView(statusDot, dotParams);
 
-        // Create expanded content layout (initially hidden)
+        // Create expanded container
+        expandedContainer = new LinearLayout(getContext());
+        expandedContainer.setOrientation(LinearLayout.VERTICAL);
+        expandedContainer.setVisibility(View.GONE);
+        expandedContainer.setBackgroundColor(Color.parseColor("#1A1A1A")); // Slightly lighter than footer
+
+        // Create tab container
+        tabContainer = new LinearLayout(getContext());
+        tabContainer.setOrientation(LinearLayout.HORIZONTAL);
+        tabContainer.setBackgroundColor(Color.parseColor("#212121"));
+        tabContainer.setPadding(dpToPx(16), dpToPx(8), dpToPx(16), 0);
+
+        // Create Vehicle Info tab
+        vehicleInfoTab = new TextView(getContext());
+        vehicleInfoTab.setText("VEHICLE INFO");
+        vehicleInfoTab.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        vehicleInfoTab.setTypeface(Typeface.DEFAULT_BOLD);
+        vehicleInfoTab.setTextColor(Color.parseColor("#00ACC1")); // Selected color
+        vehicleInfoTab.setPadding(dpToPx(16), dpToPx(8), dpToPx(16), dpToPx(8));
+        vehicleInfoTab.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams vehicleTabParams = new LinearLayout.LayoutParams(
+            0,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            1.0f
+        );
+        vehicleTabParams.rightMargin = dpToPx(8);
+
+        // Create OBD Data tab
+        obdDataTab = new TextView(getContext());
+        obdDataTab.setText("OBD DATA");
+        obdDataTab.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        obdDataTab.setTypeface(Typeface.DEFAULT_BOLD);
+        obdDataTab.setTextColor(Color.parseColor("#666666")); // Unselected color
+        obdDataTab.setPadding(dpToPx(16), dpToPx(8), dpToPx(16), dpToPx(8));
+        obdDataTab.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams obdTabParams = new LinearLayout.LayoutParams(
+            0,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            1.0f
+        );
+        obdTabParams.leftMargin = dpToPx(8);
+
+        // Add tabs to container
+        tabContainer.addView(vehicleInfoTab, vehicleTabParams);
+        tabContainer.addView(obdDataTab, obdTabParams);
+
+        // Create tab indicator line
+        tabIndicator = new View(getContext());
+        tabIndicator.setBackgroundColor(Color.parseColor("#00ACC1"));
+        LinearLayout.LayoutParams indicatorParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            dpToPx(2)
+        );
+
+        // Add tab container to expanded container
+        expandedContainer.addView(tabContainer);
+        expandedContainer.addView(tabIndicator, indicatorParams);
+
+        // Create ScrollView for expanded content
+        expandedScrollView = new ScrollView(getContext());
+        expandedScrollView.setFillViewport(false);
+        expandedScrollView.setBackgroundColor(Color.parseColor("#1A1A1A"));
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            dpToPx(400) // Increased height for better viewing
+        );
+
+        // Create expanded content layout inside ScrollView
         expandedContentLayout = new LinearLayout(getContext());
         expandedContentLayout.setOrientation(LinearLayout.VERTICAL);
-        expandedContentLayout.setPadding(dpToPx(16), 0, dpToPx(16), dpToPx(12));
-        expandedContentLayout.setVisibility(View.GONE);
+        expandedContentLayout.setPadding(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(16));
+
+        // Add content layout to ScrollView
+        expandedScrollView.addView(expandedContentLayout, new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+
+        // Add ScrollView to expanded container
+        expandedContainer.addView(expandedScrollView, scrollParams);
+
+        // Add expanded container to main layout
         LinearLayout.LayoutParams expandedParams = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        addView(expandedContentLayout, expandedParams);
+        addView(expandedContainer, expandedParams);
+
+        // Set up tab click listeners
+        vehicleInfoTab.setOnClickListener(v -> switchToVehicleInfo());
+        obdDataTab.setOnClickListener(v -> switchToObdData());
 
         // Add bottom border line
         View bottomDivider = new View(getContext());
@@ -211,14 +306,15 @@ public class VehicleInfoFooter extends LinearLayout
         contentLayout.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isConnected && currentVehicleData != null) {
-                    // Add subtle press feedback
-                    v.setAlpha(0.8f);
-                    v.animate().alpha(1f).setDuration(200).start();
-                    toggleExpanded();
-                }
+                Log.d(TAG, "Footer clicked!");
+                // Allow expanding even without connection to show demo
+                // Add subtle press feedback
+                v.setAlpha(0.8f);
+                v.animate().alpha(1f).setDuration(200).start();
+                toggleExpanded();
             }
         });
+        Log.d(TAG, "VehicleInfoFooter initialized - click listener set");
 
         // Always visible
         setVisibility(View.VISIBLE);
@@ -256,7 +352,7 @@ public class VehicleInfoFooter extends LinearLayout
                     if (isExpanded) {
                         isExpanded = false;
                         ((TextView)expandIndicator).setRotation(0f);
-                        expandedContentLayout.setVisibility(View.GONE);
+                        expandedContainer.setVisibility(View.GONE);
                     }
 
                     // Update display based on ECU connection
@@ -319,8 +415,24 @@ public class VehicleInfoFooter extends LinearLayout
         // Register as listener with VehicleManager
         VehicleManager.getInstance().addListener(vehicleListener);
 
+        // Register for Mode 9 data updates
+        ObdProt.VidPvs.addPvChangeListener(this);
+
         // Start with disconnected state - will be updated when ECU connects
         isEcuConnected = false;
+    }
+
+    @Override
+    public void pvChanged(PvChangeEvent event) {
+        // Mode 9 data updated - refresh expanded content if visible
+        Log.d(TAG, "Mode 9 data update received: " + event.getKey());
+        if (isExpanded && expandedContainer != null && expandedContainer.getVisibility() == View.VISIBLE && !showingVehicleInfo) {
+            post(() -> updateExpandedContent());
+        }
+    }
+
+    public void propertyChange(PropertyChangeEvent evt) {
+        // Not used for this implementation
     }
 
     @Override
@@ -338,6 +450,9 @@ public class VehicleInfoFooter extends LinearLayout
         if (vehicleListener != null) {
             VehicleManager.getInstance().addListener(vehicleListener);
         }
+        // Re-register for Mode 9 updates
+        ObdProt.VidPvs.addPvChangeListener(this);
+
         // Get current state (will update if actually connected)
         updateVehicleInfo();
     }
@@ -350,6 +465,8 @@ public class VehicleInfoFooter extends LinearLayout
         if (vehicleListener != null) {
             VehicleManager.getInstance().removeListener(vehicleListener);
         }
+        // Unregister from Mode 9 updates
+        ObdProt.VidPvs.removePvChangeListener(this);
     }
 
 
@@ -378,39 +495,92 @@ public class VehicleInfoFooter extends LinearLayout
 
     private void toggleExpanded() {
         isExpanded = !isExpanded;
+        Log.d(TAG, "toggleExpanded: isExpanded = " + isExpanded);
 
         // Animate arrow rotation
-        ((TextView)expandIndicator).animate()
-            .rotation(isExpanded ? 180f : 0f)
-            .setDuration(300)
-            .start();
+        if (expandIndicator != null) {
+            ((TextView)expandIndicator).animate()
+                .rotation(isExpanded ? 180f : 0f)
+                .setDuration(300)
+                .start();
+        }
 
         if (isExpanded) {
+            Log.d(TAG, "Expanding footer - updating content");
             updateExpandedContent();
-            expandedContentLayout.setVisibility(View.VISIBLE);
-            expandedContentLayout.setAlpha(0f);
-            expandedContentLayout.animate()
-                .alpha(1f)
-                .setDuration(300)
-                .start();
+            if (expandedContainer != null) {
+                expandedContainer.setVisibility(View.VISIBLE);
+                expandedContainer.setAlpha(0f);
+                expandedContainer.animate()
+                    .alpha(1f)
+                    .setDuration(300)
+                    .start();
+                Log.d(TAG, "Expanded container made visible");
+            } else {
+                Log.e(TAG, "expandedContainer is null!");
+            }
         } else {
-            expandedContentLayout.animate()
-                .alpha(0f)
-                .setDuration(300)
-                .withEndAction(new Runnable() {
-                    @Override
-                    public void run() {
-                        expandedContentLayout.setVisibility(View.GONE);
-                    }
-                })
-                .start();
+            Log.d(TAG, "Collapsing footer");
+            if (expandedContainer != null) {
+                expandedContainer.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .withEndAction(new Runnable() {
+                        @Override
+                        public void run() {
+                            expandedContainer.setVisibility(View.GONE);
+                            Log.d(TAG, "Expanded container hidden");
+                        }
+                    })
+                    .start();
+            }
         }
     }
 
-    private void updateExpandedContent() {
-        if (currentVehicleData == null) return;
+    private void switchToVehicleInfo() {
+        if (showingVehicleInfo) return;
+        showingVehicleInfo = true;
 
+        // Update tab colors
+        vehicleInfoTab.setTextColor(Color.parseColor("#00ACC1"));
+        obdDataTab.setTextColor(Color.parseColor("#666666"));
+
+        // Update content
+        updateExpandedContent();
+    }
+
+    private void switchToObdData() {
+        if (!showingVehicleInfo) return;
+        showingVehicleInfo = false;
+
+        // Update tab colors
+        vehicleInfoTab.setTextColor(Color.parseColor("#666666"));
+        obdDataTab.setTextColor(Color.parseColor("#00ACC1"));
+
+        // Update content
+        updateExpandedContent();
+    }
+
+    private void updateExpandedContent() {
         expandedContentLayout.removeAllViews();
+
+        if (showingVehicleInfo) {
+            // Show Vehicle Info tab content
+            if (currentVehicleData != null) {
+                displayVehicleInfo();
+            } else {
+                // Show demo/placeholder content
+                addEmptyStateMessage("Vehicle Information",
+                    "Vehicle information will appear here once connected and VIN is decoded");
+            }
+        } else {
+            // Show OBD Data tab content
+            displayObdData();
+        }
+    }
+
+    private void displayVehicleInfo() {
+        if (currentVehicleData == null) return;
 
         // Add VIN section
         addSectionHeader("Vehicle Identification");
@@ -472,6 +642,248 @@ public class VehicleInfoFooter extends LinearLayout
                 addDetailRow("GVWR", currentVehicleData.gvwr + " lbs");
             }
         }
+    }
+
+    private void displayObdData() {
+        // Display Mode 9 OBD data with better formatting
+        addMode9Section();
+    }
+
+    /**
+     * Add Mode 9 OBD vehicle information to the expanded view with better formatting
+     */
+    @SuppressWarnings("deprecation")
+    private void addMode9Section() {
+        // Get Mode 9 data from VidPvs
+        PvList vidPvs = ObdProt.VidPvs;
+
+        if (vidPvs == null || vidPvs.isEmpty()) {
+            // No Mode 9 data available
+            addEmptyStateMessage("No OBD Mode 9 data available", "Mode 9 data will appear here once retrieved from the vehicle");
+            return;
+        }
+
+        // Categorize Mode 9 data
+        java.util.Map<String, java.util.List<String[]>> categorizedData = new java.util.LinkedHashMap<>();
+        categorizedData.put("ECU Information", new java.util.ArrayList<>());
+        categorizedData.put("Emission Monitors", new java.util.ArrayList<>());
+        categorizedData.put("System Counters", new java.util.ArrayList<>());
+        categorizedData.put("Calibration Data", new java.util.ArrayList<>());
+        categorizedData.put("Other Information", new java.util.ArrayList<>());
+
+        // Process all Mode 9 items
+        for (Object key : vidPvs.keySet()) {
+            Object value = vidPvs.get(key);
+            if (value instanceof EcuDataPv) {
+                EcuDataPv pv = (EcuDataPv) value;
+                String description = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
+                Object dataValue = pv.get(EcuDataPv.FID_VALUE);
+
+                if (description != null && dataValue != null &&
+                    !dataValue.toString().isEmpty() &&
+                    !dataValue.toString().equals("0.0") &&
+                    !dataValue.toString().equals("0") &&
+                    !description.toLowerCase().contains("vehicle identification")) {
+
+                    String label = formatLabel(description);
+                    String displayValue = formatValue(description, dataValue);
+
+                    // Categorize the data
+                    if (description.contains("ECU name") || description.contains("ECU")) {
+                        categorizedData.get("ECU Information").add(new String[]{label, displayValue});
+                    } else if (description.contains("Monitor") || description.contains("COMP") ||
+                              description.contains("Catalyst") || description.contains("O2") ||
+                              description.contains("EGR") || description.contains("EVAP") ||
+                              description.contains("AIR")) {
+                        categorizedData.get("Emission Monitors").add(new String[]{label, displayValue});
+                    } else if (description.contains("Counter") || description.contains("CNTR") ||
+                              description.contains("Counts")) {
+                        categorizedData.get("System Counters").add(new String[]{label, displayValue});
+                    } else if (description.contains("Calibration") || description.contains("CVN") ||
+                              description.contains("CAL")) {
+                        categorizedData.get("Calibration Data").add(new String[]{label, displayValue});
+                    } else {
+                        categorizedData.get("Other Information").add(new String[]{label, displayValue});
+                    }
+                }
+            }
+        }
+
+        // Display categorized data
+        boolean hasAnyData = false;
+        for (java.util.Map.Entry<String, java.util.List<String[]>> entry : categorizedData.entrySet()) {
+            if (!entry.getValue().isEmpty()) {
+                hasAnyData = true;
+                addStyledSectionHeader(entry.getKey());
+                for (String[] item : entry.getValue()) {
+                    addStyledDetailRow(item[0], item[1]);
+                }
+            }
+        }
+
+        if (!hasAnyData) {
+            addEmptyStateMessage("No OBD Mode 9 data available", "Mode 9 data will appear here once retrieved from the vehicle");
+        }
+    }
+
+    private String formatLabel(String description) {
+        // Clean up and format labels
+        if (description.contains("ECU name")) {
+            return "ECU Name";
+        } else if (description.contains("Calibration identifier")) {
+            return description.contains("2") ? "Calibration ID 2" : "Calibration ID";
+        } else if (description.contains("Calibration verification")) {
+            return "CVN (Calibration Verification)";
+        } else if (description.contains("OBDCOMP")) {
+            return "OBD Compliance";
+        } else if (description.contains("IGNCNTR")) {
+            return "Ignition Cycles";
+        } else if (description.contains("CATCOMP")) {
+            String bank = extractBank(description);
+            return "Catalyst Monitor" + bank;
+        } else if (description.contains("O2SCOMP")) {
+            String bank = extractBank(description);
+            return description.contains("Secondary") ?
+                   "Secondary O2 Sensor" + bank : "O2 Sensor Monitor" + bank;
+        } else if (description.contains("Completion Counts")) {
+            return description.replace("Completion Counts", "Completions");
+        } else if (description.contains("Conditions Encountered Counts")) {
+            return description.replace("Conditions Encountered Counts", "Conditions");
+        }
+        return description;
+    }
+
+    private String extractBank(String description) {
+        if (description.contains("Bank 1")) return " (Bank 1)";
+        if (description.contains("Bank 2")) return " (Bank 2)";
+        if (description.contains("Bank 3")) return " (Bank 3)";
+        if (description.contains("Bank 4")) return " (Bank 4)";
+        return "";
+    }
+
+    private String formatValue(String description, Object dataValue) {
+        String displayValue = dataValue.toString();
+
+        // Format hex values
+        if (displayValue.startsWith("0x")) {
+            return displayValue.toUpperCase();
+        }
+
+        // Format numeric counters
+        if (description.contains("Counter") || description.contains("Counts") ||
+            description.contains("CNTR")) {
+            try {
+                double numValue = Double.parseDouble(displayValue);
+                return String.format("%,.0f", numValue); // Add thousands separator
+            } catch (NumberFormatException ignored) {
+                return displayValue;
+            }
+        }
+
+        return displayValue;
+    }
+
+    private void addEmptyStateMessage(String title, String subtitle) {
+        TextView emptyTitle = new TextView(getContext());
+        emptyTitle.setText(title);
+        emptyTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        emptyTitle.setTextColor(Color.parseColor("#666666"));
+        emptyTitle.setGravity(Gravity.CENTER);
+        emptyTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        titleParams.topMargin = dpToPx(48);
+        expandedContentLayout.addView(emptyTitle, titleParams);
+
+        TextView emptySubtitle = new TextView(getContext());
+        emptySubtitle.setText(subtitle);
+        emptySubtitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        emptySubtitle.setTextColor(Color.parseColor("#444444"));
+        emptySubtitle.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        subtitleParams.topMargin = dpToPx(8);
+        subtitleParams.leftMargin = dpToPx(32);
+        subtitleParams.rightMargin = dpToPx(32);
+        expandedContentLayout.addView(emptySubtitle, subtitleParams);
+    }
+
+    private void addStyledSectionHeader(String title) {
+        // Add some space before section
+        View spacer = new View(getContext());
+        LinearLayout.LayoutParams spacerParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            dpToPx(8)
+        );
+        expandedContentLayout.addView(spacer, spacerParams);
+
+        // Add section with modern card style
+        LinearLayout sectionCard = new LinearLayout(getContext());
+        sectionCard.setOrientation(LinearLayout.VERTICAL);
+        sectionCard.setBackgroundColor(Color.parseColor("#252525"));
+        sectionCard.setPadding(dpToPx(12), dpToPx(8), dpToPx(12), dpToPx(4));
+
+        TextView header = new TextView(getContext());
+        header.setText(title);
+        header.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        header.setTextColor(Color.parseColor("#00ACC1"));
+        header.setTypeface(Typeface.DEFAULT_BOLD);
+        header.setAllCaps(true);
+
+        sectionCard.addView(header);
+
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.topMargin = dpToPx(8);
+        expandedContentLayout.addView(sectionCard, cardParams);
+    }
+
+    private void addStyledDetailRow(String label, String value) {
+        if (value == null || value.isEmpty() || value.equals("Not Applicable")) {
+            return;
+        }
+
+        LinearLayout row = new LinearLayout(getContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(dpToPx(8), dpToPx(4), dpToPx(8), dpToPx(4));
+        row.setBackgroundColor(Color.parseColor("#1F1F1F"));
+
+        TextView labelView = new TextView(getContext());
+        labelView.setText(label);
+        labelView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        labelView.setTextColor(Color.parseColor("#999999"));
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
+            0,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            1.0f
+        );
+
+        TextView valueView = new TextView(getContext());
+        valueView.setText(value);
+        valueView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        valueView.setTextColor(Color.parseColor("#FFFFFF"));
+        valueView.setTypeface(Typeface.DEFAULT_BOLD);
+        valueView.setGravity(Gravity.END);
+        LinearLayout.LayoutParams valueParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+
+        row.addView(labelView, labelParams);
+        row.addView(valueView, valueParams);
+
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        rowParams.topMargin = dpToPx(1);
+        expandedContentLayout.addView(row, rowParams);
     }
 
     private String buildPlantLocation(VehicleData data) {
@@ -550,7 +962,7 @@ public class VehicleInfoFooter extends LinearLayout
             vehicleInfo.setText("VIN: " + vin);
             connectionStatus.setText("Unable to decode vehicle details");
             connectionStatus.setTextColor(Color.parseColor("#888888"));
-            expandIndicator.setVisibility(View.GONE);
+            expandIndicator.setVisibility(View.VISIBLE); // Keep visible even without decoded data
             return;
         }
 
@@ -634,7 +1046,7 @@ public class VehicleInfoFooter extends LinearLayout
             vehicleInfo.setText("Error reading vehicle data");
             connectionStatus.setText("Please reconnect");
             connectionStatus.setTextColor(Color.parseColor("#F44336")); // Red for error
-            expandIndicator.setVisibility(View.GONE);
+            expandIndicator.setVisibility(View.VISIBLE); // Keep visible
         }
     }
 
@@ -656,7 +1068,7 @@ public class VehicleInfoFooter extends LinearLayout
                 vehicleInfo.setText("ECU Connected");
                 connectionStatus.setText("Vehicle Info not available (Mode 9 not supported)");
                 connectionStatus.setTextColor(Color.parseColor("#FFA726")); // Orange
-                expandIndicator.setVisibility(View.GONE);
+                expandIndicator.setVisibility(View.VISIBLE); // Keep visible for OBD data
                 if (statusDot != null) {
                     statusDot.getBackground().setTint(Color.parseColor("#FFA726")); // Orange for partial connection
                 }
@@ -669,7 +1081,7 @@ public class VehicleInfoFooter extends LinearLayout
                 vehicleInfo.setText("ECU Connected");
                 connectionStatus.setText("Retrieving vehicle information...");
                 connectionStatus.setTextColor(Color.parseColor("#00ACC1")); // Cyan for loading
-                expandIndicator.setVisibility(View.GONE);
+                expandIndicator.setVisibility(View.VISIBLE); // Keep visible
                 if (statusDot != null) {
                     statusDot.getBackground().setTint(Color.parseColor("#00ACC1")); // Cyan for loading
                 }
@@ -683,7 +1095,7 @@ public class VehicleInfoFooter extends LinearLayout
             vehicleInfo.setText("No Vehicle Connected");
             connectionStatus.setText("Waiting for OBD connection...");
             connectionStatus.setTextColor(Color.parseColor("#888888"));
-            expandIndicator.setVisibility(View.GONE);
+            expandIndicator.setVisibility(View.VISIBLE); // Keep visible for demo mode
             if (statusDot != null) {
                 statusDot.getBackground().setTint(Color.parseColor("#888888")); // Gray when disconnected
             }
