@@ -9,3 +9,6 @@ include ':app'
 include ':nhtsa-vin-decoder'
 project(':nhtsa-vin-decoder').projectDir = new File(rootDir, 'modules/nhtsa-vin-decoder')
 
+include ':automotive-logo-library-android'
+project(':automotive-logo-library-android').projectDir = new File(rootDir, 'modules/automotive-logo-library/android/automotive-logo-library-android')
+

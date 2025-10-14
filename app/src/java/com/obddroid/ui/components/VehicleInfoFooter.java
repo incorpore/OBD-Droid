@@ -2,7 +2,6 @@ package com.obddroid.ui.components;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
@@ -18,7 +17,7 @@ import android.widget.TextView;
 
 import io.github.vindecoder.nhtsa.VehicleData;
 import com.obddroid.core.obd.ElmProt;
-import com.obddroid.utils.CarLogoHelper;
+import com.automotivelogolibrary.AutomotiveLogoLibraryAndroid;
 import com.obddroid.vehicle.VehicleManager;
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.pvs.PvList;
@@ -973,11 +972,11 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
             // Try to set manufacturer logo first
             String make = vehicleData.make;
-            Bitmap logoBitmap = CarLogoHelper.getLogoBitmap(getContext(), make);
+            android.graphics.drawable.Drawable logoDrawable = AutomotiveLogoLibraryAndroid.getLogoDrawable(getContext(), make);
 
-            if (logoBitmap != null) {
+            if (logoDrawable != null) {
                 // We have a logo - show it
-                manufacturerLogo.setImageBitmap(logoBitmap);
+                manufacturerLogo.setImageDrawable(logoDrawable);
                 manufacturerLogo.setVisibility(View.VISIBLE);
                 manufacturerIcon.setVisibility(View.GONE);
                 // Keep no background for PNG logos
