@@ -304,6 +304,7 @@ public class MainActivity extends AppCompatActivity
 
     // === Auto-Reconnect Tracking ===
     private boolean hasAttemptedAutoReconnect = false;
+    private boolean isManuallyReconnecting = false; // Flag to prevent infinite loop during manual reconnect
 
     // === Vehicle Info Footer ===
     private com.obddroid.ui.components.VehicleInfoFooter vehicleInfoFooter;
@@ -987,6 +988,24 @@ public class MainActivity extends AppCompatActivity
                         checkToRestoreLastDataSelection();
                     } else
                     {
+                        // Stop the service at protocol level FIRST to prevent stuck cycles
+                        if (CommService.elm != null) {
+                            log.info("Back pressed - stopping current service before returning to dashboard");
+                            CommService.elm.setService(ObdProt.OBD_SVC_NONE, false);
+                        }
+
+                        // If we saved ECU state before entering a potentially bad mode, restore it now
+                        if (ecuStateBeforeUnsupportedMode != ElmProt.STAT.UNDEFINED &&
+                            ecuConnectionState == ElmProt.STAT.NODATA) {
+                            log.info("Restoring saved ECU state after backing out: " + ecuStateBeforeUnsupportedMode);
+                            ecuConnectionState = ecuStateBeforeUnsupportedMode;
+                            VehicleManager.getInstance().setECUConnectionState(ecuConnectionState);
+                        }
+
+                        // Reset cycle detection
+                        resetCycleDetection();
+
+                        // Then update UI
                         setObdService(ObdProt.OBD_SVC_NONE, null);
                     }
                 } else
@@ -2287,9 +2306,13 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
+        // Set reconnecting flag to prevent infinite loop in onDisconnect()
+        isManuallyReconnecting = true;
+        log.info("Set isManuallyReconnecting = true");
+
         // Stop any existing communication service before reconnecting
         if (mCommService != null) {
-            log.info("Stopping existing communication service before reconnect");
+            log.info("Stopping existing communication service for manual reconnect");
             mCommService.stop();
             mCommService = null;
         }
@@ -2302,6 +2325,7 @@ public class MainActivity extends AppCompatActivity
                         connectBtDevice(btAddress, prefs.getBoolean("bt_secure_connection", false));
                         SnackbarHelper.showInfo(this, "Reconnecting to Bluetooth adapter...");
                     } else {
+                        isManuallyReconnecting = false;
                         SnackbarHelper.showWarning(this, "No Bluetooth device address found. Please select an adapter.");
                     }
                     break;
@@ -2313,19 +2337,23 @@ public class MainActivity extends AppCompatActivity
                         connectNetworkDevice(networkIp, networkPort);
                         SnackbarHelper.showInfo(this, "Reconnecting to network adapter...");
                     } else {
+                        isManuallyReconnecting = false;
                         SnackbarHelper.showWarning(this, "No network address found. Please select an adapter.");
                     }
                     break;
 
                 case "USB":
+                    isManuallyReconnecting = false;
                     SnackbarHelper.showWarning(this, "USB reconnection requires manual device selection. Please use 'Select Adapter'.");
                     break;
 
                 default:
+                    isManuallyReconnecting = false;
                     SnackbarHelper.showWarning(this, "Unknown adapter type. Please select an adapter.");
                     break;
             }
         } catch (Exception e) {
+            isManuallyReconnecting = false;
             log.log(Level.WARNING, "Error reconnecting to adapter", e);
             SnackbarHelper.showError(this, "Failed to reconnect. Please select an adapter manually.");
         }
@@ -3051,6 +3079,12 @@ public class MainActivity extends AppCompatActivity
     {
         stopDemoService();
 
+        // Clear manual reconnect flag if it was set
+        if (isManuallyReconnecting) {
+            log.info("Manual reconnect completed successfully - clearing flag");
+            isManuallyReconnecting = false;
+        }
+
         // Reset ECU selection state for new connection
         ecuUserSelected = false;
 
@@ -3076,6 +3110,13 @@ public class MainActivity extends AppCompatActivity
      */
     private void onDisconnect()
     {
+        // Don't clear vehicle data or set up dashboard during manual reconnect
+        if (isManuallyReconnecting) {
+            log.info("Skipping full disconnect handling - manual reconnect in progress");
+            setMode(MODE.OFFLINE);
+            return;
+        }
+
         // Clear vehicle data on disconnect
         VehicleManager.getInstance().clearVehicle();
 

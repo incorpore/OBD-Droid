@@ -1274,25 +1274,27 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             Log.d(TAG, "No description found for mnemonic: " + mnemonicKey);
         }
 
-        // Make row clickable if there's a description
-        if (hasDescription) {
-            row.setClickable(true);
-            row.setFocusable(true);
+        // Make ALL rows clickable (even without descriptions)
+        row.setClickable(true);
+        row.setFocusable(true);
 
-            // Add click listener to show description
-            final String finalPid = pidDisplay;
-            row.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    // Add subtle haptic feedback
-                    v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
+        // Add click listener to show appropriate dialog
+        final String finalPid = pidDisplay;
+        row.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Add subtle haptic feedback
+                v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
+                if (hasDescription) {
                     showDescriptionDialog(label, value, description, finalPid);
+                } else {
+                    showUnknownPidDialog(label, value, finalPid);
                 }
-            });
+            }
+        });
 
-            // Add visual indicator that row is clickable
-            row.setBackgroundColor(Color.parseColor("#222222")); // Slightly lighter
-        }
+        // Add visual indicator that row is clickable (slightly lighter background)
+        row.setBackgroundColor(Color.parseColor("#222222"));
 
         TextView labelView = new TextView(getContext());
         labelView.setText(label);
@@ -1324,6 +1326,170 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         );
         rowParams.topMargin = dpToPx(3);
         expandedContentLayout.addView(row, rowParams);
+    }
+
+    /**
+     * Show a dialog for unknown PIDs (those not in messages.csv)
+     */
+    private void showUnknownPidDialog(String label, String value, String pidDisplay) {
+        // Create custom layout for the dialog
+        LinearLayout dialogLayout = new LinearLayout(getContext());
+        dialogLayout.setOrientation(LinearLayout.VERTICAL);
+        dialogLayout.setPadding(dpToPx(24), dpToPx(20), dpToPx(24), dpToPx(20));
+        dialogLayout.setBackgroundColor(Color.parseColor("#FFFFFF"));
+
+        // Unknown PID message
+        TextView unknownHeader = new TextView(getContext());
+        unknownHeader.setText("Unknown PID");
+        unknownHeader.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        unknownHeader.setTextColor(Color.parseColor("#666666"));
+        unknownHeader.setTypeface(Typeface.DEFAULT_BOLD);
+        unknownHeader.setAllCaps(true);
+        unknownHeader.setLetterSpacing(0.05f);
+        LinearLayout.LayoutParams unknownHeaderParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        dialogLayout.addView(unknownHeader, unknownHeaderParams);
+
+        // Unknown PID explanation
+        TextView unknownText = new TextView(getContext());
+        unknownText.setText("This OBD parameter is not yet in our database. If you know what this parameter represents, you can help contribute this information to improve the app.");
+        unknownText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        unknownText.setTextColor(Color.parseColor("#212121"));
+        unknownText.setLineSpacing(TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics()), 1);
+        LinearLayout.LayoutParams unknownTextParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        unknownTextParams.topMargin = dpToPx(12);
+        dialogLayout.addView(unknownText, unknownTextParams);
+
+        // Add PID/VID display if available
+        if (pidDisplay != null && !pidDisplay.isEmpty()) {
+            TextView pidLabel = new TextView(getContext());
+            pidLabel.setText("PID/VID");
+            pidLabel.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+            pidLabel.setTextColor(Color.parseColor("#666666"));
+            pidLabel.setTypeface(Typeface.DEFAULT_BOLD);
+            pidLabel.setAllCaps(true);
+            pidLabel.setLetterSpacing(0.05f);
+            LinearLayout.LayoutParams pidLabelParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            pidLabelParams.topMargin = dpToPx(16);
+            dialogLayout.addView(pidLabel, pidLabelParams);
+
+            TextView pidText = new TextView(getContext());
+            pidText.setText(pidDisplay);
+            pidText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+            pidText.setTextColor(Color.parseColor("#00ACC1")); // Cyan accent
+            pidText.setTypeface(Typeface.MONOSPACE);
+            LinearLayout.LayoutParams pidTextParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            pidTextParams.topMargin = dpToPx(8);
+            dialogLayout.addView(pidText, pidTextParams);
+        }
+
+        // Divider
+        View divider = new View(getContext());
+        divider.setBackgroundColor(Color.parseColor("#E0E0E0"));
+        LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            dpToPx(1)
+        );
+        dividerParams.topMargin = dpToPx(20);
+        dividerParams.bottomMargin = dpToPx(16);
+        dialogLayout.addView(divider, dividerParams);
+
+        // Current value section
+        LinearLayout valueRow = new LinearLayout(getContext());
+        valueRow.setOrientation(LinearLayout.VERTICAL);
+
+        TextView valueLabel = new TextView(getContext());
+        valueLabel.setText("Current Value");
+        valueLabel.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        valueLabel.setTextColor(Color.parseColor("#666666"));
+        valueLabel.setTypeface(Typeface.DEFAULT_BOLD);
+        valueLabel.setAllCaps(true);
+        valueLabel.setLetterSpacing(0.05f);
+        LinearLayout.LayoutParams valueLabelParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        valueRow.addView(valueLabel, valueLabelParams);
+
+        TextView valueText = new TextView(getContext());
+        valueText.setText(value);
+        valueText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        valueText.setTextColor(Color.parseColor("#00ACC1"));
+        valueText.setTypeface(Typeface.DEFAULT_BOLD);
+        LinearLayout.LayoutParams valueTextParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        valueTextParams.topMargin = dpToPx(8);
+        valueRow.addView(valueText, valueTextParams);
+
+        dialogLayout.addView(valueRow);
+
+        // Create and show the dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle(label);
+        builder.setView(dialogLayout);
+
+        // Add Contribute button (placeholder for future implementation)
+        builder.setNeutralButton("Contribute Info", null);
+
+        // Add Copy button
+        builder.setNegativeButton("Copy Value", null);
+
+        // Add Close button
+        builder.setPositiveButton("Close", null);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Style the buttons
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.parseColor("#00ACC1"));
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.parseColor("#00ACC1"));
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(Color.parseColor("#FFA726")); // Orange for contribute
+
+        // Override Contribute button click listener (placeholder for future implementation)
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Placeholder for future contribution feature
+                android.widget.Toast.makeText(getContext(), "Contribution feature coming soon!",
+                    android.widget.Toast.LENGTH_SHORT).show();
+                // Note: Dialog is NOT dismissed
+            }
+        });
+
+        // Override Copy button click listener to prevent dialog dismissal
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Copy label and value to clipboard
+                String copyText = label + ": " + value;
+                if (pidDisplay != null && !pidDisplay.isEmpty()) {
+                    copyText += " (PID: " + pidDisplay + ")";
+                }
+                android.content.ClipboardManager clipboard = (android.content.ClipboardManager)
+                    getContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+                android.content.ClipData clip = android.content.ClipData.newPlainText(label, copyText);
+                clipboard.setPrimaryClip(clip);
+
+                // Show a toast to confirm
+                android.widget.Toast.makeText(getContext(), "Copied to clipboard",
+                    android.widget.Toast.LENGTH_SHORT).show();
+                // Note: Dialog is NOT dismissed
+            }
+        });
     }
 
     /**
@@ -1447,10 +1613,23 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         builder.setTitle(label);
         builder.setView(dialogLayout);
 
-        // Add Copy button
-        builder.setNegativeButton("Copy Value", new android.content.DialogInterface.OnClickListener() {
+        // Add Copy button (set listener to null in builder, we'll override after show())
+        builder.setNegativeButton("Copy Value", null);
+
+        // Add Close button (null listener = just dismiss)
+        builder.setPositiveButton("Close", null);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Style the buttons
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.parseColor("#00ACC1"));
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.parseColor("#00ACC1"));
+
+        // Override Copy button click listener to prevent dialog dismissal
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new OnClickListener() {
             @Override
-            public void onClick(android.content.DialogInterface dialog, int which) {
+            public void onClick(View v) {
                 // Copy label and value to clipboard
                 String copyText = label + ": " + value;
                 android.content.ClipboardManager clipboard = (android.content.ClipboardManager)
@@ -1461,18 +1640,9 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
                 // Show a toast to confirm
                 android.widget.Toast.makeText(getContext(), "Copied to clipboard",
                     android.widget.Toast.LENGTH_SHORT).show();
+                // Note: Dialog is NOT dismissed - user can copy and continue viewing
             }
         });
-
-        // Add Close button
-        builder.setPositiveButton("Close", null);
-
-        AlertDialog dialog = builder.create();
-        dialog.show();
-
-        // Style the buttons
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.parseColor("#00ACC1"));
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.parseColor("#00ACC1"));
     }
 
     private String buildPlantLocation(VehicleData data) {
