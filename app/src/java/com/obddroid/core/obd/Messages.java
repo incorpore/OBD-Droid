@@ -7,7 +7,7 @@ import java.util.ResourceBundle;
 
 public class Messages
 {
-	private static final String BUNDLE_NAME = "prot.messages"; //$NON-NLS-1$
+	private static final String BUNDLE_NAME = "protocol.messages"; //$NON-NLS-1$
 	private static ResourceBundle RESOURCE_BUNDLE;
 
 	public Messages()

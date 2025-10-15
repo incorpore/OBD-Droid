@@ -18,7 +18,7 @@ public class ObdCodeList
 	/** Creates a new instance of ObdCodeList */
 	public ObdCodeList()
 	{
-		super("prot.codes");
+		super("protocol.codes");
 	}
 
 	/**
