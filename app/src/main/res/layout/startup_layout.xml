@@ -11,38 +11,43 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <!-- Main Dashboard Container -->
-        <ScrollView
+        <!-- Container for breadcrumb + scroll -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#F5F5F5"
-            android:fillViewport="true">
+            android:orientation="vertical">
+
+            <!-- Breadcrumb bar under navbar -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/breadcrumb_background"
+                android:orientation="horizontal"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Dashboard"
+                    android:textSize="14sp"
+                    android:textColor="#FFFFFF"
+                    android:alpha="0.9"/>
+            </LinearLayout>
+
+            <!-- Main Dashboard Container -->
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#DDDDDD"
+                android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp">
-
-            <!-- Welcome Header -->
-            <TextView
-                android:id="@+id/welcome_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="OBD Dashboard"
-                android:textSize="28sp"
-                android:textStyle="bold"
-                android:textColor="#1A1A1A"
-                android:layout_marginBottom="8dp"/>
-
-            <TextView
-                android:id="@+id/status_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Select a service to begin"
-                android:textSize="16sp"
-                android:textColor="#666666"
-                android:layout_marginBottom="24dp"/>
 
             <!-- Cards Container -->
             <LinearLayout
@@ -88,7 +93,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Live Data"
-                            android:textSize="20sp"
+                            android:textSize="18sp"
                             android:textStyle="bold"
                             android:textColor="#1A1A1A"/>
 
@@ -96,7 +101,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Monitor real-time sensor values"
-                            android:textSize="14sp"
+                            android:textSize="13sp"
                             android:textColor="#666666"
                             android:layout_marginTop="4dp"/>
                     </LinearLayout>
@@ -105,7 +110,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="›"
-                        android:textSize="28sp"
+                        android:textSize="24sp"
                         android:textColor="#999999"
                         android:layout_gravity="center_vertical"/>
                 </LinearLayout>
@@ -148,7 +153,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Test Control"
-                            android:textSize="20sp"
+                            android:textSize="18sp"
                             android:textStyle="bold"
                             android:textColor="#1A1A1A"/>
 
@@ -156,7 +161,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Run diagnostic tests and controls"
-                            android:textSize="14sp"
+                            android:textSize="13sp"
                             android:textColor="#666666"
                             android:layout_marginTop="4dp"/>
                     </LinearLayout>
@@ -165,7 +170,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="›"
-                        android:textSize="28sp"
+                        android:textSize="24sp"
                         android:textColor="#999999"
                         android:layout_gravity="center_vertical"/>
                 </LinearLayout>
@@ -208,7 +213,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Fault Codes"
-                            android:textSize="20sp"
+                            android:textSize="18sp"
                             android:textStyle="bold"
                             android:textColor="#1A1A1A"/>
 
@@ -217,7 +222,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Read and clear trouble codes"
-                            android:textSize="14sp"
+                            android:textSize="13sp"
                             android:textColor="#666666"
                             android:layout_marginTop="4dp"/>
                     </LinearLayout>
@@ -226,7 +231,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="›"
-                        android:textSize="28sp"
+                        android:textSize="24sp"
                         android:textColor="#999999"
                         android:layout_gravity="center_vertical"/>
                 </LinearLayout>
@@ -269,7 +274,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Reconnect to Last Adapter"
-                            android:textSize="20sp"
+                            android:textSize="18sp"
                             android:textStyle="bold"
                             android:textColor="#1A1A1A"/>
 
@@ -278,7 +283,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="No adapter connected yet"
-                            android:textSize="14sp"
+                            android:textSize="13sp"
                             android:textColor="#666666"
                             android:layout_marginTop="4dp"/>
                     </LinearLayout>
@@ -287,7 +292,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="›"
-                        android:textSize="28sp"
+                        android:textSize="24sp"
                         android:textColor="#999999"
                         android:layout_gravity="center_vertical"/>
                 </LinearLayout>
@@ -296,6 +301,8 @@
 
         </LinearLayout>
     </ScrollView>
+
+        </LinearLayout>
 
     <ListView
         android:id="@android:id/list"

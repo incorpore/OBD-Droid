@@ -634,6 +634,23 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         }
     }
 
+    /**
+     * Check if the footer is currently expanded
+     * @return true if expanded, false otherwise
+     */
+    public boolean isExpanded() {
+        return isExpanded;
+    }
+
+    /**
+     * Collapse the footer if it's expanded
+     */
+    public void collapse() {
+        if (isExpanded) {
+            toggleExpanded();
+        }
+    }
+
     private void switchToVehicleInfo() {
         if (showingVehicleInfo) return;
         showingVehicleInfo = true;
@@ -1396,8 +1413,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
         // Current value section
         LinearLayout valueRow = new LinearLayout(getContext());
-        valueRow.setOrientation(LinearLayout.HORIZONTAL);
-        valueRow.setGravity(Gravity.CENTER_VERTICAL);
+        valueRow.setOrientation(LinearLayout.VERTICAL);
 
         TextView valueLabel = new TextView(getContext());
         valueLabel.setText("Current Value");
@@ -1407,9 +1423,8 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         valueLabel.setAllCaps(true);
         valueLabel.setLetterSpacing(0.05f);
         LinearLayout.LayoutParams valueLabelParams = new LinearLayout.LayoutParams(
-            0,
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            1.0f
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
         );
         valueRow.addView(valueLabel, valueLabelParams);
 
@@ -1418,11 +1433,11 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         valueText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
         valueText.setTextColor(Color.parseColor("#00ACC1"));
         valueText.setTypeface(Typeface.DEFAULT_BOLD);
-        valueText.setGravity(Gravity.END);
         LinearLayout.LayoutParams valueTextParams = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         );
+        valueTextParams.topMargin = dpToPx(8);
         valueRow.addView(valueText, valueTextParams);
 
         dialogLayout.addView(valueRow);

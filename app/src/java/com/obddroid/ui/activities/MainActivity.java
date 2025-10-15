@@ -298,11 +298,15 @@ public class MainActivity extends AppCompatActivity
     private int serviceWhenCycleStarted = ObdProt.OBD_SVC_NONE;
     private long lastCycleTimestamp = 0;
     private AlertDialog unsupportedModeDialog = null;
+    private ElmProt.STAT ecuStateBeforeUnsupportedMode = ElmProt.STAT.UNDEFINED; // Save good state before cycles
     private static final int MAX_CYCLES_BEFORE_ALERT = 3;
     private static final long CYCLE_RESET_TIMEOUT_MS = 5000; // Reset cycle count if no cycles for 5 seconds
 
     // === Auto-Reconnect Tracking ===
     private boolean hasAttemptedAutoReconnect = false;
+
+    // === Vehicle Info Footer ===
+    private com.obddroid.ui.components.VehicleInfoFooter vehicleInfoFooter;
 
     /**
      * Handle message requests
@@ -392,7 +396,9 @@ public class MainActivity extends AppCompatActivity
                         switch (event.getType())
                         {
                             case PvChangeEvent.PV_ADDED:
-                                currDataAdapter.setPvList(currDataAdapter.pvs);
+                                if (currDataAdapter != null) {
+                                    currDataAdapter.setPvList(currDataAdapter.pvs);
+                                }
                                 try
                                 {
                                     // Debug: Log event source
@@ -967,6 +973,12 @@ public class MainActivity extends AppCompatActivity
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
+                // Check if vehicle info footer is expanded - collapse it first
+                if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {
+                    vehicleInfoFooter.collapse();
+                    return; // Consume the back press
+                }
+
                 if (CommService.elm.getService() != ObdProt.OBD_SVC_NONE)
                 {
                     if (dataViewMode != DATA_VIEW_MODE.LIST)
@@ -2509,6 +2521,26 @@ public class MainActivity extends AppCompatActivity
             // Track the service where cycles started
             if (serviceWhenCycleStarted == ObdProt.OBD_SVC_NONE) {
                 serviceWhenCycleStarted = currentService;
+                // Only save as backup if we don't already have a saved state
+                // (The state should have been saved when clicking Test Control card)
+                if (ecuStateBeforeUnsupportedMode == ElmProt.STAT.UNDEFINED) {
+                    // Save the good ECU state before we start cycling into NODATA
+                    // Check if we were in a good connected state before this cycle
+                    if (lastConnectionState == ElmProt.STAT.CONNECTED ||
+                        lastConnectionState == ElmProt.STAT.ECU_DETECTED ||
+                        lastConnectionState == ElmProt.STAT.ECU_SELECTED) {
+                        ecuStateBeforeUnsupportedMode = lastConnectionState;
+                        log.info("Backup: Saved ECU state from lastConnectionState: " + ecuStateBeforeUnsupportedMode);
+                    } else if (ecuConnectionState == ElmProt.STAT.CONNECTED ||
+                               ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
+                               ecuConnectionState == ElmProt.STAT.ECU_SELECTED) {
+                        // If lastConnectionState wasn't good, use current ecuConnectionState
+                        ecuStateBeforeUnsupportedMode = ecuConnectionState;
+                        log.info("Backup: Saved ECU state from ecuConnectionState: " + ecuStateBeforeUnsupportedMode);
+                    }
+                } else {
+                    log.info("ECU state already saved: " + ecuStateBeforeUnsupportedMode);
+                }
             }
 
             // Only count if it's the same service
@@ -2536,6 +2568,7 @@ public class MainActivity extends AppCompatActivity
         serviceWhenCycleStarted = ObdProt.OBD_SVC_NONE;
         lastCycleTimestamp = 0;
         lastConnectionState = ElmProt.STAT.UNDEFINED;
+        ecuStateBeforeUnsupportedMode = ElmProt.STAT.UNDEFINED;
     }
 
     /**
@@ -2582,10 +2615,24 @@ public class MainActivity extends AppCompatActivity
                })
                .setPositiveButton("Go Back", (dialog, which) -> {
                    // Return to dashboard
+                   log.info("Go Back button clicked - ecuConnectionState: " + ecuConnectionState);
+
                    resetCycleDetection();
-                   setObdService(ObdProt.OBD_SVC_NONE, null);
                    dialog.dismiss();
                    unsupportedModeDialog = null;
+
+                   // Always trigger ECU reconnection after unsupported mode
+                   if (CommService.elm != null) {
+                       log.info("Triggering ECU reconnection after unsupported mode");
+                       // Reset the ELM adapter to trigger fresh ECU detection
+                       // This is the same flow as when you first connect to the adapter
+                       CommService.elm.reset();
+                   } else {
+                       log.warning("Cannot reset - CommService.elm is null");
+                   }
+
+                   // Return to dashboard
+                   setObdService(ObdProt.OBD_SVC_NONE, null);
                });
 
         unsupportedModeDialog = builder.create();
@@ -2723,6 +2770,18 @@ public class MainActivity extends AppCompatActivity
 
                 // Set up dashboard card click listeners
                 setupDashboardCards();
+
+                // Update status to show proper ECU state when returning to dashboard
+                // This ensures status is refreshed from "No Data" or other service-specific states
+                if (ecuUserSelected) {
+                    // User manually selected ECU - always show "ECU Selected"
+                    setStatus(getResources().getStringArray(R.array.elmcomm_states)[ElmProt.STAT.ECU_SELECTED.ordinal()]);
+                } else if (ecuConnectionState == ElmProt.STAT.CONNECTED ||
+                           ecuConnectionState == ElmProt.STAT.ECU_DETECTED) {
+                    // Auto-detected ECU - show actual state
+                    setStatus(getResources().getStringArray(R.array.elmcomm_states)[ecuConnectionState.ordinal()]);
+                }
+                // If disconnected/offline, the status will be handled by the mode-specific logic below
                 break;
         }
 
@@ -2766,7 +2825,11 @@ public class MainActivity extends AppCompatActivity
             testControlCard.setOnClickListener(v -> {
                 log.info("Test Control card clicked!");
                 if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
-                    ecuConnectionState == ElmProt.STAT.CONNECTED) {
+                    ecuConnectionState == ElmProt.STAT.CONNECTED ||
+                    ecuConnectionState == ElmProt.STAT.ECU_SELECTED) {
+                    // Save current good ECU state before entering potentially unsupported mode
+                    ecuStateBeforeUnsupportedMode = ecuConnectionState;
+                    log.info("Saved ECU state before entering Test Control: " + ecuStateBeforeUnsupportedMode);
                     setObdService(ObdProt.OBD_SVC_CTRL_MODE, "Test Control");
                 } else {
                     SnackbarHelper.showWarning(this, "Please connect to vehicle first");
@@ -2831,23 +2894,17 @@ public class MainActivity extends AppCompatActivity
 
         // Update the reconnect card subtitle
         updateReconnectCardSubtitle();
-
-        // Hide status text
-        TextView statusText = findViewById(R.id.status_text);
-        if (statusText != null) {
-            statusText.setVisibility(View.GONE);
-        }
     }
 
     /**
      * Wire up footer overlay to close footer when clicking outside
      */
     private void setupFooterOverlay() {
-        com.obddroid.ui.components.VehicleInfoFooter footer = findViewById(R.id.vehicle_footer);
+        vehicleInfoFooter = findViewById(R.id.vehicle_footer);
         View overlay = findViewById(R.id.footer_overlay);
 
-        if (footer != null && overlay != null) {
-            footer.setOverlayView(overlay);
+        if (vehicleInfoFooter != null && overlay != null) {
+            vehicleInfoFooter.setOverlayView(overlay);
             log.info("Footer overlay wired up successfully");
         } else {
             log.warning("Could not find footer or overlay view");
@@ -2892,6 +2949,10 @@ public class MainActivity extends AppCompatActivity
     {
         if (filtered)
         {
+            if (currDataAdapter == null) {
+                log.warning("currDataAdapter is null, skipping filter");
+                return;
+            }
             TreeSet<Integer> selPids = new TreeSet<>();
             int[] selectedPositions = getSelectedPositions();
             for (int pos : selectedPositions)
