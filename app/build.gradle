@@ -68,10 +68,8 @@ dependencies {
     implementation 'androidx.preference:preference:1.2.1'
     implementation 'com.google.android.material:material:1.11.0'
 
-    // NHTSA VIN Decoder submodule (Java library)
-    implementation project(':nhtsa-vin-decoder-java')
-    // Alternative: Android-specific wrapper with built-in threading
-    // implementation project(':nhtsa-vin-decoder-android')
+    // NHTSA VIN Decoder - Android wrapper with built-in threading
+    implementation project(':nhtsa-vin-decoder-android')
 
     // NHTSA VIN Decoder API dependencies
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
