@@ -78,4 +78,7 @@ dependencies {
 
     // Automotive Logo Library
     implementation project(':automotive-logo-library-android')
+
+    // DTC Database - Comprehensive diagnostic trouble code database
+    implementation project(':dtc-database-android')
 }

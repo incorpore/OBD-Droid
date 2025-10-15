@@ -589,6 +589,11 @@ public class MainActivity extends AppCompatActivity
         // Initialize VehicleManager with context
         VehicleManager.getInstance(this);
 
+        // Initialize DTC Database for comprehensive code lookup (28K+ codes)
+        com.obddroid.core.ecu.ObdCodeList.setDatabaseInstance(
+            new com.obddroid.core.ecu.DTCDatabaseCodeList(this)
+        );
+
         // Set status bar and navigation bar colors to match our theme right away
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setStatusBarColor(Color.parseColor("#212121"));

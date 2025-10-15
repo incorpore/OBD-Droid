@@ -54,7 +54,8 @@ public class Conversions
 	public static final int CNV_ID_OBD_CODELIST = 26;
 	public static final int CNV_ID_MAX = 27;// This needs to be last entry
 
-	private static final ObdCodeList obdCodeList = new ObdCodeList();
+	// Use getInstance() to get database-backed instance when available
+	private static final ObdCodeList obdCodeList = ObdCodeList.getInstance();
 
 	private static final HashConversion cnvObdType = new HashConversion(new String[]{
 		"1=OBD II",

@@ -662,12 +662,14 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             return;
         }
 
-        // Categorize Mode 9 data
+        // Categorize Mode 9 data - show EVERYTHING
         java.util.Map<String, java.util.List<String[]>> categorizedData = new java.util.LinkedHashMap<>();
+        categorizedData.put("Vehicle Identification", new java.util.ArrayList<>());
         categorizedData.put("ECU Information", new java.util.ArrayList<>());
+        categorizedData.put("Calibration Data", new java.util.ArrayList<>());
         categorizedData.put("Emission Monitors", new java.util.ArrayList<>());
         categorizedData.put("System Counters", new java.util.ArrayList<>());
-        categorizedData.put("Calibration Data", new java.util.ArrayList<>());
+        categorizedData.put("Protocol Information", new java.util.ArrayList<>());
         categorizedData.put("Other Information", new java.util.ArrayList<>());
 
         // Process all Mode 9 items
@@ -678,28 +680,42 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
                 String description = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
                 Object dataValue = pv.get(EcuDataPv.FID_VALUE);
 
-                if (description != null && dataValue != null &&
-                    !dataValue.toString().isEmpty() &&
-                    !dataValue.toString().equals("0.0") &&
-                    !dataValue.toString().equals("0") &&
-                    !description.toLowerCase().contains("vehicle identification")) {
+                if (description != null && dataValue != null) {
+                    // Show ALL Mode 9 data including zeros and VIN
 
                     String label = formatLabel(description);
                     String displayValue = formatValue(description, dataValue);
 
-                    // Categorize the data
-                    if (description.contains("ECU name") || description.contains("ECU")) {
+                    // Categorize ALL the data - including VIN and message counts
+                    if (description.toLowerCase().contains("vehicle identification") ||
+                        description.toLowerCase().contains("vin")) {
+                        categorizedData.get("Vehicle Identification").add(new String[]{label, displayValue});
+                    } else if (description.contains("Message count") ||
+                              description.contains("Number of") ||
+                              description.contains("counts_") ||
+                              description.contains("numitems") ||
+                              description.contains("length")) {
+                        categorizedData.get("Protocol Information").add(new String[]{label, displayValue});
+                    } else if (description.contains("ECU name") || description.contains("ECU")) {
                         categorizedData.get("ECU Information").add(new String[]{label, displayValue});
                     } else if (description.contains("Monitor") || description.contains("COMP") ||
                               description.contains("Catalyst") || description.contains("O2") ||
                               description.contains("EGR") || description.contains("EVAP") ||
-                              description.contains("AIR")) {
-                        categorizedData.get("Emission Monitors").add(new String[]{label, displayValue});
+                              description.contains("AIR") || description.contains("Exhaust") ||
+                              description.contains("Boost") || description.contains("Fuel") ||
+                              description.contains("NMHC") || description.contains("NOx") ||
+                              description.contains("PM Filter")) {
+                        // Skip if it's just ignition counter
+                        if (!description.contains("Ignition")) {
+                            categorizedData.get("Emission Monitors").add(new String[]{label, displayValue});
+                        } else {
+                            categorizedData.get("System Counters").add(new String[]{label, displayValue});
+                        }
                     } else if (description.contains("Counter") || description.contains("CNTR") ||
-                              description.contains("Counts")) {
+                              description.contains("Ignition") || description.contains("OBD Monitoring Conditions")) {
                         categorizedData.get("System Counters").add(new String[]{label, displayValue});
                     } else if (description.contains("Calibration") || description.contains("CVN") ||
-                              description.contains("CAL")) {
+                              description.contains("CAL-ID") || description.contains("CAL")) {
                         categorizedData.get("Calibration Data").add(new String[]{label, displayValue});
                     } else {
                         categorizedData.get("Other Information").add(new String[]{label, displayValue});
@@ -726,24 +742,59 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
     }
 
     private String formatLabel(String description) {
-        // Clean up and format labels
-        if (description.contains("ECU name")) {
+        // Clean up and format ALL labels including VIN and message counts
+        if (description.toLowerCase().contains("vehicle identification number")) {
+            return "VIN";
+        } else if (description.contains("Number of VIN items")) {
+            return "VIN Item Count";
+        } else if (description.contains("Message count VIN")) {
+            return "VIN Message Count";
+        } else if (description.contains("Message count CAL-ID")) {
+            return "CAL-ID Message Count";
+        } else if (description.contains("Number of CAL-ID items")) {
+            return "CAL-ID Item Count";
+        } else if (description.contains("Message count CVN")) {
+            return "CVN Message Count";
+        } else if (description.contains("Message count IPT")) {
+            return "IPT Message Count";
+        } else if (description.contains("ECU name length")) {
+            return "ECU Name Length";
+        } else if (description.contains("ECU name")) {
             return "ECU Name";
         } else if (description.contains("Calibration identifier")) {
             return description.contains("2") ? "Calibration ID 2" : "Calibration ID";
         } else if (description.contains("Calibration verification")) {
             return "CVN (Calibration Verification)";
-        } else if (description.contains("OBDCOMP")) {
-            return "OBD Compliance";
+        } else if (description.contains("OBDCOMP") || description.contains("OBDCOND")) {
+            return "OBD Monitor Conditions";
         } else if (description.contains("IGNCNTR")) {
             return "Ignition Cycles";
         } else if (description.contains("CATCOMP")) {
             String bank = extractBank(description);
-            return "Catalyst Monitor" + bank;
+            return "Catalyst Monitor Completions" + bank;
+        } else if (description.contains("CATCOND")) {
+            String bank = extractBank(description);
+            return "Catalyst Monitor Conditions" + bank;
         } else if (description.contains("O2SCOMP")) {
             String bank = extractBank(description);
             return description.contains("Secondary") ?
-                   "Secondary O2 Sensor" + bank : "O2 Sensor Monitor" + bank;
+                   "Secondary O2 Completions" + bank : "O2 Monitor Completions" + bank;
+        } else if (description.contains("O2SCOND")) {
+            String bank = extractBank(description);
+            return description.contains("Secondary") ?
+                   "Secondary O2 Conditions" + bank : "O2 Monitor Conditions" + bank;
+        } else if (description.contains("EGRCOMP")) {
+            return "EGR Monitor Completions";
+        } else if (description.contains("EGRCOND")) {
+            return "EGR Monitor Conditions";
+        } else if (description.contains("EVAPCOMP")) {
+            return "EVAP Monitor Completions";
+        } else if (description.contains("EVAPCOND")) {
+            return "EVAP Monitor Conditions";
+        } else if (description.contains("AIRCOMP")) {
+            return "AIR Monitor Completions";
+        } else if (description.contains("AIRCOND")) {
+            return "AIR Monitor Conditions";
         } else if (description.contains("Completion Counts")) {
             return description.replace("Completion Counts", "Completions");
         } else if (description.contains("Conditions Encountered Counts")) {
@@ -763,20 +814,46 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
     private String formatValue(String description, Object dataValue) {
         String displayValue = dataValue.toString();
 
+        // Handle empty values
+        if (displayValue.isEmpty()) {
+            return "(empty)";
+        }
+
         // Format hex values
         if (displayValue.startsWith("0x")) {
             return displayValue.toUpperCase();
         }
 
-        // Format numeric counters
+        // Special formatting for zeros in certain fields
+        if (displayValue.equals("0") || displayValue.equals("0.0")) {
+            if (description.contains("Message count") ||
+                description.contains("Number of") ||
+                description.contains("length")) {
+                return "0";  // Show zero as-is for counts
+            } else if (description.contains("Monitor")) {
+                return "0";  // Show zero for monitor counts
+            }
+        }
+
+        // Format numeric counters with thousands separator for large numbers
         if (description.contains("Counter") || description.contains("Counts") ||
-            description.contains("CNTR")) {
+            description.contains("CNTR") || description.contains("Conditions") ||
+            description.contains("Completions")) {
             try {
                 double numValue = Double.parseDouble(displayValue);
-                return String.format("%,.0f", numValue); // Add thousands separator
+                if (numValue >= 1000) {
+                    return String.format("%,.0f", numValue); // Add thousands separator
+                } else {
+                    return String.format("%.0f", numValue); // No separator for small numbers
+                }
             } catch (NumberFormatException ignored) {
                 return displayValue;
             }
+        }
+
+        // Format VIN to uppercase
+        if (description.toLowerCase().contains("vehicle identification") && displayValue.length() == 17) {
+            return displayValue.toUpperCase();
         }
 
         return displayValue;
