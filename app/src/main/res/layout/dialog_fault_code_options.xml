@@ -155,6 +155,90 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- Watch Nonda Video Option -->
+        <LinearLayout
+            android:id="@+id/option_watch_nonda"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_youtube_24"/>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginStart="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Watch Nonda Video"
+                    android:textSize="16sp"
+                    android:textColor="#424242"/>
+
+                <TextView
+                    android:id="@+id/nonda_video_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Open the nonda YouTube guide"
+                    android:textSize="12sp"
+                    android:textColor="#9E9E9E"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Ask AI Option -->
+        <LinearLayout
+            android:id="@+id/option_ask_ai"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_ai_24"/>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginStart="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ask AI"
+                    android:textSize="16sp"
+                    android:textColor="#424242"/>
+
+                <TextView
+                    android:id="@+id/ask_ai_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Get AI-powered analysis"
+                    android:textSize="12sp"
+                    android:textColor="#9E9E9E"/>
+            </LinearLayout>
+        </LinearLayout>
+
         <!-- Copy Code Option -->
         <LinearLayout
             android:id="@+id/option_copy_code"

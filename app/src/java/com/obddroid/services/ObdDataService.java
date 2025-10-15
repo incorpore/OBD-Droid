@@ -82,12 +82,6 @@ public class ObdDataService implements IDataManager {
             serviceDataStores.put(service, store);
         }
 
-        // Special handling for freeze frame data
-        if (service == ObdProt.OBD_SVC_FREEZEFRAME) {
-            // Store freeze frame data separately for each DTC
-            storeFreezeFrameDataInternal(pid, data);
-        }
-
         // Notify listeners
         notifyDataListeners(service);
     }

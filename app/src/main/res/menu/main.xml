@@ -14,11 +14,9 @@
         android:title="@string/disconnect"
         android:visible="false"/>
     <item
-        android:id="@+id/obd_services"
-        android:icon="@drawable/ic_more_vert_24"
+        android:id="@+id/settings"
+        android:icon="@drawable/ic_settings_24"
         android:enabled="true"
         app:showAsAction="always"
-        android:title="@string/obd_services">
-        <menu/><!-- submenu: obd_service.xml -->
-    </item>
+        android:title="@string/settings"/>
 </menu>

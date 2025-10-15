@@ -70,7 +70,7 @@ public class EcuDataItems extends HashMap<Integer, HashMap<Integer, Vector<EcuDa
 	{
 		this("/protocol/pids.csv",
 		     "/protocol/conversions.csv",
-		     "protocol.messages");
+		     "/protocol/messages.csv");
 	}
 
 	/**
@@ -78,10 +78,11 @@ public class EcuDataItems extends HashMap<Integer, HashMap<Integer, Vector<EcuDa
 	 *
 	 * @param pidResource        resource file for PIDs (csv)
 	 * @param conversionResource resource file for conversions (csv)
+	 * @param messagesResource   resource file for messages/labels (csv)
 	 */
-	public EcuDataItems(String pidResource, String conversionResource, String resourceBundleName)
+	public EcuDataItems(String pidResource, String conversionResource, String messagesResource)
 	{
-		Messages.init(resourceBundleName);
+		Messages.init(messagesResource);
 		cnv = new EcuConversions(conversionResource);
 		loadFromResource(pidResource);
 	}

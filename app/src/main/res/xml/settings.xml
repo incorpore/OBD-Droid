@@ -125,6 +125,25 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        android:title="AI Features"
+        android:layout="@layout/preference_category">
+
+        <EditTextPreference
+            android:key="openai_api_key"
+            android:title="OpenAI API Key"
+            android:summary="Configure your OpenAI API key for AI analysis"
+            android:inputType="textPassword"
+            android:layout="@layout/preference_indented" />
+
+        <Preference
+            android:key="openai_api_info"
+            android:title="How to get an API key"
+            android:summary="Tap to learn how to obtain an OpenAI API key"
+            android:layout="@layout/preference_indented" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:title="Debugging"
         android:layout="@layout/preference_category">
 

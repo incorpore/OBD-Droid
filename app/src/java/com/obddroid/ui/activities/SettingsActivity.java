@@ -3,9 +3,11 @@
 package com.obddroid.ui.activities;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.preference.EditTextPreference;
@@ -31,6 +33,7 @@ import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.services.CommService;
 import com.obddroid.R;
+import com.obddroid.utils.SecurePreferences;
 import com.obddroid.utils.SnackbarHelper;
 
 import java.util.HashSet;
@@ -169,6 +172,7 @@ public class SettingsActivity
 		implements SharedPreferences.OnSharedPreferenceChangeListener
 	{
 		Vector<EcuDataItem> items;
+		private SecurePreferences securePreferences;
 
 		@Override
 		public void onCreatePreferences(Bundle savedInstanceState, String rootKey)
@@ -182,6 +186,9 @@ public class SettingsActivity
 		{
 			super.onCreate(savedInstanceState);
 
+			// Initialize secure preferences
+			securePreferences = new SecurePreferences(requireContext());
+
 			// Communication media, protocol, baudrate, IP/port moved to adapter selection screen
 			// setupCommMediaSelection(); // REMOVED - now in UnifiedAdapterSelectionActivity
 			// setupProtoSelection(); // REMOVED - now in UnifiedAdapterSelectionActivity
@@ -191,6 +198,8 @@ public class SettingsActivity
 			setupElmTimingSelection();
 			// set up selectable PID list
 			setupPidSelection();
+			// set up AI features
+			setupAiFeatures();
 			// update network selection fields - REMOVED
 			// updateNetworkSelections(); // REMOVED - now in UnifiedAdapterSelectionActivity
 			// add handler for selection update
@@ -325,6 +334,104 @@ public class SettingsActivity
 			{
 				itemList.setValues(selections);
 			}
+		}
+
+		/**
+		 * Set up AI features preferences
+		 */
+		void setupAiFeatures()
+		{
+			// API key preference
+			EditTextPreference apiKeyPref = (EditTextPreference) findPreference("openai_api_key");
+			if (apiKeyPref != null)
+			{
+				// Load existing key from secure storage
+				String existingKey = securePreferences.getOpenAiApiKey();
+				if (existingKey != null && !existingKey.isEmpty())
+				{
+					apiKeyPref.setText(existingKey);
+					apiKeyPref.setSummary(maskApiKey(existingKey));
+				}
+				else
+				{
+					apiKeyPref.setSummary("Not configured - tap to set");
+				}
+
+				// Handle preference changes
+				apiKeyPref.setOnPreferenceChangeListener((preference, newValue) ->
+				{
+					String apiKey = String.valueOf(newValue).trim();
+					if (apiKey.isEmpty())
+					{
+						securePreferences.clearOpenAiApiKey();
+						apiKeyPref.setSummary("Not configured - tap to set");
+					}
+					else
+					{
+						securePreferences.setOpenAiApiKey(apiKey);
+						apiKeyPref.setSummary(maskApiKey(apiKey));
+						SnackbarHelper.showSuccess(getActivity(), "API key saved securely");
+					}
+					return true;
+				});
+			}
+
+			// Info preference
+			Preference infoPref = findPreference("openai_api_info");
+			if (infoPref != null)
+			{
+				infoPref.setOnPreferenceClickListener(preference ->
+				{
+					showApiKeyInfoDialog();
+					return true;
+				});
+			}
+		}
+
+		/**
+		 * Masks the API key for display
+		 */
+		private String maskApiKey(String apiKey)
+		{
+			if (apiKey == null || apiKey.length() < 8)
+			{
+				return "••••••••";
+			}
+			return apiKey.substring(0, 4) + "••••••••" + apiKey.substring(apiKey.length() - 4);
+		}
+
+		/**
+		 * Shows a dialog with information about getting an OpenAI API key
+		 */
+		private void showApiKeyInfoDialog()
+		{
+			new AlertDialog.Builder(requireContext())
+				.setTitle("How to Get an OpenAI API Key")
+				.setMessage("To use AI-powered fault code analysis:\n\n" +
+						"1. Visit https://platform.openai.com\n" +
+						"2. Create a free account or sign in\n" +
+						"3. Go to API Keys section\n" +
+						"4. Click 'Create new secret key'\n" +
+						"5. Copy the key and paste it here\n\n" +
+						"Note: Your API key is stored securely on your device and never shared. " +
+						"You will be charged by OpenAI based on your usage.")
+				.setPositiveButton("OK", null)
+				.setNeutralButton("Open Website", (dialog, which) ->
+				{
+					Intent intent = new Intent(Intent.ACTION_VIEW,
+							Uri.parse("https://platform.openai.com/api-keys"));
+					try
+					{
+						startActivity(intent);
+					}
+					catch (Exception e)
+					{
+						log.log(Level.WARNING, "Failed to open OpenAI website", e);
+						SnackbarHelper.showError(getActivity(),
+								"Could not open browser. Please visit platform.openai.com manually.");
+					}
+				})
+				.show();
 		}
 
 		/**

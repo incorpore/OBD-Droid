@@ -324,13 +324,27 @@ public class ObdProt extends ProtoHeader
     public static PvList VidPvs = createServiceBackedPvList(OBD_SVC_VEH_INFO);
 
     /**
+     * OBD test control items (Mode 8 TIDs)
+     * @deprecated Use getDataService().getDataForService(OBD_SVC_CTRL_MODE) instead
+     */
+    @Deprecated
+    public static PvList TidPvs = createServiceBackedPvList(OBD_SVC_CTRL_MODE);
+
+    /**
      * current fault codes
      * @deprecated Use getDataService().getDataForService(OBD_SVC_READ_CODES) instead
      */
     @Deprecated
     public static PvList tCodes = createServiceBackedPvList(OBD_SVC_READ_CODES);
-    /** list of known fault codes */
-    private static final EcuCodeList knownCodes = EcuConversions.codeList;
+
+    /**
+     * Get the current known fault codes list
+     * Uses dynamic lookup to support database injection
+     */
+    private static EcuCodeList getKnownCodes() {
+        return EcuConversions.codeList;
+    }
+
     /** queue of ELM commands to be sent */
     static final Vector<String> cmdQueue = new Vector<String>();
 
@@ -419,6 +433,7 @@ public class ObdProt extends ProtoHeader
         // prepare PID PV list
         PidPvs.put(0, new EcuDataPv());
         // VidPvs doesn't need a placeholder - vehicle info items are added as discovered
+        // TidPvs doesn't need a placeholder - test control items are added as discovered
         tCodes.put(0, new ObdCodeItem(0, "No trouble codes set"));
     }
 
@@ -430,7 +445,26 @@ public class ObdProt extends ProtoHeader
     {
         log.info(String.format("FreezeFrame ID: %d", freezeFrame_Id));
         this.freezeFrame_Id = freezeFrame_Id;
+
         setService(OBD_SVC_FREEZEFRAME, true);
+    }
+
+    /**
+     * Request a single freeze frame snapshot without switching persistent service state.
+     * @param frameId Freeze frame index to request (typically 0)
+     */
+    public synchronized void requestFreezeFrameSnapshot(int frameId)
+    {
+        int previousFrame = this.freezeFrame_Id;
+        try
+        {
+            this.freezeFrame_Id = frameId;
+            writeTelegram(emptyBuffer, OBD_SVC_FREEZEFRAME, 0);
+        }
+        finally
+        {
+            this.freezeFrame_Id = previousFrame;
+        }
     }
 
     /**
@@ -591,11 +625,19 @@ public class ObdProt extends ProtoHeader
     {
         currSupportedPid = 0;
 
-        // Clear PID list on initial bitmask (offset 0)
-        if( start == 0)
+        // Clear PID list ONLY on the very first discovery (start == 0 AND list is empty)
+        // This prevents buggy adapters from clearing the list with duplicate PID 0x00 responses
+        if( start == 0 && pidSupported.isEmpty())
         {
-            pidSupported.clear();
+            pidSupported.clear();  // Redundant but kept for clarity
             Log.i(TAG, "Starting PID discovery for service " + getServiceName(obdService));
+        }
+        else if (start == 0 && !pidSupported.isEmpty())
+        {
+            // Duplicate PID 0x00 response detected - ignore to preserve already discovered PIDs
+            Log.w(TAG, String.format("Ignoring duplicate PID 0x00 response (bitmask: %08X) - already have %d PIDs",
+                                    bitmask, pidSupported.size()));
+            return;  // Exit early without processing this duplicate message
         }
 
         Log.i(TAG, String.format("Processing PIDs %02X-%02X, bitmask: %08X",
@@ -642,6 +684,16 @@ public class ObdProt extends ProtoHeader
                 // Queue all supported PIDs for rapid sequential processing
                 for (ObdPid pid : pidSupported) {
                     cmdQueue.add(String.format("%02X%02X", obdService, pid.intValue()));
+                }
+            }
+
+            if (obdService == OBD_SVC_FREEZEFRAME && start == 0) {
+                log.info("Queueing freeze frame PIDs for snapshot retrieval");
+                for (ObdPid pid : pidSupported) {
+                    int pidValue = pid.intValue();
+                    if (pidValue != 0) {
+                        cmdQueue.add(String.format("%02X%02X", obdService, pidValue));
+                    }
                 }
             }
 
@@ -850,6 +902,8 @@ public class ObdProt extends ProtoHeader
                             for (int i = 0; i < charPayload.length; i++) {
                                 payload[i] = (byte) charPayload[i];
                             }
+                            Log.i(TAG, String.format("FreezeFrame raw payload PID 0x%02X: %s",
+                                    msgPid, ProtUtils.hexDumpBuffer(charPayload)));
                             dataService.onDataReceived(msgService, msgPid, payload);
 
                             // Store in freeze frame specific storage
@@ -876,9 +930,7 @@ public class ObdProt extends ProtoHeader
                                 long msgPayload = Long.valueOf(new String(buffer, offset, 8), 16);
                                 // For freeze frame, use the right PvList
                                 if (msgService == OBD_SVC_FREEZEFRAME) {
-                                    // Mark PIDs and also populate the data service
                                     markSupportedPids(msgService, msgPid, msgPayload, PidPvs);
-                                    // Ensure freeze frame data is initialized
                                     dataService.initializeFreezeFrameData();
                                 } else {
                                     markSupportedPids(msgService, msgPid, msgPayload, PidPvs);
@@ -921,24 +973,30 @@ public class ObdProt extends ProtoHeader
                                             }
                                             // Update the PV with the actual data from the item
                                             pv.put(EcuDataPv.FID_DESCRIPT, item.label);
-                                            if (item.pv != null) {
-                                                Object value = item.pv.get(EcuDataPv.FID_VALUE);
-                                                // Check if value is a byte array and convert to hex string
-                                                if (value instanceof byte[]) {
-                                                    byte[] bytes = (byte[]) value;
-                                                    StringBuilder hex = new StringBuilder();
-                                                    for (byte b : bytes) {
-                                                        hex.append(String.format("%02X", b & 0xFF));
-                                                    }
-                                                    pv.put(EcuDataPv.FID_VALUE, hex.toString());
-                                                } else if (value != null) {
-                                                    pv.put(EcuDataPv.FID_VALUE, value);
-                                                }
-                                                Object units = item.pv.get(EcuDataPv.FID_UNITS);
-                                                if (units != null) {
-                                                    pv.put(EcuDataPv.FID_UNITS, units);
-                                                }
-                                            }
+                                           if (item.pv != null) {
+                                               Object value = item.pv.get(EcuDataPv.FID_VALUE);
+                                               // Check if value is a byte array and convert to hex string
+                                               if (value instanceof byte[]) {
+                                                   byte[] bytes = (byte[]) value;
+                                                   StringBuilder hex = new StringBuilder();
+                                                   for (byte b : bytes) {
+                                                       hex.append(String.format("%02X", b & 0xFF));
+                                                   }
+                                                   pv.put(EcuDataPv.FID_VALUE, hex.toString());
+                                               } else if (value != null) {
+                                                   pv.put(EcuDataPv.FID_VALUE, value);
+                                               }
+                                               Object units = item.pv.get(EcuDataPv.FID_UNITS);
+                                               if (units != null) {
+                                                   pv.put(EcuDataPv.FID_UNITS, units);
+                                               }
+                                           }
+
+                                            Log.i(TAG, String.format("FreezeFrame decoded PID 0x%02X (%s) -> %s %s",
+                                                    msgPid,
+                                                    item.label,
+                                                    pv.get(EcuDataPv.FID_VALUE),
+                                                    pv.get(EcuDataPv.FID_UNITS)));
                                         }
                                     } else {
                                         // No data item definition - create basic PID entry with hex value
@@ -954,6 +1012,11 @@ public class ObdProt extends ProtoHeader
                                         // Convert payload to hex string
                                         char[] payload = getPayLoad(buffer);
                                         pv.put(EcuDataPv.FID_VALUE, String.valueOf(payload));
+
+                                        Log.i(TAG, String.format("FreezeFrame decoded PID 0x%02X (%s) -> %s",
+                                                msgPid,
+                                                description,
+                                                String.valueOf(payload)));
                                     }
 
                                     // Store the updated freeze frame data
@@ -972,7 +1035,62 @@ public class ObdProt extends ProtoHeader
                         }
                         break;
 
-                    case OBD_SVC_CTRL_MODE: // Test control mode
+                    case OBD_SVC_CTRL_MODE: // Test control mode (Mode 8)
+                        Log.i(TAG, "Mode 08 response received");
+                        msgPid = (Integer) getParamValue(ID_OBD_PID, buffer);
+                        Log.i(TAG, "Mode 08 TID: 0x" + Integer.toHexString(msgPid));
+
+                        switch (msgPid)
+                        {
+                            case 0x00:
+                            case 0x20:
+                            case 0x40:
+                            case 0x60:
+                            case 0x80:
+                            case 0xA0:
+                            case 0xC0:
+                            case 0xE0:
+                                // Check for optional message count byte, find offset to payload
+                                int offset = (buffer.length % 4 == 0) ? 4 : 6;
+                                // get payload data and mark the indicated supported TIDs
+                                long msgPayload = Long.valueOf(new String(buffer, offset, 8), 16);
+                                markSupportedPids(msgService, msgPid, msgPayload, TidPvs);
+                                break;
+
+                            default:
+                                // Handle Mode 8 test control data
+                                long updatePeriod =
+                                    dataItems.updateDataItems(msgService,
+                                                                msgPid,
+                                                                hexToBytes(String.valueOf(
+                                                                        getPayLoad(buffer))));
+
+                                // Update TidPvs with the test control data
+                                Vector<EcuDataItem> updatedItems = dataItems.getPidDataItems(msgService, msgPid);
+                                if (updatedItems != null) {
+                                    Log.i(TAG, "Triggering PV_MODIFIED for " + updatedItems.size() + " Mode 8 TID 0x" + Integer.toHexString(msgPid) + " items");
+                                    for (EcuDataItem item : updatedItems) {
+                                        if (item != null && item.pv != null) {
+                                            String key = item.toString();
+                                            // Re-put the PV to trigger PV_MODIFIED event
+                                            TidPvs.put(key, item.pv, PvChangeEvent.PV_MODIFIED);
+                                            Log.i(TAG, "  Notified TidPvs: " + key + " = " + item.pv.get(EcuDataPv.FID_VALUE));
+                                        }
+                                    }
+                                }
+
+                                /* Update expected request timestamp for TID */
+                                for( ObdPid pid : pidSupported)
+                                {
+                                    if(pid.intValue()==msgPid)
+                                    {
+                                        pid.setNextRequest(System.currentTimeMillis()+updatePeriod);
+                                    }
+                                }
+                                break;
+                        }
+                        break;
+
                     case OBD_SVC_VEH_INFO:  // get vehicle information (mode 9)
                         Log.i(TAG, "Mode 09 response received, service: " + msgService);
                         Log.i(TAG, "Mode 09 RAW buffer: " + new String(buffer));
@@ -1074,7 +1192,7 @@ public class ObdProt extends ProtoHeader
                             currCode = key.intValue();
                             if (currCode != 0)
                             {
-                                if ((code = knownCodes.get(key)) == null)
+                                if ((code = getKnownCodes().get(key)) == null)
                                 {
                                     code = new ObdCodeItem(key.intValue(),
                                                            Messages.getString(
@@ -1289,10 +1407,15 @@ public class ObdProt extends ProtoHeader
                 break;
 
             case OBD_SVC_VEH_INFO:
-            case OBD_SVC_CTRL_MODE:
                 // Clear data items
                 pidSupported.clear();
                 VidPvs.clear();
+                break;
+
+            case OBD_SVC_CTRL_MODE:
+                // Clear data items
+                pidSupported.clear();
+                TidPvs.clear();
                 break;
         }
     }
@@ -1308,6 +1431,7 @@ public class ObdProt extends ProtoHeader
         int previousService = this.service;
         this.service = obdService;
         pidsWrapped = false;
+
         // if lists shall be cleared
         if (clearLists)
         {

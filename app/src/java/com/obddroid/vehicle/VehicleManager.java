@@ -228,6 +228,21 @@ public class VehicleManager {
     }
 
     /**
+     * Clear VIN cache to force re-read from vehicle
+     * Used by refresh functionality
+     */
+    public void clearVINCache() {
+        Log.d(TAG, "Clearing VIN cache for refresh");
+        currentVIN = null;
+        currentVehicleData = null;
+        isDecoding = false;
+        vinRetrievalAttempted = false;
+        vinRetrievalFailed = false;
+        // Don't notify disconnected - we're just refreshing
+        // ECU state remains connected
+    }
+
+    /**
      * Handle VIN retrieval timeout
      */
     public void handleVINTimeout() {

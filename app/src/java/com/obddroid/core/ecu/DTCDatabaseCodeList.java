@@ -66,11 +66,18 @@ public class DTCDatabaseCodeList extends ObdCodeList {
         String code = ObdCodeItem.getPCode(value.intValue());
 
         // Look up in dtc-database
-        String description = database.getDescription(code, manufacturer);
+        android.util.Log.d("DTCDatabaseCodeList", "Looking up code: " + code + " (value: 0x" + Integer.toHexString(value.intValue()) + ")");
+        android.util.Log.d("DTCDatabaseCodeList", "Database instance: " + (database != null ? "OK" : "NULL"));
+        android.util.Log.d("DTCDatabaseCodeList", "Manufacturer: " + manufacturer);
+
+        String description = database != null ? database.getDescription(code, manufacturer) : null;
+
+        android.util.Log.d("DTCDatabaseCodeList", "Database returned: " + (description != null ? "'" + description + "'" : "NULL"));
 
         // Fallback if not found
         if (description == null || description.isEmpty()) {
             description = Messages.getString("customer.specific.trouble.code.see.manual");
+            android.util.Log.d("DTCDatabaseCodeList", "Using fallback message");
         }
 
         return new EcuCodeItem(code, description);

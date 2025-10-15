@@ -1,6 +1,7 @@
 package com.obddroid.ui.components;
 
 import android.animation.ValueAnimator;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -22,9 +23,11 @@ import com.obddroid.vehicle.VehicleManager;
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.pvs.PvList;
 import com.obddroid.core.obd.ObdProt;
+import com.obddroid.core.obd.Messages;
 import com.obddroid.core.pvs.PvChangeListener;
 import com.obddroid.core.pvs.PvChangeEvent;
 import java.beans.PropertyChangeEvent;
+import java.util.Locale;
 
 /**
  * Footer bar that displays decoded vehicle information
@@ -662,7 +665,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             return;
         }
 
-        // Categorize Mode 9 data - show EVERYTHING
+        // Categorize Mode 9 data - show EVERYTHING (now storing mnemonic too)
         java.util.Map<String, java.util.List<String[]>> categorizedData = new java.util.LinkedHashMap<>();
         categorizedData.put("Vehicle Identification", new java.util.ArrayList<>());
         categorizedData.put("ECU Information", new java.util.ArrayList<>());
@@ -685,19 +688,22 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
                     String label = formatLabel(description);
                     String displayValue = formatValue(description, dataValue);
+                    String mnemonic = extractMnemonic(description); // Extract mnemonic for description lookup
+                    String pidDisplay = formatPid(pv); // Human-readable PID/VID representation
 
                     // Categorize ALL the data - including VIN and message counts
+                    // Store as: [label, displayValue, mnemonic]
                     if (description.toLowerCase().contains("vehicle identification") ||
                         description.toLowerCase().contains("vin")) {
-                        categorizedData.get("Vehicle Identification").add(new String[]{label, displayValue});
+                        categorizedData.get("Vehicle Identification").add(new String[]{label, displayValue, mnemonic, pidDisplay});
                     } else if (description.contains("Message count") ||
                               description.contains("Number of") ||
                               description.contains("counts_") ||
                               description.contains("numitems") ||
                               description.contains("length")) {
-                        categorizedData.get("Protocol Information").add(new String[]{label, displayValue});
+                        categorizedData.get("Protocol Information").add(new String[]{label, displayValue, mnemonic, pidDisplay});
                     } else if (description.contains("ECU name") || description.contains("ECU")) {
-                        categorizedData.get("ECU Information").add(new String[]{label, displayValue});
+                        categorizedData.get("ECU Information").add(new String[]{label, displayValue, mnemonic, pidDisplay});
                     } else if (description.contains("Monitor") || description.contains("COMP") ||
                               description.contains("Catalyst") || description.contains("O2") ||
                               description.contains("EGR") || description.contains("EVAP") ||
@@ -707,18 +713,18 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
                               description.contains("PM Filter")) {
                         // Skip if it's just ignition counter
                         if (!description.contains("Ignition")) {
-                            categorizedData.get("Emission Monitors").add(new String[]{label, displayValue});
+                            categorizedData.get("Emission Monitors").add(new String[]{label, displayValue, mnemonic, pidDisplay});
                         } else {
-                            categorizedData.get("System Counters").add(new String[]{label, displayValue});
+                            categorizedData.get("System Counters").add(new String[]{label, displayValue, mnemonic, pidDisplay});
                         }
                     } else if (description.contains("Counter") || description.contains("CNTR") ||
                               description.contains("Ignition") || description.contains("OBD Monitoring Conditions")) {
-                        categorizedData.get("System Counters").add(new String[]{label, displayValue});
+                        categorizedData.get("System Counters").add(new String[]{label, displayValue, mnemonic, pidDisplay});
                     } else if (description.contains("Calibration") || description.contains("CVN") ||
                               description.contains("CAL-ID") || description.contains("CAL")) {
-                        categorizedData.get("Calibration Data").add(new String[]{label, displayValue});
+                        categorizedData.get("Calibration Data").add(new String[]{label, displayValue, mnemonic, pidDisplay});
                     } else {
-                        categorizedData.get("Other Information").add(new String[]{label, displayValue});
+                        categorizedData.get("Other Information").add(new String[]{label, displayValue, mnemonic, pidDisplay});
                     }
                 }
             }
@@ -730,8 +736,27 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             if (!entry.getValue().isEmpty()) {
                 hasAnyData = true;
                 addStyledSectionHeader(entry.getKey());
-                for (String[] item : entry.getValue()) {
-                    addStyledDetailRow(item[0], item[1]);
+
+                // Sort Vehicle Identification section to put VIN first
+                java.util.List<String[]> items = entry.getValue();
+                if (entry.getKey().equals("Vehicle Identification")) {
+                    items.sort((a, b) -> {
+                        // VIN should come first
+                        if (a[0].equals("VIN")) return -1;
+                        if (b[0].equals("VIN")) return 1;
+                        // Otherwise maintain original order
+                        return 0;
+                    });
+                }
+
+                for (String[] item : items) {
+                    // item[0]=label, item[1]=value, item[2]=mnemonic
+                    addStyledDetailRow(
+                        item[0],
+                        item[1],
+                        item.length > 2 ? item[2] : null,
+                        item.length > 3 ? item[3] : null
+                    );
                 }
             }
         }
@@ -809,6 +834,177 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         if (description.contains("Bank 3")) return " (Bank 3)";
         if (description.contains("Bank 4")) return " (Bank 4)";
         return "";
+    }
+
+    /**
+     * Extract mnemonic key from OBD description for looking up in messages.csv
+     * Maps human-readable descriptions to their mnemonic keys
+     */
+    /**
+     * Format PID/VID from EcuDataPv as hex string (e.g., "0x02")
+     */
+    private String formatPid(EcuDataPv pv) {
+        if (pv == null) {
+            return null;
+        }
+
+        Object pidObj = pv.get(EcuDataPv.FID_PID);
+        if (pidObj instanceof Number) {
+            int pidValue = ((Number) pidObj).intValue();
+            return String.format(Locale.US, "0x%02X", pidValue);
+        }
+        return null;
+    }
+
+    private String extractMnemonic(String description) {
+        if (description == null || description.isEmpty()) {
+            return null;
+        }
+
+        // Log for debugging
+        Log.d(TAG, "Extracting mnemonic from description: " + description);
+
+        // Map human-readable labels to mnemonics
+
+        // VIN and related fields
+        if (description.toLowerCase().contains("vehicle identification number") ||
+            (description.contains("VIN") && !description.contains("Message") && !description.contains("count") && !description.contains("items"))) {
+            return "vehicle_identification_number";
+        }
+        if (description.contains("VIN Item Count") || description.contains("Number of VIN items")) {
+            return "vin_numitems";
+        }
+        if (description.contains("VIN Message Count") || description.contains("Message count VIN")) {
+            return "counts_vin_length";
+        }
+
+        // Calibration ID fields
+        if (description.contains("Calibration ID 2") || description.contains("Calibration identifier 2")) {
+            return "calibration_identifier2";
+        }
+        if ((description.contains("Calibration ID") || description.contains("Calibration identifier") ||
+             description.contains("CAL-ID")) && !description.contains("Message") && !description.contains("count") && !description.contains("items")) {
+            return "calibration_identifier";
+        }
+        if (description.contains("CAL-ID Message Count") || description.contains("Message count CAL-ID")) {
+            return "counts_calibration_identifier_length";
+        }
+        if (description.contains("CAL-ID Item Count") || description.contains("Number of CAL-ID items")) {
+            return "calid_numitems";
+        }
+
+        // CVN fields
+        if (description.contains("CVN (Calibration Verification)") ||
+            (description.contains("Calibration verification") && !description.contains("Message") && !description.contains("count"))) {
+            return "calibration_verification";
+        }
+        if (description.contains("CVN Message Count") || description.contains("Message count CVN")) {
+            return "counts_calibration_verification";
+        }
+
+        // ECU Name fields
+        if (description.contains("ECU name") || description.contains("ECU Name")) {
+            if (description.contains("length") || description.contains("Length")) {
+                return "counts_ecu_name_length";
+            }
+            return "ecu_name";
+        }
+
+        // IPT Message count
+        if (description.contains("IPT Message Count") || description.contains("Message count IPT")) {
+            return "counts_ipt";
+        }
+
+        // Monitor counters
+        if (description.contains("IGNCNTR") || description.contains("Ignition Counter") ||
+            description.contains("Ignition Cycles")) {
+            return "IGNCNTR";
+        }
+        if (description.contains("OBDCOND") || description.contains("OBD Monitoring Conditions")) {
+            return "OBDCOND";
+        }
+        // Catalyst monitors
+        if (description.contains("CATCOMP1") || description.contains("Catalyst Monitor Completion") && description.contains("Bank 1")) {
+            return "CATCOMP1";
+        }
+        if (description.contains("CATCOND1") || description.contains("Catalyst Monitor Conditions") && description.contains("Bank 1")) {
+            return "CATCOND1";
+        }
+        if (description.contains("CATCOMP2") || description.contains("Catalyst Monitor Completion") && description.contains("Bank 2")) {
+            return "CATCOMP2";
+        }
+        if (description.contains("CATCOND2") || description.contains("Catalyst Monitor Conditions") && description.contains("Bank 2")) {
+            return "CATCOND2";
+        }
+
+        // O2 sensor monitors
+        if (description.contains("O2SCOMP1") || (description.contains("O2 Sensor Monitor Completion") && description.contains("Bank 1"))) {
+            return "O2SCOMP1";
+        }
+        if (description.contains("O2SCOND1") || (description.contains("O2 Sensor Monitor Conditions") && description.contains("Bank 1"))) {
+            return "O2SCOND1";
+        }
+        if (description.contains("O2SCOMP2") || (description.contains("O2 Sensor Monitor Completion") && description.contains("Bank 2"))) {
+            return "O2SCOMP2";
+        }
+        if (description.contains("O2SCOND2") || (description.contains("O2 Sensor Monitor Conditions") && description.contains("Bank 2"))) {
+            return "O2SCOND2";
+        }
+
+        // Secondary O2 monitors
+        if (description.contains("SO2SCOMP1") || (description.contains("Secondary O2") && description.contains("Completion") && description.contains("Bank 1"))) {
+            return "SO2SCOMP1";
+        }
+        if (description.contains("SO2SCOND1") || (description.contains("Secondary O2") && description.contains("Conditions") && description.contains("Bank 1"))) {
+            return "SO2SCOND1";
+        }
+        if (description.contains("SO2SCOMP2") || (description.contains("Secondary O2") && description.contains("Completion") && description.contains("Bank 2"))) {
+            return "SO2SCOMP2";
+        }
+        if (description.contains("SO2SCOND2") || (description.contains("Secondary O2") && description.contains("Conditions") && description.contains("Bank 2"))) {
+            return "SO2SCOND2";
+        }
+
+        // AIR monitor
+        if (description.contains("AIRCOMP") || (description.contains("AIR Monitor") && description.contains("Completion"))) {
+            return "AIRCOMP";
+        }
+        if (description.contains("AIRCOND") || (description.contains("AIR Monitor") && description.contains("Conditions"))) {
+            return "AIRCOND";
+        }
+
+        // EVAP monitor
+        if (description.contains("EVAPCOMP") || (description.contains("EVAP Monitor") && description.contains("Completion"))) {
+            return "EVAPCOMP";
+        }
+        if (description.contains("EVAPCOND") || (description.contains("EVAP Monitor") && description.contains("Conditions"))) {
+            return "EVAPCOND";
+        }
+
+        // EGR monitor
+        if (description.contains("EGRCOMP") || (description.contains("EGR") && description.contains("Monitor") && description.contains("Completion"))) {
+            return "EGRCOMP";
+        }
+        if (description.contains("EGRCOND") || (description.contains("EGR") && description.contains("Monitor") && description.contains("Conditions"))) {
+            return "EGRCOND";
+        }
+        if (description.contains("HCCATCOMP")) return "HCCATCOMP";
+        if (description.contains("HCCATCOND")) return "HCCATCOND";
+        if (description.contains("NCATCOMP")) return "NCATCOMP";
+        if (description.contains("NCATCOND")) return "NCATCOND";
+        if (description.contains("NADSCOMP")) return "NADSCOMP";
+        if (description.contains("NADSCOND")) return "NADSCOND";
+        if (description.contains("PMCOMP")) return "PMCOMP";
+        if (description.contains("PMCOND")) return "PMCOND";
+        if (description.contains("EGSCOMP")) return "EGSCOMP";
+        if (description.contains("EGSCOND")) return "EGSCOND";
+        if (description.contains("BPCOMP")) return "BPCOMP";
+        if (description.contains("BPCOND")) return "BPCOND";
+        if (description.contains("FUELCOMP")) return "FUELCOMP";
+        if (description.contains("FUELCOND")) return "FUELCOND";
+
+        // If no specific mnemonic found, return null
+        return null;
     }
 
     private String formatValue(String description, Object dataValue) {
@@ -920,7 +1116,31 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         expandedContentLayout.addView(sectionCard, cardParams);
     }
 
+    /**
+     * Add a detail row without description support
+     */
     private void addStyledDetailRow(String label, String value) {
+        addStyledDetailRow(label, value, null);
+    }
+
+    /**
+     * Add a detail row with optional description from messages.csv
+     * @param label Display label
+     * @param value Display value
+     * @param mnemonicKey Key to lookup description in messages.csv (null if no description)
+     */
+    private void addStyledDetailRow(String label, String value, String mnemonicKey) {
+        addStyledDetailRow(label, value, mnemonicKey, null);
+    }
+
+    /**
+     * Add a detail row with optional description and PID display
+     * @param label Display label
+     * @param value Display value
+     * @param mnemonicKey Key to lookup description in messages.csv (null if no description)
+     * @param pidDisplay PID/VID hex string (e.g., "0x02") to show in dialog
+     */
+    private void addStyledDetailRow(String label, String value, String mnemonicKey, String pidDisplay) {
         if (value == null || value.isEmpty() || value.equals("Not Applicable")) {
             return;
         }
@@ -929,6 +1149,38 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setPadding(dpToPx(8), dpToPx(4), dpToPx(8), dpToPx(4));
         row.setBackgroundColor(Color.parseColor("#1F1F1F"));
+
+        // Check if there's a description available
+        if (mnemonicKey != null) {
+            Log.d(TAG, "Looking up description for mnemonic: " + mnemonicKey);
+        }
+        final String description = (mnemonicKey != null) ? Messages.getDescription(mnemonicKey) : null;
+        final boolean hasDescription = (description != null && !description.isEmpty());
+        if (hasDescription) {
+            Log.d(TAG, "Found description for " + label + ": " + description);
+        } else if (mnemonicKey != null) {
+            Log.d(TAG, "No description found for mnemonic: " + mnemonicKey);
+        }
+
+        // Make row clickable if there's a description
+        if (hasDescription) {
+            row.setClickable(true);
+            row.setFocusable(true);
+
+            // Add click listener to show description
+            final String finalPid = pidDisplay;
+            row.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Add subtle haptic feedback
+                    v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
+                    showDescriptionDialog(label, value, description, finalPid);
+                }
+            });
+
+            // Add visual indicator that row is clickable
+            row.setBackgroundColor(Color.parseColor("#222222")); // Slightly lighter
+        }
 
         TextView labelView = new TextView(getContext());
         labelView.setText(label);
@@ -960,6 +1212,157 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         );
         rowParams.topMargin = dpToPx(1);
         expandedContentLayout.addView(row, rowParams);
+    }
+
+    /**
+     * Show a dialog with the description of an OBD field
+     */
+    private void showDescriptionDialog(String label, String value, String description) {
+        showDescriptionDialog(label, value, description, null);
+    }
+
+    /**
+     * Show a dialog with the description and PID of an OBD field
+     */
+    private void showDescriptionDialog(String label, String value, String description, String pidDisplay) {
+        // Create custom layout for the dialog
+        LinearLayout dialogLayout = new LinearLayout(getContext());
+        dialogLayout.setOrientation(LinearLayout.VERTICAL);
+        dialogLayout.setPadding(dpToPx(24), dpToPx(20), dpToPx(24), dpToPx(20));
+        dialogLayout.setBackgroundColor(Color.parseColor("#FFFFFF"));
+
+        // Description section header
+        TextView descHeader = new TextView(getContext());
+        descHeader.setText("Description");
+        descHeader.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        descHeader.setTextColor(Color.parseColor("#666666"));
+        descHeader.setTypeface(Typeface.DEFAULT_BOLD);
+        descHeader.setAllCaps(true);
+        descHeader.setLetterSpacing(0.05f);
+        LinearLayout.LayoutParams descHeaderParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        dialogLayout.addView(descHeader, descHeaderParams);
+
+        // Description text
+        TextView descText = new TextView(getContext());
+        descText.setText(description);
+        descText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        descText.setTextColor(Color.parseColor("#212121"));
+        descText.setLineSpacing(TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics()), 1);
+        LinearLayout.LayoutParams descTextParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        descTextParams.topMargin = dpToPx(12);
+        dialogLayout.addView(descText, descTextParams);
+
+        // Add PID/VID display if available
+        if (pidDisplay != null && !pidDisplay.isEmpty()) {
+            TextView pidLabel = new TextView(getContext());
+            pidLabel.setText("PID/VID");
+            pidLabel.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+            pidLabel.setTextColor(Color.parseColor("#666666"));
+            pidLabel.setTypeface(Typeface.DEFAULT_BOLD);
+            pidLabel.setAllCaps(true);
+            pidLabel.setLetterSpacing(0.05f);
+            LinearLayout.LayoutParams pidLabelParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            pidLabelParams.topMargin = dpToPx(16);
+            dialogLayout.addView(pidLabel, pidLabelParams);
+
+            TextView pidText = new TextView(getContext());
+            pidText.setText(pidDisplay);
+            pidText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+            pidText.setTextColor(Color.parseColor("#00ACC1")); // Cyan accent
+            pidText.setTypeface(Typeface.MONOSPACE);
+            LinearLayout.LayoutParams pidTextParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            pidTextParams.topMargin = dpToPx(8);
+            dialogLayout.addView(pidText, pidTextParams);
+        }
+
+        // Divider
+        View divider = new View(getContext());
+        divider.setBackgroundColor(Color.parseColor("#E0E0E0"));
+        LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            dpToPx(1)
+        );
+        dividerParams.topMargin = dpToPx(20);
+        dividerParams.bottomMargin = dpToPx(16);
+        dialogLayout.addView(divider, dividerParams);
+
+        // Current value section
+        LinearLayout valueRow = new LinearLayout(getContext());
+        valueRow.setOrientation(LinearLayout.HORIZONTAL);
+        valueRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView valueLabel = new TextView(getContext());
+        valueLabel.setText("Current Value");
+        valueLabel.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        valueLabel.setTextColor(Color.parseColor("#666666"));
+        valueLabel.setTypeface(Typeface.DEFAULT_BOLD);
+        valueLabel.setAllCaps(true);
+        valueLabel.setLetterSpacing(0.05f);
+        LinearLayout.LayoutParams valueLabelParams = new LinearLayout.LayoutParams(
+            0,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            1.0f
+        );
+        valueRow.addView(valueLabel, valueLabelParams);
+
+        TextView valueText = new TextView(getContext());
+        valueText.setText(value);
+        valueText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        valueText.setTextColor(Color.parseColor("#00ACC1"));
+        valueText.setTypeface(Typeface.DEFAULT_BOLD);
+        valueText.setGravity(Gravity.END);
+        LinearLayout.LayoutParams valueTextParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        valueRow.addView(valueText, valueTextParams);
+
+        dialogLayout.addView(valueRow);
+
+        // Create and show the dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle(label);
+        builder.setView(dialogLayout);
+
+        // Add Copy button
+        builder.setNegativeButton("Copy Value", new android.content.DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(android.content.DialogInterface dialog, int which) {
+                // Copy label and value to clipboard
+                String copyText = label + ": " + value;
+                android.content.ClipboardManager clipboard = (android.content.ClipboardManager)
+                    getContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+                android.content.ClipData clip = android.content.ClipData.newPlainText(label, copyText);
+                clipboard.setPrimaryClip(clip);
+
+                // Show a toast to confirm
+                android.widget.Toast.makeText(getContext(), "Copied to clipboard",
+                    android.widget.Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Add Close button
+        builder.setPositiveButton("Close", null);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Style the buttons
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.parseColor("#00ACC1"));
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.parseColor("#00ACC1"));
     }
 
     private String buildPlantLocation(VehicleData data) {

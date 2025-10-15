@@ -152,7 +152,8 @@ public class EcuConversions extends HashMap<String, Conversion[]>
 				else if (params[FLD_TYPE].equals(CNV_TYPE_PCODELIST))
 				{
 					// create OBD code list based on ResourceBundle
-					codeList = new ObdCodeList( String.valueOf(params[FLD_PARAMETERS]));
+					// Use getInstance to preserve any database-backed instance that was set
+					codeList = ObdCodeList.getInstance();
 					newCnv = codeList;
 				}
 				else if (params[FLD_TYPE].equals(CNV_TYPE_VAG))

@@ -59,7 +59,6 @@ import com.obddroid.core.pvs.PvList;
 import com.obddroid.ui.adapters.FaultCodeAdapter;
 import com.obddroid.ui.adapters.ObdItemAdapter;
 import com.obddroid.ui.adapters.TestResultAdapter;
-import com.obddroid.ui.adapters.VehicleInfoAdapter;
 import com.obddroid.services.BluetoothCommService;
 import com.obddroid.services.CommService;
 import com.obddroid.services.NetworkCommService;
@@ -150,6 +149,10 @@ public class MainActivity extends AppCompatActivity
      */
     private static final int EXIT_TIMEOUT = 2500;
     /**
+     * reconnect cooldown time in milliseconds
+     */
+    private static final int RECONNECT_COOLDOWN_MS = 15000;
+    /**
      * time between display updates to represent data changes
      */
     private static final int DISPLAY_UPDATE_TIME = 250;
@@ -191,7 +194,6 @@ public class MainActivity extends AppCompatActivity
      * Data list adapters
      */
     private static ObdItemAdapter mPidAdapter;
-    private static VehicleInfoAdapter mVidAdapter;
     private static TestResultAdapter mTidAdapter;
     private static FaultCodeAdapter mDfcAdapter;
     private static ObdItemAdapter currDataAdapter;
@@ -235,6 +237,10 @@ public class MainActivity extends AppCompatActivity
      * Member object for the BT comm services
      */
     private CommService mCommService = null;
+    /**
+     * timestamp of last reconnect attempt to prevent spam
+     */
+    private long lastReconnectTime = 0;
     /**
      * file helper
      */
@@ -331,8 +337,7 @@ public class MainActivity extends AppCompatActivity
                         setDataListeners();
                         // set adapters data source to loaded list instances
                         mPidAdapter.setPvList(ObdProt.PidPvs);
-                        mVidAdapter.setPvList(ObdProt.VidPvs);
-                        mTidAdapter.setPvList(ObdProt.VidPvs);
+                        mTidAdapter.setPvList(ObdProt.TidPvs);
                         mDfcAdapter.setPvList(ObdProt.tCodes);
                         // set OBD data mode to the one selected by input file
                         setObdService(CommService.elm.getService(), getString(R.string.saved_data));
@@ -348,6 +353,18 @@ public class MainActivity extends AppCompatActivity
                     case MESSAGE_DEVICE_NAME:
                         // save the connected device's name
                         mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
+
+                        // Save device name to preferences for reconnect card
+                        if (mConnectedDeviceName != null) {
+                            prefs.edit()
+                                .putString("LAST_ADAPTER_NAME", mConnectedDeviceName)
+                                .apply();
+                            log.info("Saved device name for reconnect card: " + mConnectedDeviceName);
+
+                            // Update the reconnect card subtitle immediately
+                            updateReconnectCardSubtitle();
+                        }
+
                         SnackbarHelper.showSuccess(MainActivity.this,
                                 getString(R.string.connected_to) + mConnectedDeviceName);
                         break;
@@ -383,6 +400,11 @@ public class MainActivity extends AppCompatActivity
                                         // Check if this is a VIN and notify VehicleManager
                                         VinDataHelper.checkForVinAndNotify(event);
                                     }
+                                    else if (event.getSource() == ObdProt.TidPvs)
+                                    {
+                                        log.info("TidPvs match - Test Control data received");
+                                        // Test Control data received - adapter will update automatically
+                                    }
                                 } catch (Exception e)
                                 {
                                     log.log(Level.FINER, "Error adding PV", e);
@@ -401,10 +423,17 @@ public class MainActivity extends AppCompatActivity
                                     log.info("VidPvs match - calling checkForVinAndNotify");
                                     VinDataHelper.checkForVinAndNotify(event);
                                 }
+                                else if (event.getSource() == ObdProt.TidPvs)
+                                {
+                                    log.info("TidPvs modified - Test Control data updated");
+                                    // Test Control data updated - adapter will update automatically
+                                }
                                 break;
 
                             case PvChangeEvent.PV_CLEARED:
-                                currDataAdapter.clear();
+                                if (currDataAdapter != null) {
+                                    currDataAdapter.clear();
+                                }
                                 break;
                         }
                         break;
@@ -518,6 +547,18 @@ public class MainActivity extends AppCompatActivity
                                     // Don't show error snackbar - VehicleInfoFooter handles display
                                     return;
                                 }
+                                // For Mode 8 (Test Control) - not supported by most vehicles
+                                if (CommService.elm.getService() == ObdProt.OBD_SVC_CTRL_MODE) {
+                                    // Show helpful message and switch back to dashboard
+                                    SnackbarHelper.showInfo(MainActivity.this,
+                                        "Test Control (Mode 8) not supported by this vehicle. This is normal for most consumer vehicles.");
+                                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                        if (CommService.elm != null && CommService.elm.getService() == ObdProt.OBD_SVC_CTRL_MODE) {
+                                            setObdService(ObdProt.OBD_SVC_NONE, null);
+                                        }
+                                    }, 500);
+                                    return;
+                                }
                                 // For Mode 1 (Live Data) - individual PID not supported is normal
                                 // Don't show error for individual unsupported PIDs
                                 if (CommService.elm.getService() == ObdProt.OBD_SVC_DATA) {
@@ -590,9 +631,14 @@ public class MainActivity extends AppCompatActivity
         VehicleManager.getInstance(this);
 
         // Initialize DTC Database for comprehensive code lookup (28K+ codes)
-        com.obddroid.core.ecu.ObdCodeList.setDatabaseInstance(
-            new com.obddroid.core.ecu.DTCDatabaseCodeList(this)
-        );
+        com.obddroid.core.ecu.DTCDatabaseCodeList dtcDatabase =
+            new com.obddroid.core.ecu.DTCDatabaseCodeList(this);
+
+        // Set as singleton instance for ObdCodeList
+        com.obddroid.core.ecu.ObdCodeList.setDatabaseInstance(dtcDatabase);
+
+        // Also set in EcuConversions for fault code lookups
+        com.obddroid.core.ecu.EcuConversions.codeList = dtcDatabase;
 
         // Set status bar and navigation bar colors to match our theme right away
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -631,8 +677,7 @@ public class MainActivity extends AppCompatActivity
 
         // Set up all data adapters
         mPidAdapter = new ObdItemAdapter(this, R.layout.obd_item, ObdProt.PidPvs);
-        mVidAdapter = new VehicleInfoAdapter(this, R.layout.obd_item, ObdProt.VidPvs);
-        mTidAdapter = new TestResultAdapter(this, R.layout.obd_item, ObdProt.VidPvs);
+        mTidAdapter = new TestResultAdapter(this, R.layout.obd_item, ObdProt.TidPvs);
         mDfcAdapter = new FaultCodeAdapter(this, R.layout.obd_item, ObdProt.tCodes);
         currDataAdapter = mPidAdapter;
 
@@ -662,12 +707,19 @@ public class MainActivity extends AppCompatActivity
         if (actionBar != null)
         {
             actionBar.show();
+            // Enable home button to navigate back to dashboard
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setHomeAsUpIndicator(R.drawable.ic_home_24);
         }
         // start automatic toolbar hider
         setAutoHider(prefs.getBoolean(PREF_AUTOHIDE, false));
 
         // set content view
         setContentView(R.layout.startup_layout);
+
+        // Set up dashboard card click listeners immediately after setting content view
+        setupDashboardCards();
+        log.info("Dashboard cards set up in onCreate()");
 
         // override comm medium with USB connect intent
         if ("android.hardware.usb.action.USB_DEVICE_ATTACHED".equals(getIntent().getAction()))
@@ -743,6 +795,9 @@ public class MainActivity extends AppCompatActivity
         // Synchronize UI with actual connection state
         // This prevents "Connecting..." from persisting after navigation
         updateConnectionStatusUI();
+
+        // Update reconnect card with last connected adapter info
+        updateReconnectCardSubtitle();
 
         // set up data display update timer
         updateTimer = new Timer();
@@ -924,12 +979,9 @@ public class MainActivity extends AppCompatActivity
     {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
-        getMenuInflater().inflate(R.menu.obd_services, menu.findItem(R.id.obd_services).getSubMenu());
         MainActivity.menu = menu;
         // update menu item status for current conversion
         setConversionSystem(EcuDataItem.cnvSystem);
-        // Initialize service menu items - disabled by default except Settings and Home
-        updateServiceMenuItems(false);
         return true;
     }
 
@@ -941,6 +993,10 @@ public class MainActivity extends AppCompatActivity
     {
         switch (item.getItemId())
         {
+            case android.R.id.home:
+                // Home button clicked - return to dashboard
+                setObdService(ObdProt.OBD_SVC_NONE, getString(R.string.app_name));
+                return true;
 
             case R.id.secure_connect_scan:
                 setMode(MODE.ONLINE);
@@ -962,7 +1018,7 @@ public class MainActivity extends AppCompatActivity
 
 
             case R.id.service_home:
-                // Return to home/startup screen - properly reset to NONE service
+                // Always return to dashboard/home screen
                 setObdService(ObdProt.OBD_SVC_NONE, getString(R.string.app_name));
                 return true;
 
@@ -978,28 +1034,6 @@ public class MainActivity extends AppCompatActivity
                     SnackbarHelper.showWarning(this, "Please wait for ECU connection to complete");
                 }
                 return true;
-
-            case R.id.service_vid_data:
-                if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
-                    ecuConnectionState == ElmProt.STAT.CONNECTED) {
-                    // Check if Mode 9 already failed
-                    VehicleManager vm = VehicleManager.getInstance();
-                    if (vm.hasVINRetrievalFailed()) {
-                        // Don't set service, just show info
-                        SnackbarHelper.showInfo(this, "Vehicle Info not available (Mode 9 not supported by this adapter)");
-                        // Stay on current service or go to live data
-                        if (CommService.elm != null && CommService.elm.getService() == ObdProt.OBD_SVC_NONE) {
-                            setObdService(ObdProt.OBD_SVC_DATA, "Live Data");
-                        }
-                    } else {
-                        // Try to get vehicle info
-                        setObdService(ObdProt.OBD_SVC_VEH_INFO, item.getTitle());
-                    }
-                } else {
-                    SnackbarHelper.showWarning(this, "Please wait for ECU connection to complete");
-                }
-                return true;
-
 
             case R.id.service_testcontrol:
                 if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
@@ -1145,8 +1179,13 @@ public class MainActivity extends AppCompatActivity
                                 case BLUETOOTH:
                                     String btAddress = data.getStringExtra(UnifiedAdapterSelectionActivity.EXTRA_DEVICE_ADDRESS);
                                     if (btAddress != null) {
-                                        // Save the device address
-                                        prefs.edit().putString("LAST_DEV_ADDRESS", btAddress).apply();
+                                        // Save the device address and adapter type
+                                        log.info("Saving Bluetooth adapter info - Address: " + btAddress);
+                                        prefs.edit()
+                                            .putString("LAST_DEV_ADDRESS", btAddress)
+                                            .putString("LAST_ADAPTER_TYPE", "BLUETOOTH")
+                                            .apply();
+                                        log.info("Bluetooth adapter info saved successfully");
                                         // Connect to Bluetooth device
                                         connectBtDevice(btAddress, prefs.getBoolean("bt_secure_connection", false));
                                     } else {
@@ -1156,6 +1195,12 @@ public class MainActivity extends AppCompatActivity
 
                                 case USB:
                                     if (UnifiedAdapterSelectionActivity.selectedUsbPort != null) {
+                                        // Save adapter type for USB
+                                        log.info("Saving USB adapter type");
+                                        prefs.edit()
+                                            .putString("LAST_ADAPTER_TYPE", "USB")
+                                            .apply();
+                                        log.info("USB adapter type saved successfully");
                                         mCommService = new UsbCommService(this, mHandler);
                                         mCommService.connect(UnifiedAdapterSelectionActivity.selectedUsbPort, true);
                                     } else {
@@ -1167,6 +1212,14 @@ public class MainActivity extends AppCompatActivity
                                     String networkIp = data.getStringExtra(UnifiedAdapterSelectionActivity.EXTRA_NETWORK_IP);
                                     int networkPort = data.getIntExtra(UnifiedAdapterSelectionActivity.EXTRA_NETWORK_PORT, 35000);
                                     if (networkIp != null) {
+                                        // Save network info and adapter type
+                                        log.info("Saving Network adapter info - IP: " + networkIp + ", Port: " + networkPort);
+                                        prefs.edit()
+                                            .putString("LAST_ADAPTER_TYPE", "NETWORK")
+                                            .putString("DEVICE_ADDRESS", networkIp)
+                                            .putInt("DEVICE_PORT", networkPort)
+                                            .apply();
+                                        log.info("Network adapter info saved successfully");
                                         connectNetworkDevice(networkIp, networkPort);
                                     } else {
                                         setMode(MODE.OFFLINE);
@@ -1502,17 +1555,6 @@ public class MainActivity extends AppCompatActivity
                 FaultCodeUiHelper.showFaultCodeOptionsModal(this, currDataAdapter, position, ecuConnectionState);
                 break;
 
-            case ObdProt.OBD_SVC_VEH_INFO:
-                // copy VID content to clipboard ...
-                pv = (EcuDataPv) currDataAdapter.getItem(position);
-                ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText(String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT)),
-                        String.valueOf(pv.get(EcuDataPv.FID_VALUE)));
-                clipboard.setPrimaryClip(clip);
-                // Show Toast message
-                SnackbarHelper.showSuccess(this, getString(R.string.copied_to_clipboard));
-                break;
-
             case ObdProt.OBD_SVC_CTRL_MODE:
                 pv = (EcuDataPv) currDataAdapter.getItem(position);
                 // Confirm & perform OBD test control ...
@@ -1802,6 +1844,11 @@ public class MainActivity extends AppCompatActivity
                         | PvChangeEvent.PV_MODIFIED  // Also listen for updates to existing VINs
                         | PvChangeEvent.PV_CLEARED
         );
+        ObdProt.TidPvs.addPvChangeListener(this,
+                PvChangeEvent.PV_ADDED
+                        | PvChangeEvent.PV_MODIFIED
+                        | PvChangeEvent.PV_CLEARED
+        );
         ObdProt.tCodes.addPvChangeListener(this,
                 PvChangeEvent.PV_ADDED
                         | PvChangeEvent.PV_CLEARED
@@ -1816,6 +1863,7 @@ public class MainActivity extends AppCompatActivity
         // remove pv change listeners
         ObdProt.PidPvs.removePvChangeListener(this);
         ObdProt.VidPvs.removePvChangeListener(this);
+        ObdProt.TidPvs.removePvChangeListener(this);
         ObdProt.tCodes.removePvChangeListener(this);
     }
 
@@ -2016,21 +2064,12 @@ public class MainActivity extends AppCompatActivity
 
     /**
      * Enable/disable individual service menu items based on connection state
-     * Settings and Home are always enabled
+     * Settings is always enabled in the toolbar
      * @param enable true to enable service items, false to disable
      */
     private void updateServiceMenuItems(boolean enable) {
-        if (menu != null) {
-            // These are always enabled
-            setMenuItemEnable(R.id.service_home, true);
-            setMenuItemEnable(R.id.settings, true);
-
-            // These require ECU connection
-            setMenuItemEnable(R.id.service_vid_data, enable);
-            setMenuItemEnable(R.id.service_data, enable);
-            setMenuItemEnable(R.id.service_testcontrol, enable);
-            setMenuItemEnable(R.id.service_codes, enable);
-        }
+        // Settings icon is now directly in the toolbar and always enabled
+        // This method is kept for compatibility but no longer manages menu items
     }
 
     /**
@@ -2099,6 +2138,156 @@ public class MainActivity extends AppCompatActivity
         // Attempt to connect to the device
         mCommService = new NetworkCommService(this, mHandler);
         ((NetworkCommService) mCommService).connect(address, port);
+    }
+
+    /**
+     * Update the subtitle text of the reconnect adapter card based on last connected adapter
+     */
+    private void updateReconnectCardSubtitle()
+    {
+        TextView subtitle = findViewById(R.id.reconnect_adapter_subtitle);
+        if (subtitle == null) {
+            log.fine("Reconnect card subtitle not found - layout may not be set yet");
+            return;
+        }
+
+        String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
+        String lastAdapterName = prefs.getString("LAST_ADAPTER_NAME", null);
+        log.info("updateReconnectCardSubtitle - Last adapter type: " + lastAdapterType + ", name: " + lastAdapterName);
+
+        if (lastAdapterType == null) {
+            subtitle.setText("No adapter connected yet");
+            log.info("No last adapter type found");
+            return;
+        }
+
+        String subtitleText = "";
+        switch (lastAdapterType) {
+            case "BLUETOOTH":
+                String btAddress = prefs.getString("LAST_DEV_ADDRESS", null);
+                if (btAddress != null) {
+                    // Check for device nickname first
+                    String nickname = prefs.getString("device_nickname_" + btAddress, "");
+                    if (!nickname.isEmpty()) {
+                        subtitleText = "Reconnect to " + nickname;
+                    } else if (lastAdapterName != null && !lastAdapterName.isEmpty()) {
+                        subtitleText = "Reconnect to " + lastAdapterName;
+                    } else {
+                        subtitleText = "Reconnect to Bluetooth device";
+                    }
+                } else {
+                    subtitleText = "No adapter connected yet";
+                }
+                break;
+            case "NETWORK":
+                String networkIp = prefs.getString("DEVICE_ADDRESS", null);
+                int networkPort = prefs.getInt("DEVICE_PORT", 35000);
+                if (networkIp != null) {
+                    if (lastAdapterName != null && !lastAdapterName.isEmpty()) {
+                        subtitleText = "Reconnect to " + lastAdapterName + " (" + networkIp + ":" + networkPort + ")";
+                    } else {
+                        subtitleText = "Reconnect to " + networkIp + ":" + networkPort;
+                    }
+                } else {
+                    subtitleText = "No adapter connected yet";
+                }
+                break;
+            case "USB":
+                if (lastAdapterName != null && !lastAdapterName.isEmpty()) {
+                    subtitleText = "Reconnect to " + lastAdapterName;
+                } else {
+                    subtitleText = "Reconnect to USB adapter";
+                }
+                break;
+            default:
+                subtitleText = "No adapter connected yet";
+                break;
+        }
+
+        subtitle.setText(subtitleText);
+    }
+
+    /**
+     * Reconnect to the last used adapter based on saved preferences
+     */
+    private void reconnectToLastAdapter()
+    {
+        log.info("reconnectToLastAdapter() called");
+
+        View reconnectCard = findViewById(R.id.card_reconnect_adapter);
+
+        // Check cooldown to prevent spam
+        long currentTime = System.currentTimeMillis();
+        long timeSinceLastReconnect = currentTime - lastReconnectTime;
+
+        if (timeSinceLastReconnect < RECONNECT_COOLDOWN_MS) {
+            long remainingSeconds = (RECONNECT_COOLDOWN_MS - timeSinceLastReconnect) / 1000 + 1;
+            log.info("Reconnect cooldown active - " + remainingSeconds + " seconds remaining");
+            SnackbarHelper.showInfo(this, "Please wait " + remainingSeconds + " second(s) before reconnecting again");
+            return;
+        }
+
+        // Update last reconnect time
+        lastReconnectTime = currentTime;
+
+        // Disable the reconnect card for 10 seconds
+        if (reconnectCard != null) {
+            reconnectCard.setEnabled(false);
+            reconnectCard.setAlpha(0.5f);
+            log.info("Reconnect card disabled for " + (RECONNECT_COOLDOWN_MS / 1000) + " seconds");
+
+            // Re-enable after cooldown
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                reconnectCard.setEnabled(true);
+                reconnectCard.setAlpha(1.0f);
+                log.info("Reconnect card re-enabled");
+            }, RECONNECT_COOLDOWN_MS);
+        }
+
+        String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
+        log.info("Attempting to reconnect - Last adapter type: " + lastAdapterType);
+
+        if (lastAdapterType == null) {
+            log.warning("No last adapter type found in SharedPreferences");
+            SnackbarHelper.showWarning(this, "No previous adapter connection found. Please select an adapter.");
+            return;
+        }
+
+        try {
+            switch (lastAdapterType) {
+                case "BLUETOOTH":
+                    String btAddress = prefs.getString("LAST_DEV_ADDRESS", null);
+                    if (btAddress != null) {
+                        connectBtDevice(btAddress, prefs.getBoolean("bt_secure_connection", false));
+                        SnackbarHelper.showInfo(this, "Reconnecting to Bluetooth adapter...");
+                    } else {
+                        SnackbarHelper.showWarning(this, "No Bluetooth device address found. Please select an adapter.");
+                    }
+                    break;
+
+                case "NETWORK":
+                    String networkIp = prefs.getString("DEVICE_ADDRESS", null);
+                    int networkPort = prefs.getInt("DEVICE_PORT", 35000);
+                    if (networkIp != null) {
+                        connectNetworkDevice(networkIp, networkPort);
+                        SnackbarHelper.showInfo(this, "Reconnecting to network adapter...");
+                    } else {
+                        SnackbarHelper.showWarning(this, "No network address found. Please select an adapter.");
+                    }
+                    break;
+
+                case "USB":
+                    SnackbarHelper.showWarning(this, "USB reconnection requires manual device selection. Please use 'Select Adapter'.");
+                    break;
+
+                default:
+                    SnackbarHelper.showWarning(this, "Unknown adapter type. Please select an adapter.");
+                    break;
+            }
+        } catch (Exception e) {
+            log.log(Level.WARNING, "Error reconnecting to adapter", e);
+            SnackbarHelper.showError(this, "Failed to reconnect. Please select an adapter manually.");
+        }
     }
 
     /**
@@ -2218,9 +2407,11 @@ public class MainActivity extends AppCompatActivity
 
             case ObdProt.OBD_SVC_NONE:
                 setContentView(R.layout.startup_layout);
-                // intentionally no break to initialize adapter
-            case ObdProt.OBD_SVC_VEH_INFO:
-                currDataAdapter = mVidAdapter;
+                // Set to null since we're on the startup screen
+                currDataAdapter = null;
+
+                // Set up dashboard card click listeners
+                setupDashboardCards();
                 break;
         }
 
@@ -2232,6 +2423,99 @@ public class MainActivity extends AppCompatActivity
         }
 
         // remember this as last selected service
+    }
+
+    /**
+     * Set up click listeners for dashboard cards
+     */
+    private void setupDashboardCards() {
+        // Find and set up Live Data card
+        View liveDataCard = findViewById(R.id.card_live_data);
+        if (liveDataCard != null) {
+            log.info("Live Data card found and setting up click listener");
+            liveDataCard.setOnClickListener(v -> {
+                log.info("Live Data card clicked!");
+                if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
+                    ecuConnectionState == ElmProt.STAT.CONNECTED) {
+                    setObdService(ObdProt.OBD_SVC_DATA, "Live Data");
+                } else {
+                    SnackbarHelper.showWarning(this, "Please connect to vehicle first");
+                }
+            });
+        } else {
+            log.warning("Live Data card NOT found!");
+        }
+
+        // Find and set up Test Control card
+        View testControlCard = findViewById(R.id.card_test_control);
+        if (testControlCard != null) {
+            log.info("Test Control card found and setting up click listener");
+            testControlCard.setOnClickListener(v -> {
+                log.info("Test Control card clicked!");
+                if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
+                    ecuConnectionState == ElmProt.STAT.CONNECTED) {
+                    setObdService(ObdProt.OBD_SVC_CTRL_MODE, "Test Control");
+                } else {
+                    SnackbarHelper.showWarning(this, "Please connect to vehicle first");
+                }
+            });
+        } else {
+            log.warning("Test Control card NOT found!");
+        }
+
+        // Find and set up Fault Codes card
+        View faultCodesCard = findViewById(R.id.card_fault_codes);
+        if (faultCodesCard != null) {
+            faultCodesCard.setOnClickListener(v -> {
+                if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
+                    ecuConnectionState == ElmProt.STAT.CONNECTED) {
+                    setObdService(ObdProt.OBD_SVC_READ_CODES, "Fault Codes");
+                } else {
+                    SnackbarHelper.showWarning(this, "Please connect to vehicle first");
+                }
+            });
+        }
+
+        // Find and set up Reconnect to Last Adapter card
+        View reconnectCard = findViewById(R.id.card_reconnect_adapter);
+        if (reconnectCard != null) {
+            // Check if we're still in cooldown period
+            long currentTime = System.currentTimeMillis();
+            long timeSinceLastReconnect = currentTime - lastReconnectTime;
+
+            if (timeSinceLastReconnect < RECONNECT_COOLDOWN_MS && lastReconnectTime > 0) {
+                // Still in cooldown - keep it disabled and schedule re-enable
+                reconnectCard.setEnabled(false);
+                reconnectCard.setAlpha(0.5f);
+                long remainingCooldown = RECONNECT_COOLDOWN_MS - timeSinceLastReconnect;
+                log.fine("Reconnect card still in cooldown - " + remainingCooldown + "ms remaining");
+
+                // Schedule re-enable for when cooldown expires
+                View finalReconnectCard = reconnectCard;
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    finalReconnectCard.setEnabled(true);
+                    finalReconnectCard.setAlpha(1.0f);
+                    log.info("Reconnect card re-enabled after cooldown");
+                }, remainingCooldown);
+            } else {
+                // Not in cooldown - enable it
+                reconnectCard.setEnabled(true);
+                reconnectCard.setAlpha(1.0f);
+            }
+
+            reconnectCard.setOnClickListener(v -> {
+                reconnectToLastAdapter();
+            });
+        }
+
+        // Update the reconnect card subtitle
+        updateReconnectCardSubtitle();
+
+        // Hide status text
+        TextView statusText = findViewById(R.id.status_text);
+        if (statusText != null) {
+            statusText.setVisibility(View.GONE);
+        }
     }
 
     /**
@@ -2261,9 +2545,7 @@ public class MainActivity extends AppCompatActivity
             if (currDataAdapter == mPidAdapter)
             {
                 currDataAdapter.setPvList(ObdProt.PidPvs);
-            } else if (currDataAdapter == mVidAdapter)
-                currDataAdapter.setPvList(ObdProt.VidPvs);
-            else if (currDataAdapter == mDfcAdapter)
+            } else if (currDataAdapter == mDfcAdapter)
                 currDataAdapter.setPvList(ObdProt.tCodes);
 
         }
