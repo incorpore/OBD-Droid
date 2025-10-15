@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/dialog_background">
+
+    <!-- Header -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Reconnect Settings"
+        android:textColor="#212121"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:padding="16dp"
+        android:paddingBottom="8dp"/>
+
+    <!-- Content -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp">
+
+        <!-- Description -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Configure automatic reconnection behavior when the app starts."
+            android:textSize="14sp"
+            android:textColor="#757575"
+            android:layout_marginBottom="16dp"
+            android:lineSpacingMultiplier="1.2"/>
+
+        <!-- Setting card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_background"
+            android:padding="16dp"
+            android:layout_marginBottom="8dp">
+
+            <!-- Auto-reconnect checkbox -->
+            <CheckBox
+                android:id="@+id/checkbox_auto_reconnect"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Auto-reconnect on app startup"
+                android:textSize="16sp"
+                android:textColor="#424242"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Info text -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="When enabled, the app will automatically connect to your last adapter when you start the app."
+                android:textSize="13sp"
+                android:textColor="#757575"
+                android:paddingStart="40dp"
+                android:lineSpacingMultiplier="1.2"/>
+
+        </LinearLayout>
+
+        <!-- Last adapter info -->
+        <LinearLayout
+            android:id="@+id/last_adapter_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Last Adapter"
+                android:textSize="12sp"
+                android:textColor="#757575"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/last_adapter_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OBDII (Bluetooth)"
+                android:textSize="14sp"
+                android:textColor="#424242"
+                android:textStyle="bold"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"/>
+
+    <!-- Button bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:padding="8dp">
+
+        <Button
+            android:id="@+id/btn_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="Cancel"
+            android:textColor="#757575"
+            android:textSize="14sp"
+            android:background="?android:attr/selectableItemBackground"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginEnd="8dp"/>
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="Save"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:background="@drawable/button_subtle"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"/>
+
+    </LinearLayout>
+
+</LinearLayout>

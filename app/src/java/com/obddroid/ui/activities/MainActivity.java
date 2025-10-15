@@ -291,6 +291,19 @@ public class MainActivity extends AppCompatActivity
      * Track if ECU has been selected by user
      */
     private boolean ecuUserSelected = false;
+
+    // === Connection Cycle Detection for Unsupported Modes ===
+    private ElmProt.STAT lastConnectionState = ElmProt.STAT.UNDEFINED;
+    private int connectionCycleCount = 0;
+    private int serviceWhenCycleStarted = ObdProt.OBD_SVC_NONE;
+    private long lastCycleTimestamp = 0;
+    private AlertDialog unsupportedModeDialog = null;
+    private static final int MAX_CYCLES_BEFORE_ALERT = 3;
+    private static final long CYCLE_RESET_TIMEOUT_MS = 5000; // Reset cycle count if no cycles for 5 seconds
+
+    // === Auto-Reconnect Tracking ===
+    private boolean hasAttemptedAutoReconnect = false;
+
     /**
      * Handle message requests
      */
@@ -465,6 +478,9 @@ public class MainActivity extends AppCompatActivity
 
                         // Update VehicleManager with ECU connection state
                         VehicleManager.getInstance().setECUConnectionState(state);
+
+                        // === Detect connection cycles for unsupported modes ===
+                        detectConnectionCycles(state);
 
                         /* Show ELM status only in ONLINE mode */
                         if (getMode() != MODE.DEMO && !skipStatusUpdate)
@@ -707,15 +723,18 @@ public class MainActivity extends AppCompatActivity
         if (actionBar != null)
         {
             actionBar.show();
-            // Enable home button to navigate back to dashboard
+            // Enable home button to navigate back to dashboard with app logo
             actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setHomeAsUpIndicator(R.drawable.ic_home_24);
+            actionBar.setHomeAsUpIndicator(R.drawable.ic_app_logo);
         }
         // start automatic toolbar hider
         setAutoHider(prefs.getBoolean(PREF_AUTOHIDE, false));
 
         // set content view
         setContentView(R.layout.startup_layout);
+
+        // Wire up footer overlay
+        setupFooterOverlay();
 
         // Set up dashboard card click listeners immediately after setting content view
         setupDashboardCards();
@@ -798,6 +817,9 @@ public class MainActivity extends AppCompatActivity
 
         // Update reconnect card with last connected adapter info
         updateReconnectCardSubtitle();
+
+        // Auto-reconnect on startup if enabled (only on first resume)
+        attemptAutoReconnectIfEnabled();
 
         // set up data display update timer
         updateTimer = new Timer();
@@ -2253,6 +2275,13 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
+        // Stop any existing communication service before reconnecting
+        if (mCommService != null) {
+            log.info("Stopping existing communication service before reconnect");
+            mCommService.stop();
+            mCommService = null;
+        }
+
         try {
             switch (lastAdapterType) {
                 case "BLUETOOTH":
@@ -2291,6 +2320,282 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
+     * Attempt auto-reconnect on startup if the setting is enabled
+     * Only runs once per app session (first onResume)
+     */
+    private void attemptAutoReconnectIfEnabled() {
+        // Only attempt once per session
+        if (hasAttemptedAutoReconnect) {
+            return;
+        }
+
+        // Check if auto-reconnect is enabled
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean autoReconnectEnabled = prefs.getBoolean("auto_reconnect_on_startup", false);
+
+        if (!autoReconnectEnabled) {
+            log.info("Auto-reconnect disabled");
+            hasAttemptedAutoReconnect = true;
+            return;
+        }
+
+        // Check if we have a last adapter to reconnect to
+        String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
+        if (lastAdapterType == null) {
+            log.info("Auto-reconnect: No last adapter found");
+            hasAttemptedAutoReconnect = true;
+            return;
+        }
+
+        // Check if we're already connected
+        if (mCommService != null && mCommService.getState() == CommService.STATE.CONNECTED) {
+            log.info("Auto-reconnect: Already connected");
+            hasAttemptedAutoReconnect = true;
+            return;
+        }
+
+        // Check if we're in offline mode
+        if (getMode() != MODE.OFFLINE) {
+            log.info("Auto-reconnect: Not in offline mode");
+            hasAttemptedAutoReconnect = true;
+            return;
+        }
+
+        // All checks passed - attempt reconnect after a short delay
+        // Delay ensures UI is fully initialized
+        log.info("Auto-reconnect: Attempting to reconnect to " + lastAdapterType);
+        hasAttemptedAutoReconnect = true;
+
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            reconnectToLastAdapter();
+        }, 1000); // 1 second delay to ensure UI is ready
+    }
+
+    /**
+     * Show dialog for auto-reconnect settings
+     */
+    private void showAutoReconnectSettingsDialog() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean currentAutoReconnect = prefs.getBoolean("auto_reconnect_on_startup", false);
+
+        // Inflate custom layout
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_auto_reconnect_settings, null);
+
+        // Get references to views
+        android.widget.CheckBox checkbox = dialogView.findViewById(R.id.checkbox_auto_reconnect);
+        android.widget.LinearLayout lastAdapterInfo = dialogView.findViewById(R.id.last_adapter_info);
+        TextView lastAdapterName = dialogView.findViewById(R.id.last_adapter_name);
+        Button cancelButton = dialogView.findViewById(R.id.btn_cancel);
+        Button saveButton = dialogView.findViewById(R.id.btn_save);
+
+        // Set current value
+        checkbox.setChecked(currentAutoReconnect);
+
+        // Show last adapter info if available
+        String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
+        if (lastAdapterType != null) {
+            lastAdapterInfo.setVisibility(View.VISIBLE);
+            String displayName = "";
+
+            switch (lastAdapterType) {
+                case "BLUETOOTH":
+                    String btAddress = prefs.getString("LAST_DEV_ADDRESS", null);
+                    if (btAddress != null) {
+                        // Check for device nickname first (most specific)
+                        String nickname = prefs.getString("device_nickname_" + btAddress, "");
+                        if (!nickname.isEmpty()) {
+                            displayName = nickname + " (Bluetooth)";
+                        } else {
+                            // Fall back to saved adapter name
+                            String savedName = prefs.getString("LAST_ADAPTER_NAME", null);
+                            if (savedName != null && !savedName.isEmpty()) {
+                                displayName = savedName + " (Bluetooth)";
+                            } else {
+                                displayName = "Bluetooth Device";
+                            }
+                        }
+                    } else {
+                        displayName = "Bluetooth Device";
+                    }
+                    break;
+                case "NETWORK":
+                    String ip = prefs.getString("DEVICE_ADDRESS", "Unknown");
+                    int port = prefs.getInt("DEVICE_PORT", 35000);
+                    displayName = ip + ":" + port + " (Network)";
+                    break;
+                case "USB":
+                    displayName = "USB Adapter";
+                    break;
+                default:
+                    displayName = "Unknown Adapter";
+                    break;
+            }
+
+            lastAdapterName.setText(displayName);
+        }
+
+        // Create dialog
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        // Remove default background to show our rounded corners
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        // Set up button listeners
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+
+        saveButton.setOnClickListener(v -> {
+            boolean newValue = checkbox.isChecked();
+            prefs.edit().putBoolean("auto_reconnect_on_startup", newValue).apply();
+
+            String message = newValue ?
+                "Auto-reconnect enabled. The app will reconnect on startup." :
+                "Auto-reconnect disabled. You'll need to manually reconnect.";
+            SnackbarHelper.showInfo(MainActivity.this, message);
+
+            log.info("Auto-reconnect setting changed to: " + newValue);
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+    /**
+     * Detect connection cycles (Connecting -> No Data -> Connecting)
+     * Shows a dialog after repeated cycles to help user understand unsupported mode
+     */
+    private void detectConnectionCycles(ElmProt.STAT newState) {
+        // Only track cycles for specific modes that commonly fail
+        if (CommService.elm == null) {
+            log.info("detectConnectionCycles: CommService.elm is null");
+            return;
+        }
+
+        int currentService = CommService.elm.getService();
+        log.info(String.format("detectConnectionCycles: service=%s (%d), newState=%s, lastState=%s",
+            ObdProt.getServiceName(currentService), currentService, newState, lastConnectionState));
+
+        // Only detect cycles for Mode 8 (Test Control) and Mode 6 (Monitor Test)
+        // These are commonly unsupported
+        if (currentService != ObdProt.OBD_SVC_CTRL_MODE &&
+            currentService != ObdProt.OBD_SVC_MON_RESULT) {
+            log.info("detectConnectionCycles: Not Mode 8 or 6, resetting");
+            resetCycleDetection();
+            return;
+        }
+        log.info("detectConnectionCycles: Tracking cycles for this service");
+
+        // Check for timeout - reset if no cycles for a while
+        long currentTime = System.currentTimeMillis();
+        if (lastCycleTimestamp > 0 && (currentTime - lastCycleTimestamp) > CYCLE_RESET_TIMEOUT_MS) {
+            log.info("Cycle detection timeout - resetting");
+            resetCycleDetection();
+        }
+
+        // Detect the cycle: CONNECTING -> NODATA (or vice versa)
+        boolean isCycle = false;
+        if ((lastConnectionState == ElmProt.STAT.CONNECTING && newState == ElmProt.STAT.NODATA) ||
+            (lastConnectionState == ElmProt.STAT.NODATA && newState == ElmProt.STAT.CONNECTING)) {
+            isCycle = true;
+            log.info("detectConnectionCycles: *** CYCLE DETECTED ***");
+        } else {
+            log.info("detectConnectionCycles: No cycle detected in this transition");
+        }
+
+        if (isCycle) {
+            // Track the service where cycles started
+            if (serviceWhenCycleStarted == ObdProt.OBD_SVC_NONE) {
+                serviceWhenCycleStarted = currentService;
+            }
+
+            // Only count if it's the same service
+            if (serviceWhenCycleStarted == currentService) {
+                connectionCycleCount++;
+                lastCycleTimestamp = currentTime;
+                log.info(String.format("Connection cycle detected for service %s: count=%d",
+                    ObdProt.getServiceName(currentService), connectionCycleCount));
+
+                // Show dialog after threshold
+                if (connectionCycleCount >= MAX_CYCLES_BEFORE_ALERT && unsupportedModeDialog == null) {
+                    showUnsupportedModeDialog(currentService);
+                }
+            }
+        }
+
+        lastConnectionState = newState;
+    }
+
+    /**
+     * Reset cycle detection tracking
+     */
+    private void resetCycleDetection() {
+        connectionCycleCount = 0;
+        serviceWhenCycleStarted = ObdProt.OBD_SVC_NONE;
+        lastCycleTimestamp = 0;
+        lastConnectionState = ElmProt.STAT.UNDEFINED;
+    }
+
+    /**
+     * Show dialog explaining that the mode is not supported
+     */
+    private void showUnsupportedModeDialog(int obdService) {
+        if (unsupportedModeDialog != null && unsupportedModeDialog.isShowing()) {
+            return; // Already showing
+        }
+
+        String serviceName = ObdProt.getServiceName(obdService);
+        String message;
+
+        switch (obdService) {
+            case ObdProt.OBD_SVC_CTRL_MODE:
+                message = "Test Control (Mode 8) is not supported by this vehicle.\n\n" +
+                         "This mode is used for specialized diagnostic tests like evaporative system leak tests " +
+                         "and is rarely supported by consumer vehicles or OBD emulators.\n\n" +
+                         "This is completely normal.";
+                break;
+
+            case ObdProt.OBD_SVC_MON_RESULT:
+                message = "Monitor Test Results (Mode 6) is not supported by this vehicle.\n\n" +
+                         "This mode provides detailed emissions monitoring test results and is not supported " +
+                         "by all vehicles.\n\n" +
+                         "This is normal for many vehicles.";
+                break;
+
+            default:
+                message = String.format("%s is not responding.\n\n" +
+                         "This feature may not be supported by your vehicle.", serviceName);
+                break;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Mode Not Supported")
+               .setMessage(message)
+               .setCancelable(false)
+               .setNegativeButton("Keep Trying", (dialog, which) -> {
+                   // Reset cycle detection to allow user to keep trying
+                   resetCycleDetection();
+                   dialog.dismiss();
+                   unsupportedModeDialog = null;
+               })
+               .setPositiveButton("Go Back", (dialog, which) -> {
+                   // Return to dashboard
+                   resetCycleDetection();
+                   setObdService(ObdProt.OBD_SVC_NONE, null);
+                   dialog.dismiss();
+                   unsupportedModeDialog = null;
+               });
+
+        unsupportedModeDialog = builder.create();
+        unsupportedModeDialog.show();
+
+        log.info(String.format("Showed unsupported mode dialog for %s after %d cycles",
+            serviceName, connectionCycleCount));
+    }
+
+    /**
      * Activate desired OBD service
      *
      * @param newObdService OBD service ID to be activated
@@ -2300,6 +2605,9 @@ public class MainActivity extends AppCompatActivity
         // remember this as current OBD service
         obdService = newObdService;
         ignoreNrcs = false;
+
+        // Reset cycle detection when switching services
+        resetCycleDetection();
 
         // set list view
         setContentView(mListView);
@@ -2410,6 +2718,9 @@ public class MainActivity extends AppCompatActivity
                 // Set to null since we're on the startup screen
                 currDataAdapter = null;
 
+                // Wire up footer overlay
+                setupFooterOverlay();
+
                 // Set up dashboard card click listeners
                 setupDashboardCards();
                 break;
@@ -2506,6 +2817,12 @@ public class MainActivity extends AppCompatActivity
             reconnectCard.setOnClickListener(v -> {
                 reconnectToLastAdapter();
             });
+
+            // Add long-press to open auto-reconnect settings
+            reconnectCard.setOnLongClickListener(v -> {
+                showAutoReconnectSettingsDialog();
+                return true; // Consume the long-click event
+            });
         }
 
         // Update the reconnect card subtitle
@@ -2515,6 +2832,21 @@ public class MainActivity extends AppCompatActivity
         TextView statusText = findViewById(R.id.status_text);
         if (statusText != null) {
             statusText.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Wire up footer overlay to close footer when clicking outside
+     */
+    private void setupFooterOverlay() {
+        com.obddroid.ui.components.VehicleInfoFooter footer = findViewById(R.id.vehicle_footer);
+        View overlay = findViewById(R.id.footer_overlay);
+
+        if (footer != null && overlay != null) {
+            footer.setOverlayView(overlay);
+            log.info("Footer overlay wired up successfully");
+        } else {
+            log.warning("Could not find footer or overlay view");
         }
     }
 
@@ -2650,6 +2982,12 @@ public class MainActivity extends AppCompatActivity
     {
         // Clear vehicle data on disconnect
         VehicleManager.getInstance().clearVehicle();
+
+        // Stop communication service to ensure clean disconnect
+        if (mCommService != null) {
+            mCommService.stop();
+            log.info("Stopped communication service on disconnect");
+        }
 
         // handle further initialisations
         setMode(MODE.OFFLINE);

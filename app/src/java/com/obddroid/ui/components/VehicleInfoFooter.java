@@ -11,6 +11,8 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.OvershootInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -59,6 +61,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
     private VehicleData currentVehicleData;
     private View expandIndicator;
     private View statusDot;
+    private View overlayView;
 
     public VehicleInfoFooter(Context context)
     {
@@ -201,6 +204,15 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         dotParams.gravity = Gravity.CENTER_VERTICAL;
         contentLayout.addView(statusDot, dotParams);
 
+        // Add bottom divider for header separation
+        View headerDivider = new View(getContext());
+        headerDivider.setBackgroundColor(Color.parseColor("#1A1A1A")); // Subtle dark line
+        LinearLayout.LayoutParams headerDividerParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            dpToPx(1)
+        );
+        addView(headerDivider, headerDividerParams);
+
         // Create expanded container
         expandedContainer = new LinearLayout(getContext());
         expandedContainer.setOrientation(LinearLayout.VERTICAL);
@@ -265,7 +277,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         expandedScrollView.setBackgroundColor(Color.parseColor("#1A1A1A"));
         LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
-            dpToPx(400) // Increased height for better viewing
+            dpToPx(500) // Optimal height for viewing
         );
 
         // Create expanded content layout inside ScrollView
@@ -437,6 +449,25 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         // Not used for this implementation
     }
 
+    /**
+     * Set the overlay view that should be shown/hidden when footer expands/collapses
+     * @param overlay The overlay view from the parent layout
+     */
+    public void setOverlayView(View overlay) {
+        this.overlayView = overlay;
+        // Set click listener to collapse footer when overlay is clicked
+        if (overlayView != null) {
+            overlayView.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (isExpanded) {
+                        toggleExpanded();
+                    }
+                }
+            });
+        }
+    }
+
     @Override
     protected void onAttachedToWindow()
     {
@@ -499,42 +530,106 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         isExpanded = !isExpanded;
         Log.d(TAG, "toggleExpanded: isExpanded = " + isExpanded);
 
-        // Animate arrow rotation
+        // Animate arrow rotation with smooth easing
         if (expandIndicator != null) {
             ((TextView)expandIndicator).animate()
                 .rotation(isExpanded ? 180f : 0f)
-                .setDuration(300)
+                .setDuration(400)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
                 .start();
         }
 
         if (isExpanded) {
             Log.d(TAG, "Expanding footer - updating content");
             updateExpandedContent();
+
+            // Show overlay
+            if (overlayView != null) {
+                overlayView.setVisibility(View.VISIBLE);
+                overlayView.setAlpha(0f);
+                overlayView.animate().alpha(1f).setDuration(300).start();
+            }
+
             if (expandedContainer != null) {
+                // Measure the target height
+                expandedContainer.measure(
+                    View.MeasureSpec.makeMeasureSpec(getWidth(), View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+                );
+                final int targetHeight = expandedContainer.getMeasuredHeight();
+
+                // Start with height 0
+                LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) expandedContainer.getLayoutParams();
+                params.height = 0;
+                expandedContainer.setLayoutParams(params);
                 expandedContainer.setVisibility(View.VISIBLE);
-                expandedContainer.setAlpha(0f);
-                expandedContainer.animate()
-                    .alpha(1f)
-                    .setDuration(300)
-                    .start();
-                Log.d(TAG, "Expanded container made visible");
+                expandedContainer.setAlpha(1f);
+
+                // Animate height with bounce
+                ValueAnimator animator = ValueAnimator.ofInt(0, targetHeight);
+                animator.setDuration(500);
+                animator.setInterpolator(new OvershootInterpolator(1.2f)); // Bounce factor
+                animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animation) {
+                        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) expandedContainer.getLayoutParams();
+                        params.height = (int) animation.getAnimatedValue();
+                        expandedContainer.setLayoutParams(params);
+                    }
+                });
+                animator.start();
+                Log.d(TAG, "Expanded container made visible with slide+bounce");
             } else {
                 Log.e(TAG, "expandedContainer is null!");
             }
         } else {
             Log.d(TAG, "Collapsing footer");
+
+            // Hide overlay
+            if (overlayView != null) {
+                overlayView.animate().alpha(0f).setDuration(300).withEndAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        overlayView.setVisibility(View.GONE);
+                    }
+                }).start();
+            }
+
             if (expandedContainer != null) {
-                expandedContainer.animate()
-                    .alpha(0f)
-                    .setDuration(300)
-                    .withEndAction(new Runnable() {
-                        @Override
-                        public void run() {
-                            expandedContainer.setVisibility(View.GONE);
-                            Log.d(TAG, "Expanded container hidden");
-                        }
-                    })
-                    .start();
+                final int startHeight = expandedContainer.getHeight();
+
+                // Animate height collapsing with smooth deceleration
+                ValueAnimator animator = ValueAnimator.ofInt(startHeight, 0);
+                animator.setDuration(300);
+                animator.setInterpolator(new DecelerateInterpolator(1.5f));
+                animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animation) {
+                        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) expandedContainer.getLayoutParams();
+                        params.height = (int) animation.getAnimatedValue();
+                        expandedContainer.setLayoutParams(params);
+                    }
+                });
+                animator.addListener(new android.animation.Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(android.animation.Animator animation) {}
+
+                    @Override
+                    public void onAnimationEnd(android.animation.Animator animation) {
+                        expandedContainer.setVisibility(View.GONE);
+                        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) expandedContainer.getLayoutParams();
+                        params.height = LinearLayout.LayoutParams.WRAP_CONTENT;
+                        expandedContainer.setLayoutParams(params);
+                        Log.d(TAG, "Expanded container hidden");
+                    }
+
+                    @Override
+                    public void onAnimationCancel(android.animation.Animator animation) {}
+
+                    @Override
+                    public void onAnimationRepeat(android.animation.Animator animation) {}
+                });
+                animator.start();
             }
         }
     }
@@ -1210,7 +1305,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        rowParams.topMargin = dpToPx(1);
+        rowParams.topMargin = dpToPx(3);
         expandedContentLayout.addView(row, rowParams);
     }
 

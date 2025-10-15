@@ -5,13 +5,18 @@
     android:orientation="vertical"
     >
 
-    <!-- Main Dashboard Container -->
-    <ScrollView
+    <!-- Content area with overlay support -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="#F5F5F5"
-        android:fillViewport="true">
+        android:layout_weight="1">
+
+        <!-- Main Dashboard Container -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#F5F5F5"
+            android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -291,8 +296,20 @@
     <ListView
         android:id="@android:id/list"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:visibility="invisible"/>
+
+    <!-- Overlay that appears when footer is expanded -->
+    <View
+        android:id="@+id/footer_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"/>
+
+    </FrameLayout>
 
     <com.obddroid.ui.components.VehicleInfoFooter
         android:id="@+id/vehicle_footer"
