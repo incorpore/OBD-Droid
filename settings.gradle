@@ -17,3 +17,7 @@ project(':nhtsa-vin-decoder-android').projectDir = new File(rootDir, 'modules/nh
 include ':automotive-logo-library-android'
 project(':automotive-logo-library-android').projectDir = new File(rootDir, 'modules/automotive-logo-library/android/automotive-logo-library-android')
 
+// DTC Database
+include ':dtc-database-android'
+project(':dtc-database-android').projectDir = new File(rootDir, 'modules/dtc-database/android/dtc-database-android')
+

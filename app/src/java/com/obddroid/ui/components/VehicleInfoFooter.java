@@ -581,64 +581,64 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
     private void displayVehicleInfo() {
         if (currentVehicleData == null) return;
 
-        // Add VIN section
-        addSectionHeader("Vehicle Identification");
-        addDetailRow("VIN", currentVehicleData.vin);
-        addDetailRow("Manufacturer", currentVehicleData.manufacturer);
+        // Add VIN section with styled headers and rows
+        addStyledSectionHeader("Vehicle Identification");
+        addStyledDetailRow("VIN", currentVehicleData.vin);
+        addStyledDetailRow("Manufacturer", currentVehicleData.manufacturer);
         if (currentVehicleData.series != null && !currentVehicleData.series.equals("Not Applicable")) {
-            addDetailRow("Series", currentVehicleData.series);
+            addStyledDetailRow("Series", currentVehicleData.series);
         }
         if (currentVehicleData.trim != null && !currentVehicleData.trim.equals("Not Applicable")) {
-            addDetailRow("Trim", currentVehicleData.trim);
+            addStyledDetailRow("Trim", currentVehicleData.trim);
         }
 
         // Add Body/Structure section
-        addSectionHeader("Body & Structure");
-        addDetailRow("Body Class", currentVehicleData.bodyClass);
-        addDetailRow("Vehicle Type", currentVehicleData.vehicleType);
-        addDetailRow("Doors", currentVehicleData.doors);
+        addStyledSectionHeader("Body & Structure");
+        addStyledDetailRow("Body Class", currentVehicleData.bodyClass);
+        addStyledDetailRow("Vehicle Type", currentVehicleData.vehicleType);
+        addStyledDetailRow("Doors", currentVehicleData.doors);
         if (currentVehicleData.wheelBase != null && !currentVehicleData.wheelBase.isEmpty()) {
-            addDetailRow("Wheelbase", currentVehicleData.wheelBase + " inches");
+            addStyledDetailRow("Wheelbase", currentVehicleData.wheelBase + " inches");
         }
 
         // Add Engine section
-        addSectionHeader("Engine & Performance");
+        addStyledSectionHeader("Engine & Performance");
         if (currentVehicleData.engineModel != null && !currentVehicleData.engineModel.isEmpty()) {
-            addDetailRow("Engine Model", currentVehicleData.engineModel);
+            addStyledDetailRow("Engine Model", currentVehicleData.engineModel);
         }
         if (currentVehicleData.displacementL != null) {
             String displacement = currentVehicleData.displacementL + "L";
             if (currentVehicleData.displacementCC != null) {
                 displacement += " (" + currentVehicleData.displacementCC + "cc)";
             }
-            addDetailRow("Displacement", displacement);
+            addStyledDetailRow("Displacement", displacement);
         }
-        addDetailRow("Cylinders", currentVehicleData.engineCylinders);
-        addDetailRow("Fuel Type", currentVehicleData.fuelTypePrimary);
+        addStyledDetailRow("Cylinders", currentVehicleData.engineCylinders);
+        addStyledDetailRow("Fuel Type", currentVehicleData.fuelTypePrimary);
 
         // Add Drivetrain section
-        addSectionHeader("Drivetrain");
-        addDetailRow("Drive Type", currentVehicleData.driveType);
-        addDetailRow("Transmission", currentVehicleData.transmissionStyle);
+        addStyledSectionHeader("Drivetrain");
+        addStyledDetailRow("Drive Type", currentVehicleData.driveType);
+        addStyledDetailRow("Transmission", currentVehicleData.transmissionStyle);
         if (currentVehicleData.transmissionSpeeds != null && !currentVehicleData.transmissionSpeeds.isEmpty()) {
-            addDetailRow("Speeds", currentVehicleData.transmissionSpeeds);
+            addStyledDetailRow("Speeds", currentVehicleData.transmissionSpeeds);
         }
 
         // Add Manufacturing section
-        addSectionHeader("Manufacturing");
+        addStyledSectionHeader("Manufacturing");
         String plantLocation = buildPlantLocation(currentVehicleData);
         if (!plantLocation.isEmpty()) {
-            addDetailRow("Plant Location", plantLocation);
+            addStyledDetailRow("Plant Location", plantLocation);
         }
 
         // Add Weight section if available
         if (currentVehicleData.gvwr != null || currentVehicleData.curbWeight != null) {
-            addSectionHeader("Weight");
+            addStyledSectionHeader("Weight");
             if (currentVehicleData.curbWeight != null && !currentVehicleData.curbWeight.isEmpty()) {
-                addDetailRow("Curb Weight", currentVehicleData.curbWeight + " lbs");
+                addStyledDetailRow("Curb Weight", currentVehicleData.curbWeight + " lbs");
             }
             if (currentVehicleData.gvwr != null && !currentVehicleData.gvwr.isEmpty()) {
-                addDetailRow("GVWR", currentVehicleData.gvwr + " lbs");
+                addStyledDetailRow("GVWR", currentVehicleData.gvwr + " lbs");
             }
         }
     }
