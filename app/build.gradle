@@ -22,13 +22,15 @@ android {
             targetCompatibility JavaVersion.VERSION_17
         }
 
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+
         gradle.projectsEvaluated {
             tasks.withType(JavaCompile).configureEach {
                 options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
             }
         }
-
-        // Kotlin will automatically use the Java version from compileOptions
     }
 
     sourceSets {

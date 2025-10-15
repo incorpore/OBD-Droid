@@ -35,7 +35,16 @@ public class EcuCodeList
 	 */
 	public EcuCodeList(String resourceBundleName)
 	{
-		codes = UTF8Bundle.getBundle(resourceBundleName);
+		ResourceBundle tempCodes = null;
+		if (resourceBundleName != null && !resourceBundleName.isEmpty()) {
+			try {
+				tempCodes = UTF8Bundle.getBundle(resourceBundleName);
+			} catch (MissingResourceException e) {
+				// Resource not found - codes will be null, handled by get() method
+				tempCodes = null;
+			}
+		}
+		codes = tempCodes;
 	}
 
 	/**
@@ -81,9 +90,11 @@ public class EcuCodeList
 	public Set<String> values()
 	{
 		Set<String> values = new HashSet<String>();
-		for( String key : codes.keySet())
-		{
-			values.add(codes.getString(key));
+		if (codes != null) {
+			for( String key : codes.keySet())
+			{
+				values.add(codes.getString(key));
+			}
 		}
 		return values;
 	}
