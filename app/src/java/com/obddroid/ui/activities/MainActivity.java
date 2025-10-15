@@ -2744,6 +2744,7 @@ public class MainActivity extends AppCompatActivity
         View liveDataCard = findViewById(R.id.card_live_data);
         if (liveDataCard != null) {
             log.info("Live Data card found and setting up click listener");
+            addCardPressAnimation(liveDataCard);
             liveDataCard.setOnClickListener(v -> {
                 log.info("Live Data card clicked!");
                 if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
@@ -2761,6 +2762,7 @@ public class MainActivity extends AppCompatActivity
         View testControlCard = findViewById(R.id.card_test_control);
         if (testControlCard != null) {
             log.info("Test Control card found and setting up click listener");
+            addCardPressAnimation(testControlCard);
             testControlCard.setOnClickListener(v -> {
                 log.info("Test Control card clicked!");
                 if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
@@ -2777,6 +2779,7 @@ public class MainActivity extends AppCompatActivity
         // Find and set up Fault Codes card
         View faultCodesCard = findViewById(R.id.card_fault_codes);
         if (faultCodesCard != null) {
+            addCardPressAnimation(faultCodesCard);
             faultCodesCard.setOnClickListener(v -> {
                 if (ecuConnectionState == ElmProt.STAT.ECU_DETECTED ||
                     ecuConnectionState == ElmProt.STAT.CONNECTED) {
@@ -2790,6 +2793,7 @@ public class MainActivity extends AppCompatActivity
         // Find and set up Reconnect to Last Adapter card
         View reconnectCard = findViewById(R.id.card_reconnect_adapter);
         if (reconnectCard != null) {
+            addCardPressAnimation(reconnectCard);
             // Check if we're still in cooldown period
             long currentTime = System.currentTimeMillis();
             long timeSinceLastReconnect = currentTime - lastReconnectTime;
@@ -2848,6 +2852,37 @@ public class MainActivity extends AppCompatActivity
         } else {
             log.warning("Could not find footer or overlay view");
         }
+    }
+
+    /**
+     * Add tactile press animation to a card view
+     */
+    @SuppressLint("ClickableViewAccessibility")
+    private void addCardPressAnimation(View card) {
+        card.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    // Scale down slightly when pressed
+                    v.animate()
+                        .scaleX(0.97f)
+                        .scaleY(0.97f)
+                        .setDuration(100)
+                        .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                        .start();
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    // Scale back to normal when released
+                    v.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                        .start();
+                    break;
+            }
+            return false; // Let the click listener handle the click
+        });
     }
 
     /**

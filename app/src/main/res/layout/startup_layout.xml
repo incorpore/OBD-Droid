@@ -55,25 +55,26 @@
                     android:id="@+id/card_live_data"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/card_background"
+                    android:background="@drawable/card_background_selectable"
                     android:orientation="horizontal"
                     android:padding="20dp"
                     android:layout_marginBottom="16dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:elevation="4dp">
+                    android:elevation="4dp"
+                    android:stateListAnimator="@null">
 
                     <LinearLayout
                         android:layout_width="56dp"
                         android:layout_height="56dp"
-                        android:background="@drawable/circle_background_primary"
+                        android:background="@drawable/circle_background_live_data"
                         android:gravity="center">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="📊"
-                            android:textSize="24sp"/>
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_dashboard_live_data"
+                            android:contentDescription="Live Data"/>
                     </LinearLayout>
 
                     <LinearLayout
@@ -114,25 +115,26 @@
                     android:id="@+id/card_test_control"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/card_background"
+                    android:background="@drawable/card_background_selectable"
                     android:orientation="horizontal"
                     android:padding="20dp"
                     android:layout_marginBottom="16dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:elevation="4dp">
+                    android:elevation="4dp"
+                    android:stateListAnimator="@null">
 
                     <LinearLayout
                         android:layout_width="56dp"
                         android:layout_height="56dp"
-                        android:background="@drawable/circle_background_secondary"
+                        android:background="@drawable/circle_background_test_control"
                         android:gravity="center">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🔧"
-                            android:textSize="24sp"/>
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_dashboard_test_control"
+                            android:contentDescription="Test Control"/>
                     </LinearLayout>
 
                     <LinearLayout
@@ -173,25 +175,26 @@
                     android:id="@+id/card_fault_codes"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/card_background"
+                    android:background="@drawable/card_background_selectable"
                     android:orientation="horizontal"
                     android:padding="20dp"
                     android:layout_marginBottom="16dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:elevation="4dp">
+                    android:elevation="4dp"
+                    android:stateListAnimator="@null">
 
                     <LinearLayout
                         android:layout_width="56dp"
                         android:layout_height="56dp"
-                        android:background="@drawable/circle_background_error"
+                        android:background="@drawable/circle_background_fault_codes"
                         android:gravity="center">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="⚠️"
-                            android:textSize="24sp"/>
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_dashboard_fault_codes"
+                            android:contentDescription="Fault Codes"/>
                     </LinearLayout>
 
                     <LinearLayout
@@ -233,25 +236,26 @@
                     android:id="@+id/card_reconnect_adapter"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/card_background"
+                    android:background="@drawable/card_background_selectable"
                     android:orientation="horizontal"
                     android:padding="20dp"
                     android:layout_marginBottom="16dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:elevation="4dp">
+                    android:elevation="4dp"
+                    android:stateListAnimator="@null">
 
                     <LinearLayout
                         android:layout_width="56dp"
                         android:layout_height="56dp"
-                        android:background="@drawable/circle_background_secondary"
+                        android:background="@drawable/circle_background_reconnect"
                         android:gravity="center">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🔄"
-                            android:textSize="24sp"/>
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_dashboard_reconnect"
+                            android:contentDescription="Reconnect Adapter"/>
                     </LinearLayout>
 
                     <LinearLayout
