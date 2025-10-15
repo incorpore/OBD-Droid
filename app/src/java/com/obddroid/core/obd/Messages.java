@@ -9,12 +9,12 @@ import java.util.logging.Logger;
 
 /**
  * Messages and labels for OBD data items
- * Loads from CSV file: protocol/messages.csv
+ * Loads from CSV file: standard/messages.csv
  * Format: key, label, description (tab-separated)
  */
 public class Messages
 {
-	private static final String CSV_FILE = "/protocol/messages.csv";
+	private static final String CSV_FILE = "/standard/messages.csv";
 	private static final Logger log = Logger.getLogger("messages");
 
 	// Maps key -> label

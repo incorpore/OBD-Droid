@@ -25,7 +25,7 @@ public class EcuCodeList
 	 */
 	EcuCodeList()
 	{
-		this("protocol.codes");
+		this("standard.codes");
 	}
 
 	/**

@@ -378,8 +378,49 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             public void onECUConnectionChanged(ElmProt.STAT state) {
                 Log.d(TAG, "ECU connection state changed: " + state);
                 post(() -> {
-                    isEcuConnected = (state == ElmProt.STAT.ECU_DETECTED ||
-                                      state == ElmProt.STAT.CONNECTED);
+                    // NODATA is a transient state - keep ECU connected if we have cached data
+                    // This prevents the footer from showing as disconnected during temporary NODATA
+                    boolean wasConnected = isEcuConnected;
+
+                    if (state == ElmProt.STAT.NODATA) {
+                        // Check if we have cached vehicle data
+                        VehicleManager vm = VehicleManager.getInstance();
+                        String cachedVin = vm.getCurrentVIN();
+                        VehicleData cachedData = vm.getCurrentVehicleData();
+
+                        if (cachedVin != null && cachedData != null) {
+                            // Keep ECU connected state during NODATA if we have cached data
+                            // This prevents the footer from flickering grey during transient NODATA states
+                            Log.d(TAG, "NODATA received but keeping ECU connected (cached data present)");
+                            isEcuConnected = true;
+                            // Don't update display - keep existing state
+                            return;
+                        } else {
+                            // No cached data - treat NODATA as disconnected
+                            isEcuConnected = false;
+                        }
+                    } else {
+                        isEcuConnected = (state == ElmProt.STAT.ECU_DETECTED ||
+                                          state == ElmProt.STAT.ECU_SELECTED ||
+                                          state == ElmProt.STAT.CONNECTED);
+                    }
+
+                    // If ECU connected and we have cached vehicle data, restore full display
+                    // This handles reconnection scenarios where VIN/data is cached
+                    if (isEcuConnected) {
+                        VehicleManager vm = VehicleManager.getInstance();
+                        String cachedVin = vm.getCurrentVIN();
+                        VehicleData cachedData = vm.getCurrentVehicleData();
+
+                        if (cachedVin != null && cachedData != null) {
+                            // We have cached data - restore full vehicle display with green indicator
+                            Log.d(TAG, "ECU reconnected with cached vehicle data - restoring display");
+                            updateVehicleDisplay(cachedVin, cachedData);
+                            return; // Don't call updateConnectionDisplay
+                        }
+                    }
+
+                    // Otherwise, update connection status normally
                     updateConnectionDisplay();
                 });
             }

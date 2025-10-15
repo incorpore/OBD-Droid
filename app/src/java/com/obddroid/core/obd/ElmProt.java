@@ -1340,6 +1340,32 @@ public class ElmProt
 	private long connectingStateStartTime = 0;
 
 	/**
+	 * Timeout for NODATA state recovery (3 seconds)
+	 * If status stays NODATA longer than this, trigger recovery
+	 */
+	private static final long NODATA_TIMEOUT_MS = 3000;
+
+	/**
+	 * Maximum consecutive NODATA responses before triggering recovery
+	 */
+	private static final int NODATA_MAX_CONSECUTIVE = 5;
+
+	/**
+	 * Timestamp when NODATA state started
+	 */
+	private long nodataStateStartTime = 0;
+
+	/**
+	 * Counter for consecutive NODATA responses
+	 */
+	private int consecutiveNodataCount = 0;
+
+	/**
+	 * Last known good ECU state before NODATA started
+	 */
+	private STAT lastGoodState = STAT.UNDEFINED;
+
+	/**
 	 * Getter for property status.
 	 *
 	 * @return Value of property status.
@@ -1357,6 +1383,35 @@ public class ElmProt
 	private void setStatus(STAT status)
 	{
 		STAT oldStatus = this.status;
+
+		// === NODATA Stuck Detection ===
+		// Check if we're currently stuck in NODATA before processing new status
+		// This runs on EVERY setStatus() call to catch stalled communication
+		if (oldStatus == STAT.NODATA && nodataStateStartTime > 0)
+		{
+			long duration = System.currentTimeMillis() - nodataStateStartTime;
+
+			// If stuck in NODATA beyond timeout, force recovery
+			if (duration > NODATA_TIMEOUT_MS && status == STAT.NODATA)
+			{
+				log.warning(String.format(
+					"NODATA stuck detected (%dms) - forcing recovery to %s",
+					duration, lastGoodState));
+
+				// Reset counters
+				consecutiveNodataCount = 0;
+				nodataStateStartTime = 0;
+
+				// Force recovery if we have a good state to restore
+				if (lastGoodState == STAT.ECU_DETECTED || lastGoodState == STAT.CONNECTED || lastGoodState == STAT.ECU_SELECTED)
+				{
+					log.info("Auto-recovering from stuck NODATA state");
+					this.status = lastGoodState;
+					firePropertyChange(new PropertyChangeEvent(this, PROP_STATUS, oldStatus, this.status));
+					return; // Exit early - recovery complete
+				}
+			}
+		}
 
 		// Timeout guard: Check if leaving CONNECTING state after too long
 		if (oldStatus == STAT.CONNECTING && status != STAT.CONNECTING)
@@ -1382,6 +1437,74 @@ public class ElmProt
 			{
 				log.warning(String.format("Stuck in CONNECTING for %dms - may need manual recovery", duration));
 			}
+		}
+
+		// === NODATA Recovery Logic ===
+		// Track when entering NODATA state
+		if (status == STAT.NODATA && oldStatus != STAT.NODATA)
+		{
+			// Save last good ECU state before NODATA
+			if (oldStatus == STAT.CONNECTED || oldStatus == STAT.ECU_DETECTED || oldStatus == STAT.ECU_SELECTED)
+			{
+				lastGoodState = oldStatus;
+				log.info("Saved last good state before NODATA: " + lastGoodState);
+			}
+			nodataStateStartTime = System.currentTimeMillis();
+			consecutiveNodataCount++;
+			log.info(String.format("Entered NODATA state (count: %d)", consecutiveNodataCount));
+		}
+		// Leaving NODATA - check if recovery is needed
+		else if (oldStatus == STAT.NODATA && status != STAT.NODATA)
+		{
+			long duration = System.currentTimeMillis() - nodataStateStartTime;
+			log.info(String.format("Recovered from NODATA after %dms (count: %d) -> %s",
+				duration, consecutiveNodataCount, status));
+
+			// If recovered to CONNECTED, reset counters
+			if (status == STAT.CONNECTED)
+			{
+				consecutiveNodataCount = 0;
+				lastGoodState = status;
+			}
+		}
+		// Still in NODATA - check if recovery needed
+		else if (status == STAT.NODATA && oldStatus == STAT.NODATA)
+		{
+			consecutiveNodataCount++;
+			long duration = System.currentTimeMillis() - nodataStateStartTime;
+
+			// Check if we need to trigger recovery
+			if (consecutiveNodataCount >= NODATA_MAX_CONSECUTIVE || duration > NODATA_TIMEOUT_MS)
+			{
+				log.warning(String.format(
+					"NODATA recovery triggered: count=%d, duration=%dms, lastGoodState=%s",
+					consecutiveNodataCount, duration, lastGoodState));
+
+				// Reset counters
+				consecutiveNodataCount = 0;
+
+				// Attempt recovery: restore to last good ECU state if known
+				if (lastGoodState == STAT.ECU_DETECTED || lastGoodState == STAT.CONNECTED || lastGoodState == STAT.ECU_SELECTED)
+				{
+					log.info("Attempting to restore ECU connection state: " + lastGoodState);
+					// Force status change to restored state
+					this.status = lastGoodState;
+					firePropertyChange(new PropertyChangeEvent(this, PROP_STATUS, oldStatus, this.status));
+					return; // Skip normal status update below
+				}
+			}
+		}
+		// Leaving a good state - save it
+		else if ((oldStatus == STAT.CONNECTED || oldStatus == STAT.ECU_DETECTED || oldStatus == STAT.ECU_SELECTED) &&
+		         status != STAT.NODATA)
+		{
+			// Reset NODATA counter when successfully connecting
+			if (consecutiveNodataCount > 0)
+			{
+				log.info("Reset NODATA counter after successful connection");
+				consecutiveNodataCount = 0;
+			}
+			lastGoodState = oldStatus;
 		}
 
 		this.status = status;

@@ -50,12 +50,12 @@ public class EcuConversions extends HashMap<String, Conversion[]>
 	public static EcuCodeList codeList = null;
 	/**
 	 * Create conversion list from default resource file (tab delimited csv)
-	 * (protocol/conversions.csv)
+	 * (standard/conversions.csv)
 	 */
 	public EcuConversions()
 	{
 		// add dynamic entris from csv file(s)
-		this("/protocol/conversions.csv");
+		this("/standard/conversions.csv");
 	}
 
 	/**

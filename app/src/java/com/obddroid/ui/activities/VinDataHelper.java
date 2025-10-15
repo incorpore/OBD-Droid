@@ -133,9 +133,16 @@ final class VinDataHelper
         VehicleManager vm = VehicleManager.getInstance();
         String currentVin = vm.getCurrentVIN();
 
-        if (currentVin == null || currentVin.isEmpty())
+        // Check if Mode 9 data is present (even if VIN is cached)
+        // This handles reconnection scenarios where VIN is cached but Mode 9 data is stale
+        boolean hasMode9Data = ObdProt.VidPvs != null && !ObdProt.VidPvs.isEmpty();
+
+        // Query if: no VIN, OR VIN exists but Mode 9 data is missing/stale
+        if ((currentVin == null || currentVin.isEmpty()) || !hasMode9Data)
         {
-            log.info("ECU Selected, requesting VIN in background");
+            log.info("ECU Selected, requesting Mode 9 data (VIN cached: " +
+                    (currentVin != null && !currentVin.isEmpty()) +
+                    ", Mode 9 data present: " + hasMode9Data + ")");
 
             new Handler(Looper.getMainLooper()).postDelayed(() ->
             {

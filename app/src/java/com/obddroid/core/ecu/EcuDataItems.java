@@ -68,9 +68,9 @@ public class EcuDataItems extends HashMap<Integer, HashMap<Integer, Vector<EcuDa
 	 */
 	public EcuDataItems()
 	{
-		this("/protocol/pids.csv",
-		     "/protocol/conversions.csv",
-		     "/protocol/messages.csv");
+		this("/standard/pids.csv",
+		     "/standard/conversions.csv",
+		     "/standard/messages.csv");
 	}
 
 	/**
