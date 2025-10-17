@@ -113,6 +113,18 @@ final class DashboardUiHelper {
             });
         }
 
+        // Fuel Economy card
+        View fuelEconomyCard = activity.findViewById(R.id.card_fuel_economy);
+        if (fuelEconomyCard != null) {
+            addCardPressAnimation(fuelEconomyCard);
+            fuelEconomyCard.setOnClickListener(v -> {
+                log.info("Fuel Economy card clicked!");
+                activity.launchFuelEconomyActivity();
+            });
+        } else {
+            log.warning("Fuel Economy card NOT found!");
+        }
+
         updateReconnectCardSubtitle(activity);
         setupBreadcrumbNavigation(activity);
     }

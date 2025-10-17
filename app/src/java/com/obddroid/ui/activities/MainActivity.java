@@ -2267,6 +2267,14 @@ public class MainActivity extends AppCompatActivity
         isManuallyReconnecting = true;
         log.info("Set isManuallyReconnecting = true");
 
+        // Safety timeout - clear flag after 30 seconds if reconnect doesn't complete
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (isManuallyReconnecting) {
+                log.warning("Manual reconnect timeout - clearing flag after 30 seconds");
+                isManuallyReconnecting = false;
+            }
+        }, 30000);
+
         // Stop any existing communication service before reconnecting
         if (mCommService != null) {
             log.info("Stopping existing communication service for manual reconnect");
@@ -2314,6 +2322,15 @@ public class MainActivity extends AppCompatActivity
             log.log(Level.WARNING, "Error reconnecting to adapter", e);
             SnackbarHelper.showError(this, "Failed to reconnect. Please select an adapter manually.");
         }
+    }
+
+    /**
+     * Launch the Fuel Economy activity
+     */
+    void launchFuelEconomyActivity() {
+        log.info("Launching Fuel Economy activity");
+        Intent intent = new Intent(this, FuelEconomyActivity.class);
+        startActivity(intent);
     }
 
     /**
@@ -2510,6 +2527,16 @@ public class MainActivity extends AppCompatActivity
                     setStatus(getResources().getStringArray(R.array.elmcomm_states)[ecuConnectionState.ordinal()]);
                 }
                 // If disconnected/offline, the status will be handled by the mode-specific logic below
+
+                // Ensure footer is collapsed and overlay is hidden when returning to dashboard
+                if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {
+                    vehicleInfoFooter.collapse();
+                }
+                View overlay = findViewById(R.id.footer_overlay);
+                if (overlay != null && overlay.getVisibility() == View.VISIBLE) {
+                    overlay.setVisibility(View.GONE);
+                    log.info("Forced overlay to GONE when returning to dashboard");
+                }
                 break;
         }
 
@@ -2681,7 +2708,8 @@ public class MainActivity extends AppCompatActivity
         // Don't clear vehicle data or set up dashboard during manual reconnect
         if (isManuallyReconnecting) {
             log.info("Skipping full disconnect handling - manual reconnect in progress");
-            setMode(MODE.OFFLINE);
+            // Don't call setMode or anything else that might trigger another disconnect
+            // The reconnect process will handle mode changes
             return;
         }
 
