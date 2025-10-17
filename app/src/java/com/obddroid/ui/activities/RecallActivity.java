@@ -62,6 +62,7 @@ public class RecallActivity extends AppCompatActivity {
         prefillVin();
 
         statusText.setText(R.string.recalls_intro);
+        statusText.setVisibility(View.VISIBLE);
 
         searchButton.setOnClickListener(v -> fetchRecalls());
     }

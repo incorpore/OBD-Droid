@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -104,9 +105,12 @@ final class DashboardUiHelper {
             String lastAdapterType = activity.getPrefs().getString("LAST_ADAPTER_TYPE", null);
 
             if (lastAdapterType == null) {
-                // No adapter has been connected yet - hide the reconnect card
-                reconnectCard.setVisibility(View.GONE);
-                log.info("Reconnect card hidden - no previous adapter found");
+                // No adapter has been connected yet - remove the reconnect card from layout
+                ViewGroup parent = (ViewGroup) reconnectCard.getParent();
+                if (parent != null) {
+                    parent.removeView(reconnectCard);
+                    log.info("Reconnect card removed from layout - no previous adapter found");
+                }
             } else {
                 // Show the card and set up functionality
                 reconnectCard.setVisibility(View.VISIBLE);
@@ -195,6 +199,28 @@ final class DashboardUiHelper {
         View reconnectCard = activity.findViewById(R.id.card_reconnect_adapter);
         TextView titleView = activity.findViewById(R.id.reconnect_adapter_title);
         TextView subtitle = activity.findViewById(R.id.reconnect_adapter_subtitle);
+
+        String lastAdapterType = activity.getPrefs().getString("LAST_ADAPTER_TYPE", null);
+        String lastAdapterName = activity.getPrefs().getString("LAST_ADAPTER_NAME", null);
+        log.info("updateReconnectCardSubtitle - Last adapter type: " + lastAdapterType + ", name: " + lastAdapterName);
+
+        if (lastAdapterType == null) {
+            // No adapter saved - remove the card
+            if (reconnectCard != null) {
+                ViewGroup parent = (ViewGroup) reconnectCard.getParent();
+                if (parent != null) {
+                    parent.removeView(reconnectCard);
+                    log.info("Reconnect card removed during subtitle update - no previous adapter");
+                }
+            }
+            return;
+        }
+
+        // Adapter exists - make sure card is visible
+        if (reconnectCard != null) {
+            reconnectCard.setVisibility(View.VISIBLE);
+        }
+
         if (titleView == null) {
             log.fine("Reconnect card title not found - layout may not be set yet");
             return;
@@ -203,24 +229,6 @@ final class DashboardUiHelper {
         if (subtitle != null) {
             subtitle.setText("");
             subtitle.setVisibility(View.GONE);
-        }
-
-        String lastAdapterType = activity.getPrefs().getString("LAST_ADAPTER_TYPE", null);
-        String lastAdapterName = activity.getPrefs().getString("LAST_ADAPTER_NAME", null);
-        log.info("updateReconnectCardSubtitle - Last adapter type: " + lastAdapterType + ", name: " + lastAdapterName);
-
-        if (lastAdapterType == null) {
-            // No adapter saved - hide the card
-            if (reconnectCard != null) {
-                reconnectCard.setVisibility(View.GONE);
-            }
-            titleView.setText("Reconnect Adapter");
-            return;
-        }
-
-        // Adapter exists - make sure card is visible
-        if (reconnectCard != null) {
-            reconnectCard.setVisibility(View.VISIBLE);
         }
 
         String titleText;

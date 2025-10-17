@@ -28,345 +28,351 @@
             android:columnCount="2"
             android:useDefaultMargins="true">
 
-            <com.obddroid.ui.components.SquareCardView
+            <androidx.cardview.widget.CardView
                 android:id="@+id/card_live_data"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless"
                 android:elevation="4dp"
-                android:layout_margin="8dp"
+                android:layout_margin="6dp"
                 app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="12dp"
                 app:cardUseCompatPadding="false"
-                android:layout_columnWeight="1"
-                android:layout_rowWeight="1">
+                android:layout_columnWeight="1">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
 
                     <LinearLayout
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:background="@drawable/circle_background_live_data"
                         android:gravity="center">
 
                         <ImageView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
                             android:src="@drawable/ic_dashboard_live_data"
                             android:contentDescription="Live Data"/>
                     </LinearLayout>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
                         android:text="Live Data"
                         android:textColor="#1A1A1A"
-                        android:textSize="16sp"
+                        android:textSize="15sp"
                         android:textStyle="bold"/>
 
                 </LinearLayout>
-            </com.obddroid.ui.components.SquareCardView>
+            </androidx.cardview.widget.CardView>
 
-            <com.obddroid.ui.components.SquareCardView
+            <androidx.cardview.widget.CardView
                 android:id="@+id/card_test_control"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless"
                 android:elevation="4dp"
-                android:layout_margin="8dp"
+                android:layout_margin="6dp"
                 app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="12dp"
                 app:cardUseCompatPadding="false"
-                android:layout_columnWeight="1"
-                android:layout_rowWeight="1">
+                android:layout_columnWeight="1">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
 
                     <LinearLayout
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:background="@drawable/circle_background_test_control"
                         android:gravity="center">
 
                         <ImageView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
                             android:src="@drawable/ic_dashboard_test_control"
                             android:contentDescription="Test Control"/>
                     </LinearLayout>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
                         android:text="Test Control"
                         android:textColor="#1A1A1A"
-                        android:textSize="16sp"
+                        android:textSize="15sp"
                         android:textStyle="bold"/>
 
                 </LinearLayout>
-            </com.obddroid.ui.components.SquareCardView>
+            </androidx.cardview.widget.CardView>
 
-            <com.obddroid.ui.components.SquareCardView
+            <androidx.cardview.widget.CardView
                 android:id="@+id/card_fault_codes"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless"
                 android:elevation="4dp"
-                android:layout_margin="8dp"
+                android:layout_margin="6dp"
                 app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="12dp"
                 app:cardUseCompatPadding="false"
-                android:layout_columnWeight="1"
-                android:layout_rowWeight="1">
+                android:layout_columnWeight="1">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
 
                     <LinearLayout
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:background="@drawable/circle_background_fault_codes"
                         android:gravity="center">
 
                         <ImageView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
                             android:src="@drawable/ic_dashboard_fault_codes"
                             android:contentDescription="Fault Codes"/>
                     </LinearLayout>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
                         android:text="Fault Codes"
                         android:textColor="#1A1A1A"
-                        android:textSize="16sp"
+                        android:textSize="15sp"
                         android:textStyle="bold"/>
 
                 </LinearLayout>
-            </com.obddroid.ui.components.SquareCardView>
+            </androidx.cardview.widget.CardView>
 
-            <com.obddroid.ui.components.SquareCardView
+            <androidx.cardview.widget.CardView
                 android:id="@+id/card_reconnect_adapter"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless"
                 android:elevation="4dp"
-                android:layout_margin="8dp"
+                android:layout_margin="6dp"
                 app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="12dp"
                 app:cardUseCompatPadding="false"
-                android:layout_columnWeight="1"
-                android:layout_rowWeight="1">
+                android:layout_columnWeight="1">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
 
                     <LinearLayout
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:background="@drawable/circle_background_reconnect"
                         android:gravity="center">
 
                         <ImageView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
                             android:src="@drawable/ic_dashboard_reconnect"
                             android:contentDescription="Reconnect Adapter"/>
                     </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/reconnect_adapter_title"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="Reconnect Adapter"
-                        android:textColor="#1A1A1A"
-                        android:textSize="16sp"
-                        android:textStyle="bold"/>
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/reconnect_adapter_subtitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:textColor="#666666"
-                        android:textSize="12sp"
-                        android:text=""
-                        android:visibility="gone"/>
+                        <TextView
+                            android:id="@+id/reconnect_adapter_title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Reconnect Adapter"
+                            android:textColor="#1A1A1A"
+                            android:textSize="15sp"
+                            android:textStyle="bold"/>
+
+                        <TextView
+                            android:id="@+id/reconnect_adapter_subtitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textColor="#666666"
+                            android:textSize="11sp"
+                            android:text=""
+                            android:visibility="gone"/>
+                    </LinearLayout>
 
                 </LinearLayout>
-            </com.obddroid.ui.components.SquareCardView>
+            </androidx.cardview.widget.CardView>
 
-            <com.obddroid.ui.components.SquareCardView
+            <androidx.cardview.widget.CardView
                 android:id="@+id/card_fuel_economy"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless"
                 android:elevation="4dp"
-                android:layout_margin="8dp"
+                android:layout_margin="6dp"
                 app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="12dp"
                 app:cardUseCompatPadding="false"
-                android:layout_columnWeight="1"
-                android:layout_rowWeight="1">
+                android:layout_columnWeight="1">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
 
                     <LinearLayout
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:background="@drawable/circle_background_fuel_economy"
                         android:gravity="center">
 
                         <ImageView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
                             android:src="@drawable/ic_dashboard_fuel_economy"
                             android:contentDescription="Fuel Economy"/>
                     </LinearLayout>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
                         android:text="Fuel Economy"
                         android:textColor="#1A1A1A"
-                        android:textSize="16sp"
+                        android:textSize="15sp"
                         android:textStyle="bold"/>
 
                 </LinearLayout>
-            </com.obddroid.ui.components.SquareCardView>
+            </androidx.cardview.widget.CardView>
 
-            <com.obddroid.ui.components.SquareCardView
+            <androidx.cardview.widget.CardView
                 android:id="@+id/card_vehicle_history"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless"
                 android:elevation="4dp"
-                android:layout_margin="8dp"
+                android:layout_margin="6dp"
                 app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="12dp"
                 app:cardUseCompatPadding="false"
-                android:layout_columnWeight="1"
-                android:layout_rowWeight="1">
+                android:layout_columnWeight="1">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
 
                     <LinearLayout
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:background="@drawable/circle_background_vehicle_history"
                         android:gravity="center">
 
                         <ImageView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
                             android:src="@drawable/ic_dashboard_vehicle_history"
                             android:contentDescription="Vehicle History"/>
                     </LinearLayout>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
                         android:text="Vehicle History"
                         android:textColor="#1A1A1A"
-                        android:textSize="16sp"
+                        android:textSize="15sp"
                         android:textStyle="bold"/>
 
                 </LinearLayout>
-            </com.obddroid.ui.components.SquareCardView>
+            </androidx.cardview.widget.CardView>
 
-            <com.obddroid.ui.components.SquareCardView
+            <androidx.cardview.widget.CardView
                 android:id="@+id/card_vehicle_recalls"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless"
                 android:elevation="4dp"
-                android:layout_margin="8dp"
+                android:layout_margin="6dp"
                 app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="12dp"
                 app:cardUseCompatPadding="false"
-                android:layout_columnWeight="1"
-                android:layout_rowWeight="1">
+                android:layout_columnWeight="1">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
 
                     <LinearLayout
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:background="@drawable/circle_background_recalls"
                         android:gravity="center">
 
                         <ImageView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
                             android:src="@drawable/ic_dashboard_recalls"
                             android:contentDescription="@string/safety_recalls"/>
                     </LinearLayout>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
                         android:text="@string/safety_recalls"
                         android:textColor="#1A1A1A"
-                        android:textSize="16sp"
+                        android:textSize="15sp"
                         android:textStyle="bold"/>
 
                 </LinearLayout>
-            </com.obddroid.ui.components.SquareCardView>
+            </androidx.cardview.widget.CardView>
 
         </GridLayout>
     </ScrollView>

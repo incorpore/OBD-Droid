@@ -109,6 +109,11 @@
             android:label="Vehicle History"
             android:configChanges="touchscreen|orientation|screenSize"
             android:exported="false" />
+        <activity
+            android:name="com.obddroid.ui.activities.RecallActivity"
+            android:label="@string/safety_recalls"
+            android:configChanges="touchscreen|orientation|screenSize"
+            android:exported="false" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
