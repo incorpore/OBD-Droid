@@ -60,7 +60,7 @@ public class RecallActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        recallClient = new NHTSARecallClientAndroid();
+        recallClient = new NHTSARecallClientAndroid(this);
 
         bindViews();
         setupFooterOverlay();
