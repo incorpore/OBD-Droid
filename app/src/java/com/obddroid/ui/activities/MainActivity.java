@@ -2392,6 +2392,16 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
+     * Launch the ECU List activity
+     */
+    void launchEcuListActivity() {
+        log.info("Launching ECU List activity - NOT IMPLEMENTED");
+        // TODO: EcuListActivity not yet implemented
+        // Intent intent = new Intent(this, EcuListActivity.class);
+        // startActivity(intent);
+    }
+
+    /**
      * Attempt auto-reconnect on startup if the setting is enabled
      * Only runs once per app session (first onResume)
      */

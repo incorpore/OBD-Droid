@@ -25,29 +25,63 @@
                 android:paddingLeft="8dp"
                 android:paddingRight="8dp">
 
-                <!-- Generate Report Button Card -->
+                <!-- Empty State / Generate Report Card -->
                 <androidx.cardview.widget.CardView
+                    android:id="@+id/empty_state_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="8dp"
-                    android:layout_marginRight="8dp"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginBottom="8dp"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="4dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginTop="32dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="6dp"
                     android:backgroundTint="#FFFFFF">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="24dp">
+                        android:padding="48dp"
+                        android:gravity="center">
 
+                        <!-- Hero Icon -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📋"
+                            android:textSize="80sp"
+                            android:layout_marginBottom="24dp"/>
+
+                        <!-- Title -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Vehicle History Report"
+                            android:textSize="24sp"
+                            android:textStyle="bold"
+                            android:textColor="#1A1A1A"
+                            android:gravity="center"
+                            android:layout_marginBottom="12dp"/>
+
+                        <!-- Description -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Get a comprehensive vehicle history report powered by AutoCheck. View ownership history, accident records, title status, and more."
+                            android:textSize="15sp"
+                            android:textColor="#757575"
+                            android:gravity="center"
+                            android:lineSpacingExtra="4dp"
+                            android:layout_marginBottom="32dp"/>
+
+                        <!-- Generate Button -->
                         <Button
                             android:id="@+id/check_history_button"
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="64dp"
-                            android:text="📋 Generate Vehicle History Report"
+                            android:minWidth="280dp"
+                            android:text="Generate Report"
                             android:textSize="16sp"
                             android:textStyle="bold"
                             android:textAllCaps="false"
@@ -63,7 +97,7 @@
                             android:orientation="vertical"
                             android:gravity="center"
                             android:padding="32dp"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="24dp"
                             android:background="@drawable/stat_card_background"
                             android:visibility="gone">
 

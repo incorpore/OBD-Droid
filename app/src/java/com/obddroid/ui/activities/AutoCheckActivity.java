@@ -1,6 +1,7 @@
 package com.obddroid.ui.activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -19,6 +20,7 @@ import androidx.cardview.widget.CardView;
 import androidx.core.content.FileProvider;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.gson.Gson;
 import com.obddroid.R;
 import com.obddroid.services.AutoCheckService;
 import com.obddroid.vehicle.AutoCheckReport;
@@ -33,7 +35,11 @@ import java.io.File;
  */
 public class AutoCheckActivity extends AppCompatActivity {
 
+    private static final String PREFS_NAME = "AutoCheckCache";
+    private static final String PREFS_KEY_PREFIX = "report_";
+
     // Input views
+    private CardView emptyStateCard;
     private Button checkHistoryButton;
     private String currentVin;
     private LinearLayout loadingContainer;
@@ -117,12 +123,16 @@ public class AutoCheckActivity extends AppCompatActivity {
         checkHistoryButton.setOnClickListener(v -> fetchVehicleHistory());
         pdfFab.setOnClickListener(v -> openPdf());
 
+        // Try to load cached report for current VIN
+        loadCachedReport();
+
         // Check API health on startup
         checkApiHealth();
     }
 
     private void findViews() {
         // Input views
+        emptyStateCard = findViewById(R.id.empty_state_card);
         checkHistoryButton = findViewById(R.id.check_history_button);
         loadingContainer = findViewById(R.id.loading_container);
         loadingSpinner = findViewById(R.id.loading_spinner);
@@ -243,6 +253,9 @@ public class AutoCheckActivity extends AppCompatActivity {
                 // Store PDF file path
                 currentPdfFilePath = pdfFilePath;
 
+                // Save report to cache for future use
+                saveReportToCache(report);
+
                 // Display report with world-class visualization
                 displayReport(report);
 
@@ -275,8 +288,9 @@ public class AutoCheckActivity extends AppCompatActivity {
      * Display report with world-class visualization
      */
     private void displayReport(AutoCheckReport report) {
-        // Hide error, show report
+        // Hide error and empty state, show report
         errorCard.setVisibility(View.GONE);
+        emptyStateCard.setVisibility(View.GONE);
         reportContainer.setVisibility(View.VISIBLE);
 
         // ═══════════════════════════════════════
@@ -686,6 +700,73 @@ public class AutoCheckActivity extends AppCompatActivity {
         errorMessage.setText(error);
         reportContainer.setVisibility(View.GONE);
         pdfFab.setVisibility(View.GONE);
+    }
+
+    /**
+     * Save report to SharedPreferences cache keyed by VIN
+     */
+    private void saveReportToCache(AutoCheckReport report) {
+        if (report == null || report.getVin() == null) {
+            return;
+        }
+
+        try {
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            Gson gson = new Gson();
+            String json = gson.toJson(report);
+
+            String cacheKey = PREFS_KEY_PREFIX + report.getVin();
+            prefs.edit().putString(cacheKey, json).apply();
+
+            // Also save timestamp
+            prefs.edit().putLong(cacheKey + "_time", System.currentTimeMillis()).apply();
+        } catch (Exception e) {
+            // Silent fail - caching is not critical
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Load cached report for current VIN if available
+     */
+    private void loadCachedReport() {
+        if (currentVin == null || currentVin.isEmpty()) {
+            return;
+        }
+
+        try {
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            String cacheKey = PREFS_KEY_PREFIX + currentVin;
+            String json = prefs.getString(cacheKey, null);
+
+            if (json != null && !json.isEmpty()) {
+                Gson gson = new Gson();
+                AutoCheckReport report = gson.fromJson(json, AutoCheckReport.class);
+
+                if (report != null) {
+                    // Display cached report
+                    displayReport(report);
+
+                    // Show toast to inform user it's cached
+                    long cacheTime = prefs.getLong(cacheKey + "_time", 0);
+                    long ageMinutes = (System.currentTimeMillis() - cacheTime) / 60000;
+
+                    if (ageMinutes < 60) {
+                        Toast.makeText(this,
+                            "Loaded cached report (" + ageMinutes + " min old)",
+                            Toast.LENGTH_SHORT).show();
+                    } else {
+                        long ageHours = ageMinutes / 60;
+                        Toast.makeText(this,
+                            "Loaded cached report (" + ageHours + " hr old)",
+                            Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Silent fail - if cache load fails, user can generate new report
+            e.printStackTrace();
+        }
     }
 
     @Override
