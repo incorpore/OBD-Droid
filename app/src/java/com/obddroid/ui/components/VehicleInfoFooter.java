@@ -481,6 +481,35 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
     public void pvChanged(PvChangeEvent event) {
         // Mode 9 data updated - refresh expanded content if visible
         Log.d(TAG, "Mode 9 data update received: " + event.getKey());
+
+        // BACKUP VIN DETECTION: Check if this event contains a VIN
+        // This ensures VIN is detected even if MainActivity's listener misses the event
+        try {
+            Object eventValue = event.getValue();
+            if (eventValue instanceof EcuDataPv) {
+                EcuDataPv dataPv = (EcuDataPv) eventValue;
+                String description = String.valueOf(dataPv.get(EcuDataPv.FID_DESCRIPT));
+                Object vinValue = dataPv.get(EcuDataPv.FID_VALUE);
+
+                // Check if this is a VIN field with a valid 17-character VIN
+                if (description != null && description.toLowerCase().contains("vehicle identification") &&
+                    vinValue != null && vinValue.toString().trim().length() == 17) {
+                    String vin = vinValue.toString().trim();
+                    VehicleManager vm = VehicleManager.getInstance();
+                    String currentVin = vm.getCurrentVIN();
+
+                    // Only set VIN if not already set (prevents duplicate calls)
+                    if (currentVin == null || !currentVin.equals(vin)) {
+                        Log.i(TAG, "VIN DETECTED in VehicleInfoFooter (backup path): " + vin);
+                        vm.setVIN(vin);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking for VIN in pvChanged", e);
+        }
+
+        // Refresh expanded content if visible
         if (isExpanded && expandedContainer != null && expandedContainer.getVisibility() == View.VISIBLE && !showingVehicleInfo) {
             post(() -> updateExpandedContent());
         }
