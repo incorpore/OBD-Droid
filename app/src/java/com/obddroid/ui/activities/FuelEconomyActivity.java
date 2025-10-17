@@ -76,6 +76,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     // Trip computers
     private TripComputer tripA;
     private TripComputer tripB;
+    private boolean tripAIsActive = true; // Track which trip is actively recording
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -237,7 +238,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             fuelUsed.setText(String.format("%.2f", trip.getFuelUsedGallons()));
             cost.setText(String.format("%.2f", trip.getTripCost()));
 
-            // Update tab colors
+            // Update tab colors and REC indicator
             if (showingTripA[0]) {
                 tripATab.setTextColor(Color.parseColor("#00ACC1"));
                 tripBTab.setTextColor(Color.parseColor("#888888"));
@@ -258,16 +259,22 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                 params.leftMargin = dialogView.getWidth() / 2;
                 tabIndicator.setLayoutParams(params);
             }
+
+            // Add REC indicator to the actively recording trip
+            tripATab.setText(tripAIsActive ? "TRIP A ●" : "TRIP A");
+            tripBTab.setText(tripAIsActive ? "TRIP B" : "TRIP B ●");
         };
 
         // Tab click listeners
         tripATab.setOnClickListener(v -> {
             showingTripA[0] = true;
+            tripAIsActive = true; // Make Trip A the active recording trip
             updateDisplay.run();
         });
 
         tripBTab.setOnClickListener(v -> {
             showingTripA[0] = false;
+            tripAIsActive = false; // Make Trip B the active recording trip
             updateDisplay.run();
         });
 
@@ -630,13 +637,17 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             // Update time to empty
             updateTimeToEmpty();
 
-            // Update trip computers
+            // Update trip computers (ONLY the active one!)
             float currentSpeed = getCurrentSpeed();
             String fuelFlowStr = fuelFlowValue.getText().toString();
             try {
                 float fuelFlow = Float.parseFloat(fuelFlowStr);
-                tripA.update(currentSpeed, fuelFlow);
-                tripB.update(currentSpeed, fuelFlow);
+                // Only update the active trip - like a real car!
+                if (tripAIsActive) {
+                    tripA.update(currentSpeed, fuelFlow);
+                } else {
+                    tripB.update(currentSpeed, fuelFlow);
+                }
             } catch (Exception e) {
                 // Ignore parse errors
             }
