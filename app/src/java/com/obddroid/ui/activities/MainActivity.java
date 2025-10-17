@@ -575,10 +575,11 @@ public class MainActivity extends AppCompatActivity
                                     VehicleManager vm = VehicleManager.getInstance();
                                     if (!vm.hasVINRetrievalFailed()) {
                                         vm.setVIN(null);
-                                        // Auto-switch to live data since Mode 9 isn't supported
+                                        // Don't auto-switch to live data - just return to dashboard
+                                        // This prevents unwanted navigation when reconnecting from dashboard
                                         new Handler(Looper.getMainLooper()).postDelayed(() -> {
                                             if (CommService.elm != null && CommService.elm.getService() == ObdProt.OBD_SVC_VEH_INFO) {
-                                                setObdService(ObdProt.OBD_SVC_DATA, "Live Data");
+                                                setObdService(ObdProt.OBD_SVC_NONE, null);
                                             }
                                         }, 500);
                                     }
