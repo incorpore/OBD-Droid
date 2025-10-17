@@ -200,10 +200,10 @@ final class VinDataHelper
                 // Footer receives all Mode 9 data as it arrives
                 CommService.elm.setService(ObdProt.OBD_SVC_VEH_INFO, false);
 
-                // Start timeout AFTER Mode 9 request is sent (1 second delay + 15 second timeout = 16 seconds total)
+                // Start timeout AFTER Mode 9 request is sent (3 second delay + 15 second timeout = 18 seconds total)
                 log.info("Starting VIN retrieval timeout (" + VIN_RETRIEVAL_TIMEOUT_MS + "ms)");
                 timeoutHandler.postDelayed(vinTimeoutRunnable, VIN_RETRIEVAL_TIMEOUT_MS);
-            }, 1000);
+            }, 3000); // Increased from 1000ms to 3000ms to allow ECU proper initialization time
         }
     }
 }
