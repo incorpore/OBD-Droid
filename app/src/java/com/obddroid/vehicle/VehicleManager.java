@@ -157,7 +157,7 @@ public class VehicleManager {
             listener.onDecodingStarted();
         }
 
-        // Decode using Android wrapper (handles offline fallback automatically)
+        // Decode using offline decoder (always offline, no network calls)
         if (vinDecoder != null) {
             final String vinToDecode = vin;
             vinDecoder.decodeAsync(vinToDecode, new VINDecoderAndroid.DecodeCallback() {

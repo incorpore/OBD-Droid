@@ -107,13 +107,10 @@ final class VinDataHelper
                     if (currentVin == null || !currentVin.equals(vin))
                     {
                         log.info("VIN DETECTED from Mode 9: " + vin);
+                        // Set VIN and trigger async decode (non-blocking)
+                        // Mode 9 scan continues in background to populate footer with all data
                         vm.setVIN(vin);
-
-                        if (CommService.elm.getService() == ObdProt.OBD_SVC_VEH_INFO)
-                        {
-                            log.info("VIN retrieved successfully, switching back to idle");
-                            CommService.elm.setService(ObdProt.OBD_SVC_NONE, false);
-                        }
+                        log.info("Mode 9 scan continues - footer will receive all data");
                     }
                 }
             }
@@ -146,25 +143,15 @@ final class VinDataHelper
 
             new Handler(Looper.getMainLooper()).postDelayed(() ->
             {
-                final int previousService = CommService.elm.getService();
-
-                log.info("Clearing stale vehicle info cache before VIN request");
+                log.info("Clearing stale vehicle info cache before Mode 9 request");
                 ObdProt.VidPvs.clear();
                 CommService.elm.getCachedVehicleInfo().clear();
 
-                log.info("Requesting Mode 9 VIN data");
+                log.info("Requesting Mode 9 data (full scan - VIN + all vehicle info)");
+                // Mode 9 will scan all supported PIDs and naturally complete when pidsWrapped=true
+                // VIN decode happens async when VIN is detected
+                // Footer receives all Mode 9 data as it arrives
                 CommService.elm.setService(ObdProt.OBD_SVC_VEH_INFO, false);
-
-                new Handler(Looper.getMainLooper()).postDelayed(() ->
-                {
-                    if (VehicleManager.getInstance().getCurrentVIN() == null)
-                    {
-                        log.info("VIN request timeout, switching back to previous service");
-                        CommService.elm.setService(previousService, false);
-                        VehicleManager.getInstance().handleVINTimeout();
-                        log.info("VIN not retrieved within timeout - may retry later");
-                    }
-                }, 8000);
             }, 1000);
         }
     }

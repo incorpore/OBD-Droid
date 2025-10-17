@@ -21,17 +21,13 @@ import com.obddroid.ui.components.FuelEconomyChart;
 import com.obddroid.ui.components.FuelFlowGauge;
 import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.utils.TripComputer;
-import com.obddroid.utils.TripManager;
 
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
@@ -77,8 +73,9 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private Handler updateHandler;
     private static final long UPDATE_INTERVAL = 1000; // Update every second
 
-    // Trip manager
-    private TripManager tripManager;
+    // Trip computers
+    private TripComputer tripA;
+    private TripComputer tripB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,8 +124,9 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         // Wire up footer overlay
         setupFooterOverlay();
 
-        // Initialize trip manager
-        tripManager = new TripManager(this);
+        // Initialize trip computers
+        tripA = new TripComputer(this, "tripA");
+        tripB = new TripComputer(this, "tripB");
     }
 
     /**
@@ -202,9 +200,9 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private void showTripComputerDialog() {
         log.info("Trip computer icon clicked!");
 
-        // Inflate the new dialog layout
+        // Inflate the dialog layout
         LayoutInflater inflater = LayoutInflater.from(this);
-        View dialogView = inflater.inflate(R.layout.dialog_trip_manager, null);
+        View dialogView = inflater.inflate(R.layout.dialog_trip_computer, null);
 
         // Create the dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -212,9 +210,11 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         AlertDialog dialog = builder.create();
 
         // Get views
-        LinearLayout tabsContainer = dialogView.findViewById(R.id.trip_tabs_container);
-        TextView tripNameHeader = dialogView.findViewById(R.id.trip_name_header);
-        View activeIndicator = dialogView.findViewById(R.id.active_trip_indicator);
+        TextView tripATab = dialogView.findViewById(R.id.trip_a_tab);
+        TextView tripBTab = dialogView.findViewById(R.id.trip_b_tab);
+        View tabIndicator = dialogView.findViewById(R.id.tab_indicator);
+        ImageView exportButton = dialogView.findViewById(R.id.btn_export);
+
         TextView distance = dialogView.findViewById(R.id.trip_distance);
         TextView duration = dialogView.findViewById(R.id.trip_duration);
         TextView avgSpeed = dialogView.findViewById(R.id.trip_avg_speed);
@@ -222,22 +222,14 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         TextView fuelUsed = dialogView.findViewById(R.id.trip_fuel_used);
         TextView cost = dialogView.findViewById(R.id.trip_cost);
         Button resetButton = dialogView.findViewById(R.id.reset_trip_button);
-        TextView addTripButton = dialogView.findViewById(R.id.btn_add_trip);
-        TextView exportButton = dialogView.findViewById(R.id.btn_export);
-        ImageView optionsButton = dialogView.findViewById(R.id.btn_trip_options);
 
-        // Current selected trip
-        final String[] selectedTripId = {tripManager.getActiveTrip().getId()};
+        // State for currently showing trip
+        final boolean[] showingTripA = {true};
 
-        // Function to update trip display
-        final Runnable[] updateDisplay = new Runnable[1];
-        final Runnable[] refreshTabs = new Runnable[1];
+        // Function to update display
+        Runnable updateDisplay = () -> {
+            TripComputer trip = showingTripA[0] ? tripA : tripB;
 
-        updateDisplay[0] = () -> {
-            TripComputer trip = tripManager.getTripById(selectedTripId[0]);
-            if (trip == null) return;
-
-            tripNameHeader.setText(trip.getName());
             distance.setText(String.format("%.1f", trip.getDistanceMiles()));
             duration.setText(trip.getFormattedDuration());
             avgSpeed.setText(String.format("%.0f", trip.getAverageSpeedMph()));
@@ -245,194 +237,69 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             fuelUsed.setText(String.format("%.2f", trip.getFuelUsedGallons()));
             cost.setText(String.format("%.2f", trip.getTripCost()));
 
-            // Show active indicator if this is the active trip
-            boolean isActive = selectedTripId[0].equals(tripManager.getActiveTrip().getId());
-            activeIndicator.setVisibility(isActive ? View.VISIBLE : View.GONE);
-        };
-
-        refreshTabs[0] = () -> {
-            tabsContainer.removeAllViews();
-            for (TripComputer trip : tripManager.getAllTrips()) {
-                View tabView = inflater.inflate(R.layout.item_trip_tab, tabsContainer, false);
-                TextView tabName = tabView.findViewById(R.id.tab_trip_name);
-                View tabIndicator = tabView.findViewById(R.id.tab_indicator);
-
-                tabName.setText(trip.getName());
-
-                // Highlight selected trip
-                boolean isSelected = trip.getId().equals(selectedTripId[0]);
-                tabName.setTextColor(Color.parseColor(isSelected ? "#00ACC1" : "#888888"));
-                tabIndicator.setBackgroundColor(Color.parseColor(isSelected ? "#00ACC1" : "#00000000"));
-
-                tabView.setOnClickListener(v -> {
-                    selectedTripId[0] = trip.getId();
-                    refreshTabs[0].run();
-                    updateDisplay[0].run();
-                });
-
-                tabsContainer.addView(tabView);
+            // Update tab colors
+            if (showingTripA[0]) {
+                tripATab.setTextColor(Color.parseColor("#00ACC1"));
+                tripBTab.setTextColor(Color.parseColor("#888888"));
+                // Move indicator to left
+                tabIndicator.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                    dialogView.getWidth() / 2,
+                    tabIndicator.getLayoutParams().height
+                ));
+            } else {
+                tripATab.setTextColor(Color.parseColor("#888888"));
+                tripBTab.setTextColor(Color.parseColor("#00ACC1"));
+                // Move indicator to right
+                android.widget.LinearLayout.LayoutParams params =
+                    new android.widget.LinearLayout.LayoutParams(
+                        dialogView.getWidth() / 2,
+                        tabIndicator.getLayoutParams().height
+                    );
+                params.leftMargin = dialogView.getWidth() / 2;
+                tabIndicator.setLayoutParams(params);
             }
         };
 
-        // Add trip button
-        addTripButton.setOnClickListener(v -> showAddTripDialog(dialog, refreshTabs[0], updateDisplay[0]));
+        // Tab click listeners
+        tripATab.setOnClickListener(v -> {
+            showingTripA[0] = true;
+            updateDisplay.run();
+        });
+
+        tripBTab.setOnClickListener(v -> {
+            showingTripA[0] = false;
+            updateDisplay.run();
+        });
 
         // Export button
         exportButton.setOnClickListener(v -> showExportDialog());
 
-        // Options menu (rename/delete/set active)
-        optionsButton.setOnClickListener(v -> {
-            PopupMenu popup = new PopupMenu(this, v);
-            popup.getMenu().add(0, 1, 0, "Rename Trip");
-            popup.getMenu().add(0, 2, 0, "Delete Trip");
-            popup.getMenu().add(0, 3, 0, "Set as Active Trip");
-
-            popup.setOnMenuItemClickListener(item -> {
-                switch (item.getItemId()) {
-                    case 1: // Rename
-                        showRenameTripDialog(selectedTripId[0], refreshTabs[0], updateDisplay[0]);
-                        return true;
-                    case 2: // Delete
-                        showDeleteTripDialog(selectedTripId[0], dialog, refreshTabs[0], updateDisplay[0]);
-                        return true;
-                    case 3: // Set active
-                        tripManager.setActiveTrip(selectedTripId[0]);
-                        updateDisplay[0].run();
-                        Toast.makeText(this, "Active trip updated", Toast.LENGTH_SHORT).show();
-                        return true;
-                }
-                return false;
-            });
-            popup.show();
-        });
-
-        // Reset button
+        // Reset button listener
         resetButton.setOnClickListener(v -> {
-            TripComputer trip = tripManager.getTripById(selectedTripId[0]);
-            if (trip == null) return;
+            TripComputer trip = showingTripA[0] ? tripA : tripB;
+            String tripName = showingTripA[0] ? "Trip A" : "Trip B";
 
             new AlertDialog.Builder(this)
-                .setTitle("Reset " + trip.getName() + "?")
-                .setMessage("This will reset all data for this trip to zero.")
+                .setTitle("Reset " + tripName + "?")
+                .setMessage("This will reset all data for " + tripName + " to zero.")
                 .setPositiveButton("Reset", (d, which) -> {
-                    tripManager.resetTrip(selectedTripId[0]);
-                    updateDisplay[0].run();
+                    trip.reset();
+                    updateDisplay.run();
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
         });
 
-        // Initial setup
-        refreshTabs[0].run();
-        updateDisplay[0].run();
+        // Initial display
+        updateDisplay.run();
 
         dialog.show();
     }
 
-    private void showAddTripDialog(AlertDialog parentDialog, Runnable refreshTabs, Runnable updateDisplay) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Create New Trip");
-
-        // Create input layout
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(50, 20, 50, 20);
-
-        EditText input = new EditText(this);
-        input.setHint("Trip name");
-        layout.addView(input);
-
-        // Add suggestions
-        TextView suggestionsLabel = new TextView(this);
-        suggestionsLabel.setText("\nSuggestions:");
-        suggestionsLabel.setTextSize(12);
-        suggestionsLabel.setTextColor(Color.GRAY);
-        layout.addView(suggestionsLabel);
-
-        LinearLayout suggestionsContainer = new LinearLayout(this);
-        suggestionsContainer.setOrientation(LinearLayout.HORIZONTAL);
-        suggestionsContainer.setPadding(0, 10, 0, 0);
-
-        for (String suggestion : new String[]{"Work", "City", "Highway", "Weekend"}) {
-            Button suggestionBtn = new Button(this);
-            suggestionBtn.setText(suggestion);
-            suggestionBtn.setTextSize(12);
-            suggestionBtn.setPadding(20, 10, 20, 10);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            );
-            params.setMargins(0, 0, 10, 0);
-            suggestionBtn.setLayoutParams(params);
-            suggestionBtn.setOnClickListener(v -> input.setText(suggestion));
-            suggestionsContainer.addView(suggestionBtn);
-        }
-        layout.addView(suggestionsContainer);
-
-        builder.setView(layout);
-        builder.setPositiveButton("Create", (d, which) -> {
-            String name = input.getText().toString().trim();
-            if (name.isEmpty()) {
-                name = "Trip " + (tripManager.getTripCount() + 1);
-            }
-            tripManager.createTrip(name);
-            refreshTabs.run();
-            Toast.makeText(this, "Trip created: " + name, Toast.LENGTH_SHORT).show();
-        });
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
-    }
-
-    private void showRenameTripDialog(String tripId, Runnable refreshTabs, Runnable updateDisplay) {
-        TripComputer trip = tripManager.getTripById(tripId);
-        if (trip == null) return;
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Rename Trip");
-
-        EditText input = new EditText(this);
-        input.setText(trip.getName());
-        input.setSelection(trip.getName().length());
-        input.setPadding(50, 20, 50, 20);
-        builder.setView(input);
-
-        builder.setPositiveButton("Rename", (d, which) -> {
-            String newName = input.getText().toString().trim();
-            if (!newName.isEmpty()) {
-                tripManager.renameTrip(tripId, newName);
-                refreshTabs.run();
-                updateDisplay.run();
-                Toast.makeText(this, "Trip renamed", Toast.LENGTH_SHORT).show();
-            }
-        });
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
-    }
-
-    private void showDeleteTripDialog(String tripId, AlertDialog parentDialog, Runnable refreshTabs, Runnable updateDisplay) {
-        TripComputer trip = tripManager.getTripById(tripId);
-        if (trip == null) return;
-
-        new AlertDialog.Builder(this)
-            .setTitle("Delete " + trip.getName() + "?")
-            .setMessage("This action cannot be undone.")
-            .setPositiveButton("Delete", (d, which) -> {
-                if (tripManager.deleteTrip(tripId)) {
-                    refreshTabs.run();
-                    updateDisplay.run();
-                    Toast.makeText(this, "Trip deleted", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(this, "Cannot delete the last trip", Toast.LENGTH_SHORT).show();
-                }
-            })
-            .setNegativeButton("Cancel", null)
-            .show();
-    }
-
     private void showExportDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Export Trips");
-        builder.setMessage("Choose export format:");
+        builder.setTitle("Export Trip Data");
+        builder.setMessage("Export both Trip A and Trip B data:");
 
         builder.setPositiveButton("CSV", (d, which) -> exportToCSV());
         builder.setNeutralButton("JSON", (d, which) -> exportToJSON());
@@ -442,10 +309,30 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
     private void exportToCSV() {
         try {
-            String csv = tripManager.exportToCSV();
+            StringBuilder csv = new StringBuilder();
+            csv.append("Trip Name,Distance (mi),Duration,Avg Speed (mph),Avg MPG,Fuel Used (gal),Cost ($)\n");
+
+            // Trip A
+            csv.append("Trip A,");
+            csv.append(String.format("%.2f,", tripA.getDistanceMiles()));
+            csv.append(tripA.getFormattedDuration()).append(",");
+            csv.append(String.format("%.1f,", tripA.getAverageSpeedMph()));
+            csv.append(String.format("%.1f,", tripA.getAverageMPG()));
+            csv.append(String.format("%.2f,", tripA.getFuelUsedGallons()));
+            csv.append(String.format("%.2f\n", tripA.getTripCost()));
+
+            // Trip B
+            csv.append("Trip B,");
+            csv.append(String.format("%.2f,", tripB.getDistanceMiles()));
+            csv.append(tripB.getFormattedDuration()).append(",");
+            csv.append(String.format("%.1f,", tripB.getAverageSpeedMph()));
+            csv.append(String.format("%.1f,", tripB.getAverageMPG()));
+            csv.append(String.format("%.2f,", tripB.getFuelUsedGallons()));
+            csv.append(String.format("%.2f\n", tripB.getTripCost()));
+
             File file = new File(getCacheDir(), "trips_export.csv");
             FileWriter writer = new FileWriter(file);
-            writer.write(csv);
+            writer.write(csv.toString());
             writer.close();
 
             shareFile(file, "text/csv");
@@ -457,10 +344,39 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
     private void exportToJSON() {
         try {
-            String json = tripManager.exportToJSON();
+            StringBuilder json = new StringBuilder();
+            json.append("{\n");
+            json.append("  \"exportDate\": ").append(System.currentTimeMillis()).append(",\n");
+            json.append("  \"trips\": [\n");
+
+            // Trip A
+            json.append("    {\n");
+            json.append("      \"name\": \"Trip A\",\n");
+            json.append("      \"distance\": ").append(tripA.getDistanceMiles()).append(",\n");
+            json.append("      \"duration\": \"").append(tripA.getFormattedDuration()).append("\",\n");
+            json.append("      \"avgSpeed\": ").append(tripA.getAverageSpeedMph()).append(",\n");
+            json.append("      \"avgMPG\": ").append(tripA.getAverageMPG()).append(",\n");
+            json.append("      \"fuelUsed\": ").append(tripA.getFuelUsedGallons()).append(",\n");
+            json.append("      \"cost\": ").append(tripA.getTripCost()).append("\n");
+            json.append("    },\n");
+
+            // Trip B
+            json.append("    {\n");
+            json.append("      \"name\": \"Trip B\",\n");
+            json.append("      \"distance\": ").append(tripB.getDistanceMiles()).append(",\n");
+            json.append("      \"duration\": \"").append(tripB.getFormattedDuration()).append("\",\n");
+            json.append("      \"avgSpeed\": ").append(tripB.getAverageSpeedMph()).append(",\n");
+            json.append("      \"avgMPG\": ").append(tripB.getAverageMPG()).append(",\n");
+            json.append("      \"fuelUsed\": ").append(tripB.getFuelUsedGallons()).append(",\n");
+            json.append("      \"cost\": ").append(tripB.getTripCost()).append("\n");
+            json.append("    }\n");
+
+            json.append("  ]\n");
+            json.append("}");
+
             File file = new File(getCacheDir(), "trips_export.json");
             FileWriter writer = new FileWriter(file);
-            writer.write(json);
+            writer.write(json.toString());
             writer.close();
 
             shareFile(file, "application/json");
@@ -714,12 +630,13 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             // Update time to empty
             updateTimeToEmpty();
 
-            // Update active trip
+            // Update trip computers
             float currentSpeed = getCurrentSpeed();
             String fuelFlowStr = fuelFlowValue.getText().toString();
             try {
                 float fuelFlow = Float.parseFloat(fuelFlowStr);
-                tripManager.updateActiveTrip(currentSpeed, fuelFlow);
+                tripA.update(currentSpeed, fuelFlow);
+                tripB.update(currentSpeed, fuelFlow);
             } catch (Exception e) {
                 // Ignore parse errors
             }

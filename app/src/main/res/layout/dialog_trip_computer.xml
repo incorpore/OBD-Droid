@@ -7,52 +7,72 @@
     android:background="@android:color/white"
     android:padding="0dp">
 
-    <!-- Header with tabs -->
+    <!-- Header with tabs and export button -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="#212121"
-        android:paddingTop="16dp"
-        android:paddingBottom="8dp">
+        android:orientation="vertical"
+        android:background="#212121">
 
-        <TextView
-            android:id="@+id/trip_a_tab"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="TRIP A"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#00ACC1"
-            android:gravity="center"
-            android:padding="12dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackground" />
+            android:orientation="horizontal"
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp">
 
-        <TextView
-            android:id="@+id/trip_b_tab"
+            <TextView
+                android:id="@+id/trip_a_tab"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="TRIP A"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#00ACC1"
+                android:gravity="center"
+                android:padding="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground" />
+
+            <TextView
+                android:id="@+id/trip_b_tab"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="TRIP B"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#888888"
+                android:gravity="center"
+                android:padding="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground" />
+
+            <!-- Small export button -->
+            <ImageView
+                android:id="@+id/btn_export"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_menu_share"
+                android:contentDescription="Export trips"
+                android:padding="10dp"
+                android:layout_marginEnd="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:tint="#888888"
+                android:background="?attr/selectableItemBackgroundBorderless"/>
+        </LinearLayout>
+
+        <!-- Tab indicator -->
+        <View
+            android:id="@+id/tab_indicator"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="TRIP B"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#888888"
-            android:gravity="center"
-            android:padding="12dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackground" />
+            android:layout_height="3dp"
+            android:background="#00ACC1" />
     </LinearLayout>
-
-    <!-- Tab indicator -->
-    <View
-        android:id="@+id/tab_indicator"
-        android:layout_width="0dp"
-        android:layout_height="3dp"
-        android:background="#00ACC1" />
 
     <ScrollView
         android:layout_width="match_parent"

@@ -1,5 +1,6 @@
 package com.obddroid.ui.activities;
 
+import android.app.AlertDialog;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
@@ -40,6 +41,11 @@ final class DashboardUiHelper {
                     SnackbarHelper.showWarning(activity, "Please connect to vehicle first");
                 }
             });
+            liveDataCard.setOnLongClickListener(v -> showCardInfoDialog(
+                activity,
+                "Live Data",
+                "Monitor real-time sensor values from the vehicle."
+            ));
         } else {
             log.warning("Live Data card NOT found!");
         }
@@ -63,6 +69,11 @@ final class DashboardUiHelper {
                     SnackbarHelper.showWarning(activity, "Please connect to vehicle first");
                 }
             });
+            testControlCard.setOnLongClickListener(v -> showCardInfoDialog(
+                activity,
+                "Test Control",
+                "Run diagnostic tests and actuator controls supported by the vehicle."
+            ));
         } else {
             log.warning("Test Control card NOT found!");
         }
@@ -79,6 +90,11 @@ final class DashboardUiHelper {
                     SnackbarHelper.showWarning(activity, "Please connect to vehicle first");
                 }
             });
+            faultCodesCard.setOnLongClickListener(v -> showCardInfoDialog(
+                activity,
+                "Fault Codes",
+                "Read, decode, and clear diagnostic trouble codes stored by the vehicle."
+            ));
         }
 
         // Reconnect card
@@ -107,10 +123,7 @@ final class DashboardUiHelper {
             }
 
             reconnectCard.setOnClickListener(v -> activity.reconnectToLastAdapter());
-            reconnectCard.setOnLongClickListener(v -> {
-                AutoReconnectDialogHelper.show(activity);
-                return true;
-            });
+            reconnectCard.setOnLongClickListener(v -> showReconnectInfoDialog(activity));
         }
 
         // Fuel Economy card
@@ -121,8 +134,30 @@ final class DashboardUiHelper {
                 log.info("Fuel Economy card clicked!");
                 activity.launchFuelEconomyActivity();
             });
+            fuelEconomyCard.setOnLongClickListener(v -> showCardInfoDialog(
+                activity,
+                "Fuel Economy",
+                "Track MPG, fuel level, and driving range statistics."
+            ));
         } else {
             log.warning("Fuel Economy card NOT found!");
+        }
+
+        // Vehicle History card
+        View vehicleHistoryCard = activity.findViewById(R.id.card_vehicle_history);
+        if (vehicleHistoryCard != null) {
+            addCardPressAnimation(vehicleHistoryCard);
+            vehicleHistoryCard.setOnClickListener(v -> {
+                log.info("Vehicle History card clicked!");
+                activity.launchAutoCheckActivity();
+            });
+            vehicleHistoryCard.setOnLongClickListener(v -> showCardInfoDialog(
+                activity,
+                "Vehicle History",
+                "Get comprehensive vehicle history reports powered by AutoCheck. Check for accidents, ownership history, title status, recalls, and more."
+            ));
+        } else {
+            log.warning("Vehicle History card NOT found!");
         }
 
         updateReconnectCardSubtitle(activity);
@@ -130,10 +165,16 @@ final class DashboardUiHelper {
     }
 
     static void updateReconnectCardSubtitle(MainActivity activity) {
+        TextView titleView = activity.findViewById(R.id.reconnect_adapter_title);
         TextView subtitle = activity.findViewById(R.id.reconnect_adapter_subtitle);
-        if (subtitle == null) {
-            log.fine("Reconnect card subtitle not found - layout may not be set yet");
+        if (titleView == null) {
+            log.fine("Reconnect card title not found - layout may not be set yet");
             return;
+        }
+
+        if (subtitle != null) {
+            subtitle.setText("");
+            subtitle.setVisibility(View.GONE);
         }
 
         String lastAdapterType = activity.getPrefs().getString("LAST_ADAPTER_TYPE", null);
@@ -141,48 +182,55 @@ final class DashboardUiHelper {
         log.info("updateReconnectCardSubtitle - Last adapter type: " + lastAdapterType + ", name: " + lastAdapterName);
 
         if (lastAdapterType == null) {
-            subtitle.setText("No adapter connected yet");
+            titleView.setText("Reconnect Adapter");
             return;
         }
 
-        String subtitleText;
+        String titleText;
         switch (lastAdapterType) {
             case "BLUETOOTH":
-                subtitleText = buildBluetoothSubtitle(activity, lastAdapterName);
+                titleText = buildBluetoothTitle(activity, lastAdapterName);
                 break;
             case "NETWORK":
-                subtitleText = buildNetworkSubtitle(activity);
+                titleText = buildNetworkTitle(activity);
                 break;
             case "USB":
-                subtitleText = "Reconnect to USB adapter";
+                titleText = "Reconnect USB adapter";
                 break;
             default:
-                subtitleText = "No adapter connected yet";
+                titleText = null;
                 break;
         }
 
-        subtitle.setText(subtitleText);
+        if (titleText == null || titleText.isEmpty()) {
+            titleView.setText("Reconnect Adapter");
+        } else {
+            titleView.setText(titleText);
+        }
     }
 
-    private static String buildBluetoothSubtitle(MainActivity activity, @Nullable String lastAdapterName) {
+    private static String buildBluetoothTitle(MainActivity activity, @Nullable String lastAdapterName) {
         String btAddress = activity.getPrefs().getString("LAST_DEV_ADDRESS", null);
         if (btAddress != null) {
             String nickname = activity.getPrefs().getString("device_nickname_" + btAddress, "");
             if (!nickname.isEmpty()) {
-                return "Reconnect to " + nickname;
+                return "Reconnect " + nickname;
             }
             if (lastAdapterName != null && !lastAdapterName.isEmpty()) {
-                return "Reconnect to " + lastAdapterName;
+                return "Reconnect " + lastAdapterName;
             }
-            return "Reconnect to Bluetooth device";
+            return "Reconnect Bluetooth device";
         }
-        return "No adapter connected yet";
+        return "";
     }
 
-    private static String buildNetworkSubtitle(MainActivity activity) {
+    private static String buildNetworkTitle(MainActivity activity) {
         String ip = activity.getPrefs().getString("DEVICE_ADDRESS", "Unknown");
         int port = activity.getPrefs().getInt("DEVICE_PORT", 35000);
-        return ip + ":" + port;
+        if (ip == null || ip.isEmpty() || "Unknown".equals(ip)) {
+            return "";
+        }
+        return "Reconnect " + ip + ":" + port;
     }
 
     private static void setupBreadcrumbNavigation(MainActivity activity) {
@@ -220,5 +268,24 @@ final class DashboardUiHelper {
             }
             return false;
         });
+    }
+
+    private static boolean showCardInfoDialog(MainActivity activity, String title, String message) {
+        new AlertDialog.Builder(activity)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton("Close", null)
+            .show();
+        return true;
+    }
+
+    private static boolean showReconnectInfoDialog(MainActivity activity) {
+        new AlertDialog.Builder(activity)
+            .setTitle("Reconnect Adapter")
+            .setMessage("Reconnect to the most recently used adapter. Manage auto-reconnect behaviour from settings.")
+            .setNegativeButton("Close", null)
+            .setPositiveButton("Auto-Reconnect Settings", (dialog, which) -> AutoReconnectDialogHelper.show(activity))
+            .show();
+        return true;
     }
 }

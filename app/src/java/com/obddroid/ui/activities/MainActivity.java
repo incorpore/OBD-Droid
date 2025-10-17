@@ -2334,6 +2334,15 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
+     * Launch the AutoCheck Vehicle History activity
+     */
+    void launchAutoCheckActivity() {
+        log.info("Launching Vehicle History (AutoCheck) activity");
+        Intent intent = new Intent(this, AutoCheckActivity.class);
+        startActivity(intent);
+    }
+
+    /**
      * Attempt auto-reconnect on startup if the setting is enabled
      * Only runs once per app session (first onResume)
      */

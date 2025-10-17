@@ -103,6 +103,11 @@
             android:label="Fuel Economy"
             android:configChanges="touchscreen|orientation|screenSize"
             android:exported="false" />
+        <activity
+            android:name="com.obddroid.ui.activities.AutoCheckActivity"
+            android:label="Vehicle History"
+            android:configChanges="touchscreen|orientation|screenSize"
+            android:exported="false" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
