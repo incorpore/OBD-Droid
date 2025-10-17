@@ -19,9 +19,29 @@ final class VinDataHelper
 {
     private static final Logger log = Logger.getLogger(VinDataHelper.class.getName());
 
+    // Timeout for VIN retrieval (15 seconds)
+    private static final long VIN_RETRIEVAL_TIMEOUT_MS = 15000;
+
+    // Handler and runnable for timeout management
+    private static final Handler timeoutHandler = new Handler(Looper.getMainLooper());
+    private static Runnable vinTimeoutRunnable = null;
+
     private VinDataHelper()
     {
         // Utility class
+    }
+
+    /**
+     * Cancel any pending VIN timeout
+     */
+    private static void cancelVinTimeout()
+    {
+        if (vinTimeoutRunnable != null)
+        {
+            timeoutHandler.removeCallbacks(vinTimeoutRunnable);
+            vinTimeoutRunnable = null;
+            log.info("VIN retrieval timeout cancelled");
+        }
     }
 
     /**
@@ -107,6 +127,8 @@ final class VinDataHelper
                     if (currentVin == null || !currentVin.equals(vin))
                     {
                         log.info("VIN DETECTED from Mode 9: " + vin);
+                        // Cancel timeout since VIN was successfully retrieved
+                        cancelVinTimeout();
                         // Set VIN and trigger async decode (non-blocking)
                         // Mode 9 scan continues in background to populate footer with all data
                         vm.setVIN(vin);
@@ -141,6 +163,31 @@ final class VinDataHelper
                     (currentVin != null && !currentVin.isEmpty()) +
                     ", Mode 9 data present: " + hasMode9Data + ")");
 
+            // Cancel any existing timeout
+            cancelVinTimeout();
+
+            // Schedule timeout for VIN retrieval
+            vinTimeoutRunnable = new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    log.warning("VIN retrieval timed out after " + VIN_RETRIEVAL_TIMEOUT_MS + "ms");
+                    VehicleManager vm = VehicleManager.getInstance();
+                    // Check if VIN was retrieved during timeout period
+                    if (vm.getCurrentVIN() == null || vm.getCurrentVIN().isEmpty())
+                    {
+                        log.info("Calling handleVINTimeout - Mode 9 may not be supported by this vehicle");
+                        vm.handleVINTimeout();
+                    }
+                    else
+                    {
+                        log.info("VIN was retrieved during timeout period, ignoring timeout");
+                    }
+                    vinTimeoutRunnable = null;
+                }
+            };
+
             new Handler(Looper.getMainLooper()).postDelayed(() ->
             {
                 log.info("Clearing stale vehicle info cache before Mode 9 request");
@@ -152,6 +199,10 @@ final class VinDataHelper
                 // VIN decode happens async when VIN is detected
                 // Footer receives all Mode 9 data as it arrives
                 CommService.elm.setService(ObdProt.OBD_SVC_VEH_INFO, false);
+
+                // Start timeout AFTER Mode 9 request is sent (1 second delay + 15 second timeout = 16 seconds total)
+                log.info("Starting VIN retrieval timeout (" + VIN_RETRIEVAL_TIMEOUT_MS + "ms)");
+                timeoutHandler.postDelayed(vinTimeoutRunnable, VIN_RETRIEVAL_TIMEOUT_MS);
             }, 1000);
         }
     }
