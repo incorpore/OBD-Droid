@@ -417,9 +417,15 @@ public class AutoCheckActivity extends AppCompatActivity {
             statServiceRecords.setText("0");
         }
 
-        // Year
+        // Year + Age
         if (report.getYear() != null) {
-            statYear.setText(report.getYear());
+            Integer age = report.getVehicleAge();
+            if (age != null) {
+                String ageLabel = age == 1 ? "yr" : "yrs";
+                statYear.setText(report.getYear() + "\n(" + age + " " + ageLabel + ")");
+            } else {
+                statYear.setText(report.getYear());
+            }
         } else {
             statYear.setText("N/A");
         }
@@ -540,28 +546,28 @@ public class AutoCheckActivity extends AppCompatActivity {
         // Create event container
         LinearLayout eventLayout = new LinearLayout(this);
         eventLayout.setOrientation(LinearLayout.HORIZONTAL);
-        eventLayout.setPadding(0, 8, 0, 8);
+        eventLayout.setPadding(0, 0, 0, isLast ? 0 : 16);
 
         // Timeline indicator (dot + line)
         LinearLayout timelineIndicator = new LinearLayout(this);
         timelineIndicator.setOrientation(LinearLayout.VERTICAL);
         timelineIndicator.setGravity(Gravity.CENTER_HORIZONTAL);
-        timelineIndicator.setPadding(0, 0, 16, 0);
+        timelineIndicator.setPadding(0, 6, 20, 0);
 
-        // Dot
+        // Dot - larger and more prominent
         View dot = new View(this);
         dot.setBackgroundResource(R.drawable.timeline_dot);
-        LinearLayout.LayoutParams dotParams = new LinearLayout.LayoutParams(12, 12);
+        LinearLayout.LayoutParams dotParams = new LinearLayout.LayoutParams(16, 16);
         dot.setLayoutParams(dotParams);
         timelineIndicator.addView(dot);
 
-        // Line (if not last)
+        // Line (if not last) - thicker and more visible
         if (!isLast) {
             View line = new View(this);
             line.setBackgroundResource(R.drawable.timeline_line);
-            LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(2,
+            LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(3,
                 ViewGroup.LayoutParams.MATCH_PARENT);
-            lineParams.topMargin = 4;
+            lineParams.topMargin = 6;
             line.setLayoutParams(lineParams);
             timelineIndicator.addView(line);
         }
@@ -573,55 +579,57 @@ public class AutoCheckActivity extends AppCompatActivity {
         timelineIndicator.setLayoutParams(indicatorParams);
         eventLayout.addView(timelineIndicator);
 
-        // Event content
+        // Event content with background card
         LinearLayout eventContent = new LinearLayout(this);
         eventContent.setOrientation(LinearLayout.VERTICAL);
-        eventContent.setPadding(0, 0, 0, 16);
+        eventContent.setPadding(16, 14, 16, 14);
+        eventContent.setBackgroundResource(R.drawable.stat_card_background);
 
-        // Date
+        // Date - larger and more prominent
         TextView dateText = new TextView(this);
         dateText.setText(event.date != null ? event.date : "Unknown Date");
-        dateText.setTextSize(13);
-        dateText.setTextColor(Color.parseColor("#1A1A1A"));
+        dateText.setTextSize(15);
+        dateText.setTextColor(Color.parseColor("#00ACC1"));
         dateText.setTypeface(null, android.graphics.Typeface.BOLD);
+        dateText.setLetterSpacing(0.02f);
         eventContent.addView(dateText);
 
-        // Details
+        // Details - larger and better spaced
         TextView detailsText = new TextView(this);
         detailsText.setText(event.details != null ? event.details : "No details");
-        detailsText.setTextSize(14);
-        detailsText.setTextColor(Color.parseColor("#424242"));
-        detailsText.setPadding(0, 4, 0, 0);
+        detailsText.setTextSize(15);
+        detailsText.setTextColor(Color.parseColor("#212121"));
+        detailsText.setPadding(0, 8, 0, 0);
+        detailsText.setLineSpacing(4, 1.0f);
         eventContent.addView(detailsText);
 
-        // Location
+        // Location - better visibility
         if (event.location != null && !event.location.isEmpty()) {
             TextView locationText = new TextView(this);
             locationText.setText("📍 " + event.location);
-            locationText.setTextSize(12);
-            locationText.setTextColor(Color.parseColor("#757575"));
-            locationText.setPadding(0, 4, 0, 0);
+            locationText.setTextSize(13);
+            locationText.setTextColor(Color.parseColor("#616161"));
+            locationText.setPadding(0, 8, 0, 0);
             eventContent.addView(locationText);
         }
 
-        // Odometer
+        // Odometer - better visibility
         if (event.odometer != null && !event.odometer.isEmpty()) {
             TextView odometerText = new TextView(this);
             odometerText.setText("🛣 " + event.odometer + " miles");
-            odometerText.setTextSize(12);
-            odometerText.setTextColor(Color.parseColor("#757575"));
+            odometerText.setTextSize(13);
+            odometerText.setTextColor(Color.parseColor("#616161"));
             odometerText.setPadding(0, 4, 0, 0);
             eventContent.addView(odometerText);
         }
 
-        // Source
+        // Source - more readable, not italic
         if (event.source != null && !event.source.isEmpty()) {
             TextView sourceText = new TextView(this);
             sourceText.setText("Source: " + event.source);
-            sourceText.setTextSize(11);
-            sourceText.setTextColor(Color.parseColor("#9E9E9E"));
-            sourceText.setPadding(0, 4, 0, 0);
-            sourceText.setTypeface(null, android.graphics.Typeface.ITALIC);
+            sourceText.setTextSize(12);
+            sourceText.setTextColor(Color.parseColor("#757575"));
+            sourceText.setPadding(0, 8, 0, 0);
             eventContent.addView(sourceText);
         }
 
