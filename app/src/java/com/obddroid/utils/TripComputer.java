@@ -3,6 +3,9 @@ package com.obddroid.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Locale;
 
 /**
@@ -14,18 +17,34 @@ public class TripComputer {
     private static final String PREFS_NAME = "TripComputerPrefs";
     private static final float DEFAULT_FUEL_PRICE = 3.50f; // Default $/gallon
 
+    private final Context context;
     private final SharedPreferences prefs;
-    private final String tripPrefix; // "tripA_" or "tripB_"
+    private final String id;
+    private String name;
 
     // Trip metrics
     private float distanceMiles = 0f;
     private long durationSeconds = 0;
     private float fuelUsedGallons = 0f;
     private long lastUpdateTime = 0;
+    private long createdTime = 0;
 
+    /**
+     * Constructor for new trip with ID and name
+     */
+    public TripComputer(Context context, String id, String name) {
+        this.context = context;
+        this.prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        this.id = id;
+        this.name = name;
+        this.createdTime = System.currentTimeMillis();
+    }
+
+    /**
+     * Legacy constructor for backwards compatibility (Trip A / Trip B)
+     */
     public TripComputer(Context context, String tripId) {
-        prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        this.tripPrefix = tripId + "_";
+        this(context, tripId, tripId.equals("tripA") ? "Trip A" : "Trip B");
         loadFromPreferences();
     }
 
@@ -153,7 +172,66 @@ public class TripComputer {
         return prefs.getFloat("fuel_price", DEFAULT_FUEL_PRICE);
     }
 
+    /**
+     * Get trip ID
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * Get trip name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Set trip name
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * Get creation time
+     */
+    public long getCreatedTime() {
+        return createdTime;
+    }
+
+    /**
+     * Convert trip to JSON
+     */
+    public JSONObject toJSON() throws JSONException {
+        JSONObject json = new JSONObject();
+        json.put("id", id);
+        json.put("name", name);
+        json.put("distance", distanceMiles);
+        json.put("duration", durationSeconds);
+        json.put("fuelUsed", fuelUsedGallons);
+        json.put("created", createdTime);
+        json.put("lastUpdate", lastUpdateTime);
+        return json;
+    }
+
+    /**
+     * Create trip from JSON
+     */
+    public static TripComputer fromJSON(Context context, JSONObject json) throws JSONException {
+        String id = json.getString("id");
+        String name = json.getString("name");
+        TripComputer trip = new TripComputer(context, id, name);
+        trip.distanceMiles = (float) json.getDouble("distance");
+        trip.durationSeconds = json.getLong("duration");
+        trip.fuelUsedGallons = (float) json.getDouble("fuelUsed");
+        trip.createdTime = json.getLong("created");
+        trip.lastUpdateTime = json.getLong("lastUpdate");
+        return trip;
+    }
+
     private void loadFromPreferences() {
+        String tripPrefix = id + "_";
         distanceMiles = prefs.getFloat(tripPrefix + "distance", 0f);
         durationSeconds = prefs.getLong(tripPrefix + "duration", 0);
         fuelUsedGallons = prefs.getFloat(tripPrefix + "fuel", 0f);
@@ -161,6 +239,7 @@ public class TripComputer {
     }
 
     private void saveToPreferences() {
+        String tripPrefix = id + "_";
         prefs.edit()
             .putFloat(tripPrefix + "distance", distanceMiles)
             .putLong(tripPrefix + "duration", durationSeconds)
