@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <!-- Content area with overlay support -->
+    <!-- Main Content -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="match_parent">
 
-        <ScrollView
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true"
@@ -20,249 +20,681 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:paddingBottom="80dp"
+                android:paddingTop="16dp">
 
-        <!-- Header -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Vehicle History Report"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#1A1A1A"
-            android:gravity="center"
-            android:paddingBottom="8dp"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Powered by AutoCheck"
-            android:textSize="14sp"
-            android:textColor="#666666"
-            android:gravity="center"
-            android:paddingBottom="24dp"/>
-
-        <!-- VIN Input Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:elevation="4dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Enter VIN"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#1A1A1A"
-                    android:paddingBottom="8dp"/>
-
-                <EditText
-                    android:id="@+id/vin_input"
+                <!-- Generate Report Button Card -->
+                <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="17-character VIN"
-                    android:inputType="textCapCharacters"
-                    android:maxLength="17"
-                    android:textSize="16sp"
-                    android:padding="12dp"
-                    android:background="@android:drawable/edit_text"/>
+                    android:layout_margin="16dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp">
 
-                <Button
-                    android:id="@+id/check_history_button"
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="20dp">
+
+                        <Button
+                            android:id="@+id/check_history_button"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Generate Vehicle History Report"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:padding="18dp"/>
+
+                        <!-- Loading Container -->
+                        <LinearLayout
+                            android:id="@+id/loading_container"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="24dp"
+                            android:visibility="gone">
+
+                            <ProgressBar
+                                android:id="@+id/loading_spinner"
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"/>
+
+                            <TextView
+                                android:id="@+id/loading_text"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Analyzing vehicle history...\nGenerating detailed PDF report...\nThis may take 30-60 seconds"
+                                android:textColor="#666666"
+                                android:textSize="14sp"
+                                android:gravity="center"
+                                android:lineSpacingExtra="4dp"
+                                android:layout_marginTop="16dp"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Error Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/error_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Check Vehicle History"
-                    android:textSize="16sp"
-                    android:layout_marginTop="16dp"
-                    android:padding="12dp"/>
+                    android:layout_margin="16dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="6dp"
+                    android:visibility="gone">
 
-                <!-- Loading Spinner -->
-                <ProgressBar
-                    android:id="@+id/loading_spinner"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginTop="16dp"
-                    android:visibility="gone"/>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="24dp"
+                        android:background="#FFEBEE">
 
-                <TextView
-                    android:id="@+id/loading_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="Fetching vehicle history...\nThis may take 30-60 seconds"
-                    android:textColor="#666666"
-                    android:textSize="14sp"
-                    android:gravity="center"
-                    android:layout_marginTop="8dp"
-                    android:visibility="gone"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⚠ Error"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#C62828"
+                            android:paddingBottom="12dp"/>
 
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+                        <TextView
+                            android:id="@+id/error_message"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="#C62828"
+                            android:textSize="14sp"
+                            android:lineSpacingExtra="4dp"/>
 
-        <!-- Error Message -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/error_card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone">
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:background="#FFEBEE">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Error"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#C62828"
-                    android:paddingBottom="8dp"/>
-
-                <TextView
-                    android:id="@+id/error_message"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="#C62828"
-                    android:textSize="14sp"/>
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- Report Results -->
-        <LinearLayout
-            android:id="@+id/report_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <!-- Vehicle Info Card -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:elevation="4dp">
-
+                <!-- Report Container -->
                 <LinearLayout
+                    android:id="@+id/report_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:visibility="gone">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Vehicle Information"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="#1A1A1A"
-                        android:paddingBottom="12dp"/>
-
-                    <TextView
-                        android:id="@+id/vehicle_name"
+                    <!-- ═══════════════════════════════════════ -->
+                    <!-- HERO SCORE SECTION -->
+                    <!-- ═══════════════════════════════════════ -->
+                    <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:textColor="#2196F3"
-                        android:paddingBottom="8dp"/>
+                        android:layout_marginBottom="16dp"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="12dp">
 
-                    <TextView
-                        android:id="@+id/vehicle_vin"
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:background="#FFFFFF"
+                            android:padding="32dp"
+                            android:gravity="center">
+
+                            <!-- Vehicle Name -->
+                            <TextView
+                                android:id="@+id/vehicle_name"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textSize="26sp"
+                                android:textStyle="bold"
+                                android:textColor="#1A1A1A"
+                                android:gravity="center"
+                                android:paddingBottom="8dp"/>
+
+                            <!-- VIN -->
+                            <TextView
+                                android:id="@+id/vehicle_vin"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textSize="12sp"
+                                android:textColor="#757575"
+                                android:gravity="center"
+                                android:paddingBottom="32dp"
+                                android:fontFamily="monospace"/>
+
+                            <!-- Circular Score Gauge -->
+                            <FrameLayout
+                                android:layout_width="140dp"
+                                android:layout_height="140dp"
+                                android:layout_gravity="center">
+
+                                <View
+                                    android:id="@+id/score_circle_background"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:background="@drawable/score_circle_background"/>
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:orientation="vertical"
+                                    android:gravity="center">
+
+                                    <TextView
+                                        android:id="@+id/autocheck_score"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:textSize="48sp"
+                                        android:textStyle="bold"
+                                        android:textColor="#1A1A1A"/>
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="SCORE"
+                                        android:textSize="11sp"
+                                        android:textColor="#757575"
+                                        android:letterSpacing="0.1"/>
+
+                                </LinearLayout>
+
+                            </FrameLayout>
+
+                            <!-- Score Range -->
+                            <TextView
+                                android:id="@+id/score_range"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="14sp"
+                                android:textColor="#757575"
+                                android:layout_marginTop="16dp"/>
+
+                            <!-- Score Interpretation -->
+                            <TextView
+                                android:id="@+id/score_interpretation"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                android:layout_marginTop="8dp"/>
+
+                            <!-- Quick Status Badges -->
+                            <LinearLayout
+                                android:id="@+id/quick_status_container"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="24dp"
+                                android:gravity="center">
+                                <!-- Badges will be added programmatically -->
+                            </LinearLayout>
+
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- ═══════════════════════════════════════ -->
+                    <!-- QUICK STATS GRID -->
+                    <!-- ═══════════════════════════════════════ -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/stats_card"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="14sp"
-                        android:textColor="#666666"/>
+                        android:layout_marginBottom="16dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="6dp">
 
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="20dp">
 
-            <!-- AutoCheck Score Card -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:elevation="4dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Key Statistics"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="#1A1A1A"
+                                android:paddingBottom="16dp"/>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                            <!-- 2x2 Grid -->
+                            <GridLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:columnCount="2"
+                                android:rowCount="2"
+                                android:alignmentMode="alignBounds"
+                                android:columnOrderPreserved="false">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="AutoCheck Score"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="#1A1A1A"
-                        android:paddingBottom="12dp"/>
+                                <!-- Owners Stat -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_columnWeight="1"
+                                    android:layout_margin="8dp"
+                                    android:orientation="vertical"
+                                    android:background="@drawable/stat_card_background"
+                                    android:padding="16dp"
+                                    android:gravity="center">
 
-                    <TextView
-                        android:id="@+id/autocheck_score"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="36sp"
-                        android:textStyle="bold"
-                        android:textColor="#4CAF50"/>
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="👥"
+                                        android:textSize="32sp"
+                                        android:paddingBottom="8dp"/>
 
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                                    <TextView
+                                        android:id="@+id/stat_owners"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold"
+                                        android:textColor="#1A1A1A"/>
 
-            <!-- Vehicle Details Card -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:elevation="4dp">
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Owners"
+                                        android:textSize="12sp"
+                                        android:textColor="#757575"/>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                                </LinearLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Vehicle Details"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="#1A1A1A"
-                        android:paddingBottom="12dp"/>
+                                <!-- Odometer Stat -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_columnWeight="1"
+                                    android:layout_margin="8dp"
+                                    android:orientation="vertical"
+                                    android:background="@drawable/stat_card_background"
+                                    android:padding="16dp"
+                                    android:gravity="center">
 
-                    <TextView
-                        android:id="@+id/report_details"
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="🛣"
+                                        android:textSize="32sp"
+                                        android:paddingBottom="8dp"/>
+
+                                    <TextView
+                                        android:id="@+id/stat_odometer"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:textSize="20sp"
+                                        android:textStyle="bold"
+                                        android:textColor="#1A1A1A"/>
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Miles"
+                                        android:textSize="12sp"
+                                        android:textColor="#757575"/>
+
+                                </LinearLayout>
+
+                                <!-- Service Records Stat -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_columnWeight="1"
+                                    android:layout_margin="8dp"
+                                    android:orientation="vertical"
+                                    android:background="@drawable/stat_card_background"
+                                    android:padding="16dp"
+                                    android:gravity="center">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="🔧"
+                                        android:textSize="32sp"
+                                        android:paddingBottom="8dp"/>
+
+                                    <TextView
+                                        android:id="@+id/stat_service_records"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold"
+                                        android:textColor="#1A1A1A"/>
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Service Records"
+                                        android:textSize="12sp"
+                                        android:textColor="#757575"/>
+
+                                </LinearLayout>
+
+                                <!-- Vehicle Age Stat -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_columnWeight="1"
+                                    android:layout_margin="8dp"
+                                    android:orientation="vertical"
+                                    android:background="@drawable/stat_card_background"
+                                    android:padding="16dp"
+                                    android:gravity="center">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="📅"
+                                        android:textSize="32sp"
+                                        android:paddingBottom="8dp"/>
+
+                                    <TextView
+                                        android:id="@+id/stat_year"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:textSize="24sp"
+                                        android:textStyle="bold"
+                                        android:textColor="#1A1A1A"/>
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Model Year"
+                                        android:textSize="12sp"
+                                        android:textColor="#757575"/>
+
+                                </LinearLayout>
+
+                            </GridLayout>
+
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- ═══════════════════════════════════════ -->
+                    <!-- SAFETY & TITLE OVERVIEW -->
+                    <!-- ═══════════════════════════════════════ -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/safety_card"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="14sp"
-                        android:textColor="#333333"
-                        android:lineSpacingExtra="4dp"/>
+                        android:layout_marginBottom="16dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="6dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="20dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Safety &amp; Title Overview"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="#1A1A1A"
+                                android:paddingBottom="16dp"/>
+
+                            <!-- Title Brand -->
+                            <LinearLayout
+                                android:id="@+id/title_brand_row"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:padding="12dp"
+                                android:gravity="center_vertical">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Title Status"
+                                    android:textSize="15sp"
+                                    android:textColor="#424242"/>
+
+                                <TextView
+                                    android:id="@+id/title_brand_value"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"
+                                    android:paddingLeft="12dp"
+                                    android:paddingRight="12dp"
+                                    android:paddingTop="6dp"
+                                    android:paddingBottom="6dp"
+                                    android:textColor="#FFFFFF"/>
+
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:background="#E0E0E0"
+                                android:layout_marginTop="8dp"
+                                android:layout_marginBottom="8dp"/>
+
+                            <!-- Accident/Damage -->
+                            <LinearLayout
+                                android:id="@+id/accident_row"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:padding="12dp"
+                                android:gravity="center_vertical">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Accident/Damage"
+                                    android:textSize="15sp"
+                                    android:textColor="#424242"/>
+
+                                <TextView
+                                    android:id="@+id/accident_value"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"/>
+
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:background="#E0E0E0"
+                                android:layout_marginTop="8dp"
+                                android:layout_marginBottom="8dp"/>
+
+                            <!-- Structural Damage -->
+                            <LinearLayout
+                                android:id="@+id/structural_row"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:padding="12dp"
+                                android:gravity="center_vertical">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Structural Damage"
+                                    android:textSize="15sp"
+                                    android:textColor="#424242"/>
+
+                                <TextView
+                                    android:id="@+id/structural_value"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"/>
+
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:background="#E0E0E0"
+                                android:layout_marginTop="8dp"
+                                android:layout_marginBottom="8dp"/>
+
+                            <!-- Airbag Deployment -->
+                            <LinearLayout
+                                android:id="@+id/airbag_row"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:padding="12dp"
+                                android:gravity="center_vertical">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Airbag Deployment"
+                                    android:textSize="15sp"
+                                    android:textColor="#424242"/>
+
+                                <TextView
+                                    android:id="@+id/airbag_value"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"/>
+
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:background="#E0E0E0"
+                                android:layout_marginTop="8dp"
+                                android:layout_marginBottom="8dp"/>
+
+                            <!-- Odometer Rollback -->
+                            <LinearLayout
+                                android:id="@+id/rollback_row"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:padding="12dp"
+                                android:gravity="center_vertical">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Odometer Rollback"
+                                    android:textSize="15sp"
+                                    android:textColor="#424242"/>
+
+                                <TextView
+                                    android:id="@+id/rollback_value"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"/>
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- ═══════════════════════════════════════ -->
+                    <!-- VEHICLE DETAILS -->
+                    <!-- ═══════════════════════════════════════ -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/details_card"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="6dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="20dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Vehicle Specifications"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="#1A1A1A"
+                                android:paddingBottom="16dp"/>
+
+                            <TextView
+                                android:id="@+id/vehicle_details_text"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textSize="14sp"
+                                android:textColor="#424242"
+                                android:lineSpacingExtra="6dp"/>
+
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- ═══════════════════════════════════════ -->
+                    <!-- HISTORY TIMELINE -->
+                    <!-- ═══════════════════════════════════════ -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/timeline_card"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="6dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="20dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Vehicle History Timeline"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="#1A1A1A"
+                                android:paddingBottom="8dp"/>
+
+                            <TextView
+                                android:id="@+id/timeline_summary"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="13sp"
+                                android:textColor="#757575"
+                                android:paddingBottom="16dp"/>
+
+                            <!-- Timeline Container -->
+                            <LinearLayout
+                                android:id="@+id/timeline_container"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical">
+                                <!-- Timeline events will be added programmatically -->
+                            </LinearLayout>
+
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
 
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-        </LinearLayout>
 
             </LinearLayout>
-        </ScrollView>
+        </androidx.core.widget.NestedScrollView>
 
-        <!-- Overlay that appears when footer is expanded -->
+        <!-- Overlay for footer -->
         <View
             android:id="@+id/footer_overlay"
             android:layout_width="match_parent"
@@ -274,9 +706,25 @@
 
     </FrameLayout>
 
+    <!-- Footer -->
     <com.obddroid.ui.components.VehicleInfoFooter
         android:id="@+id/vehicle_footer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"/>
 
-</LinearLayout>
+    <!-- PDF Button - Positioned above footer -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/pdf_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="90dp"
+        android:src="@android:drawable/ic_menu_save"
+        android:contentDescription="View PDF Report"
+        android:visibility="gone"
+        app:fabSize="normal"
+        app:tint="#FFFFFF"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

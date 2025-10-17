@@ -12,66 +12,12 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <!-- Container for breadcrumb + scroll -->
-        <LinearLayout
+        <!-- Main Dashboard Container -->
+        <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <!-- Breadcrumb bar under navbar -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:background="@drawable/breadcrumb_background"
-                android:orientation="horizontal"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:gravity="center_vertical">
-
-                <!-- Left navigation arrow -->
-                <ImageView
-                    android:id="@+id/breadcrumb_nav_left"
-                    android:layout_width="38dp"
-                    android:layout_height="38dp"
-                    android:src="@android:drawable/ic_media_rew"
-                    android:padding="6dp"
-                    android:contentDescription="Previous"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:alpha="0.7"/>
-
-                <TextView
-                    android:id="@+id/breadcrumb_title"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Dashboard"
-                    android:textSize="14sp"
-                    android:textColor="#FFFFFF"
-                    android:alpha="0.9"
-                    android:gravity="center"/>
-
-                <!-- Right navigation arrow -->
-                <ImageView
-                    android:id="@+id/breadcrumb_nav_right"
-                    android:layout_width="38dp"
-                    android:layout_height="38dp"
-                    android:src="@android:drawable/ic_media_ff"
-                    android:padding="6dp"
-                    android:contentDescription="Next"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:alpha="0.7"/>
-            </LinearLayout>
-
-            <!-- Main Dashboard Container -->
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="#DDDDDD"
-                android:fillViewport="true">
+            android:background="#DDDDDD"
+            android:fillViewport="true">
 
         <GridLayout
             android:id="@+id/dashboard_grid"
@@ -375,10 +321,55 @@
                 </LinearLayout>
             </com.obddroid.ui.components.SquareCardView>
 
+            <com.obddroid.ui.components.SquareCardView
+                android:id="@+id/card_vehicle_recalls"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless"
+                android:elevation="4dp"
+                android:layout_margin="8dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="16dp"
+                app:cardUseCompatPadding="false"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:background="@drawable/circle_background_recalls"
+                        android:gravity="center">
+
+                        <ImageView
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:src="@drawable/ic_dashboard_recalls"
+                            android:contentDescription="@string/safety_recalls"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/safety_recalls"
+                        android:textColor="#1A1A1A"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                </LinearLayout>
+            </com.obddroid.ui.components.SquareCardView>
+
         </GridLayout>
     </ScrollView>
-
-        </LinearLayout>
 
     <ListView
         android:id="@android:id/list"

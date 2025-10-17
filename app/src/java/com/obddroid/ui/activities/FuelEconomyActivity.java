@@ -5,8 +5,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
@@ -20,20 +18,6 @@ import com.obddroid.core.pvs.PvChangeListener;
 import com.obddroid.ui.components.FuelEconomyChart;
 import com.obddroid.ui.components.FuelFlowGauge;
 import com.obddroid.ui.components.VehicleInfoFooter;
-import com.obddroid.utils.TripComputer;
-
-import android.app.AlertDialog;
-import android.content.Intent;
-import android.net.Uri;
-import android.view.LayoutInflater;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.Toast;
-
-import androidx.core.content.FileProvider;
-
-import java.io.File;
-import java.io.FileWriter;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -72,11 +56,6 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
     private Handler updateHandler;
     private static final long UPDATE_INTERVAL = 1000; // Update every second
-
-    // Trip computers
-    private TripComputer tripA;
-    private TripComputer tripB;
-    private boolean tripAIsActive = true; // Track which trip is actively recording
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,10 +103,6 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
         // Wire up footer overlay
         setupFooterOverlay();
-
-        // Initialize trip computers
-        tripA = new TripComputer(this, "tripA");
-        tripB = new TripComputer(this, "tripB");
     }
 
     /**
@@ -181,226 +156,50 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Add trip computer icon to action bar
-        MenuItem tripComputerItem = menu.add(0, R.id.menu_trip_computer, 0, "Trip Computer");
-        tripComputerItem.setIcon(android.R.drawable.ic_menu_mylocation); // Speedometer-like icon
-        tripComputerItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+    public boolean onCreateOptionsMenu(android.view.Menu menu) {
+        // Add info icon to action bar
+        menu.add(0, 1, 0, "Info")
+            .setIcon(android.R.drawable.ic_menu_info_details)
+            .setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.menu_trip_computer) {
-            showTripComputerDialog();
+    public boolean onOptionsItemSelected(android.view.MenuItem item) {
+        if (item.getItemId() == 1) {
+            showInfoDialog();
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private void showTripComputerDialog() {
-        log.info("Trip computer icon clicked!");
+    private void showInfoDialog() {
+        String title = "Fuel Economy";
+        String message = "This page provides comprehensive fuel economy tracking and analysis for your vehicle.\n\n" +
+                "REAL-TIME METRICS:\n" +
+                "• Instant MPG - Current fuel efficiency\n" +
+                "• Average MPG - Overall fuel economy\n" +
+                "• Fuel Level - Percentage remaining\n" +
+                "• Range - Estimated miles to empty\n" +
+                "• Fuel Flow - Current consumption rate (gal/h)\n" +
+                "• Throttle Position - Current throttle %\n" +
+                "• Time to Empty - Estimated time remaining\n\n" +
+                "HISTORICAL CHART:\n" +
+                "The bar chart shows fuel economy trends over three time periods:\n" +
+                "• 0-5 min (Recent) - Last few minutes\n" +
+                "• 0-30 min (Medium) - Last half hour\n" +
+                "• 0-3 hours (Long) - Extended driving session\n\n" +
+                "DATA SOURCE:\n" +
+                "All values are calculated from real-time OBD-II data including vehicle speed, engine RPM, and engine load.\n\n" +
+                "NOTE: Ensure your vehicle is connected and Live Data is active for accurate readings.";
 
-        // Inflate the dialog layout
-        LayoutInflater inflater = LayoutInflater.from(this);
-        View dialogView = inflater.inflate(R.layout.dialog_trip_computer, null);
-
-        // Create the dialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setView(dialogView);
-        AlertDialog dialog = builder.create();
-
-        // Get views
-        TextView tripATab = dialogView.findViewById(R.id.trip_a_tab);
-        TextView tripBTab = dialogView.findViewById(R.id.trip_b_tab);
-        View tabIndicator = dialogView.findViewById(R.id.tab_indicator);
-        ImageView exportButton = dialogView.findViewById(R.id.btn_export);
-
-        TextView distance = dialogView.findViewById(R.id.trip_distance);
-        TextView duration = dialogView.findViewById(R.id.trip_duration);
-        TextView avgSpeed = dialogView.findViewById(R.id.trip_avg_speed);
-        TextView avgMpg = dialogView.findViewById(R.id.trip_avg_mpg);
-        TextView fuelUsed = dialogView.findViewById(R.id.trip_fuel_used);
-        TextView cost = dialogView.findViewById(R.id.trip_cost);
-        Button resetButton = dialogView.findViewById(R.id.reset_trip_button);
-
-        // State for currently showing trip
-        final boolean[] showingTripA = {true};
-
-        // Function to update display
-        Runnable updateDisplay = () -> {
-            TripComputer trip = showingTripA[0] ? tripA : tripB;
-
-            distance.setText(String.format("%.1f", trip.getDistanceMiles()));
-            duration.setText(trip.getFormattedDuration());
-            avgSpeed.setText(String.format("%.0f", trip.getAverageSpeedMph()));
-            avgMpg.setText(String.format("%.1f", trip.getAverageMPG()));
-            fuelUsed.setText(String.format("%.2f", trip.getFuelUsedGallons()));
-            cost.setText(String.format("%.2f", trip.getTripCost()));
-
-            // Update tab colors and REC indicator
-            if (showingTripA[0]) {
-                tripATab.setTextColor(Color.parseColor("#00ACC1"));
-                tripBTab.setTextColor(Color.parseColor("#888888"));
-                // Move indicator to left
-                tabIndicator.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
-                    dialogView.getWidth() / 2,
-                    tabIndicator.getLayoutParams().height
-                ));
-            } else {
-                tripATab.setTextColor(Color.parseColor("#888888"));
-                tripBTab.setTextColor(Color.parseColor("#00ACC1"));
-                // Move indicator to right
-                android.widget.LinearLayout.LayoutParams params =
-                    new android.widget.LinearLayout.LayoutParams(
-                        dialogView.getWidth() / 2,
-                        tabIndicator.getLayoutParams().height
-                    );
-                params.leftMargin = dialogView.getWidth() / 2;
-                tabIndicator.setLayoutParams(params);
-            }
-
-            // Add REC indicator to the actively recording trip
-            tripATab.setText(tripAIsActive ? "TRIP A ●" : "TRIP A");
-            tripBTab.setText(tripAIsActive ? "TRIP B" : "TRIP B ●");
-        };
-
-        // Tab click listeners
-        tripATab.setOnClickListener(v -> {
-            showingTripA[0] = true;
-            tripAIsActive = true; // Make Trip A the active recording trip
-            updateDisplay.run();
-        });
-
-        tripBTab.setOnClickListener(v -> {
-            showingTripA[0] = false;
-            tripAIsActive = false; // Make Trip B the active recording trip
-            updateDisplay.run();
-        });
-
-        // Export button
-        exportButton.setOnClickListener(v -> showExportDialog());
-
-        // Reset button listener
-        resetButton.setOnClickListener(v -> {
-            TripComputer trip = showingTripA[0] ? tripA : tripB;
-            String tripName = showingTripA[0] ? "Trip A" : "Trip B";
-
-            new AlertDialog.Builder(this)
-                .setTitle("Reset " + tripName + "?")
-                .setMessage("This will reset all data for " + tripName + " to zero.")
-                .setPositiveButton("Reset", (d, which) -> {
-                    trip.reset();
-                    updateDisplay.run();
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-        });
-
-        // Initial display
-        updateDisplay.run();
-
-        dialog.show();
+        new android.app.AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton("Got it", null)
+            .show();
     }
 
-    private void showExportDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Export Trip Data");
-        builder.setMessage("Export both Trip A and Trip B data:");
-
-        builder.setPositiveButton("CSV", (d, which) -> exportToCSV());
-        builder.setNeutralButton("JSON", (d, which) -> exportToJSON());
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
-    }
-
-    private void exportToCSV() {
-        try {
-            StringBuilder csv = new StringBuilder();
-            csv.append("Trip Name,Distance (mi),Duration,Avg Speed (mph),Avg MPG,Fuel Used (gal),Cost ($)\n");
-
-            // Trip A
-            csv.append("Trip A,");
-            csv.append(String.format("%.2f,", tripA.getDistanceMiles()));
-            csv.append(tripA.getFormattedDuration()).append(",");
-            csv.append(String.format("%.1f,", tripA.getAverageSpeedMph()));
-            csv.append(String.format("%.1f,", tripA.getAverageMPG()));
-            csv.append(String.format("%.2f,", tripA.getFuelUsedGallons()));
-            csv.append(String.format("%.2f\n", tripA.getTripCost()));
-
-            // Trip B
-            csv.append("Trip B,");
-            csv.append(String.format("%.2f,", tripB.getDistanceMiles()));
-            csv.append(tripB.getFormattedDuration()).append(",");
-            csv.append(String.format("%.1f,", tripB.getAverageSpeedMph()));
-            csv.append(String.format("%.1f,", tripB.getAverageMPG()));
-            csv.append(String.format("%.2f,", tripB.getFuelUsedGallons()));
-            csv.append(String.format("%.2f\n", tripB.getTripCost()));
-
-            File file = new File(getCacheDir(), "trips_export.csv");
-            FileWriter writer = new FileWriter(file);
-            writer.write(csv.toString());
-            writer.close();
-
-            shareFile(file, "text/csv");
-        } catch (Exception e) {
-            log.warning("Failed to export CSV: " + e.getMessage());
-            Toast.makeText(this, "Export failed", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void exportToJSON() {
-        try {
-            StringBuilder json = new StringBuilder();
-            json.append("{\n");
-            json.append("  \"exportDate\": ").append(System.currentTimeMillis()).append(",\n");
-            json.append("  \"trips\": [\n");
-
-            // Trip A
-            json.append("    {\n");
-            json.append("      \"name\": \"Trip A\",\n");
-            json.append("      \"distance\": ").append(tripA.getDistanceMiles()).append(",\n");
-            json.append("      \"duration\": \"").append(tripA.getFormattedDuration()).append("\",\n");
-            json.append("      \"avgSpeed\": ").append(tripA.getAverageSpeedMph()).append(",\n");
-            json.append("      \"avgMPG\": ").append(tripA.getAverageMPG()).append(",\n");
-            json.append("      \"fuelUsed\": ").append(tripA.getFuelUsedGallons()).append(",\n");
-            json.append("      \"cost\": ").append(tripA.getTripCost()).append("\n");
-            json.append("    },\n");
-
-            // Trip B
-            json.append("    {\n");
-            json.append("      \"name\": \"Trip B\",\n");
-            json.append("      \"distance\": ").append(tripB.getDistanceMiles()).append(",\n");
-            json.append("      \"duration\": \"").append(tripB.getFormattedDuration()).append("\",\n");
-            json.append("      \"avgSpeed\": ").append(tripB.getAverageSpeedMph()).append(",\n");
-            json.append("      \"avgMPG\": ").append(tripB.getAverageMPG()).append(",\n");
-            json.append("      \"fuelUsed\": ").append(tripB.getFuelUsedGallons()).append(",\n");
-            json.append("      \"cost\": ").append(tripB.getTripCost()).append("\n");
-            json.append("    }\n");
-
-            json.append("  ]\n");
-            json.append("}");
-
-            File file = new File(getCacheDir(), "trips_export.json");
-            FileWriter writer = new FileWriter(file);
-            writer.write(json.toString());
-            writer.close();
-
-            shareFile(file, "application/json");
-        } catch (Exception e) {
-            log.warning("Failed to export JSON: " + e.getMessage());
-            Toast.makeText(this, "Export failed", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void shareFile(File file, String mimeType) {
-        Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".provider", file);
-        Intent shareIntent = new Intent(Intent.ACTION_SEND);
-        shareIntent.setType(mimeType);
-        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivity(Intent.createChooser(shareIntent, "Export Trips"));
-    }
 
     private void initializeDemoData() {
         // Initialize with sample data for demonstration
@@ -636,21 +435,6 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
             // Update time to empty
             updateTimeToEmpty();
-
-            // Update trip computers (ONLY the active one!)
-            float currentSpeed = getCurrentSpeed();
-            String fuelFlowStr = fuelFlowValue.getText().toString();
-            try {
-                float fuelFlow = Float.parseFloat(fuelFlowStr);
-                // Only update the active trip - like a real car!
-                if (tripAIsActive) {
-                    tripA.update(currentSpeed, fuelFlow);
-                } else {
-                    tripB.update(currentSpeed, fuelFlow);
-                }
-            } catch (Exception e) {
-                // Ignore parse errors
-            }
 
             // Update fuel level if available
             // Key format is "PID.SENSOR.BANK" e.g. "2F.0.0"

@@ -18,6 +18,21 @@
     <string name="status_selecting_ecu">Selecting ECU</string>
     <string name="logo">Logo</string>
     <string name="back_again_to_exit">Press back again to close this app</string>
+    <string name="safety_recalls">Safety Recalls</string>
+    <string name="recalls_vin_hint">Enter VIN</string>
+    <string name="recalls_search_button">Check Recalls</string>
+    <string name="recalls_intro">Enter a 17-character VIN to search the NHTSA recall database.</string>
+    <string name="recalls_loading">Checking NHTSA recall database…</string>
+    <string name="recalls_empty_state">No open recalls reported for this vehicle.</string>
+    <string name="recalls_error_generic">Unable to load recall information. Please try again.</string>
+    <string name="recalls_invalid_vin">Please enter a 17-character VIN.</string>
+    <string name="recalls_component_label">Component: %1$s</string>
+    <string name="recalls_campaign_label">Campaign %1$s</string>
+    <string name="recalls_report_date">Report date: %1$s</string>
+    <string name="recalls_open_in_browser">Tap to view details on NHTSA.gov</string>
+    <string name="recalls_summary_heading">Summary</string>
+    <string name="recalls_remedy_heading">Remedy</string>
+    <string name="recalls_not_available">Not available</string>
     <!-- menu  -->
     <string name="action_connect">Connect</string>
     <string name="obd_none">NO service</string>

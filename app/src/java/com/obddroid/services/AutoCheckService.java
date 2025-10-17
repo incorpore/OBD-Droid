@@ -29,6 +29,7 @@ public class AutoCheckService {
     private static final String API_BASE_URL = "http://192.168.0.153:3248";
     private static final int TIMEOUT_MS = 60000; // 60 seconds for browser automation
 
+    private final Context context;
     private final ExecutorService executor;
     private final Handler mainHandler;
 
@@ -37,7 +38,13 @@ public class AutoCheckService {
         void onError(String errorMessage);
     }
 
+    public interface AutoCheckPdfCallback {
+        void onSuccess(AutoCheckReport report, String pdfFilePath);
+        void onError(String errorMessage);
+    }
+
     public AutoCheckService(Context context) {
+        this.context = context;
         this.executor = Executors.newSingleThreadExecutor();
         this.mainHandler = new Handler(Looper.getMainLooper());
     }
@@ -113,6 +120,117 @@ public class AutoCheckService {
                 mainHandler.post(() -> callback.onError("Failed to fetch report: " + errorMsg));
             }
         });
+    }
+
+    /**
+     * Fetch AutoCheck report with PDF generation
+     * @param vin The 17-character VIN
+     * @param callback Callback to receive results with PDF file path on main thread
+     */
+    public void fetchReportWithPdf(String vin, AutoCheckPdfCallback callback) {
+        if (vin == null || vin.length() != 17) {
+            mainHandler.post(() -> callback.onError("Invalid VIN. Must be 17 characters."));
+            return;
+        }
+
+        executor.execute(() -> {
+            try {
+                Log.d(TAG, "Fetching AutoCheck report with PDF for VIN: " + vin);
+
+                // Build API URL
+                URL url = new URL(API_BASE_URL + "/api/autocheck/lookup");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+                // Configure request
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setConnectTimeout(TIMEOUT_MS);
+                conn.setReadTimeout(TIMEOUT_MS);
+                conn.setDoOutput(true);
+
+                // Build request body with PDF generation flag
+                JSONObject requestBody = new JSONObject();
+                requestBody.put("vin", vin);
+                requestBody.put("generatePdf", true);
+
+                // Send request
+                try (OutputStream os = conn.getOutputStream()) {
+                    byte[] input = requestBody.toString().getBytes(StandardCharsets.UTF_8);
+                    os.write(input, 0, input.length);
+                }
+
+                // Check response code
+                int responseCode = conn.getResponseCode();
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    String error = readErrorStream(conn);
+                    Log.e(TAG, "API error " + responseCode + ": " + error);
+                    mainHandler.post(() -> callback.onError("API Error: " + error));
+                    return;
+                }
+
+                // Read response
+                StringBuilder response = new StringBuilder();
+                try (BufferedReader br = new BufferedReader(
+                        new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        response.append(line.trim());
+                    }
+                }
+
+                // Parse response
+                JSONObject json = new JSONObject(response.toString());
+                JSONObject data = json.getJSONObject("data");
+                AutoCheckReport report = AutoCheckReport.fromJSON(data);
+
+                // Extract and save PDF if available
+                String pdfFilePath = null;
+                if (json.has("pdfBase64")) {
+                    String pdfBase64 = json.getString("pdfBase64");
+                    pdfFilePath = savePdfToFile(vin, pdfBase64);
+                    Log.d(TAG, "PDF saved to: " + pdfFilePath);
+                }
+
+                Log.d(TAG, "Successfully fetched AutoCheck report with PDF: " + report.getVehicleName());
+
+                // Return on main thread
+                final String finalPdfPath = pdfFilePath;
+                mainHandler.post(() -> callback.onSuccess(report, finalPdfPath));
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error fetching AutoCheck report with PDF", e);
+                String errorMsg = e.getMessage() != null ? e.getMessage() : "Unknown error";
+                mainHandler.post(() -> callback.onError("Failed to fetch report: " + errorMsg));
+            }
+        });
+    }
+
+    /**
+     * Save PDF base64 data to a file
+     * @param vin Vehicle VIN for filename
+     * @param pdfBase64 Base64 encoded PDF data
+     * @return File path to the saved PDF
+     */
+    private String savePdfToFile(String vin, String pdfBase64) throws Exception {
+        // Decode base64
+        byte[] pdfBytes = android.util.Base64.decode(pdfBase64, android.util.Base64.DEFAULT);
+
+        // Create directory if it doesn't exist
+        java.io.File pdfDir = new java.io.File(context.getExternalFilesDir(null), "autocheck_reports");
+        if (!pdfDir.exists()) {
+            pdfDir.mkdirs();
+        }
+
+        // Create PDF file
+        String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(new java.util.Date());
+        java.io.File pdfFile = new java.io.File(pdfDir, "autocheck_" + vin + "_" + timestamp + ".pdf");
+
+        // Write PDF bytes to file
+        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(pdfFile)) {
+            fos.write(pdfBytes);
+        }
+
+        return pdfFile.getAbsolutePath();
     }
 
     /**

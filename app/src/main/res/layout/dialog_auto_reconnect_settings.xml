@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Reconnect Settings"
+        android:text="Reconnect Adapter"
         android:textColor="#212121"
         android:textSize="18sp"
         android:textStyle="bold"
@@ -25,12 +25,22 @@
         android:paddingEnd="16dp"
         android:paddingBottom="16dp">
 
-        <!-- Description -->
+        <!-- Main Description -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Configure automatic reconnection behavior when the app starts."
+            android:text="Reconnect to the most recently used adapter."
             android:textSize="14sp"
+            android:textColor="#424242"
+            android:layout_marginBottom="8dp"
+            android:lineSpacingMultiplier="1.2"/>
+
+        <!-- Auto-reconnect Description -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="You can also configure automatic reconnection behavior when the app starts."
+            android:textSize="13sp"
             android:textColor="#757575"
             android:layout_marginBottom="16dp"
             android:lineSpacingMultiplier="1.2"/>
@@ -115,9 +125,22 @@
             android:id="@+id/btn_cancel"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
-            android:text="Cancel"
+            android:text="Close"
             android:textColor="#757575"
             android:textSize="14sp"
+            android:background="?android:attr/selectableItemBackground"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginEnd="8dp"/>
+
+        <Button
+            android:id="@+id/btn_reconnect"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="Reconnect Now"
+            android:textColor="#2196F3"
+            android:textSize="14sp"
+            android:textStyle="bold"
             android:background="?android:attr/selectableItemBackground"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
@@ -127,7 +150,7 @@
             android:id="@+id/btn_save"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
-            android:text="Save"
+            android:text="SAVE"
             android:textColor="@android:color/white"
             android:textSize="14sp"
             android:background="@drawable/button_subtle"

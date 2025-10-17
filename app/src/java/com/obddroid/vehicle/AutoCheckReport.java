@@ -21,6 +21,7 @@ public class AutoCheckReport {
     private String engine;
     private String country;
     private Integer owners;
+    private String usage;  // "Lease", "Personal", "Commercial", etc.
     private Integer lastOdometer;
     private Date lastOdometerDate;
     private Integer score;
@@ -77,6 +78,7 @@ public class AutoCheckReport {
         if (json.has("engine")) report.engine = json.getString("engine");
         if (json.has("country")) report.country = json.getString("country");
         if (json.has("owners")) report.owners = json.getInt("owners");
+        if (json.has("usage")) report.usage = json.getString("usage");
         if (json.has("lastOdometer")) report.lastOdometer = json.getInt("lastOdometer");
         if (json.has("score")) report.score = json.getInt("score");
         if (json.has("titleBrand")) report.titleBrand = json.getString("titleBrand");
@@ -104,13 +106,25 @@ public class AutoCheckReport {
             JSONArray eventsArray = json.getJSONArray("historyEvents");
             for (int i = 0; i < eventsArray.length(); i++) {
                 JSONObject eventJson = eventsArray.getJSONObject(i);
-                HistoryEvent event = new HistoryEvent(
-                    eventJson.getString("date"),
-                    eventJson.getString("details")
-                );
+
+                // Get date - try "eventDate" first, then "date", default to "Unknown"
+                String date = "Unknown Date";
+                if (eventJson.has("eventDate")) {
+                    date = eventJson.getString("eventDate");
+                } else if (eventJson.has("date")) {
+                    date = eventJson.getString("date");
+                }
+
+                // Get details - default to empty if not present
+                String details = eventJson.has("details") ? eventJson.getString("details") : "";
+
+                HistoryEvent event = new HistoryEvent(date, details);
+
                 if (eventJson.has("location")) event.location = eventJson.getString("location");
                 if (eventJson.has("odometer")) event.odometer = eventJson.getString("odometer");
                 if (eventJson.has("source")) event.source = eventJson.getString("source");
+                if (eventJson.has("dataSource")) event.source = eventJson.getString("dataSource");
+
                 report.historyEvents.add(event);
             }
         }
@@ -127,6 +141,7 @@ public class AutoCheckReport {
     public String getEngine() { return engine; }
     public String getCountry() { return country; }
     public Integer getOwners() { return owners; }
+    public String getUsage() { return usage; }
     public Integer getLastOdometer() { return lastOdometer; }
     public Date getLastOdometerDate() { return lastOdometerDate; }
     public Integer getScore() { return score; }

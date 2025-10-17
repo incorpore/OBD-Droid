@@ -160,8 +160,24 @@ final class DashboardUiHelper {
             log.warning("Vehicle History card NOT found!");
         }
 
+        // Safety Recalls card
+        View recallsCard = activity.findViewById(R.id.card_vehicle_recalls);
+        if (recallsCard != null) {
+            addCardPressAnimation(recallsCard);
+            recallsCard.setOnClickListener(v -> {
+                log.info("Safety Recalls card clicked!");
+                activity.launchRecallActivity();
+            });
+            recallsCard.setOnLongClickListener(v -> showCardInfoDialog(
+                activity,
+                activity.getString(R.string.safety_recalls),
+                "Look up open safety recalls using the official NHTSA database."
+            ));
+        } else {
+            log.warning("Safety Recalls card NOT found!");
+        }
+
         updateReconnectCardSubtitle(activity);
-        setupBreadcrumbNavigation(activity);
     }
 
     static void updateReconnectCardSubtitle(MainActivity activity) {
@@ -233,18 +249,6 @@ final class DashboardUiHelper {
         return "Reconnect " + ip + ":" + port;
     }
 
-    private static void setupBreadcrumbNavigation(MainActivity activity) {
-        ImageView navLeft = activity.findViewById(R.id.breadcrumb_nav_left);
-        if (navLeft != null) {
-            navLeft.setOnClickListener(v -> log.info("Breadcrumb left navigation clicked (stub)"));
-        }
-
-        ImageView navRight = activity.findViewById(R.id.breadcrumb_nav_right);
-        if (navRight != null) {
-            navRight.setOnClickListener(v -> log.info("Breadcrumb right navigation clicked (stub)"));
-        }
-    }
-
     private static void addCardPressAnimation(View card) {
         card.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
@@ -280,12 +284,90 @@ final class DashboardUiHelper {
     }
 
     private static boolean showReconnectInfoDialog(MainActivity activity) {
-        new AlertDialog.Builder(activity)
-            .setTitle("Reconnect Adapter")
-            .setMessage("Reconnect to the most recently used adapter. Manage auto-reconnect behaviour from settings.")
-            .setNegativeButton("Close", null)
-            .setPositiveButton("Auto-Reconnect Settings", (dialog, which) -> AutoReconnectDialogHelper.show(activity))
-            .show();
+        try {
+            android.content.SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(activity);
+            boolean currentAutoReconnect = prefs.getBoolean("auto_reconnect_on_startup", false);
+
+            View dialogView = activity.getLayoutInflater()
+                .inflate(R.layout.dialog_auto_reconnect_settings, null);
+
+            android.widget.CheckBox checkbox = dialogView.findViewById(R.id.checkbox_auto_reconnect);
+            android.widget.LinearLayout lastAdapterInfo = dialogView.findViewById(R.id.last_adapter_info);
+            TextView lastAdapterName = dialogView.findViewById(R.id.last_adapter_name);
+            android.widget.Button closeButton = dialogView.findViewById(R.id.btn_cancel);
+            android.widget.Button reconnectButton = dialogView.findViewById(R.id.btn_reconnect);
+            android.widget.Button saveButton = dialogView.findViewById(R.id.btn_save);
+
+            checkbox.setChecked(currentAutoReconnect);
+
+            // Show last adapter info if available
+            String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
+            if (lastAdapterType != null) {
+                lastAdapterInfo.setVisibility(View.VISIBLE);
+                lastAdapterName.setText(buildAdapterDisplayName(prefs, lastAdapterType));
+            } else {
+                lastAdapterInfo.setVisibility(View.GONE);
+            }
+
+            AlertDialog dialog = new AlertDialog.Builder(activity)
+                .setView(dialogView)
+                .create();
+
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            }
+
+            closeButton.setOnClickListener(v -> dialog.dismiss());
+
+            reconnectButton.setOnClickListener(v -> {
+                dialog.dismiss();
+                activity.reconnectToLastAdapter();
+            });
+
+            saveButton.setOnClickListener(v -> {
+                boolean newValue = checkbox.isChecked();
+                prefs.edit().putBoolean("auto_reconnect_on_startup", newValue).apply();
+
+                String message = newValue
+                    ? "Auto-reconnect enabled. The app will reconnect on startup."
+                    : "Auto-reconnect disabled. You'll need to manually reconnect.";
+                SnackbarHelper.showInfo(activity, message);
+
+                dialog.dismiss();
+            });
+
+            dialog.show();
+        } catch (Exception e) {
+            log.warning("Failed to show reconnect dialog: " + e.getMessage());
+            SnackbarHelper.showError(activity,
+                "Unable to open reconnect settings. Please try again.");
+        }
         return true;
+    }
+
+    private static String buildAdapterDisplayName(android.content.SharedPreferences prefs, String adapterType) {
+        switch (adapterType) {
+            case "BLUETOOTH":
+                String btAddress = prefs.getString("LAST_DEV_ADDRESS", null);
+                if (btAddress != null) {
+                    String nickname = prefs.getString("device_nickname_" + btAddress, "");
+                    if (!nickname.isEmpty()) {
+                        return nickname + " (Bluetooth)";
+                    }
+                    String savedName = prefs.getString("LAST_ADAPTER_NAME", null);
+                    if (savedName != null && !savedName.isEmpty()) {
+                        return savedName + " (Bluetooth)";
+                    }
+                }
+                return "Bluetooth Device";
+            case "NETWORK":
+                String ip = prefs.getString("DEVICE_ADDRESS", "Unknown");
+                int port = prefs.getInt("DEVICE_PORT", 35000);
+                return ip + ":" + port + " (Network)";
+            case "USB":
+                return "USB Adapter";
+            default:
+                return "Unknown Adapter";
+        }
     }
 }

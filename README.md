@@ -1,201 +1,307 @@
-# OBDroid – Open Diagnostics Platform
+# OBD-Droid Platform
 
-OBDroid is an Android application that turns any ELM327-compatible adapter into a powerful diagnostic workstation. It covers the “everyday” OBD-II workflows (live data, fault codes, freeze frames) and lays the groundwork for professional Unified Diagnostic Services (UDS) features such as service routines, actuator tests, and vehicle coding.
+OBD-Droid is a full-stack vehicle intelligence suite that combines real-time OBD-II diagnostics with rich vehicle history, recall planning, and reusable automotive data modules for Android, Java, and Python applications.
 
----
+## At a Glance
+- Android app with live diagnostics, VIN-aware dashboards, and AutoCheck-powered vehicle history.
+- Local AutoCheck service providing full reports via either official Experian API integration or Playwright-based browser automation.
+- Recall notification roadmap outlining integration with NHTSA APIs and planned Canadian/TSB coverage.
+- Reusable modules: world-class VIN decoder, comprehensive DTC database, and automotive logo library.
+- Detailed go-to-market plan, testing scripts, and business-grade roadmap to monetize history reports.
 
-## Feature Snapshot
-
-- **Live telemetry**: Real-time PID streaming, dashboards, HUD, and logging/export.
-- **Trouble-code handling**: Read/clear generic & manufacturer DTCs, inspect freeze frames, decode VINs.
-- **Adapter flexibility**: Works with Bluetooth, USB, and TCP adapters; includes connection wizards and reconnection logic.
-- **UI modes**: List, filtered selection, dashboard, charting, and training overlays.
-- **Road to pro diagnostics**: UDS scaffolding, security access flow, manufacturer detection, coding/adaptation stubs, and virtual ECU training concepts.
-
----
-
-## Build & Deploy
-
-Requirements
-```
-Android Studio / command-line tools (AGP 8.x)
-Android SDK 33+
-JDK 17 (toolchain) – app builds against Java 17 bytecode
-Android device running Android 5.0+ and an ELM327-compatible adapter
-```
-
-Common tasks
-```bash
-# Assemble debug APK
-./gradlew assembleDebug
-
-# Install & launch
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n com.obddroid/.ui.activities.MainActivity
-
-# Clean build
-./gradlew clean
-```
-
----
-
-## Project Layout
+## Repository Layout
 
 ```
-app/
-├── src/java/com/obddroid/
-│   ├── core/obd/           # ObdProt, ElmProt, data services, PID catalogues
-│   ├── core/ecu/           # Process-variable models (EcuDataPv, EcuCodeItem…)
-│   ├── services/           # CommService + Bluetooth/USB/Network transports
-│   └── ui/activities/      # MainActivity, dashboards, settings, training modes
-├── src/main/res/           # Layouts, drawables, menus, strings
-└── build.gradle            # Android module configuration
-
-modules/
-└── nhtsa-vin-decoder/      # Optional VIN decoding helper
-
-docs/ (suggested)           # Use for detailed references if you need to export tables
+OBD-Droid/
+├── app/                         # Android application source
+├── modules/
+│   ├── nhtsa-vin-decoder/       # Multi-language VIN decoder toolkit
+│   ├── dtc-database/            # Diagnostic trouble code database
+│   └── automotive-logo-library/ # Logo + WMI helpers for OEM branding
+├── build.gradle | settings.gradle | gradle/  # Android build tooling
+├── MANIFEST.in | pom.xml | pyproject.toml    # Packaging metadata for modules
+└── README.md                     # This consolidated guide
 ```
 
----
+## Core Features
 
-## Supported Protocols & Adapters
+### OBD Diagnostics
+- Bluetooth OBD-II communication via `app/src/java/com/obddroid/services/CommService.java`.
+- Live data, DTC handling with freeze-frame information, and fuel economy tooling.
+- Component responsibilities outlined in the Contributing & Workflow section below.
 
-| Transport | Details |
-|-----------|---------|
-| ISO 15765-4 CAN | Primary OBD-II transport (11-bit & 29-bit IDs) |
-| ISO 14230-4 (KWP2000) | Legacy ISO protocol via serial ELM bridges |
-| ISO 9141-2 | Chrysler/older Japanese vehicles |
-| SAE J1850 VPW / PWM | GM/Ford legacy support |
+### Vehicle History & AutoCheck
+- AutoCheck report ingestion with structured models (`AutoCheckReport.java`) and network service layer (`AutoCheckService.java`) that dispatches results to the UI thread.
+- VIN auto-fill via Mode 09 PID 02 when available; manual entry fallback.
+- Mileage fraud detection opportunities by comparing AutoCheck odometer with OBD readings.
+- Dashboard card launches the Vehicle History flow and surfaces summary status.
 
-Adapters confirmed: Classic Bluetooth ELM327, BLE-to-serial bridges (via companion service), USB FTDI/CP210x, WiFi sockets on TCP/35000.
+### Recall Intelligence
+- Roadmap includes automated recall polling after VIN retrieval with local caching and user notifications.
+- Detail view design covers campaign ID, severity, remedies, and contact information for upcoming implementation.
+- Planned additions: PDF exports, share flows, push notifications, and Canadian/TSB data parity.
+- Data sources: NHTSA `recallsByVIN`, `recallsByVehicle`, `recallsByCampaign` with Transport Canada coverage slated for future work.
 
----
+## AutoCheck Service Stack
 
-## OBD-II & UDS Primer
+### Companion Service Expectations
+- The Android client targets the companion repository at `/path/to/autocheck-api/`.
+- `AutoCheckService` calls the following endpoints:
+  - `GET /health` – readiness probe used on activity startup.
+  - `POST /api/autocheck/lookup` – returns a JSON payload consumed by `AutoCheckReport`.
+  - `POST /api/autocheck/decode` – optional VIN decode helper.
+- The current base URL is hard-coded to `http://192.168.0.153:3248`; update it to your machine’s IP when testing from a phone.
+- Both `fetchReport` and `fetchReportWithPdf` execute off the main thread and marshal results back to the UI handler.
 
-### Diagnostic Modes Snapshot
+### Running the Companion Service
+- Install dependencies and launch the Node/TypeScript service:
+  ```bash
+  cd /path/to/autocheck-api
+  npm install
+  cp .env.example .env
+  npm run dev
+  ```
+- By default the service uses Playwright to scrape AutoCheck; with Experian credentials you can switch the implementation in `ExperianAutoCheckService.ts` to hit official endpoints while preserving the same JSON contract.
 
-| Mode | Purpose | Typical Use |
-|------|---------|-------------|
-| 01 | Current powertrain data (PIDs) | Live dashboards & logging |
-| 02 | Freeze frame snapshot | DTC root-cause data |
-| 03 | Stored DTCs | Fault inspection |
-| 04 | Clear DTCs | Reset MIL / service lights |
-| 05 | O2 sensor test data (Spark) | Emissions diagnostics |
-| 06 | On-board monitoring | Component results / misfire counters |
-| 07 | Pending DTCs | Pre-MIL faults |
-| 08 | Control operations | Bi-directional tests (legacy) |
-| 09 | Vehicle information | VIN, calibration IDs |
-| 0A | Permanent DTCs | Post-clear retained codes |
+### Troubleshooting from the Android Client
+- If the activity warns that the API is unreachable, ensure the service is running and the device can reach `http://<laptop-ip>:3248/health`.
+- Free port 3248 when needed (`lsof -ti:3248 | xargs kill -9` on macOS).
+- For slow or flaky scrapes, adjust headless/speed settings in the companion repo and watch its console logs.
 
-### Essential Mode 01 PIDs
+### Companion Scraper Fix Checklist
+- **Owners & usage extraction:** pull owner count from the `owner-icon-X.svg` filename and usage text from the `.owner .use` section so the Android stats card renders correctly.
+- **Odometer checks:** inspect the `.odometer-box` tiles and flag rollback only when any tile deviates from "No issues reported".
+- **Safety booleans:** derive structural damage, airbag deployment, and total loss from their respective icon alt attributes (`*-off` indicates false).
+- **Reference VIN:** `4JGDA5HB7JB158144` should return owners `1`, usage `Lease`, and `odometerRollback=false` once the scraper logic is updated.
 
-| PID | Description | Formula | Units |
-|-----|-------------|---------|-------|
-| 0x00 | Supported PIDs 0x01–0x20 | Bit mask | – |
-| 0x01 | Monitor status/MIL | Bit mask | – |
-| 0x03 | Fuel system status | Bit mask | – |
-| 0x04 | Engine load | A × 100 / 255 | % |
-| 0x05 | Coolant temp | A − 40 | °C |
-| 0x0C | Engine RPM | (256A + B) / 4 | rpm |
-| 0x0D | Vehicle speed | A | km/h |
-| 0x10 | MAF rate | (256A + B) / 100 | g/s |
-| 0x11 | Throttle | A × 100 / 255 | % |
-| 0x1F | Run time since start | 256A + B | s |
-| 0x42 | Control module voltage | (256A + B) / 1000 | V |
-| 0x46 | Ambient air temp | A − 40 | °C |
-| 0x5C | Engine oil temp | A − 40 | °C |
+## Android Integration Details
 
-> Tip: `ObdProt.dataItems` maps PIDs to `EcuDataPv` entries. Use `ObdItemAdapter` for formatting and display.
+| Component | Path | Purpose |
+|-----------|------|---------|
+| Data model | `app/src/java/com/obddroid/vehicle/AutoCheckReport.java` | Parses API payload, exposes helpers like `hasAccidents()` |
+| Service | `app/src/java/com/obddroid/services/AutoCheckService.java` | Handles network calls, threading, and callbacks |
+| UI | Vehicle History activity & dashboard card | UX for VIN entry, loading states, and rich report presentation |
 
----
+### Next UI Enhancements
+- Create dedicated activity layout with loading indicators, error states, and report cards.
+- Add main menu entry point and persist VIN prefill from `VehicleManager`.
+- Introduce mileage discrepancy alerts and premium upsell hooks.
+- Optional upgrades: PDF export, VIN barcode scanner, batch lookup, recall alerts.
 
-## Professional Diagnostics Roadmap
+## Testing & Demo Guide
 
-OBDroid already houses abstractions for advanced services. The roadmap below consolidates the old PID reference and pro-diagnostics plan into a single vision.
+### Quick Start Checklist
 
-### Core UDS Services
+1. **Verify backend health**
+   ```bash
+   cd /path/to/autocheck-api
+   curl http://localhost:3248/health
+   npm start # only if the previous check fails
+   ```
+2. **Confirm network connectivity**
+   - Laptop and phone on the same Wi-Fi network.
+   - From the phone browser, open `http://<laptop-ip>:3248/health` (example: `http://192.168.0.149:3248/health`).
+3. **Launch the app**
+   - Open OBD-Droid on the device or emulator.
+   - Ensure the dashboard shows the blue “Vehicle History” card in the grid.
+4. **Run a report**
+   - Tap the card, enter VIN `1HGBH41JXMN109186`, and press “Check Vehicle History”.
+   - Expect 30–60 seconds on first run while the scraper boots, logs in, and fetches data.
+5. **Observe results**
+   - Verify vehicle summary, AutoCheck score, owners, mileage, title status, accidents, recalls, and timeline entries.
+6. **Capture logs when debugging**
+   - Android: `adb logcat | grep -i autocheck`
+   - API: tail the Node server output for Playwright activity and rate-limit notices.
 
-| Service | ID | Purpose |
-|---------|----|---------|
-| DiagnosticSessionControl | 0x10 | Switch to default/extended/programming sessions |
-| ECUReset | 0x11 | Controlled module reset |
-| ClearDiagnosticInformation | 0x14 | DTC erase with conditions |
-| ReadDTCInformation | 0x19 | Rich DTC queries, snapshots, records |
-| ReadDataByIdentifier | 0x22 | Read VIN, coding, calibration values |
-| SecurityAccess | 0x27 | Seed/key unlock for protected routines |
-| WriteDataByIdentifier | 0x2E | Persist adaptations, coding flags |
-| InputOutputControlByIdentifier | 0x2F | Actuator/solenoid control |
-| RoutineControl | 0x31 | Service resets, calibrations, regen routines |
-| RequestDownload/TransferData | 0x34/0x36 | Firmware flashing (future) |
+### Scenario Matrix
+- **Successful lookup** – VIN `1HGBH41JXMN109186`; sample data from the companion service returns ~75 score, three owners, ~108,904 miles, and one open recall.
+- **API offline** – Stop the Node server and repeat lookup; UI should surface a connectivity error banner/toast.
+- **Invalid VIN** – Use `123`; app shows “VIN must be exactly 17 characters”.
+- **Network mismatch** – Disconnect the phone from Wi-Fi (use LTE) and try again; expect timeout messaging.
+- **Repeated request** – Run the same VIN twice; second call should complete faster thanks to warm session caching.
 
-### Implementation Phases
+### Demo Flow (15 minutes)
+1. Show `http://localhost:3248/health` to prove service readiness.
+2. Perform a live VIN lookup (use customer/employee vehicle if available).
+3. Walk through key sections: score, owners, mileage, accidents, recalls.
+4. Highlight upcoming additions (VIN scanner, mileage fraud alerts, PDF export, recall notifications).
+5. Invite questions; keep troubleshooting cheatsheet handy.
 
-1. **Foundation (Weeks 1–2)**  
-   - Integrate ISO-TP transport and UDS session/state machine.  
-   - Extend `CommService` to negotiate baud/headers per manufacturer.  
-   - Mirror `ediabaslib`/`Implementation_UDS_CAN` patterns for message framing.
+### Troubleshooting Reference
+- Free port 3248: `lsof -ti:3248 | xargs kill -9`
+- Scraper flakiness: set `BROWSER_HEADLESS=false`, increase `BROWSER_SLOWMO`, or refresh credentials.
+- Connectivity issues: confirm IP, firewall rules, and Wi-Fi; update base URL in `AutoCheckService`.
+- VIN auto-read missing: verify Mode 09 PID 02 support; allow manual entry fallback.
+- Unexpected scraper errors: clear session storage, re-login, monitor Playwright console output.
 
-2. **Service Function Layer (Weeks 3–4)**  
-   - Build `ServiceFunction` abstractions (oil reset, SAS calibration, battery registration, DPF regen, injector coding).  
-   - Add safety wrapper (`SafetyManager`) to enforce preconditions (ignition state, brakes, engine off).  
-   - Implement DID database using `python-uds` descriptors for UI-friendly labels.
+### Ready-to-Go Demo Script
+> “We pull the VIN straight from the vehicle, trigger a full AutoCheck report in about a minute, and surface it alongside live OBD diagnostics—no extra websites or per-report fees.”
 
-3. **Manufacturer Packs (Weeks 5–6)**  
-   - VIN-based detection (WMI/WVIN) to load brand profiles.  
-   - BMW: KOMBI coding, NBT retrofits via `ediabaslib` .prg/.ncd knowledge.  
-   - VAG: Long coding editor inspired by `ediabaslib` TP2.0 handling.  
-   - Mercedes/Ford/Toyota: targeted service menus leveraging UDS routines.
+1. Start API (`npm start`) and open the health endpoint.
+2. On Android, tap Vehicle History, paste VIN, press “Check”.
+3. Narrate the returned insights (score trend, owners, mileage, recall count).
+4. Close with the roadmap: premium upsells, B2B API, recall alerts, mileage fraud detection.
 
-4. **Training & Simulation**  
-   - Bundle scenarios backed by `ecu-simulator` style virtual ECUs.  
-   - Offer interactive lessons (read VIN, clear DTCs, run DPF regen) without a real car.
+## Recall & Safety Roadmap
 
-5. **UI/Monetization**  
-   - “Service & Coding” tab with tile-based navigation.  
-   - Monetization tiers: free (basic OBD), Pro (service resets, diagnostics), Expert (coding, manufacturer packs).  
-   - Provide try-before-you-buy paths using virtual ECU practice mode.
+### Why Recall Intelligence Matters
+- Life-safety issues (airbags, brakes, steering, fuel systems) demand proactive alerts.
+- Owners may be legally responsible for addressing open recalls, and unresolved campaigns reduce resale value.
+- Integrating recalls alongside fault codes gives users full diagnostic context without app switching.
 
----
+### Feature Stack
+1. **VIN-based recall checks**
+   - Automatic read via Mode 09 PID 02; manual entry fallback.
+   - Queries NHTSA on first connect and then on a scheduled cadence (daily/weekly).
+   - Caches responses locally to minimize quota usage and support offline display.
+2. **Recall presentation**
+   - Dashboard badge when open recalls exist, highlighting severity via color-coded chips.
+   - Detail view with campaign ID, affected component, risk summary, remedy instructions, and manufacturer contact info.
+   - Historical log of resolved campaigns and timestamps.
+3. **Notification channels**
+   - In-app banner, persistent dashboard indicator, and optional push notifications for newly detected recalls.
+   - Manual refresh control and snooze/“mark resolved” workflows for user acknowledgement.
+4. **Vehicle history synergy**
+   - Consolidates recalls, TSBs, AutoCheck history, DTC logs, and mileage trends into a single exportable report.
+   - Planned PDF/email/share flows for dealerships, insurance, and resale documentation.
 
-## Safety & Best Practices
+### Data Sources
+- **NHTSA Recalls API** – `https://api.nhtsa.gov/recalls/recallsByVehicle`, `recallsByVIN`, `recallsByCampaign`.
+- **Transport Canada** – bilingual feed for Canadian-market vehicles.
+- **Technical Service Bulletins** – optional expansion using NHTSA TSB dataset and OEM feeds.
+- **VIN decoding** – leverage internal VIN decoder module for make/model/year normalization.
 
-- Block destructive commands unless vehicle state matches routine expectations.
-- Confirm critical operations (coding, resets) with double prompts and disclaimers.
-- Keep adapters powered safely; advise against using with low battery voltage.
-- Log UDS traffic (with user consent) for traceability and bug reports.
-- Provide “simulation mode” for learning without touching a real ECU.
+### Architecture Blueprint
 
----
+```
+┌──────────────┐     ┌────────────────┐     ┌────────────────────┐
+│ VIN Decoder  │────▶│ Recall Manager │────▶│ UI & Notification   │
+│ (Mode 09)    │     │  • Cache store │     │  • Dashboard badge  │
+└──────────────┘     │  • Scheduler   │     │  • Detail screens   │
+                      │  • API client  │     │  • Push service     │
+                      └────────────────┘     └────────────────────┘
+                              │
+                              ▼
+                     ┌─────────────────┐
+                     │ NHTSA / TC APIs │
+                     └─────────────────┘
+```
 
-## Contributing
+Refresh heuristic pseudocode:
 
-1. Fork & clone the repository.  
-2. Create a feature branch: `git checkout -b feature/my-change`.  
-3. Run `./gradlew lint ktlint detekt` (if configured) before pushing.  
-4. Submit a pull request that explains the problem, solution, and testing performed.  
-5. For protocol changes, attach traces (if available) with sensitive data redacted.
+```java
+if (cache.isExpired(vin)) {
+    List<Recall> recalls = api.fetchRecalls(vin);
+    cache.store(vin, recalls, Instant.now());
+    notifier.handle(recalls);
+}
+```
 
----
+### UI Concepts
 
-## Roadmap Resources
+Dashboard card sketch:
+```
+┌─────────────────────────────────────────┐
+│ ⚠️  SAFETY RECALL NOTICE (2 open)       │
+│  • Airbag Inflator – HIGH               │
+│  • Fuel Pump Module – MODERATE          │
+│  [ View Details ]  [ Mark Resolved ]    │
+└─────────────────────────────────────────┘
+```
 
-- **ediabaslib** – BMW/VAG protocols, coding formats  
-  <https://github.com/uholeschak/ediabaslib>
-- **Implementation_UDS_CAN** – Reference ISO-TP + UDS stack in C  
-  <https://github.com/nizarmojab/Implementation_UDS_CAN>
-- **python-uds** – DID database, response parsing, negative response codes  
-  <https://github.com/pylessard/python-uds>
-- **ecu-simulator** – Virtual ECU for testing & training  
-  <https://github.com/lbenthins/ecu-simulator>
-- **SAE J1979 / ISO 14229** – Standards for PIDs & UDS messaging
+Detail dialog sketch:
+```
+┌─────────────────────────────────────────┐
+│ Campaign 23V456 – Airbag Inflator       │
+│ Severity: HIGH                          │
+│ Issue: Inflator may rupture...          │
+│ Remedy: Dealer replaces inflator free   │
+│ Contact: 1-800-XXX-XXXX                 │
+│ [ Schedule Repair ]  [ Dismiss ]        │
+└─────────────────────────────────────────┘
+```
 
----
+### Privacy & Offline Behavior
+- No account required; VINs can remain on-device with optional hashing if cloud sync is introduced.
+- Cached recall state persists offline, with timestamp showing last successful update.
+- User controls to disable lookups or clear cached data.
 
-## License & Contact
+### User Benefits
+- Immediate awareness of safety-critical campaigns.
+- Maintains service compliance records for resale and insurance.
+- Cross-references recall fixes with DTC history and AutoCheck events.
+- Drives dealership loyalty by surfacing repair scheduling prompts.
 
-OBDroid is open source. Refer to `LICENSE` for distribution terms.  
-Maintainer: **Waleed Judah (Wal33D)** · aquataze@yahoo.com
+### Next Steps
+1. Build `RecallService` with caching, background refresh, and API integration.
+2. Implement dashboard card, detail activity/fragment, and preference toggles.
+3. Add PDF export that merges recall status with DTC history and AutoCheck summaries.
+4. Extend data sources to Canadian recalls and TSBs.
+5. Consider push notification backend for off-device alerting.
 
-Let’s build professional-grade diagnostics together—pull requests, protocol traces, and real-world testing feedback are always welcome.
+### Resources
+- NHTSA API docs: https://vpic.nhtsa.dot.gov/api/
+- Transport Canada recalls: https://tc.canada.ca/en/road-transportation/defect-investigations-recalls
+- NHTSA recall lookup: https://www.nhtsa.gov/recalls
+- OBD-II VIN retrieval reference: SAE J1979 Mode 09 PID 02
+
+## Automotive Data Modules
+
+### NHTSA VIN Decoder (`modules/nhtsa-vin-decoder`)
+- 2,015+ WMI codes synchronized across Java (`java/io/github/vindecoder/`) and Python (`python/nhtsa_vin_decoder.py`) implementations with ISO-compliant year decoding.
+- Supports offline decoding, manufacturer-specific extensions, and automatic online fallback to NHTSA vPIC.
+- Includes Android wrapper module, Gradle/Maven build files, packaging metadata, and GitHub Actions workflows.
+- Highlights:
+  - Offline decode <1 ms, batch decode >1,800 VINs/sec (per included benchmarks).
+  - Extend by adding manufacturer decoders under `java/io/github/vindecoder/offline` and updating the Python equivalents.
+  - Installation consists of copying the language-specific modules or wiring the Gradle submodule into your Android project.
+  - Roadmap: add Honda, BMW, Nissan decoders and publish artifacts to Maven Central/PyPI.
+
+### DTC Database (`modules/dtc-database`)
+- SQLite dataset with 28,220 codes covering P/B/C/U categories and 33 manufacturers (`modules/dtc-database/data/dtc_codes.db`).
+- Python API (`python/dtc_database.py`) and Java core (`java/DTCDatabaseCore.java`) expose caching, batch lookups, keyword search, and manufacturer filters.
+- Android library (`android/dtc-database-android/`) bundles the database asset for on-device lookups.
+- `build_database.py` regenerates the SQLite file from `data/source-data/*.txt`, keeping the dataset reproducible.
+
+### Automotive Logo Library (`modules/automotive-logo-library`)
+- Cross-language helpers to map manufacturer names or VINs to logo assets stored under `assets/logos/`.
+- Python package (`python/carlogohelper/`), Java helper (`java/com/automotivelogolibrary/`), and Android wrapper (`android/automotive-logo-library-android/`) expose consistent APIs such as `getManufacturerFromVIN`, `getLogoFilename`, and `hasLogo`.
+- Supports 60+ OEMs with alias matching and VIN-based manufacturer hints.
+- To extend: add the PNG, update `LOGO_MAP`/`VIN_WMI_MAP` in both languages, and run the included smoke scripts.
+
+### NHTSA Recall Client (`modules/nhtsa-recall-client`)
+- Sister project to the VIN decoder that targets `api.nhtsa.gov/recalls` for VIN, vehicle, and campaign queries.
+- Provides Java, Android (async callbacks), and Python clients with a shared schema for recall records.
+- Under active construction; scaffolding mirrors the VIN decoder with planned caching, retries, and CI parity.
+- Roadmap priorities include richer Python models, Maven publication, shared caching, recorded fixtures, and CLI/demo tooling.
+
+## Strategy & Roadmap Highlights
+
+### AutoCheck Integration Plan
+- Internal roadmap recommends a standalone AutoCheck API with API keys, usage tracking, caching, and billing support.
+- Android flow: automatic VIN retrieval, one-tap history request, in-app purchase flow, cached summaries.
+- Launch phases (subject to refinement):
+  1. **Internal Testing (Week 1-2):** validate accuracy, refine rate limits.
+  2. **Integration (Week 3-4):** embed in OBD-Droid, add dashboard card, hook VIN auto-read.
+  3. **Soft Launch (Month 2):** beta rollout, monitoring, pricing adjustments.
+  4. **Growth (Month 4+):** influencer partnerships, affiliate program, SEO, B2B API offerings.
+- Monetization targets: $15-25 per lookup vs ~$5-8 cost; upsell dealerships and consumer premium tiers.
+- Success metrics under consideration: >95% scraper success, <15 s uncached response, 99.5% uptime, 10k users / $50k ARR target by month 12.
+
+### Future Enhancements
+- VIN scanner, batch VIN processing, WhatsApp bot integrations, PDF export, dealer-ready printouts.
+- Recall notification automation, analytics dashboards, fraud detection alerts.
+- API productization with customer billing, usage dashboards, and webhook notifications.
+
+## Support & Contact
+
+- Author: Waleed Judah (Wal33D) — aquataze@yahoo.com
+- GitHub Issues: use respective module repositories when applicable.
+- Companion AutoCheck service documentation covers Experian onboarding and Playwright configuration.
+
+## Business Value Summary
+
+- Delivers a differentiated OBD-II experience bundling recalls, history, and diagnostics.
+- Enables dealership demos (60-minute prep, 15-minute presentation) and unlocks premium upsells.
+- Future-ready for B2B licensing, affiliate programs, and API monetization with clear action items.
+- With AutoCheck, recall intelligence, VIN decoding, DTC insights, and branding assets in one stack, OBD-Droid positions itself as the all-in-one automotive intelligence platform.

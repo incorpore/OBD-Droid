@@ -2343,6 +2343,15 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
+     * Launch the NHTSA Safety Recalls activity
+     */
+    void launchRecallActivity() {
+        log.info("Launching Safety Recalls activity");
+        Intent intent = new Intent(this, RecallActivity.class);
+        startActivity(intent);
+    }
+
+    /**
      * Attempt auto-reconnect on startup if the setting is enabled
      * Only runs once per app session (first onResume)
      */
