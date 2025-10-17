@@ -100,30 +100,41 @@ final class DashboardUiHelper {
         // Reconnect card
         View reconnectCard = activity.findViewById(R.id.card_reconnect_adapter);
         if (reconnectCard != null) {
-            addCardPressAnimation(reconnectCard);
-            long lastReconnectTime = activity.getLastReconnectTime();
-            int cooldownMs = activity.getReconnectCooldownMs();
-            long currentTime = System.currentTimeMillis();
-            long timeSinceLastReconnect = currentTime - lastReconnectTime;
+            // Check if there's a previously saved adapter
+            String lastAdapterType = activity.getPrefs().getString("LAST_ADAPTER_TYPE", null);
 
-            if (timeSinceLastReconnect < cooldownMs && lastReconnectTime > 0) {
-                reconnectCard.setEnabled(false);
-                reconnectCard.setAlpha(0.5f);
-                long remainingCooldown = cooldownMs - timeSinceLastReconnect;
-                log.fine("Reconnect card still in cooldown - " + remainingCooldown + "ms remaining");
-                View finalReconnectCard = reconnectCard;
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    finalReconnectCard.setEnabled(true);
-                    finalReconnectCard.setAlpha(1.0f);
-                    log.info("Reconnect card re-enabled after cooldown");
-                }, remainingCooldown);
+            if (lastAdapterType == null) {
+                // No adapter has been connected yet - hide the reconnect card
+                reconnectCard.setVisibility(View.GONE);
+                log.info("Reconnect card hidden - no previous adapter found");
             } else {
-                reconnectCard.setEnabled(true);
-                reconnectCard.setAlpha(1.0f);
-            }
+                // Show the card and set up functionality
+                reconnectCard.setVisibility(View.VISIBLE);
+                addCardPressAnimation(reconnectCard);
+                long lastReconnectTime = activity.getLastReconnectTime();
+                int cooldownMs = activity.getReconnectCooldownMs();
+                long currentTime = System.currentTimeMillis();
+                long timeSinceLastReconnect = currentTime - lastReconnectTime;
 
-            reconnectCard.setOnClickListener(v -> activity.reconnectToLastAdapter());
-            reconnectCard.setOnLongClickListener(v -> showReconnectInfoDialog(activity));
+                if (timeSinceLastReconnect < cooldownMs && lastReconnectTime > 0) {
+                    reconnectCard.setEnabled(false);
+                    reconnectCard.setAlpha(0.5f);
+                    long remainingCooldown = cooldownMs - timeSinceLastReconnect;
+                    log.fine("Reconnect card still in cooldown - " + remainingCooldown + "ms remaining");
+                    View finalReconnectCard = reconnectCard;
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        finalReconnectCard.setEnabled(true);
+                        finalReconnectCard.setAlpha(1.0f);
+                        log.info("Reconnect card re-enabled after cooldown");
+                    }, remainingCooldown);
+                } else {
+                    reconnectCard.setEnabled(true);
+                    reconnectCard.setAlpha(1.0f);
+                }
+
+                reconnectCard.setOnClickListener(v -> activity.reconnectToLastAdapter());
+                reconnectCard.setOnLongClickListener(v -> showReconnectInfoDialog(activity));
+            }
         }
 
         // Fuel Economy card
@@ -181,6 +192,7 @@ final class DashboardUiHelper {
     }
 
     static void updateReconnectCardSubtitle(MainActivity activity) {
+        View reconnectCard = activity.findViewById(R.id.card_reconnect_adapter);
         TextView titleView = activity.findViewById(R.id.reconnect_adapter_title);
         TextView subtitle = activity.findViewById(R.id.reconnect_adapter_subtitle);
         if (titleView == null) {
@@ -198,8 +210,17 @@ final class DashboardUiHelper {
         log.info("updateReconnectCardSubtitle - Last adapter type: " + lastAdapterType + ", name: " + lastAdapterName);
 
         if (lastAdapterType == null) {
+            // No adapter saved - hide the card
+            if (reconnectCard != null) {
+                reconnectCard.setVisibility(View.GONE);
+            }
             titleView.setText("Reconnect Adapter");
             return;
+        }
+
+        // Adapter exists - make sure card is visible
+        if (reconnectCard != null) {
+            reconnectCard.setVisibility(View.VISIBLE);
         }
 
         String titleText;
