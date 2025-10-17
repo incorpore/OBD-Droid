@@ -50,6 +50,11 @@ public class RecallActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recalls);
 
+        // Set navigation bar to black to match footer
+        if (getWindow() != null) {
+            getWindow().setNavigationBarColor(0xFF000000); // Black
+        }
+
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(R.string.safety_recalls);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
