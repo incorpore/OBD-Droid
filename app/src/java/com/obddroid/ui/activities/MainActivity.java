@@ -1265,6 +1265,21 @@ public class MainActivity extends AppCompatActivity
                                         log.info("Bluetooth adapter info saved successfully");
                                         // Connect to Bluetooth device
                                         connectBtDevice(btAddress, prefs.getBoolean("bt_secure_connection", false));
+
+                                        // Schedule backup VIN retrieval trigger
+                                        // This ensures VIN retrieval happens even if MESSAGE_OBD_ECUS is missed
+                                        // due to activity lifecycle timing when coming from adapter selection
+                                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                            log.info("Backup VIN retrieval trigger from adapter selection");
+                                            VehicleManager vm = VehicleManager.getInstance();
+                                            // Only trigger if ECU is connected but VIN retrieval hasn't started yet
+                                            if (vm.isECUConnected() && !vm.isDecoding() && vm.getCurrentVIN() == null) {
+                                                log.info("Triggering VIN retrieval (backup from adapter selection)");
+                                                VinDataHelper.triggerVinRetrieval();
+                                            } else {
+                                                log.info("Backup trigger not needed - VIN retrieval already in progress or complete");
+                                            }
+                                        }, 3000); // 3 second delay to allow ECU detection to complete
                                     } else {
                                         setMode(MODE.OFFLINE);
                                     }
@@ -1280,6 +1295,18 @@ public class MainActivity extends AppCompatActivity
                                         log.info("USB adapter type saved successfully");
                                         mCommService = new UsbCommService(this, mHandler);
                                         mCommService.connect(UnifiedAdapterSelectionActivity.selectedUsbPort, true);
+
+                                        // Schedule backup VIN retrieval trigger for USB
+                                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                            log.info("Backup VIN retrieval trigger from USB adapter selection");
+                                            VehicleManager vm = VehicleManager.getInstance();
+                                            if (vm.isECUConnected() && !vm.isDecoding() && vm.getCurrentVIN() == null) {
+                                                log.info("Triggering VIN retrieval (backup from USB adapter selection)");
+                                                VinDataHelper.triggerVinRetrieval();
+                                            } else {
+                                                log.info("Backup trigger not needed - VIN retrieval already in progress or complete");
+                                            }
+                                        }, 3000);
                                     } else {
                                         setMode(MODE.OFFLINE);
                                     }
@@ -1298,6 +1325,18 @@ public class MainActivity extends AppCompatActivity
                                             .apply();
                                         log.info("Network adapter info saved successfully");
                                         connectNetworkDevice(networkIp, networkPort);
+
+                                        // Schedule backup VIN retrieval trigger for Network
+                                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                            log.info("Backup VIN retrieval trigger from network adapter selection");
+                                            VehicleManager vm = VehicleManager.getInstance();
+                                            if (vm.isECUConnected() && !vm.isDecoding() && vm.getCurrentVIN() == null) {
+                                                log.info("Triggering VIN retrieval (backup from network adapter selection)");
+                                                VinDataHelper.triggerVinRetrieval();
+                                            } else {
+                                                log.info("Backup trigger not needed - VIN retrieval already in progress or complete");
+                                            }
+                                        }, 3000);
                                     } else {
                                         setMode(MODE.OFFLINE);
                                     }
