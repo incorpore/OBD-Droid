@@ -417,15 +417,14 @@ public class AutoCheckActivity extends AppCompatActivity {
             statServiceRecords.setText("0");
         }
 
-        // Year + Age
-        if (report.getYear() != null) {
-            Integer age = report.getVehicleAge();
-            if (age != null) {
-                String ageLabel = age == 1 ? "yr" : "yrs";
-                statYear.setText(report.getYear() + "\n(" + age + " " + ageLabel + ")");
-            } else {
-                statYear.setText(report.getYear());
-            }
+        // Age (just show years old, not the year itself)
+        Integer age = report.getVehicleAge();
+        if (age != null) {
+            String ageLabel = age == 1 ? "yr" : "yrs";
+            statYear.setText(age + " " + ageLabel);
+        } else if (report.getYear() != null) {
+            // If we can't calculate age, show year as fallback
+            statYear.setText(report.getYear());
         } else {
             statYear.setText("N/A");
         }
