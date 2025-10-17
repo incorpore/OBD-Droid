@@ -52,7 +52,7 @@
                             android:textStyle="bold"
                             android:textAllCaps="false"
                             android:letterSpacing="0"
-                            android:backgroundTint="#37474F"
+                            android:backgroundTint="@color/colorPrimary"
                             android:textColor="#FFFFFF"/>
 
                         <!-- Loading Container -->
@@ -71,7 +71,7 @@
                                 android:id="@+id/loading_spinner"
                                 android:layout_width="64dp"
                                 android:layout_height="64dp"
-                                android:indeterminateTint="#37474F"/>
+                                android:indeterminateTint="@color/colorPrimary"/>
 
                             <TextView
                                 android:id="@+id/loading_text"

@@ -16,6 +16,15 @@
     <string name="status_demo_mode">Demo Mode</string>
     <string name="status_viewing_saved">Viewing Saved Data</string>
     <string name="status_selecting_ecu">Selecting ECU</string>
+    <string name="ecu_list_header">Select ECU Module</string>
+    <string name="ecu_scan_button">Scan for ECUs</string>
+    <string name="ecu_currently_selected">Currently Selected</string>
+    <string name="ecu_detected_modules">Detected ECU Modules</string>
+    <string name="ecu_active">Active</string>
+    <string name="ecu_protocol">Protocol: %1$s</string>
+    <string name="ecu_address_type">Address: %1$s</string>
+    <string name="ecu_supported_pids">%1$d PIDs supported</string>
+    <string name="ecu_tap_to_select">Tap to select this ECU</string>
     <string name="logo">Logo</string>
     <string name="back_again_to_exit">Press back again to close this app</string>
     <string name="safety_recalls">Safety Recalls</string>
@@ -33,6 +42,7 @@
     <string name="recalls_summary_heading">Summary</string>
     <string name="recalls_remedy_heading">Remedy</string>
     <string name="recalls_not_available">Not available</string>
+    <string name="value_placeholder">--</string>
     <!-- menu  -->
     <string name="action_connect">Connect</string>
     <string name="obd_none">NO service</string>
