@@ -6,7 +6,7 @@
         <domain includeSubdomains="true">localhost</domain>
         <domain includeSubdomains="true">127.0.0.1</domain>
         <!-- Allow local network IPs (192.168.x.x) for laptop API server -->
-        <domain includeSubdomains="true">192.168.0.153</domain>
+        <domain includeSubdomains="true">10.153.141.55</domain>
         <domain includeSubdomains="true">192.168.1.0</domain>
         <!-- Add other common local network ranges if needed -->
         <domain includeSubdomains="true">10.0.0.0</domain>
