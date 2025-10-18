@@ -716,10 +716,16 @@ public class AutoCheckActivity extends AppCompatActivity {
             String json = gson.toJson(report);
 
             String cacheKey = PREFS_KEY_PREFIX + report.getVin();
-            prefs.edit().putString(cacheKey, json).apply();
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString(cacheKey, json);
+            editor.putLong(cacheKey + "_time", System.currentTimeMillis());
 
-            // Also save timestamp
-            prefs.edit().putLong(cacheKey + "_time", System.currentTimeMillis()).apply();
+            // Also cache the PDF file path if available
+            if (currentPdfFilePath != null && !currentPdfFilePath.isEmpty()) {
+                editor.putString(cacheKey + "_pdf", currentPdfFilePath);
+            }
+
+            editor.apply();
         } catch (Exception e) {
             // Silent fail - caching is not critical
             e.printStackTrace();
@@ -747,20 +753,61 @@ public class AutoCheckActivity extends AppCompatActivity {
                     // Display cached report
                     displayReport(report);
 
+                    // Restore PDF file path if available
+                    String cachedPdfPath = prefs.getString(cacheKey + "_pdf", null);
+                    if (cachedPdfPath != null && !cachedPdfPath.isEmpty()) {
+                        // Check if the PDF file still exists
+                        File pdfFile = new File(cachedPdfPath);
+                        if (pdfFile.exists()) {
+                            currentPdfFilePath = cachedPdfPath;
+                            pdfFab.setVisibility(View.VISIBLE);
+                        } else {
+                            // PDF was deleted, clear from cache
+                            prefs.edit().remove(cacheKey + "_pdf").apply();
+                        }
+                    } else {
+                        // No cached PDF path - search for existing PDF files for this VIN
+                        File pdfDir = new File(getExternalFilesDir(null), "autocheck_reports");
+                        if (pdfDir.exists() && pdfDir.isDirectory()) {
+                            File[] pdfFiles = pdfDir.listFiles((dir, name) ->
+                                name.startsWith("autocheck_" + currentVin) && name.endsWith(".pdf"));
+
+                            if (pdfFiles != null && pdfFiles.length > 0) {
+                                // Find most recent PDF
+                                File mostRecentPdf = pdfFiles[0];
+                                for (File pdf : pdfFiles) {
+                                    if (pdf.lastModified() > mostRecentPdf.lastModified()) {
+                                        mostRecentPdf = pdf;
+                                    }
+                                }
+
+                                currentPdfFilePath = mostRecentPdf.getAbsolutePath();
+                                pdfFab.setVisibility(View.VISIBLE);
+
+                                // Save to cache for next time
+                                prefs.edit().putString(cacheKey + "_pdf", currentPdfFilePath).apply();
+                            }
+                        }
+                    }
+
                     // Show toast to inform user it's cached
                     long cacheTime = prefs.getLong(cacheKey + "_time", 0);
                     long ageMinutes = (System.currentTimeMillis() - cacheTime) / 60000;
 
+                    String toastMessage;
                     if (ageMinutes < 60) {
-                        Toast.makeText(this,
-                            "Loaded cached report (" + ageMinutes + " min old)",
-                            Toast.LENGTH_SHORT).show();
+                        toastMessage = "Loaded cached report (" + ageMinutes + " min old)";
                     } else {
                         long ageHours = ageMinutes / 60;
-                        Toast.makeText(this,
-                            "Loaded cached report (" + ageHours + " hr old)",
-                            Toast.LENGTH_SHORT).show();
+                        toastMessage = "Loaded cached report (" + ageHours + " hr old)";
                     }
+
+                    // Add PDF status to toast
+                    if (currentPdfFilePath != null) {
+                        toastMessage += " - PDF available";
+                    }
+
+                    Toast.makeText(this, toastMessage, Toast.LENGTH_SHORT).show();
                 }
             }
         } catch (Exception e) {
