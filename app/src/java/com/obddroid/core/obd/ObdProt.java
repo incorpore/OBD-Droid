@@ -634,10 +634,11 @@ public class ObdProt extends ProtoHeader
         }
         else if (start == 0 && !pidSupported.isEmpty())
         {
-            // Duplicate PID 0x00 response detected - ignore to preserve already discovered PIDs
-            Log.w(TAG, String.format("Ignoring duplicate PID 0x00 response (bitmask: %08X) - already have %d PIDs",
+            // Multiple ECUs may report different supported PIDs - merge them instead of ignoring
+            // This is common in vehicles with multiple control modules (TCM, ECM, etc.)
+            Log.i(TAG, String.format("Merging additional PID 0x00 response (bitmask: %08X) with %d existing PIDs",
                                     bitmask, pidSupported.size()));
-            return;  // Exit early without processing this duplicate message
+            // Continue processing to merge PIDs from this ECU
         }
 
         Log.i(TAG, String.format("Processing PIDs %02X-%02X, bitmask: %08X",
@@ -651,10 +652,23 @@ public class ObdProt extends ProtoHeader
             if ((bitmask & (0x80000000L >> i)) != 0)
             {
                 int pidCode = i + start + 1;
-                pidSupported.add(new ObdPid(pidCode));
-                addedCount++;
-                Log.d(TAG, String.format("  Found PID: %02X (%s)",
-                                        pidCode, getPidDescription(pidCode)));
+                // Check if PID already exists to prevent duplicates when merging ECU responses
+                boolean alreadyExists = false;
+                for (ObdPid existingPid : pidSupported) {
+                    if (existingPid.intValue() == pidCode) {
+                        alreadyExists = true;
+                        break;
+                    }
+                }
+
+                if (!alreadyExists) {
+                    pidSupported.add(new ObdPid(pidCode));
+                    addedCount++;
+                    Log.d(TAG, String.format("  Found PID: %02X (%s)",
+                                            pidCode, getPidDescription(pidCode)));
+                } else {
+                    Log.d(TAG, String.format("  Skipping duplicate PID: %02X", pidCode));
+                }
             }
         }
 
