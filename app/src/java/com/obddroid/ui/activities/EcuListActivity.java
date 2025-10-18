@@ -16,11 +16,13 @@ import com.obddroid.R;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.services.CommService;
+import com.obddroid.services.EcuDiscoveryService;
 import com.obddroid.ui.adapters.EcuAdapter;
 import com.obddroid.vehicle.EcuInfo;
 import com.obddroid.vehicle.EcuManager;
 
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -111,10 +113,12 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
     }
 
     /**
-     * Scan for ECUs by requesting Mode 9 data
+     * Scan for ECUs using the isolated discovery service.
+     * This uses Mode 9 commands with headers enabled to properly identify ECU addresses.
+     * NOTE: This is SEPARATE from the standard Mode 9 flow used elsewhere in the app.
      */
     private void scanForEcus() {
-        log.info("Scan for ECUs requested");
+        log.info("Scan for ECUs requested (using isolated discovery service)");
 
         // Check if connected to vehicle
         if (CommService.elm == null) {
@@ -137,51 +141,67 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
         ecuManager.clear();
         adapter.setEcuList(null);
 
-        // Start ECU manager listening
-        ecuManager.startListening();
+        Snackbar.make(recyclerView, "Scanning for ECUs with detailed discovery...", Snackbar.LENGTH_SHORT).show();
 
-        Snackbar.make(recyclerView, "Scanning for ECUs...", Snackbar.LENGTH_SHORT).show();
+        // Use the NEW isolated discovery service
+        log.info("Starting isolated ECU discovery (with headers enabled)");
 
-        // Request Mode 9 data (Vehicle Info Service)
-        // This will trigger ECU discovery and Mode 9 data collection
-        log.info("Requesting Mode 9 data for ECU discovery");
-
-        new android.os.Handler().postDelayed(() -> {
+        // Run discovery on background thread
+        new Thread(() -> {
             try {
-                // Clear stale data
-                if (ObdProt.VidPvs != null) {
-                    ObdProt.VidPvs.clear();
-                }
+                // Create discovery service (no params needed - uses CommService.elm)
+                EcuDiscoveryService discoveryService = new EcuDiscoveryService();
 
-                // Request Mode 9 service
-                if (CommService.elm != null) {
-                    CommService.elm.setService(ObdProt.OBD_SVC_VEH_INFO, false);
-                }
+                // Start discovery (returns CompletableFuture)
+                Map<Integer, EcuDiscoveryService.EcuDiscoveryInfo> discoveryData =
+                    discoveryService.discoverEcus().get(15, java.util.concurrent.TimeUnit.SECONDS);
 
-                // Hide progress after 10 seconds
-                new android.os.Handler().postDelayed(() -> {
+                log.info("Discovery complete! Found " + discoveryData.size() + " ECUs");
+
+                // Update ECU manager with discovery data
+                ecuManager.updateFromDiscoveryData(discoveryData);
+
+                // Update UI on main thread
+                runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
                     scanButton.setEnabled(true);
 
                     List<EcuInfo> ecuList = ecuManager.getEcuList();
+                    loadEcuData();  // Refresh display
+
                     if (ecuList.isEmpty()) {
                         Snackbar.make(recyclerView,
                             "No ECUs found. Vehicle may not support Mode 9.",
                             Snackbar.LENGTH_LONG).show();
                     } else {
                         Snackbar.make(recyclerView,
-                            "Found " + ecuList.size() + " ECU(s)",
+                            "Found " + ecuList.size() + " ECU(s) with detailed info",
                             Snackbar.LENGTH_SHORT).show();
                     }
-                }, 10000);
+                });
 
+            } catch (java.util.concurrent.TimeoutException e) {
+                log.warning("ECU discovery timed out after 15 seconds");
+                runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    scanButton.setEnabled(true);
+                    Snackbar.make(recyclerView,
+                        "Discovery timed out - try again or check connection",
+                        Snackbar.LENGTH_LONG).show();
+                });
             } catch (Exception e) {
-                log.warning("Error scanning for ECUs: " + e.getMessage());
-                progressBar.setVisibility(View.GONE);
-                scanButton.setEnabled(true);
-                Snackbar.make(recyclerView, "Error scanning for ECUs", Snackbar.LENGTH_SHORT).show();
+                log.warning("Error during ECU discovery: " + e.getMessage());
+                e.printStackTrace();
+
+                runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    scanButton.setEnabled(true);
+                    Snackbar.make(recyclerView,
+                        "Error scanning for ECUs: " + e.getMessage(),
+                        Snackbar.LENGTH_LONG).show();
+                });
             }
-        }, 500);
+        }).start();
     }
 
     /**

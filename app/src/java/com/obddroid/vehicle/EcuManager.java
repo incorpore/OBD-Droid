@@ -10,21 +10,23 @@ import com.obddroid.services.CommService;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
 /**
  * Singleton manager for tracking and discovering ECUs in the vehicle.
  * Listens to Mode 9 data and ECU address discovery to build a comprehensive ECU list.
+ * Uses TreeMap for deterministic ECU ordering by address.
  */
 public class EcuManager {
     private static final Logger log = Logger.getLogger(EcuManager.class.getName());
     private static EcuManager instance;
 
-    private final Map<Integer, EcuInfo> ecuMap = new HashMap<>();
+    // TreeMap ensures ECUs are always processed in address order (0x7E8, 0x7E9, 0x7EB...)
+    private final Map<Integer, EcuInfo> ecuMap = new TreeMap<>();
     private final List<EcuManagerListener> listeners = new ArrayList<>();
 
     // Property change listener for ECU addresses from ElmProt
@@ -354,6 +356,85 @@ public class EcuManager {
                 return;
             }
         }
+    }
+
+    /**
+     * Update ECU data from isolated discovery service results.
+     * This method is ONLY called from ECU Modules page (EcuListActivity).
+     *
+     * IMPORTANT: This uses data collected via EcuDiscoveryService which sends
+     * Mode 9 requests with headers enabled, allowing us to match data to specific ECU addresses.
+     *
+     * @param discoveryData Map of ECU address → discovery info
+     */
+    public synchronized void updateFromDiscoveryData(Map<Integer, com.obddroid.services.EcuDiscoveryService.EcuDiscoveryInfo> discoveryData) {
+        if (discoveryData == null || discoveryData.isEmpty()) {
+            log.info("EcuManager: No discovery data to update");
+            return;
+        }
+
+        log.info("EcuManager: Updating from discovery data - " + discoveryData.size() + " ECUs discovered");
+
+        for (Map.Entry<Integer, com.obddroid.services.EcuDiscoveryService.EcuDiscoveryInfo> entry : discoveryData.entrySet()) {
+            int address = entry.getKey();
+            com.obddroid.services.EcuDiscoveryService.EcuDiscoveryInfo info = entry.getValue();
+
+            // Get or create ECU
+            EcuInfo ecu = ecuMap.get(address);
+            boolean isNew = (ecu == null);
+
+            if (ecu == null) {
+                ecu = new EcuInfo(address);
+                ecuMap.put(address, ecu);
+                log.info("EcuManager: Created ECU from discovery: " + ecu.getAddressHex());
+            }
+
+            // Update with discovered data (only if we have valid data)
+            boolean updated = false;
+
+            if (info.name != null && !info.name.trim().isEmpty()) {
+                String sanitized = sanitizeEcuName(info.name);
+                if (sanitized != null && !sanitized.isEmpty()) {
+                    // Only update if different
+                    if (!sanitized.equals(ecu.getName())) {
+                        ecu.setName(sanitized);
+                        updated = true;
+                        log.info(String.format("EcuManager: Set ECU %s name: %s", ecu.getAddressHex(), sanitized));
+                    }
+                }
+            }
+
+            if (info.calibrationId != null && !info.calibrationId.trim().isEmpty()) {
+                // Only update if different
+                if (!info.calibrationId.equals(ecu.getCalibrationId())) {
+                    ecu.setCalibrationId(info.calibrationId);
+                    updated = true;
+                    log.info(String.format("EcuManager: Set ECU %s cal ID: %s", ecu.getAddressHex(), info.calibrationId));
+                }
+            }
+
+            if (info.cvn != null && !info.cvn.trim().isEmpty()) {
+                // Only update if different
+                if (!info.cvn.equals(ecu.getCalibrationVerification())) {
+                    ecu.setCalibrationVerification(info.cvn);
+                    updated = true;
+                    log.info(String.format("EcuManager: Set ECU %s CVN: %s", ecu.getAddressHex(), info.cvn));
+                }
+            }
+
+            if (updated) {
+                ecu.incrementResponseCount();
+            }
+
+            // Notify listeners
+            if (isNew) {
+                notifyEcuDiscovered(ecu);
+            } else if (updated) {
+                notifyEcuUpdated(ecu);
+            }
+        }
+
+        log.info("EcuManager: Discovery update complete - " + ecuMap.size() + " total ECUs");
     }
 
     /**

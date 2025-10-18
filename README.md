@@ -1,11 +1,11 @@
 # OBD-Droid Platform
 
-OBD-Droid is a full-stack vehicle intelligence suite that combines real-time OBD-II diagnostics with rich vehicle history, recall planning, and reusable automotive data modules for Android, Java, and Python applications.
+OBD-Droid is a full-stack vehicle intelligence suite that combines real-time OBD-II diagnostics with rich vehicle history and reusable automotive data modules for Android, Java, and Python applications.
 
 ## At a Glance
 - Android app with live diagnostics, VIN-aware dashboards, and AutoCheck-powered vehicle history.
 - Local AutoCheck service providing full reports via either official Experian API integration or Playwright-based browser automation.
-- Recall notification roadmap outlining integration with NHTSA APIs and planned Canadian/TSB coverage.
+- Recall notification roadmap outlining integration with OEM data feeds (future work).
 - Reusable modules: world-class VIN decoder, comprehensive DTC database, and automotive logo library.
 - Detailed go-to-market plan, testing scripts, and business-grade roadmap to monetize history reports.
 
@@ -35,12 +35,6 @@ OBD-Droid/
 - VIN auto-fill via Mode 09 PID 02 when available; manual entry fallback.
 - Mileage fraud detection opportunities by comparing AutoCheck odometer with OBD readings.
 - Dashboard card launches the Vehicle History flow and surfaces summary status, including quick stats for owners, mileage, service records, and model year with derived age.
-
-### Recall Intelligence
-- Roadmap includes automated recall polling after VIN retrieval with local caching and user notifications.
-- Detail view design covers campaign ID, severity, remedies, and contact information for upcoming implementation.
-- Planned additions: PDF exports, share flows, push notifications, and Canadian/TSB data parity.
-- Data sources: NHTSA `recallsByVIN`, `recallsByVehicle`, `recallsByCampaign` with Transport Canada coverage slated for future work.
 
 ## AutoCheck Service Stack
 
@@ -142,62 +136,6 @@ OBD-Droid/
 3. Narrate the returned insights (score trend, owners, mileage, recall count).
 4. Close with the roadmap: premium upsells, B2B API, recall alerts, mileage fraud detection.
 
-## Recall & Safety Roadmap
-
-### Why Recall Intelligence Matters
-- Life-safety issues (airbags, brakes, steering, fuel systems) demand proactive alerts.
-- Owners may be legally responsible for addressing open recalls, and unresolved campaigns reduce resale value.
-- Integrating recalls alongside fault codes gives users full diagnostic context without app switching.
-
-### Feature Stack
-1. **VIN-based recall checks**
-   - Automatic read via Mode 09 PID 02; manual entry fallback.
-   - Queries NHTSA on first connect and then on a scheduled cadence (daily/weekly).
-   - Caches responses locally to minimize quota usage and support offline display.
-2. **Recall presentation**
-   - Dashboard badge when open recalls exist, highlighting severity via color-coded chips.
-   - Detail view with campaign ID, affected component, risk summary, remedy instructions, and manufacturer contact info.
-   - Historical log of resolved campaigns and timestamps.
-3. **Notification channels**
-   - In-app banner, persistent dashboard indicator, and optional push notifications for newly detected recalls.
-   - Manual refresh control and snooze/“mark resolved” workflows for user acknowledgement.
-4. **Vehicle history synergy**
-   - Consolidates recalls, TSBs, AutoCheck history, DTC logs, and mileage trends into a single exportable report.
-   - Planned PDF/email/share flows for dealerships, insurance, and resale documentation.
-
-### Data Sources
-- **NHTSA Recalls API** – `https://api.nhtsa.gov/recalls/recallsByVehicle`, `recallsByVIN`, `recallsByCampaign`.
-- **Transport Canada** – bilingual feed for Canadian-market vehicles.
-- **Technical Service Bulletins** – optional expansion using NHTSA TSB dataset and OEM feeds.
-- **VIN decoding** – leverage internal VIN decoder module for make/model/year normalization.
-
-### Architecture Blueprint
-
-```
-┌──────────────┐     ┌────────────────┐     ┌────────────────────┐
-│ VIN Decoder  │────▶│ Recall Manager │────▶│ UI & Notification   │
-│ (Mode 09)    │     │  • Cache store │     │  • Dashboard badge  │
-└──────────────┘     │  • Scheduler   │     │  • Detail screens   │
-                      │  • API client  │     │  • Push service     │
-                      └────────────────┘     └────────────────────┘
-                              │
-                              ▼
-                     ┌─────────────────┐
-                     │ NHTSA / TC APIs │
-                     └─────────────────┘
-```
-
-Refresh heuristic pseudocode:
-
-```java
-if (cache.isExpired(vin)) {
-    List<Recall> recalls = api.fetchRecalls(vin);
-    cache.store(vin, recalls, Instant.now());
-    notifier.handle(recalls);
-}
-```
-
-### UI Concepts
 
 Dashboard card sketch:
 ```

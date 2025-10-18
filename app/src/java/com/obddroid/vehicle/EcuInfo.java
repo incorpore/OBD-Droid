@@ -67,45 +67,13 @@ public class EcuInfo {
 
     /**
      * Get display name for this ECU (cleaned up and user-friendly)
+     * Uses simple, robust logic: just return the cleaned raw name
      */
     public String getDisplayName() {
         if (name != null && !name.trim().isEmpty()) {
-            String cleaned = name.trim();
-
-            // Replace common acronyms with full names
-            cleaned = cleaned
-                .replaceAll("(?i)ECM", "Engine Control Module")
-                .replaceAll("(?i)TCM", "Transmission Control Module")
-                .replaceAll("(?i)ABS", "Anti-lock Braking System")
-                .replaceAll("(?i)SRS", "Airbag Control Module")
-                .replaceAll("(?i)BCM", "Body Control Module")
-                .replaceAll("(?i)PCM", "Powertrain Control Module")
-                .replaceAll("(?i)FPC", "Fuel Pump Control");
-
-            // Remove redundant text (e.g., "Transmission Control Module TransmisCtrl")
-            // Keep only the first full description
-            String[] parts = cleaned.split("\\s+");
-            StringBuilder result = new StringBuilder();
-            boolean foundFullName = false;
-
-            for (String part : parts) {
-                // If we find "Module" or "System", we've found the full name
-                if (part.equalsIgnoreCase("Module") || part.equalsIgnoreCase("System")) {
-                    result.append(part);
-                    foundFullName = true;
-                    break;
-                }
-                result.append(part).append(" ");
-            }
-
-            cleaned = result.toString().trim();
-
-            // Ensure at least some text remains
-            if (cleaned.isEmpty()) {
-                cleaned = name.trim();
-            }
-
-            return cleaned;
+            // Just return the cleaned name - let the data speak for itself
+            // More reliable than trying to parse/manipulate ECU names
+            return name.trim();
         }
         // Fallback to generic name based on address
         return "ECU " + getAddressHex();
