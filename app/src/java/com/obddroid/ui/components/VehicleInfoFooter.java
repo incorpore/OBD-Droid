@@ -1344,27 +1344,35 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             Log.d(TAG, "No description found for mnemonic: " + mnemonicKey);
         }
 
-        // Make ALL rows clickable (even without descriptions)
-        row.setClickable(true);
-        row.setFocusable(true);
+        // Only make rows clickable in OBD Data section (when showingVehicleInfo is false)
+        // Vehicle Info section should NOT have clickable rows
+        if (!showingVehicleInfo) {
+            // We're in OBD Data tab - make rows clickable
+            row.setClickable(true);
+            row.setFocusable(true);
 
-        // Add click listener to show appropriate dialog
-        final String finalPid = pidDisplay;
-        row.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Add subtle haptic feedback
-                v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
-                if (hasDescription) {
-                    showDescriptionDialog(label, value, description, finalPid);
-                } else {
-                    showUnknownPidDialog(label, value, finalPid);
+            // Add click listener to show appropriate dialog
+            final String finalPid = pidDisplay;
+            row.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Add subtle haptic feedback
+                    v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
+                    if (hasDescription) {
+                        showDescriptionDialog(label, value, description, finalPid);
+                    } else {
+                        showUnknownPidDialog(label, value, finalPid);
+                    }
                 }
-            }
-        });
+            });
 
-        // Add visual indicator that row is clickable (slightly lighter background)
-        row.setBackgroundColor(Color.parseColor("#222222"));
+            // Add visual indicator that row is clickable (slightly lighter background)
+            row.setBackgroundColor(Color.parseColor("#222222"));
+        } else {
+            // We're in Vehicle Info tab - rows should NOT be clickable
+            // Use standard darker background
+            row.setBackgroundColor(Color.parseColor("#1F1F1F"));
+        }
 
         TextView labelView = new TextView(getContext());
         labelView.setText(label);

@@ -2395,10 +2395,9 @@ public class MainActivity extends AppCompatActivity
      * Launch the ECU List activity
      */
     void launchEcuListActivity() {
-        log.info("Launching ECU List activity - NOT IMPLEMENTED");
-        // TODO: EcuListActivity not yet implemented
-        // Intent intent = new Intent(this, EcuListActivity.class);
-        // startActivity(intent);
+        log.info("Launching ECU List activity");
+        Intent intent = new Intent(this, EcuListActivity.class);
+        startActivity(intent);
     }
 
     /**

@@ -192,6 +192,23 @@ final class DashboardUiHelper {
             log.warning("Safety Recalls card NOT found!");
         }
 
+        // ECU List card
+        View ecuListCard = activity.findViewById(R.id.card_ecu_list);
+        if (ecuListCard != null) {
+            addCardPressAnimation(ecuListCard);
+            ecuListCard.setOnClickListener(v -> {
+                log.info("ECU List card clicked!");
+                activity.launchEcuListActivity();
+            });
+            ecuListCard.setOnLongClickListener(v -> showCardInfoDialog(
+                activity,
+                activity.getString(R.string.ecu_list_title),
+                "Discover and view all Electronic Control Units (ECUs) in your vehicle. Shows ECU names, addresses, calibration IDs, and supported features."
+            ));
+        } else {
+            log.warning("ECU List card NOT found!");
+        }
+
         updateReconnectCardSubtitle(activity);
     }
 
