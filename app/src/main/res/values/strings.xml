@@ -29,7 +29,7 @@
     <string name="back_again_to_exit">Press back again to close this app</string>
     <string name="safety_recalls">Safety Recalls</string>
     <string name="recalls_vin_hint">Enter VIN</string>
-    <string name="recalls_search_button">Check Recalls</string>
+    <string name="recalls_search_button">Visit NHTSA Website</string>
     <string name="recalls_intro">Enter a 17-character VIN to search the NHTSA recall database.</string>
     <string name="recalls_loading">Checking NHTSA recall database…</string>
     <string name="recalls_empty_state">No open recalls reported for this vehicle.</string>
@@ -339,4 +339,17 @@ period of time while the ECU recalibrates itself.
         <item>57600</item>
         <item>115200</item>
     </string-array>
+    <!-- ECU List Activity -->
+    <string name="ecu_list_title">ECU Modules</string>
+    <string name="ecu_scan_instructions">Tap \"Scan for ECUs\" to discover vehicle control modules</string>
+    <string name="ecu_not_connected">Not connected to adapter. Please connect first.</string>
+    <string name="ecu_scanning">Scanning for ECU modules…</string>
+    <string name="ecu_none_found">No ECU modules detected. Ensure vehicle is running.</string>
+    <string name="ecu_scan_error">ECU scan failed. Please try again.</string>
+    <string name="ecu_name_unknown">Unknown Module</string>
+    <string name="ecu_pids_unknown">Unknown</string>
+    <string name="ecu_currently_active">Currently active ECU</string>
+    <string name="ecu_already_selected">This ECU is already selected</string>
+    <string name="ecu_selected_success">ECU selected successfully</string>
+    <string name="ecu_select_error">Failed to select ECU. Please try again.</string>
 </resources>

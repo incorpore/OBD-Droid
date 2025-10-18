@@ -13,12 +13,6 @@ project(':nhtsa-vin-decoder-java').projectDir = new File(rootDir, 'modules/nhtsa
 include ':nhtsa-vin-decoder-android'
 project(':nhtsa-vin-decoder-android').projectDir = new File(rootDir, 'modules/nhtsa-vin-decoder/android/nhtsa-vin-decoder-android')
 
-// NHTSA Recall Client modules
-include ':nhtsa-recall-client-java'
-project(':nhtsa-recall-client-java').projectDir = new File(rootDir, 'modules/nhtsa-recall-client')
-include ':nhtsa-recall-client-android'
-project(':nhtsa-recall-client-android').projectDir = new File(rootDir, 'modules/nhtsa-recall-client/android/nhtsa-recall-client-android')
-
 // Automotive Logo Library
 include ':automotive-logo-library-android'
 project(':automotive-logo-library-android').projectDir = new File(rootDir, 'modules/automotive-logo-library/android/automotive-logo-library-android')

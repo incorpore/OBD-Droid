@@ -7,6 +7,3 @@
 [submodule "modules/dtc-database"]
 	path = modules/dtc-database
 	url = https://github.com/Wal33D/dtc-database.git
-[submodule "modules/nhtsa-recall-client"]
-	path = modules/nhtsa-recall-client
-	url = https://github.com/Wal33D/nhtsa-recall-client.git

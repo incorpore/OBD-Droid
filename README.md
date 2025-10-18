@@ -34,7 +34,7 @@ OBD-Droid/
 - AutoCheck report ingestion with structured models (`AutoCheckReport.java`) and network service layer (`AutoCheckService.java`) that dispatches results to the UI thread.
 - VIN auto-fill via Mode 09 PID 02 when available; manual entry fallback.
 - Mileage fraud detection opportunities by comparing AutoCheck odometer with OBD readings.
-- Dashboard card launches the Vehicle History flow and surfaces summary status.
+- Dashboard card launches the Vehicle History flow and surfaces summary status, including quick stats for owners, mileage, service records, and model year with derived age.
 
 ### Recall Intelligence
 - Roadmap includes automated recall polling after VIN retrieval with local caching and user notifications.

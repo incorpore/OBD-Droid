@@ -5,6 +5,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class AutoCheckReport {
     private Date lastOdometerDate;
     private Integer score;
     private ScoreRange scoreRange;
+    private Integer vehicleAge;
     private String titleBrand;
     private String accidentDamage;
     private Boolean totalLoss;
@@ -85,6 +87,12 @@ public class AutoCheckReport {
         if (json.has("accidentDamage")) report.accidentDamage = json.getString("accidentDamage");
         if (json.has("recalls")) report.recalls = json.getString("recalls");
         if (json.has("serviceRecords")) report.serviceRecords = json.getInt("serviceRecords");
+        if (json.has("vehicleAge")) {
+            Integer parsedAge = parseInteger(json.opt("vehicleAge"));
+            if (parsedAge != null && parsedAge >= 0) {
+                report.vehicleAge = parsedAge;
+            }
+        }
 
         // Boolean fields
         if (json.has("totalLoss")) report.totalLoss = json.getBoolean("totalLoss");
@@ -146,6 +154,29 @@ public class AutoCheckReport {
     public Date getLastOdometerDate() { return lastOdometerDate; }
     public Integer getScore() { return score; }
     public ScoreRange getScoreRange() { return scoreRange; }
+    public Integer getVehicleAge() {
+        if (vehicleAge != null && vehicleAge >= 0) {
+            return vehicleAge;
+        }
+        if (year == null) {
+            return null;
+        }
+        String numericYear = year.replaceAll("\\D", "");
+        if (numericYear.isEmpty()) {
+            return null;
+        }
+        try {
+            int modelYear = Integer.parseInt(numericYear);
+            int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+            int age = currentYear - modelYear;
+            if (age < 0 || age > 150) {
+                return null;
+            }
+            return age;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
     public String getTitleBrand() { return titleBrand; }
     public String getAccidentDamage() { return accidentDamage; }
     public Boolean getTotalLoss() { return totalLoss; }
@@ -185,5 +216,26 @@ public class AutoCheckReport {
     public String toString() {
         return String.format("AutoCheck Report: %s (VIN: %s, Score: %s, Owners: %d)",
                 getVehicleName(), vin, getScoreSummary(), owners != null ? owners : 0);
+    }
+
+    private static Integer parseInteger(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value instanceof String) {
+            String digits = ((String) value).replaceAll("[^0-9-]", "");
+            if (digits.isEmpty()) {
+                return null;
+            }
+            try {
+                return Integer.parseInt(digits);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 }

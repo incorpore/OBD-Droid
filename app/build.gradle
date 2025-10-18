@@ -73,7 +73,6 @@ dependencies {
 
     // NHTSA VIN Decoder - Android wrapper with built-in threading
     implementation project(':nhtsa-vin-decoder-android')
-    implementation project(':nhtsa-recall-client-android')
 
     // NHTSA VIN Decoder API dependencies
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
