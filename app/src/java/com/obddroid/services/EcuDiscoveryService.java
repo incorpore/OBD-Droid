@@ -1,7 +1,7 @@
 package com.obddroid.services;
 
 import android.util.Log;
-import com.obddroid.core.obd.TelegramListener;
+import com.obddroid.core.obd.RawTelegramListener;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,14 +20,15 @@ import java.util.logging.Logger;
  * HOW IT WORKS:
  * 1. Temporarily enables CAN headers (ATH1)
  * 2. Sends Mode 9 requests (0904, 090A for calibration ID and ECU name)
- * 3. Parses responses to extract ECU addresses from headers
- * 4. Builds map of ECU address → ECU info
- * 5. Restores headers to disabled state (ATH0)
- * 6. Returns results via CompletableFuture
+ * 3. Receives RAW responses WITH headers via RawTelegramListener
+ * 4. Parses ECU addresses from CAN headers (e.g., "7E8 03 490201...")
+ * 5. Builds map of ECU address → ECU info
+ * 6. Restores headers to disabled state (ATH0)
+ * 7. Returns results via CompletableFuture
  *
  * @author Wal33D <aquataze@yahoo.com>
  */
-public class EcuDiscoveryService implements TelegramListener {
+public class EcuDiscoveryService implements RawTelegramListener {
     private static final String TAG = "EcuDiscoveryService";
     private static final Logger log = Logger.getLogger(TAG);
 
@@ -86,8 +87,9 @@ public class EcuDiscoveryService implements TelegramListener {
                 isDiscovering.set(true);
                 Log.i(TAG, "========== ECU DISCOVERY START ==========");
 
-                // Add ourselves as a telegram listener to receive responses
-                CommService.elm.addTelegramListener(this);
+                // Add ourselves as a RAW telegram listener to receive responses WITH headers
+                CommService.elm.addRawTelegramListener(this);
+                Log.i(TAG, "Registered as RAW telegram listener");
 
                 // Step 1: Enable headers to capture ECU addresses
                 Log.i(TAG, "Step 1: Enabling headers (ATH1)");
@@ -109,8 +111,9 @@ public class EcuDiscoveryService implements TelegramListener {
                 sendRawCommand("ATH0");
                 Thread.sleep(150);
 
-                // Remove listener
-                CommService.elm.removeTelegramListener(this);
+                // Remove raw listener
+                CommService.elm.removeRawTelegramListener(this);
+                Log.i(TAG, "Unregistered RAW telegram listener");
 
                 // Step 5: Complete discovery
                 Log.i(TAG, "========== ECU DISCOVERY COMPLETE ==========");
@@ -123,7 +126,7 @@ public class EcuDiscoveryService implements TelegramListener {
 
             } catch (Exception e) {
                 Log.e(TAG, "ECU discovery failed: " + e.getMessage(), e);
-                CommService.elm.removeTelegramListener(this);
+                CommService.elm.removeRawTelegramListener(this);
                 currentDiscovery.completeExceptionally(e);
             } finally {
                 isDiscovering.set(false);
@@ -144,11 +147,14 @@ public class EcuDiscoveryService implements TelegramListener {
     }
 
     /**
-     * Handle incoming telegram responses from ELM adapter.
-     * This is called by the ELM protocol layer for every response.
+     * Handle incoming RAW telegram responses from ELM adapter.
+     * This is called by ElmProt BEFORE header stripping, giving us access to
+     * complete responses including CAN headers (e.g., "7E8 03 490201...").
+     *
+     * CRITICAL: This method receives responses WITH headers when ATH1 is enabled!
      */
     @Override
-    public int handleTelegram(char[] buffer) {
+    public int handleRawTelegram(char[] buffer) {
         String response = new String(buffer).trim();
 
         if (response.isEmpty()) {

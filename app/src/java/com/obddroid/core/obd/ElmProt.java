@@ -68,6 +68,11 @@ public class ElmProt
 	 */
 	private int selectedEcuAddress = 0;
 	/**
+	 * list of raw telegram listeners (receive data BEFORE header stripping)
+	 */
+	@SuppressWarnings("rawtypes")
+	private final Vector rawTelegramListeners = new Vector();
+	/**
 	 * custom ELM initialisation commands
 	 */
 	private final Vector<String> customInitCommands = new Vector<String>();
@@ -639,9 +644,14 @@ public class ElmProt
 	{
 		int result = 0;
 		String bufferStr = new String(buffer);
-		
+
 		log.fine(this.toString() + " RX:'" + bufferStr + "'");
-		
+
+		// === RAW TELEGRAM LISTENERS ===
+		// Notify raw listeners FIRST, before any processing
+		// This gives them access to complete telegrams WITH headers (if enabled)
+		notifyRawTelegramListeners(buffer);
+
 		// empty result
 		if (buffer.length == 0)
 		{
@@ -1279,7 +1289,70 @@ public class ElmProt
 		// add all entries
 		customInitCommands.addAll(cmds);
 	}
-	
+
+	/**
+	 * Raw Telegram Listener Management
+	 * These methods allow listeners to receive RAW telegrams BEFORE header stripping.
+	 */
+
+	/**
+	 * Add a raw telegram listener to receive data before protocol processing
+	 *
+	 * @param listener RawTelegramListener to be added
+	 * @return true if adding was OK, otherwise false
+	 */
+	@SuppressWarnings("unchecked")
+	public boolean addRawTelegramListener(RawTelegramListener listener)
+	{
+		log.fine("Adding raw telegram listener: " + listener.getClass().getSimpleName());
+		return rawTelegramListeners.add(listener);
+	}
+
+	/**
+	 * Remove a raw telegram listener
+	 *
+	 * @param listener RawTelegramListener to be removed
+	 * @return true if removal was OK, otherwise false
+	 */
+	public boolean removeRawTelegramListener(RawTelegramListener listener)
+	{
+		log.fine("Removing raw telegram listener: " + listener.getClass().getSimpleName());
+		return rawTelegramListeners.remove(listener);
+	}
+
+	/**
+	 * Notify all raw telegram listeners about incoming telegram
+	 * This is called BEFORE any protocol processing or header stripping.
+	 *
+	 * @param buffer Raw telegram buffer including headers (when enabled)
+	 */
+	@SuppressWarnings("rawtypes")
+	private void notifyRawTelegramListeners(char[] buffer)
+	{
+		if (rawTelegramListeners.isEmpty())
+		{
+			return;
+		}
+
+		// Notify all raw listeners
+		java.util.Iterator it = rawTelegramListeners.iterator();
+		while (it.hasNext())
+		{
+			Object listener = it.next();
+			if (listener instanceof RawTelegramListener)
+			{
+				try
+				{
+					((RawTelegramListener) listener).handleRawTelegram(buffer);
+				}
+				catch (Exception e)
+				{
+					log.warning("Raw telegram listener error: " + e.getMessage());
+				}
+			}
+		}
+	}
+
 	/**
 	 * Setter for property service.
 	 *
