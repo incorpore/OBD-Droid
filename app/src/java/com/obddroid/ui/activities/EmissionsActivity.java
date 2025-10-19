@@ -249,38 +249,28 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
 
     @Override
     public boolean onCreateOptionsMenu(android.view.Menu menu) {
-        log.info("onCreateOptionsMenu: Creating refresh menu button");
-
-        // Add refresh button to action bar (right side)
-        menu.add(0, 1, 0, "Refresh")
-            .setIcon(android.R.drawable.ic_menu_rotate)
-            .setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
-
-        log.info("onCreateOptionsMenu: Refresh button added successfully");
+        log.info("onCreateOptionsMenu called - inflating menu");
+        getMenuInflater().inflate(R.menu.emissions_menu, menu);
+        log.info("Menu inflated, items: " + menu.size());
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        log.info("onOptionsItemSelected: item ID = " + item.getItemId() + ", title = " + item.getTitle());
+        log.info("onOptionsItemSelected: ID=" + item.getItemId() + ", R.id.action_refresh=" + R.id.action_refresh);
 
         if (item.getItemId() == android.R.id.home) {
             finish();
             return true;
-        } else if (item.getItemId() == 1) {  // Refresh button ID
+        } else if (item.getItemId() == R.id.action_refresh) {
+            log.info("Refresh button clicked!");
             // Trigger immediate data refresh
-            log.info("Refresh button clicked - requesting emissions data");
             updateDisplay();
 
-            // Show feedback to user via Snackbar
-            try {
-                log.info("Attempting to show Snackbar...");
-                SnackbarHelper.showInfo(this, "Refreshing emissions data...", SnackbarHelper.Duration.SHORT);
-                log.info("Snackbar call completed");
-            } catch (Exception e) {
-                log.severe("Error showing Snackbar: " + e.getMessage());
-                e.printStackTrace();
-            }
+            // Show feedback to user
+            log.info("Showing Snackbar...");
+            SnackbarHelper.showInfo(this, "Refreshing emissions data...");
+            log.info("Snackbar shown");
             return true;
         }
         return super.onOptionsItemSelected(item);

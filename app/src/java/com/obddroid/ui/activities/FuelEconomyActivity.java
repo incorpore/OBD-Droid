@@ -59,6 +59,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private FuelEconomyChart fuelEconomyChart;
     private FuelFlowGauge fuelFlowGauge;
     private VehicleInfoFooter vehicleInfoFooter;
+    private View snackbarAnchor;  // Anchor view for snackbars
 
     // Data tracking
     private Queue<Float> recentMpgData = new LinkedList<>();     // Last 5 values (0-5 min)
@@ -128,11 +129,8 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     }
 
     private void showRecordingStartError() {
-        com.google.android.material.snackbar.Snackbar.make(
-                findViewById(android.R.id.content),
-                "⚠️ Recording failed to start",
-                com.google.android.material.snackbar.Snackbar.LENGTH_SHORT
-        ).show();
+        showSnackbar("⚠️ Recording failed to start",
+                com.google.android.material.snackbar.Snackbar.LENGTH_SHORT);
     }
 
     // Store the latest fuel calculation diagnostics for trip logging
@@ -211,12 +209,23 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
      */
     private void setupFooterOverlay() {
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);
+        snackbarAnchor = findViewById(R.id.content_frame);  // Use content frame for snackbar creation
         View overlay = findViewById(R.id.footer_overlay);
 
         if (vehicleInfoFooter != null && overlay != null) {
             vehicleInfoFooter.setOverlayView(overlay);
             log.info("Footer overlay wired up successfully");
         }
+    }
+
+    /**
+     * Show a snackbar anchored above the vehicle footer
+     */
+    private void showSnackbar(String message, int duration) {
+        com.google.android.material.snackbar.Snackbar snackbar =
+            com.google.android.material.snackbar.Snackbar.make(snackbarAnchor, message, duration);
+        snackbar.setAnchorView(vehicleInfoFooter);  // Position above the footer
+        snackbar.show();
     }
 
     /**
@@ -261,11 +270,8 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                 tripDataLogger.flush();
 
                 log.info("Trip data logging initialized: Documents/OBDroid/" + tripLogFilename);
-                com.google.android.material.snackbar.Snackbar.make(
-                    findViewById(android.R.id.content),
-                    "📊 Recording started: " + tripLogFilename,
-                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG
-                ).show();
+                showSnackbar("📊 Recording started: " + tripLogFilename,
+                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG);
                 return true;
             } else {
                 // Android 9 and below - Use legacy file system
@@ -287,11 +293,8 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                 tripDataLogger.flush();
 
                 log.info("Trip data logging initialized: " + csvFile.getAbsolutePath());
-                com.google.android.material.snackbar.Snackbar.make(
-                    findViewById(android.R.id.content),
-                    "📊 Recording started: " + tripLogFilename,
-                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG
-                ).show();
+                showSnackbar("📊 Recording started: " + tripLogFilename,
+                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG);
                 return true;
             }
         } catch (IOException e) {
@@ -469,18 +472,12 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                 tripDataLogger = null;
                 log.info("Trip data logging stopped: " + tripLogFilename);
 
-                com.google.android.material.snackbar.Snackbar.make(
-                    findViewById(android.R.id.content),
-                    "✅ Trip data saved: " + tripLogFilename,
-                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG
-                ).show();
+                showSnackbar("✅ Trip data saved: " + tripLogFilename,
+                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG);
             } catch (IOException e) {
                 log.warning("Error stopping trip data logger: " + e.getMessage());
-                com.google.android.material.snackbar.Snackbar.make(
-                    findViewById(android.R.id.content),
-                    "⚠️ Error saving trip data",
-                    com.google.android.material.snackbar.Snackbar.LENGTH_SHORT
-                ).show();
+                showSnackbar("⚠️ Error saving trip data",
+                    com.google.android.material.snackbar.Snackbar.LENGTH_SHORT);
             }
         }
         isRecording = false;
@@ -683,11 +680,8 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                 if (success) {
                     log.info("Calibration saved successfully: VE=" + calculatedNewVE[0] + "%");
 
-                    com.google.android.material.snackbar.Snackbar.make(
-                            findViewById(android.R.id.content),
-                            String.format("✅ Calibration saved! VE adjusted to %.1f%%", calculatedNewVE[0]),
-                            com.google.android.material.snackbar.Snackbar.LENGTH_LONG
-                    ).show();
+                    showSnackbar(String.format("✅ Calibration saved! VE adjusted to %.1f%%", calculatedNewVE[0]),
+                            com.google.android.material.snackbar.Snackbar.LENGTH_LONG);
 
                     dialog.dismiss();
                 } else {
@@ -1100,11 +1094,8 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                                 log.info("User confirmed tank capacity: " + capacity + " gal");
 
                                 // Show confirmation snackbar
-                                com.google.android.material.snackbar.Snackbar.make(
-                                        findViewById(android.R.id.content),
-                                        "Tank capacity saved: " + String.format(Locale.US, "%.1f", capacity) + " gal",
-                                        com.google.android.material.snackbar.Snackbar.LENGTH_SHORT
-                                ).show();
+                                showSnackbar("Tank capacity saved: " + String.format(Locale.US, "%.1f", capacity) + " gal",
+                                        com.google.android.material.snackbar.Snackbar.LENGTH_SHORT);
 
                                 // Recalculate range with new capacity
                                 updateDisplayedValues();
@@ -1113,19 +1104,13 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                             }
                         } else {
                             // Invalid range
-                            com.google.android.material.snackbar.Snackbar.make(
-                                    findViewById(android.R.id.content),
-                                    "Please enter a value between 5 and 100 gallons",
-                                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG
-                            ).show();
+                            showSnackbar("Please enter a value between 5 and 100 gallons",
+                                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG);
                         }
                     } catch (NumberFormatException e) {
                         log.warning("Invalid tank capacity input: " + input.getText());
-                        com.google.android.material.snackbar.Snackbar.make(
-                                findViewById(android.R.id.content),
-                                "Invalid number format",
-                                com.google.android.material.snackbar.Snackbar.LENGTH_SHORT
-                        ).show();
+                        showSnackbar("Invalid number format",
+                                com.google.android.material.snackbar.Snackbar.LENGTH_SHORT);
                     }
                 })
                 .setNegativeButton("Later", (dialogInterface, which) -> {
