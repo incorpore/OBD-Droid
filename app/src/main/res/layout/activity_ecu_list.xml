@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- Content area with overlay support -->
+    <FrameLayout
+        android:id="@+id/content_frame"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <!-- RecyclerView for ECU List -->
         <androidx.recyclerview.widget.RecyclerView
@@ -46,7 +54,16 @@
                 android:textSize="14sp"
                 android:textColor="@android:color/darker_gray"
                 android:textAlignment="center"
-                android:gravity="center" />
+                android:gravity="center"
+                android:layout_marginBottom="24dp" />
+
+            <!-- Scan Button (centered below text) -->
+            <Button
+                android:id="@+id/scan_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Scan ECUs"
+                android:textSize="14sp" />
         </LinearLayout>
 
         <!-- Progress Bar -->
@@ -57,16 +74,22 @@
             android:layout_gravity="center"
             android:visibility="gone" />
 
-    <!-- Scan Button -->
-    <Button
-        android:id="@+id/scan_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:text="SCAN ECUS"
-        android:textSize="16sp"
-        android:drawableLeft="@android:drawable/ic_menu_search"
-        android:drawablePadding="8dp" />
+        <!-- Overlay that appears when footer is expanded -->
+        <View
+            android:id="@+id/footer_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#80000000"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone"/>
 
-</FrameLayout>
+    </FrameLayout>
+
+    <!-- Vehicle Info Footer -->
+    <com.obddroid.ui.components.VehicleInfoFooter
+        android:id="@+id/vehicle_footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+</LinearLayout>

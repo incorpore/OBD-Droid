@@ -850,8 +850,6 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         // Categorize Mode 9 data - show EVERYTHING (now storing mnemonic too)
         java.util.Map<String, java.util.List<String[]>> categorizedData = new java.util.LinkedHashMap<>();
         categorizedData.put("Vehicle Identification", new java.util.ArrayList<>());
-        categorizedData.put("ECU Information", new java.util.ArrayList<>());
-        categorizedData.put("Calibration Data", new java.util.ArrayList<>());
         categorizedData.put("Emission Monitors", new java.util.ArrayList<>());
         categorizedData.put("System Counters", new java.util.ArrayList<>());
         categorizedData.put("Protocol Information", new java.util.ArrayList<>());
@@ -884,8 +882,6 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
                               description.contains("numitems") ||
                               description.contains("length")) {
                         categorizedData.get("Protocol Information").add(new String[]{label, displayValue, mnemonic, pidDisplay});
-                    } else if (description.contains("ECU name") || description.contains("ECU")) {
-                        categorizedData.get("ECU Information").add(new String[]{label, displayValue, mnemonic, pidDisplay});
                     } else if (description.contains("Monitor") || description.contains("COMP") ||
                               description.contains("Catalyst") || description.contains("O2") ||
                               description.contains("EGR") || description.contains("EVAP") ||
@@ -904,7 +900,9 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
                         categorizedData.get("System Counters").add(new String[]{label, displayValue, mnemonic, pidDisplay});
                     } else if (description.contains("Calibration") || description.contains("CVN") ||
                               description.contains("CAL-ID") || description.contains("CAL")) {
-                        categorizedData.get("Calibration Data").add(new String[]{label, displayValue, mnemonic, pidDisplay});
+                        // Skip calibration data - ECU-specific, shown on ECU Modules page instead
+                    } else if (description.contains("ECU name") || description.contains("ECU")) {
+                        // Skip ECU data - don't display it
                     } else {
                         categorizedData.get("Other Information").add(new String[]{label, displayValue, mnemonic, pidDisplay});
                     }

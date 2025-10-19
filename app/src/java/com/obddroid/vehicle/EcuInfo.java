@@ -10,6 +10,7 @@ public class EcuInfo {
     private final int address;
     private String name;
     private String calibrationId;
+    private String calibrationId2;
     private String calibrationVerification;
     private int responseCount;
 
@@ -21,6 +22,7 @@ public class EcuInfo {
         this.address = address;
         this.name = null;
         this.calibrationId = null;
+        this.calibrationId2 = null;
         this.calibrationVerification = null;
         this.responseCount = 0;
     }
@@ -47,6 +49,14 @@ public class EcuInfo {
 
     public void setCalibrationId(String calibrationId) {
         this.calibrationId = calibrationId;
+    }
+
+    public String getCalibrationId2() {
+        return calibrationId2;
+    }
+
+    public void setCalibrationId2(String calibrationId2) {
+        this.calibrationId2 = calibrationId2;
     }
 
     public String getCalibrationVerification() {
@@ -121,7 +131,7 @@ public class EcuInfo {
      * Check if this ECU has meaningful data
      */
     public boolean hasData() {
-        return name != null || calibrationId != null || calibrationVerification != null;
+        return name != null || calibrationId != null || calibrationId2 != null || calibrationVerification != null;
     }
 
     @NonNull

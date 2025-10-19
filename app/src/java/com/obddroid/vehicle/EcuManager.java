@@ -267,9 +267,10 @@ public class EcuManager {
             }
         }
 
-        // Replace multiple spaces/dashes with a single space
+        // Clean up spacing: replace multiple spaces with single space, preserve dashes
         String result = cleaned.toString()
-            .replaceAll("[-\\s]+", " ")
+            .replaceAll("\\s+", " ")  // Multiple spaces → single space
+            .replaceAll("-+", "-")     // Multiple dashes → single dash
             .trim();
 
         return result.isEmpty() ? null : result;
@@ -410,6 +411,15 @@ public class EcuManager {
                     ecu.setCalibrationId(info.calibrationId);
                     updated = true;
                     log.info(String.format("EcuManager: Set ECU %s cal ID: %s", ecu.getAddressHex(), info.calibrationId));
+                }
+            }
+
+            if (info.calibrationId2 != null && !info.calibrationId2.trim().isEmpty()) {
+                // Only update if different
+                if (!info.calibrationId2.equals(ecu.getCalibrationId2())) {
+                    ecu.setCalibrationId2(info.calibrationId2);
+                    updated = true;
+                    log.info(String.format("EcuManager: Set ECU %s cal ID 2: %s", ecu.getAddressHex(), info.calibrationId2));
                 }
             }
 

@@ -44,6 +44,10 @@ public class EcuAdapter extends RecyclerView.Adapter<EcuAdapter.EcuViewHolder> {
         }
     }
 
+    public List<EcuInfo> getEcuList() {
+        return new ArrayList<>(ecuList);  // Return copy to prevent modification
+    }
+
     @NonNull
     @Override
     public EcuViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -68,8 +72,10 @@ public class EcuAdapter extends RecyclerView.Adapter<EcuAdapter.EcuViewHolder> {
         private final TextView typeTextView;
         private final TextView addressTextView;
         private final TextView calibrationIdTextView;
+        private final TextView calibrationId2TextView;
         private final TextView calibrationVerificationTextView;
         private final View calibrationIdContainer;
+        private final View calibrationId2Container;
         private final View calibrationVerificationContainer;
 
         public EcuViewHolder(@NonNull View itemView) {
@@ -78,8 +84,10 @@ public class EcuAdapter extends RecyclerView.Adapter<EcuAdapter.EcuViewHolder> {
             typeTextView = itemView.findViewById(R.id.ecu_type);
             addressTextView = itemView.findViewById(R.id.ecu_address);
             calibrationIdTextView = itemView.findViewById(R.id.ecu_calibration_id);
+            calibrationId2TextView = itemView.findViewById(R.id.ecu_calibration_id2);
             calibrationVerificationTextView = itemView.findViewById(R.id.ecu_calibration_verification);
             calibrationIdContainer = itemView.findViewById(R.id.calibration_id_container);
+            calibrationId2Container = itemView.findViewById(R.id.calibration_id2_container);
             calibrationVerificationContainer = itemView.findViewById(R.id.calibration_verification_container);
         }
 
@@ -94,6 +102,14 @@ public class EcuAdapter extends RecyclerView.Adapter<EcuAdapter.EcuViewHolder> {
                 calibrationIdContainer.setVisibility(View.VISIBLE);
             } else {
                 calibrationIdContainer.setVisibility(View.GONE);
+            }
+
+            // Calibration ID 2
+            if (ecu.getCalibrationId2() != null && !ecu.getCalibrationId2().isEmpty()) {
+                calibrationId2TextView.setText(ecu.getCalibrationId2());
+                calibrationId2Container.setVisibility(View.VISIBLE);
+            } else {
+                calibrationId2Container.setVisibility(View.GONE);
             }
 
             // Calibration Verification
