@@ -93,7 +93,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@android:color/white"
+        android:background="#212121"
         android:elevation="8dp">
 
         <!-- Summary section -->
@@ -102,7 +102,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="16dp"
-            android:background="#F5F5F5"
+            android:background="#212121"
             android:gravity="center">
 
             <LinearLayout
@@ -126,14 +126,14 @@
                     android:layout_height="wrap_content"
                     android:text="Changed"
                     android:textSize="12sp"
-                    android:textColor="#757575"
+                    android:textColor="#9E9E9E"
                     android:layout_marginTop="4dp"/>
             </LinearLayout>
 
             <View
                 android:layout_width="1dp"
                 android:layout_height="50dp"
-                android:background="#E0E0E0"/>
+                android:background="#424242"/>
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -156,7 +156,7 @@
                     android:layout_height="wrap_content"
                     android:text="Unchanged"
                     android:textSize="12sp"
-                    android:textColor="#757575"
+                    android:textColor="#9E9E9E"
                     android:layout_marginTop="4dp"/>
             </LinearLayout>
         </LinearLayout>

@@ -61,6 +61,7 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
     private static final Logger log = Logger.getLogger(EcuListActivity.class.getName());
     private static final int REQUEST_CODE_IMPORT_CSV = 1001;
     private static final int REQUEST_CODE_IMPORT_CSV_FOR_COMPARISON = 1002;
+    private static final int REQUEST_CODE_SELECT_BASELINE_SCAN = 1003;
 
     private RecyclerView recyclerView;
     private EcuAdapter adapter;
@@ -441,6 +442,25 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
             if (data != null && data.getData() != null) {
                 importCSVFileForComparison(data.getData());
             }
+        } else if (requestCode == REQUEST_CODE_SELECT_BASELINE_SCAN && resultCode == RESULT_OK) {
+            if (data != null) {
+                // Check if user requested CSV import
+                boolean importCsvRequested = data.getBooleanExtra(
+                    BaselineScanSelectionActivity.EXTRA_IMPORT_CSV_REQUESTED, false);
+
+                if (importCsvRequested) {
+                    // User tapped Import CSV button
+                    importCsvForComparison();
+                } else {
+                    // User selected a baseline scan
+                    EcuScan selectedScan = (EcuScan) data.getSerializableExtra(
+                        BaselineScanSelectionActivity.EXTRA_SELECTED_SCAN);
+
+                    if (selectedScan != null) {
+                        compareAgainstCurrentData(selectedScan);
+                    }
+                }
+            }
         }
     }
 
@@ -705,7 +725,7 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
     }
 
     /**
-     * Open scan comparison dialog
+     * Open scan comparison activity
      */
     private void openCompareScans() {
         // Check if we have current ECU data
@@ -722,97 +742,11 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
             return;
         }
 
-        List<EcuScan> scans = scanHistoryManager.getScansForVin(vin);
-
-        // Show scan selection dialog
-        showScanSelectionDialog(scans);
+        // Launch baseline scan selection activity
+        Intent intent = new Intent(this, BaselineScanSelectionActivity.class);
+        startActivityForResult(intent, REQUEST_CODE_SELECT_BASELINE_SCAN);
     }
 
-    /**
-     * Show dialog for selecting a baseline scan to compare against current data
-     */
-    private void showScanSelectionDialog(List<EcuScan> scans) {
-        // Inflate custom dialog layout
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_scan_selection, null);
-
-        LinearLayout scanListContainer = dialogView.findViewById(R.id.scan_list_container);
-        TextView showMoreButton = dialogView.findViewById(R.id.show_more_button);
-        Button importCsvButton = dialogView.findViewById(R.id.btn_import_csv);
-        Button cancelButton = dialogView.findViewById(R.id.btn_cancel);
-
-        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.US);
-
-        final int INITIAL_LIMIT = 5;
-        final boolean[] isExpanded = {false};
-
-        // Function to populate scan list
-        Runnable populateScans = () -> {
-            scanListContainer.removeAllViews();
-
-            int limit = isExpanded[0] ? scans.size() : Math.min(INITIAL_LIMIT, scans.size());
-
-            for (int i = 0; i < limit; i++) {
-                EcuScan scan = scans.get(i);
-                TextView scanItem = new TextView(this);
-                scanItem.setText(sdf.format(scan.getDate()) + " (" + scan.getEcus().size() + " ECUs)");
-                scanItem.setTextSize(16);
-                scanItem.setPadding(32, 32, 32, 32);
-                scanItem.setBackground(getDrawable(android.R.drawable.list_selector_background));
-                scanItem.setClickable(true);
-                scanItem.setFocusable(true);
-
-                final int index = i;
-                scanItem.setOnClickListener(v -> {
-                    compareAgainstCurrentData(scans.get(index));
-                    ((android.app.AlertDialog) v.getTag()).dismiss();
-                });
-
-                scanListContainer.addView(scanItem);
-            }
-
-            // Show/hide "Show more" button
-            if (scans.size() > INITIAL_LIMIT) {
-                showMoreButton.setVisibility(View.VISIBLE);
-                showMoreButton.setText(isExpanded[0] ? "▲ Show less" : "▼ Show more scans");
-            } else {
-                showMoreButton.setVisibility(View.GONE);
-            }
-        };
-
-        // Create dialog
-        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this)
-                .setView(dialogView)
-                .create();
-
-        // Populate initial scans
-        populateScans.run();
-
-        // Set tag for dialog reference in scan item click listeners
-        for (int i = 0; i < scanListContainer.getChildCount(); i++) {
-            scanListContainer.getChildAt(i).setTag(dialog);
-        }
-
-        // Show more button click listener
-        showMoreButton.setOnClickListener(v -> {
-            isExpanded[0] = !isExpanded[0];
-            populateScans.run();
-            // Update tags after repopulating
-            for (int i = 0; i < scanListContainer.getChildCount(); i++) {
-                scanListContainer.getChildAt(i).setTag(dialog);
-            }
-        });
-
-        // Import CSV button
-        importCsvButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            importCsvForComparison();
-        });
-
-        // Cancel button
-        cancelButton.setOnClickListener(v -> dialog.dismiss());
-
-        dialog.show();
-    }
 
     /**
      * Show comparison results in a dialog

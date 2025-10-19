@@ -125,6 +125,12 @@
             android:configChanges="touchscreen|orientation|screenSize"
             android:parentActivityName="com.obddroid.ui.activities.EcuListActivity"
             android:exported="false" />
+        <activity
+            android:name="com.obddroid.ui.activities.BaselineScanSelectionActivity"
+            android:label="Select Baseline Scan"
+            android:configChanges="touchscreen|orientation|screenSize"
+            android:parentActivityName="com.obddroid.ui.activities.EcuListActivity"
+            android:exported="false" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
