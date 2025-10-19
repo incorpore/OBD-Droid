@@ -119,6 +119,12 @@
             android:label="@string/ecu_list_title"
             android:configChanges="touchscreen|orientation|screenSize"
             android:exported="false" />
+        <activity
+            android:name="com.obddroid.ui.activities.EcuComparisonActivity"
+            android:label="ECU Comparison"
+            android:configChanges="touchscreen|orientation|screenSize"
+            android:parentActivityName="com.obddroid.ui.activities.EcuListActivity"
+            android:exported="false" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

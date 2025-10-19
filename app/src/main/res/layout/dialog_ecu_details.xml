@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background">
+
+    <!-- Header with ECU info -->
+    <LinearLayout
+        android:id="@+id/header_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:background="#1976D2"
+        android:gravity="center_vertical"
+        android:layout_alignParentTop="true">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@android:drawable/ic_menu_info_details"
+            android:tint="@android:color/white"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
+
+            <TextView
+                android:id="@+id/ecu_name_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ECU Details"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"/>
+
+            <TextView
+                android:id="@+id/ecu_address_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0x7E8"
+                android:textSize="14sp"
+                android:textColor="#B3E5FC"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Bottom button container -->
+    <LinearLayout
+        android:id="@+id/button_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_alignParentBottom="true">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:padding="12dp">
+
+            <Button
+                android:id="@+id/btn_close"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="Close"
+                android:textColor="#757575"
+                android:textSize="14sp"
+                android:background="?android:attr/selectableItemBackground"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Content area -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/header_container"
+        android:layout_above="@id/button_container"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+            <!-- Status -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Status"
+                android:textSize="12sp"
+                android:textColor="#757575"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/ecu_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No changes"
+                android:textSize="16sp"
+                android:textColor="#4CAF50"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Baseline Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="BASELINE SCAN"
+                    android:textSize="14sp"
+                    android:textColor="#1976D2"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/baseline_timestamp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Oct 18, 2025 22:22"
+                    android:textSize="11sp"
+                    android:textColor="#757575"
+                    android:layout_marginStart="8dp"/>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:background="#E0E0E0"
+                android:layout_marginBottom="12dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:text="Cal ID:"
+                    android:textSize="14sp"
+                    android:textColor="#757575"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/baseline_cal_id"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2769011200190170"
+                    android:textSize="14sp"
+                    android:textColor="#212121"
+                    android:fontFamily="monospace"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:text="CVN:"
+                    android:textSize="14sp"
+                    android:textColor="#757575"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/baseline_cvn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="EB854939"
+                    android:textSize="14sp"
+                    android:textColor="#212121"
+                    android:fontFamily="monospace"/>
+            </LinearLayout>
+
+            <!-- Current Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CURRENT SCAN"
+                    android:textSize="14sp"
+                    android:textColor="#F57C00"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/current_timestamp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Live Data"
+                    android:textSize="11sp"
+                    android:textColor="#757575"
+                    android:layout_marginStart="8dp"/>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:background="#E0E0E0"
+                android:layout_marginBottom="12dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:text="Cal ID:"
+                    android:textSize="14sp"
+                    android:textColor="#757575"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/current_cal_id"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2769011200190170"
+                    android:textSize="14sp"
+                    android:textColor="#212121"
+                    android:fontFamily="monospace"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:text="CVN:"
+                    android:textSize="14sp"
+                    android:textColor="#757575"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/current_cvn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="EB854939"
+                    android:textSize="14sp"
+                    android:textColor="#212121"
+                    android:fontFamily="monospace"/>
+            </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>

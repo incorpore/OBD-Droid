@@ -1,12 +1,14 @@
 package com.obddroid.vehicle;
 
 import androidx.annotation.NonNull;
+import java.io.Serializable;
 
 /**
  * Represents an Electronic Control Unit (ECU) in the vehicle.
  * Contains identification, calibration, and diagnostic information.
  */
-public class EcuInfo {
+public class EcuInfo implements Serializable {
+    private static final long serialVersionUID = 1L;
     private final int address;
     private String name;
     private String calibrationId;

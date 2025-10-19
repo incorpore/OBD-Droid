@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="6dp"
+    app:cardCornerRadius="6dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- ECU Header -->
+        <LinearLayout
+            android:id="@+id/ecu_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:gravity="center_vertical"
+            android:background="@android:color/white">
+
+            <!-- Status Icon -->
+            <ImageView
+                android:id="@+id/status_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_info_details"
+                android:tint="#4CAF50"
+                android:layout_marginEnd="12dp"/>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/ecu_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ECM-EngineControl"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black"/>
+
+                <TextView
+                    android:id="@+id/status_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No changes"
+                    android:textSize="12sp"
+                    android:textColor="#4CAF50"
+                    android:layout_marginTop="2dp"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/ecu_address"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0x7E8"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/holo_blue_dark"
+                android:fontFamily="monospace"
+                android:padding="4dp"
+                android:background="@drawable/rounded_background"/>
+        </LinearLayout>
+
+        <!-- Changes Container (hidden by default, shown only if ECU changed) -->
+        <LinearLayout
+            android:id="@+id/changes_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:paddingTop="0dp"
+            android:visibility="gone">
+
+            <!-- Cal ID Change -->
+            <LinearLayout
+                android:id="@+id/cal_id_change_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="8dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Calibration ID"
+                    android:textSize="10sp"
+                    android:textColor="@android:color/darker_gray"
+                    android:textStyle="bold"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Was:"
+                        android:textSize="11sp"
+                        android:textColor="#757575"
+                        android:layout_marginEnd="8dp"
+                        android:minWidth="50dp"/>
+
+                    <TextView
+                        android:id="@+id/cal_id_old"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="2769011200190170"
+                        android:textSize="11sp"
+                        android:textColor="#757575"
+                        android:fontFamily="monospace"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="2dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Now:"
+                        android:textSize="11sp"
+                        android:textColor="#F57C00"
+                        android:textStyle="bold"
+                        android:layout_marginEnd="8dp"
+                        android:minWidth="50dp"/>
+
+                    <TextView
+                        android:id="@+id/cal_id_new"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="2769011200190999"
+                        android:textSize="11sp"
+                        android:textColor="#F57C00"
+                        android:fontFamily="monospace"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- CVN Change -->
+            <LinearLayout
+                android:id="@+id/cvn_change_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="12dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Calibration Verification Number"
+                    android:textSize="10sp"
+                    android:textColor="@android:color/darker_gray"
+                    android:textStyle="bold"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Was:"
+                        android:textSize="11sp"
+                        android:textColor="#757575"
+                        android:layout_marginEnd="8dp"
+                        android:minWidth="50dp"/>
+
+                    <TextView
+                        android:id="@+id/cvn_old"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="EB854939"
+                        android:textSize="11sp"
+                        android:textColor="#757575"
+                        android:fontFamily="monospace"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="2dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Now:"
+                        android:textSize="11sp"
+                        android:textColor="#F57C00"
+                        android:textStyle="bold"
+                        android:layout_marginEnd="8dp"
+                        android:minWidth="50dp"/>
+
+                    <TextView
+                        android:id="@+id/cvn_new"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="FF123ABC"
+                        android:textSize="11sp"
+                        android:textColor="#F57C00"
+                        android:fontFamily="monospace"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
