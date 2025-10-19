@@ -51,6 +51,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
     private CardView overallStatusCard;
     private LinearLayout monitorsContainer;
     private VehicleInfoFooter vehicleInfoFooter;
+    private View snackbarAnchor;  // Anchor view for snackbars
 
     // Monitor tracking
     private Map<String, MonitorData> monitorDataMap = new HashMap<>();
@@ -183,8 +184,20 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         lastUpdatedText = findViewById(R.id.last_updated_text);
         monitorsContainer = findViewById(R.id.monitors_container);
         vehicleInfoFooter = findViewById(R.id.vehicle_info_footer);
+        snackbarAnchor = findViewById(R.id.content_frame);  // Use CoordinatorLayout for snackbar creation
 
         log.info("Views initialized");
+    }
+
+    /**
+     * Show a snackbar anchored above the vehicle footer
+     */
+    private void showSnackbar(String message) {
+        com.google.android.material.snackbar.Snackbar snackbar =
+            com.google.android.material.snackbar.Snackbar.make(snackbarAnchor, message,
+                com.google.android.material.snackbar.Snackbar.LENGTH_SHORT);
+        snackbar.setAnchorView(vehicleInfoFooter);  // Position above the footer
+        snackbar.show();
     }
 
     private void initializeMonitors() {
@@ -269,7 +282,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
 
             // Show feedback to user
             log.info("Showing Snackbar...");
-            SnackbarHelper.showInfo(this, "Refreshing emissions data...");
+            showSnackbar("Refreshing emissions data...");
             log.info("Snackbar shown");
             return true;
         }
@@ -311,7 +324,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
             log.info("Some data missing - user should visit Live Data or Vehicle Info tabs first");
             updateHandler.postDelayed(() -> {
                 String message = "Tip: Visit 'Live Data' and 'Vehicle Info' tabs first to populate emissions data";
-                SnackbarHelper.showInfo(this, message);
+                showSnackbar(message);
             }, 1000);
         }
     }
