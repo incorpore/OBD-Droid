@@ -15,11 +15,12 @@
         android:textColor="@android:color/black"
         android:paddingBottom="16dp"/>
 
-    <!-- Scrollable scan list -->
+    <!-- Scrollable scan list with fixed height -->
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:maxHeight="400dp">
+        android:layout_height="300dp"
+        android:fillViewport="false"
+        android:scrollbars="vertical">
 
         <LinearLayout
             android:id="@+id/scan_list_container"
