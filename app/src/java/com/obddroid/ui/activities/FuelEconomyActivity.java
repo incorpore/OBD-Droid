@@ -1,10 +1,14 @@
 package com.obddroid.ui.activities;
 
+import android.content.ContentValues;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.view.View;
 import android.widget.TextView;
 
@@ -19,8 +23,16 @@ import com.obddroid.ui.components.FuelEconomyChart;
 import com.obddroid.ui.components.FuelFlowGauge;
 import com.obddroid.ui.components.VehicleInfoFooter;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.logging.Logger;
 
@@ -56,6 +68,12 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
     private Handler updateHandler;
     private static final long UPDATE_INTERVAL = 1000; // Update every second
+
+    // Trip data logging
+    private OutputStreamWriter tripDataLogger;
+    private String tripLogFilename;
+    private long tripStartTime;
+    private boolean isRecording = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +136,110 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         }
     }
 
+    /**
+     * Initialize trip data logging to CSV file
+     */
+    private void initializeTripDataLogging() {
+        try {
+            tripStartTime = System.currentTimeMillis();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
+            String timestamp = sdf.format(new Date(tripStartTime));
+            tripLogFilename = "fuel_economy_trip_" + timestamp + ".csv";
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Android 10+ - Use MediaStore API
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, tripLogFilename);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+
+                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
+                if (uri != null) {
+                    OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                    tripDataLogger = new OutputStreamWriter(outputStream);
+
+                    // Write CSV header
+                    tripDataLogger.write("Timestamp,ElapsedSec,Speed_MPH,RPM,EngineLoad_%,ThrottlePos_%,FuelLevel_%," +
+                            "FuelFlow_GalH,InstantMPG,AvgMPG,Range_Mi,TimeToEmpty,PID,PIDValue\n");
+                    tripDataLogger.flush();
+
+                    log.info("Trip data logging initialized: Documents/OBDroid/" + tripLogFilename);
+                    com.google.android.material.snackbar.Snackbar.make(
+                        findViewById(android.R.id.content),
+                        "📊 Recording started: " + tripLogFilename,
+                        com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                    ).show();
+                }
+            } else {
+                // Android 9 and below - Use legacy file system
+                File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+                File obdroidDir = new File(documentsDir, "OBDroid");
+                if (!obdroidDir.exists()) {
+                    obdroidDir.mkdirs();
+                }
+
+                File csvFile = new File(obdroidDir, tripLogFilename);
+                tripDataLogger = new OutputStreamWriter(new java.io.FileOutputStream(csvFile));
+
+                // Write CSV header
+                tripDataLogger.write("Timestamp,ElapsedSec,Speed_MPH,RPM,EngineLoad_%,ThrottlePos_%,FuelLevel_%," +
+                        "FuelFlow_GalH,InstantMPG,AvgMPG,Range_Mi,TimeToEmpty,PID,PIDValue\n");
+                tripDataLogger.flush();
+
+                log.info("Trip data logging initialized: " + csvFile.getAbsolutePath());
+                com.google.android.material.snackbar.Snackbar.make(
+                    findViewById(android.R.id.content),
+                    "📊 Recording started: " + tripLogFilename,
+                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                ).show();
+            }
+        } catch (IOException e) {
+            log.severe("Failed to initialize trip data logging: " + e.getMessage());
+            com.google.android.material.snackbar.Snackbar.make(
+                findViewById(android.R.id.content),
+                "⚠️ Recording failed to start",
+                com.google.android.material.snackbar.Snackbar.LENGTH_SHORT
+            ).show();
+        }
+    }
+
+    /**
+     * Log trip data row to CSV
+     */
+    private void logTripData(String pid, String pidValue) {
+        if (!isRecording || tripDataLogger == null) return;
+
+        try {
+            long elapsedMs = System.currentTimeMillis() - tripStartTime;
+            float elapsedSec = elapsedMs / 1000f;
+
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US);
+            String timestamp = sdf.format(new Date());
+
+            // Get current values
+            float speed = getCurrentSpeed();
+            float rpm = getCurrentRPM();
+            float engineLoad = getCurrentEngineLoad();
+            float throttle = getThrottlePosition();
+            String fuelLevel = fuelLevelValue.getText().toString();
+            String fuelFlow = fuelFlowValue.getText().toString();
+            String instantMpg = instantMpgValue.getText().toString();
+            String avgMpg = averageMpgValue.getText().toString();
+            String range = rangeValue.getText().toString();
+            String timeToEmpty = timeToEmptyValue.getText().toString();
+
+            // Write CSV row
+            tripDataLogger.write(String.format(Locale.US,
+                    "%s,%.1f,%.1f,%.0f,%.1f,%.0f,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                    timestamp, elapsedSec, speed, rpm, engineLoad, throttle,
+                    fuelLevel, fuelFlow, instantMpg, avgMpg, range, timeToEmpty,
+                    pid, pidValue));
+            tripDataLogger.flush();
+        } catch (IOException e) {
+            log.warning("Failed to log trip data: " + e.getMessage());
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -147,6 +269,11 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     protected void onDestroy() {
         super.onDestroy();
         ObdProt.PidPvs.removePvChangeListener(this);
+
+        // Auto-save if still recording
+        if (isRecording) {
+            stopRecording();
+        }
     }
 
     @Override
@@ -157,20 +284,86 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
     @Override
     public boolean onCreateOptionsMenu(android.view.Menu menu) {
-        // Add info icon to action bar
-        menu.add(0, 1, 0, "Info")
+        // Add record button to action bar (left side)
+        menu.add(0, 1, 0, "Record")
+            .setIcon(android.R.drawable.ic_menu_save)
+            .setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+        // Add info icon to action bar (right side)
+        menu.add(0, 2, 1, "Info")
             .setIcon(android.R.drawable.ic_menu_info_details)
             .setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
         return true;
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(android.view.Menu menu) {
+        // Update record button icon based on recording state
+        android.view.MenuItem recordItem = menu.findItem(1);
+        if (recordItem != null) {
+            if (isRecording) {
+                recordItem.setIcon(android.R.drawable.ic_media_pause);
+                recordItem.setTitle("Stop Recording");
+            } else {
+                recordItem.setIcon(android.R.drawable.ic_menu_save);
+                recordItem.setTitle("Start Recording");
+            }
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(android.view.MenuItem item) {
-        if (item.getItemId() == 1) {
+        int itemId = item.getItemId();
+
+        if (itemId == 1) {
+            // Toggle recording
+            toggleRecording();
+            invalidateOptionsMenu(); // Refresh menu to update icon
+            return true;
+        } else if (itemId == 2) {
             showInfoDialog();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void toggleRecording() {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    }
+
+    private void startRecording() {
+        initializeTripDataLogging();
+        isRecording = true;
+    }
+
+    private void stopRecording() {
+        if (tripDataLogger != null) {
+            try {
+                tripDataLogger.flush();
+                tripDataLogger.close();
+                tripDataLogger = null;
+                log.info("Trip data logging stopped: " + tripLogFilename);
+
+                com.google.android.material.snackbar.Snackbar.make(
+                    findViewById(android.R.id.content),
+                    "✅ Trip data saved: " + tripLogFilename,
+                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                ).show();
+            } catch (IOException e) {
+                log.warning("Error stopping trip data logger: " + e.getMessage());
+                com.google.android.material.snackbar.Snackbar.make(
+                    findViewById(android.R.id.content),
+                    "⚠️ Error saving trip data",
+                    com.google.android.material.snackbar.Snackbar.LENGTH_SHORT
+                ).show();
+            }
+        }
+        isRecording = false;
     }
 
     private void showInfoDialog() {
@@ -258,6 +451,9 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         if (valueObj == null) return;
 
         String valueStr = valueObj.toString();
+
+        // Log all incoming PID data
+        logTripData(String.format("0x%02X", pid), valueStr);
 
         try {
             switch (pid) {
