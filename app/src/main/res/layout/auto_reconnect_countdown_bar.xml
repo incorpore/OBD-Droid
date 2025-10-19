@@ -10,6 +10,17 @@
     android:focusable="true"
     android:visibility="gone">
 
+    <!-- Progress bar at top -->
+    <ProgressBar
+        android:id="@+id/countdown_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:max="5000"
+        android:progress="0"
+        android:progressTint="#4CAF50"
+        android:progressBackgroundTint="#424242"/>
+
     <!-- Main content row -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -67,16 +78,5 @@
             android:clickable="true"
             android:focusable="true"/>
     </LinearLayout>
-
-    <!-- Progress bar -->
-    <ProgressBar
-        android:id="@+id/countdown_progress"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:max="5000"
-        android:progress="0"
-        android:progressTint="#4CAF50"
-        android:progressBackgroundTint="#424242"/>
 
 </LinearLayout>

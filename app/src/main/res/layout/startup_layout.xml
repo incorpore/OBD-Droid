@@ -6,11 +6,6 @@
     android:orientation="vertical"
     >
 
-    <!-- Auto-reconnect countdown bar (hidden by default) -->
-    <include
-        android:id="@+id/auto_reconnect_countdown_bar"
-        layout="@layout/auto_reconnect_countdown_bar"/>
-
     <!-- Content area with overlay support -->
     <FrameLayout
         android:layout_width="match_parent"
@@ -383,6 +378,11 @@
         android:visibility="gone"/>
 
     </FrameLayout>
+
+    <!-- Auto-reconnect countdown bar (hidden by default) -->
+    <include
+        android:id="@+id/auto_reconnect_countdown_bar"
+        layout="@layout/auto_reconnect_countdown_bar"/>
 
     <com.obddroid.ui.components.VehicleInfoFooter
         android:id="@+id/vehicle_footer"
