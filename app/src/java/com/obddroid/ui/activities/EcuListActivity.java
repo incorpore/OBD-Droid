@@ -493,7 +493,7 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
 
             // Mark data as imported
             isDataFromImport = true;
-            importedFileName = getFileNameFromUri(uri); // Get actual filename from URI
+            importedFileName = extractTimestampFromFilename(getFileNameFromUri(uri)); // Extract timestamp from filename
 
             showSnackbar("Imported " + importedEcus.size() + " ECU(s)",
                 Snackbar.LENGTH_LONG);
@@ -732,32 +732,86 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
      * Show dialog for selecting a baseline scan to compare against current data
      */
     private void showScanSelectionDialog(List<EcuScan> scans) {
-        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-        builder.setTitle("Select Baseline Scan");
+        // Inflate custom dialog layout
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_scan_selection, null);
 
-        // Build list of scan options
+        LinearLayout scanListContainer = dialogView.findViewById(R.id.scan_list_container);
+        TextView showMoreButton = dialogView.findViewById(R.id.show_more_button);
+        Button importCsvButton = dialogView.findViewById(R.id.btn_import_csv);
+        Button cancelButton = dialogView.findViewById(R.id.btn_cancel);
+
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.US);
-        String[] scanOptions = new String[scans.size() + 1];
 
-        for (int i = 0; i < scans.size(); i++) {
-            EcuScan scan = scans.get(i);
-            scanOptions[i] = sdf.format(scan.getDate()) + " (" + scan.getEcus().size() + " ECUs)";
-        }
-        scanOptions[scans.size()] = "📁 Import CSV file...";
+        final int INITIAL_LIMIT = 5;
+        final boolean[] isExpanded = {false};
 
-        builder.setItems(scanOptions, (dialog, which) -> {
-            if (which == scans.size()) {
-                // Import CSV option selected
-                importCsvForComparison();
+        // Function to populate scan list
+        Runnable populateScans = () -> {
+            scanListContainer.removeAllViews();
+
+            int limit = isExpanded[0] ? scans.size() : Math.min(INITIAL_LIMIT, scans.size());
+
+            for (int i = 0; i < limit; i++) {
+                EcuScan scan = scans.get(i);
+                TextView scanItem = new TextView(this);
+                scanItem.setText(sdf.format(scan.getDate()) + " (" + scan.getEcus().size() + " ECUs)");
+                scanItem.setTextSize(16);
+                scanItem.setPadding(32, 32, 32, 32);
+                scanItem.setBackground(getDrawable(android.R.drawable.list_selector_background));
+                scanItem.setClickable(true);
+                scanItem.setFocusable(true);
+
+                final int index = i;
+                scanItem.setOnClickListener(v -> {
+                    compareAgainstCurrentData(scans.get(index));
+                    ((android.app.AlertDialog) v.getTag()).dismiss();
+                });
+
+                scanListContainer.addView(scanItem);
+            }
+
+            // Show/hide "Show more" button
+            if (scans.size() > INITIAL_LIMIT) {
+                showMoreButton.setVisibility(View.VISIBLE);
+                showMoreButton.setText(isExpanded[0] ? "▲ Show less" : "▼ Show more scans");
             } else {
-                // Scan selected - compare against current data
-                EcuScan baseline = scans.get(which);
-                compareAgainstCurrentData(baseline);
+                showMoreButton.setVisibility(View.GONE);
+            }
+        };
+
+        // Create dialog
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        // Populate initial scans
+        populateScans.run();
+
+        // Set tag for dialog reference in scan item click listeners
+        for (int i = 0; i < scanListContainer.getChildCount(); i++) {
+            scanListContainer.getChildAt(i).setTag(dialog);
+        }
+
+        // Show more button click listener
+        showMoreButton.setOnClickListener(v -> {
+            isExpanded[0] = !isExpanded[0];
+            populateScans.run();
+            // Update tags after repopulating
+            for (int i = 0; i < scanListContainer.getChildCount(); i++) {
+                scanListContainer.getChildAt(i).setTag(dialog);
             }
         });
 
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
+        // Import CSV button
+        importCsvButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            importCsvForComparison();
+        });
+
+        // Cancel button
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 
     /**
@@ -951,5 +1005,40 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
         }
 
         return fileName;
+    }
+
+    /**
+     * Extract and format timestamp from imported CSV filename
+     * Expects format: {VIN}-ecu_modules-{yyyyMMdd_HHmmss}.csv
+     * Returns formatted date string like "Oct 18, 2025 21:34"
+     */
+    private String extractTimestampFromFilename(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return "Unknown";
+        }
+
+        try {
+            // Extract timestamp portion from filename (e.g., "20251018_213443")
+            // Pattern: {something}-{yyyyMMdd_HHmmss}.csv
+            String[] parts = filename.split("-");
+            if (parts.length >= 3) {
+                String lastPart = parts[parts.length - 1]; // "20251018_213443.csv"
+                String timestampStr = lastPart.replace(".csv", ""); // "20251018_213443"
+
+                // Parse the timestamp
+                SimpleDateFormat inputFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
+                SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.US);
+
+                java.util.Date date = inputFormat.parse(timestampStr);
+                if (date != null) {
+                    return outputFormat.format(date);
+                }
+            }
+        } catch (Exception e) {
+            log.warning("Could not extract timestamp from filename: " + filename + " - " + e.getMessage());
+        }
+
+        // Fallback to filename if parsing fails
+        return filename;
     }
 }

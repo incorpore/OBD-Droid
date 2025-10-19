@@ -97,7 +97,7 @@ public class EcuComparisonActivity extends AppCompatActivity {
         baselineDate.setText(sdf.format(baselineScan.getDate()));
 
         if (isCurrentFromImport && currentImportFilename != null) {
-            currentDate.setText("Imported: " + currentImportFilename);
+            currentDate.setText(currentImportFilename); // Already formatted timestamp from filename
         } else {
             currentDate.setText("Live Data");
         }
@@ -414,9 +414,9 @@ public class EcuComparisonActivity extends AppCompatActivity {
         TextView currentTimestamp = dialogView.findViewById(R.id.current_timestamp);
         baselineTimestamp.setText(sdf.format(baselineScan.getDate()));
 
-        // Set current scan timestamp - either imported filename or "Live Data"
+        // Set current scan timestamp - either parsed timestamp or "Live Data"
         if (isCurrentFromImport && currentImportFilename != null) {
-            currentTimestamp.setText("Imported: " + currentImportFilename);
+            currentTimestamp.setText(currentImportFilename); // Already formatted timestamp
         } else {
             currentTimestamp.setText("Live Data");
         }

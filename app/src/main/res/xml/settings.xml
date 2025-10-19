@@ -27,6 +27,19 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        android:title="Connection"
+        android:layout="@layout/preference_category">
+
+        <CheckBoxPreference
+            android:key="auto_reconnect_on_startup"
+            android:title="Auto-reconnect on startup"
+            android:summary="Automatically reconnect to your last adapter when the app starts"
+            android:defaultValue="false"
+            android:layout="@layout/preference_indented" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:title="@string/csv_export_options"
         android:layout="@layout/preference_category">
 

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select Baseline Scan"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:paddingBottom="16dp"/>
+
+    <!-- Scrollable scan list -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxHeight="400dp">
+
+        <LinearLayout
+            android:id="@+id/scan_list_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <!-- Scan items will be added programmatically -->
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Show more button (initially visible if more than 5 scans) -->
+    <TextView
+        android:id="@+id/show_more_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="▼ Show more scans"
+        android:textSize="14sp"
+        android:textColor="#1976D2"
+        android:textStyle="bold"
+        android:padding="12dp"
+        android:gravity="center"
+        android:background="?android:attr/selectableItemBackground"
+        android:visibility="gone"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"/>
+
+    <!-- Bottom buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btn_import_csv"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="40dp"
+            android:text="📁 Import CSV"
+            android:textColor="#1976D2"
+            android:textSize="14sp"
+            android:background="?android:attr/selectableItemBackground"
+            android:layout_marginEnd="8dp"/>
+
+        <Button
+            android:id="@+id/btn_cancel"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="40dp"
+            android:text="Cancel"
+            android:textColor="#757575"
+            android:textSize="14sp"
+            android:background="?android:attr/selectableItemBackground"/>
+    </LinearLayout>
+
+</LinearLayout>

@@ -35,6 +35,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -299,6 +300,16 @@ public class MainActivity extends AppCompatActivity
     private boolean hasAttemptedAutoReconnect = false;
     private boolean isManuallyReconnecting = false; // Flag to prevent infinite loop during manual reconnect
 
+    // === Auto-Reconnect Countdown UI ===
+    private View autoReconnectCountdownBar;
+    private ProgressBar countdownProgress;
+    private TextView countdownText;
+    private Handler countdownHandler;
+    private Runnable countdownRunnable;
+    private int countdownSecondsRemaining = 5;
+    private static final int COUNTDOWN_DURATION_MS = 5000; // 5 seconds
+    private static final int COUNTDOWN_UPDATE_INTERVAL_MS = 100; // Update every 100ms for smooth animation
+
     // === Vehicle Info Footer ===
     private com.obddroid.ui.components.VehicleInfoFooter vehicleInfoFooter;
 
@@ -390,10 +401,7 @@ public class MainActivity extends AppCompatActivity
                             prefs.edit()
                                 .putString("LAST_ADAPTER_NAME", mConnectedDeviceName)
                                 .apply();
-                            log.info("Saved device name for reconnect card: " + mConnectedDeviceName);
-
-                            // Update the reconnect card subtitle immediately
-                            DashboardUiHelper.updateReconnectCardSubtitle(MainActivity.this);
+                            log.info("Saved device name for reconnect: " + mConnectedDeviceName);
                         }
 
                         SnackbarHelper.showSuccess(MainActivity.this,
@@ -761,6 +769,9 @@ public class MainActivity extends AppCompatActivity
         // Wire up footer overlay
         setupFooterOverlay();
 
+        // Initialize auto-reconnect countdown bar
+        initializeCountdownBar();
+
         // Set up dashboard cards and related UI components
         DashboardUiHelper.setupDashboardCards(this);
         log.info("Dashboard cards set up in onCreate()");
@@ -839,9 +850,6 @@ public class MainActivity extends AppCompatActivity
         // Synchronize UI with actual connection state
         // This prevents "Connecting..." from persisting after navigation
         updateConnectionStatusUI();
-
-        // Update reconnect card with last connected adapter info
-        DashboardUiHelper.updateReconnectCardSubtitle(this);
 
         // Auto-reconnect on startup if enabled (only on first resume)
         attemptAutoReconnectIfEnabled();
@@ -2264,8 +2272,6 @@ public class MainActivity extends AppCompatActivity
     {
         log.info("reconnectToLastAdapter() called");
 
-        View reconnectCard = findViewById(R.id.card_reconnect_adapter);
-
         // Check cooldown to prevent spam
         long currentTime = System.currentTimeMillis();
         long timeSinceLastReconnect = currentTime - lastReconnectTime;
@@ -2279,20 +2285,6 @@ public class MainActivity extends AppCompatActivity
 
         // Update last reconnect time
         lastReconnectTime = currentTime;
-
-        // Disable the reconnect card for 10 seconds
-        if (reconnectCard != null) {
-            reconnectCard.setEnabled(false);
-            reconnectCard.setAlpha(0.5f);
-            log.info("Reconnect card disabled for " + (RECONNECT_COOLDOWN_MS / 1000) + " seconds");
-
-            // Re-enable after cooldown
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                reconnectCard.setEnabled(true);
-                reconnectCard.setAlpha(1.0f);
-                log.info("Reconnect card re-enabled");
-            }, RECONNECT_COOLDOWN_MS);
-        }
 
         String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
         log.info("Attempting to reconnect - Last adapter type: " + lastAdapterType);
@@ -2401,6 +2393,167 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
+     * Initialize the auto-reconnect countdown bar and its click handlers
+     */
+    private void initializeCountdownBar() {
+        autoReconnectCountdownBar = findViewById(R.id.auto_reconnect_countdown_bar);
+        if (autoReconnectCountdownBar == null) {
+            log.warning("Countdown bar not found in layout");
+            return;
+        }
+
+        // Find child views
+        countdownProgress = autoReconnectCountdownBar.findViewById(R.id.countdown_progress);
+        countdownText = autoReconnectCountdownBar.findViewById(R.id.countdown_text);
+        View cancelBtn = autoReconnectCountdownBar.findViewById(R.id.countdown_cancel_btn);
+
+        // Initialize handler
+        countdownHandler = new Handler(Looper.getMainLooper());
+
+        // Set up click handlers
+        if (cancelBtn != null) {
+            cancelBtn.setOnClickListener(v -> cancelAutoReconnect());
+        }
+
+        // Clicking anywhere on the bar also cancels
+        autoReconnectCountdownBar.setOnClickListener(v -> cancelAutoReconnect());
+
+        log.info("Auto-reconnect countdown bar initialized");
+    }
+
+    /**
+     * Show the auto-reconnect countdown bar and start the countdown
+     */
+    private void showAutoReconnectCountdown() {
+        if (autoReconnectCountdownBar == null) {
+            log.warning("Countdown bar not initialized, falling back to direct reconnect");
+            reconnectToLastAdapter();
+            return;
+        }
+
+        // Get adapter name from preferences
+        String adapterName = "adapter";
+        String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
+
+        if ("BLUETOOTH".equals(lastAdapterType)) {
+            String btDeviceName = prefs.getString("LAST_BT_DEVICE_NAME", null);
+            if (btDeviceName != null && !btDeviceName.isEmpty()) {
+                adapterName = btDeviceName;
+            }
+        } else if ("USB".equals(lastAdapterType)) {
+            String usbDeviceName = prefs.getString("LAST_USB_DEVICE_NAME", null);
+            if (usbDeviceName != null && !usbDeviceName.isEmpty()) {
+                adapterName = usbDeviceName;
+            }
+        }
+
+        // Reset countdown
+        countdownSecondsRemaining = 5;
+
+        // Update initial text
+        if (countdownText != null) {
+            countdownText.setText(String.format("Auto-reconnecting to %s in %ds...", adapterName, countdownSecondsRemaining));
+        }
+
+        // Reset progress
+        if (countdownProgress != null) {
+            countdownProgress.setProgress(0);
+        }
+
+        // Show the bar
+        autoReconnectCountdownBar.setVisibility(View.VISIBLE);
+
+        log.info("Showing auto-reconnect countdown for adapter: " + adapterName);
+
+        // Start countdown
+        startCountdownTimer();
+    }
+
+    /**
+     * Cancel the auto-reconnect countdown and hide the bar
+     */
+    private void cancelAutoReconnect() {
+        log.info("Auto-reconnect cancelled by user");
+
+        // Cancel the countdown timer
+        if (countdownHandler != null && countdownRunnable != null) {
+            countdownHandler.removeCallbacks(countdownRunnable);
+        }
+
+        // Hide the bar
+        if (autoReconnectCountdownBar != null) {
+            autoReconnectCountdownBar.setVisibility(View.GONE);
+        }
+
+        // Show feedback to user
+        SnackbarHelper.showInfo(this, "Auto-reconnect cancelled");
+    }
+
+    /**
+     * Start the countdown timer with smooth progress animation
+     */
+    private void startCountdownTimer() {
+        final long startTime = System.currentTimeMillis();
+        final long endTime = startTime + COUNTDOWN_DURATION_MS;
+
+        countdownRunnable = new Runnable() {
+            @Override
+            public void run() {
+                long now = System.currentTimeMillis();
+                long remaining = endTime - now;
+
+                if (remaining <= 0) {
+                    // Countdown complete - trigger reconnect
+                    if (autoReconnectCountdownBar != null) {
+                        autoReconnectCountdownBar.setVisibility(View.GONE);
+                    }
+                    log.info("Auto-reconnect countdown complete, initiating connection");
+                    reconnectToLastAdapter();
+                } else {
+                    // Update progress bar
+                    int progress = (int) (COUNTDOWN_DURATION_MS - remaining);
+                    if (countdownProgress != null) {
+                        countdownProgress.setProgress(progress);
+                    }
+
+                    // Update text countdown
+                    int secondsLeft = (int) Math.ceil(remaining / 1000.0);
+                    if (secondsLeft != countdownSecondsRemaining) {
+                        countdownSecondsRemaining = secondsLeft;
+
+                        if (countdownText != null) {
+                            String adapterName = "adapter";
+                            String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
+
+                            if ("BLUETOOTH".equals(lastAdapterType)) {
+                                String btDeviceName = prefs.getString("LAST_BT_DEVICE_NAME", null);
+                                if (btDeviceName != null && !btDeviceName.isEmpty()) {
+                                    adapterName = btDeviceName;
+                                }
+                            } else if ("USB".equals(lastAdapterType)) {
+                                String usbDeviceName = prefs.getString("LAST_USB_DEVICE_NAME", null);
+                                if (usbDeviceName != null && !usbDeviceName.isEmpty()) {
+                                    adapterName = usbDeviceName;
+                                }
+                            }
+
+                            countdownText.setText(String.format("Auto-reconnecting to %s in %ds...", adapterName, secondsLeft));
+                        }
+                    }
+
+                    // Schedule next update
+                    if (countdownHandler != null) {
+                        countdownHandler.postDelayed(this, COUNTDOWN_UPDATE_INTERVAL_MS);
+                    }
+                }
+            }
+        };
+
+        // Start the countdown
+        countdownHandler.post(countdownRunnable);
+    }
+
+    /**
      * Attempt auto-reconnect on startup if the setting is enabled
      * Only runs once per app session (first onResume)
      */
@@ -2442,13 +2595,13 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
-        // All checks passed - attempt reconnect after a short delay
-        // Delay ensures UI is fully initialized
-        log.info("Auto-reconnect: Attempting to reconnect to " + lastAdapterType);
+        // All checks passed - show countdown bar and give user chance to cancel
+        // Delay ensures UI is fully initialized before showing countdown
+        log.info("Auto-reconnect: Showing countdown for " + lastAdapterType);
         hasAttemptedAutoReconnect = true;
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            reconnectToLastAdapter();
+            showAutoReconnectCountdown();
         }, 1000); // 1 second delay to ensure UI is ready
     }
 
