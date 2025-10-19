@@ -458,4 +458,262 @@ public class VehicleManager {
         }
         return null;
     }
+
+    /**
+     * Estimate fuel tank capacity based on vehicle characteristics
+     *
+     * Uses vehicle class, body style, and other attributes to provide
+     * an intelligent estimate of tank capacity in gallons.
+     *
+     * @param vehicleData Decoded vehicle information
+     * @return Estimated tank capacity in gallons
+     */
+    public float estimateTankCapacity(VehicleData vehicleData) {
+        if (vehicleData == null) {
+            Log.d(TAG, "No vehicle data available for tank estimation, using default");
+            return 16.0f; // Generic default
+        }
+
+        float baseCapacity = estimateBaseCapacityFromClass(vehicleData);
+
+        // Apply adjustments based on vehicle characteristics
+        float adjustedCapacity = applyCapacityAdjustments(baseCapacity, vehicleData);
+
+        // Ensure capacity is within reasonable bounds
+        adjustedCapacity = Math.max(10.0f, Math.min(adjustedCapacity, 40.0f));
+
+        Log.i(TAG, String.format("Estimated tank capacity for %s: %.1f gal",
+                vehicleData.getDisplayName(), adjustedCapacity));
+
+        return adjustedCapacity;
+    }
+
+    /**
+     * Estimate base tank capacity from vehicle class/body type
+     */
+    private float estimateBaseCapacityFromClass(VehicleData vehicleData) {
+        String bodyClass = vehicleData.bodyClass;
+        String vehicleType = vehicleData.vehicleType;
+
+        if (bodyClass == null || bodyClass.isEmpty()) {
+            bodyClass = "";
+        }
+        if (vehicleType == null || vehicleType.isEmpty()) {
+            vehicleType = "";
+        }
+
+        bodyClass = bodyClass.toLowerCase();
+        vehicleType = vehicleType.toLowerCase();
+
+        // Pickup Trucks - Largest tanks
+        if (bodyClass.contains("pickup") || vehicleType.contains("truck")) {
+            Log.d(TAG, "Detected pickup truck - base: 26 gal");
+            return 26.0f; // Pickup trucks: 26-36 gallons
+        }
+
+        // Large SUVs
+        if (bodyClass.contains("sport utility") || bodyClass.contains("suv")) {
+            // Check if it's a large/luxury SUV
+            if (isLargeSUV(vehicleData)) {
+                Log.d(TAG, "Detected large SUV - base: 23 gal");
+                return 23.0f; // Large SUVs: 22-26 gallons
+            } else {
+                Log.d(TAG, "Detected midsize SUV - base: 19 gal");
+                return 19.0f; // Midsize SUVs/Crossovers: 18-20 gallons
+            }
+        }
+
+        // Crossovers (often classified as wagon or hatchback)
+        if (bodyClass.contains("crossover") || bodyClass.contains("wagon/suv")) {
+            Log.d(TAG, "Detected crossover - base: 17 gal");
+            return 17.0f; // Crossovers: 15-18 gallons
+        }
+
+        // Vans and Minivans
+        if (bodyClass.contains("van") || bodyClass.contains("minivan") ||
+            bodyClass.contains("passenger van") || bodyClass.contains("cargo van")) {
+            Log.d(TAG, "Detected van - base: 20 gal");
+            return 20.0f; // Vans: 18-25 gallons
+        }
+
+        // Sedans
+        if (bodyClass.contains("sedan")) {
+            // Check size classification
+            if (bodyClass.contains("large") || bodyClass.contains("full-size")) {
+                Log.d(TAG, "Detected large sedan - base: 18 gal");
+                return 18.0f; // Full-size sedans: 17-20 gallons
+            } else if (bodyClass.contains("mid") || bodyClass.contains("medium")) {
+                Log.d(TAG, "Detected midsize sedan - base: 16 gal");
+                return 16.0f; // Midsize sedans: 15-18 gallons
+            } else if (bodyClass.contains("compact") || bodyClass.contains("small")) {
+                Log.d(TAG, "Detected compact sedan - base: 14 gal");
+                return 14.0f; // Compact sedans: 13-15 gallons
+            } else {
+                Log.d(TAG, "Detected sedan (unspecified size) - base: 16 gal");
+                return 16.0f; // Generic sedan
+            }
+        }
+
+        // Coupes
+        if (bodyClass.contains("coupe") || bodyClass.contains("2-door")) {
+            Log.d(TAG, "Detected coupe - base: 15 gal");
+            return 15.0f; // Coupes: 14-17 gallons
+        }
+
+        // Hatchbacks
+        if (bodyClass.contains("hatchback")) {
+            Log.d(TAG, "Detected hatchback - base: 13 gal");
+            return 13.0f; // Hatchbacks: 12-15 gallons
+        }
+
+        // Convertibles
+        if (bodyClass.contains("convertible")) {
+            Log.d(TAG, "Detected convertible - base: 15 gal");
+            return 15.0f; // Convertibles: 14-17 gallons
+        }
+
+        // Wagons
+        if (bodyClass.contains("wagon") || bodyClass.contains("estate")) {
+            Log.d(TAG, "Detected wagon - base: 17 gal");
+            return 17.0f; // Wagons: 16-19 gallons
+        }
+
+        // Sports cars and performance vehicles
+        if (bodyClass.contains("sport") || vehicleType.contains("sports")) {
+            Log.d(TAG, "Detected sports car - base: 16 gal");
+            return 16.0f; // Sports cars: 14-19 gallons
+        }
+
+        // Default fallback
+        Log.d(TAG, "Unknown body class '" + bodyClass + "' - using default: 16 gal");
+        return 16.0f; // Generic default for unknown types
+    }
+
+    /**
+     * Apply adjustments to base capacity based on vehicle characteristics
+     */
+    private float applyCapacityAdjustments(float baseCapacity, VehicleData vehicleData) {
+        float adjusted = baseCapacity;
+
+        // Luxury brand adjustment (typically larger tanks)
+        if (isLuxuryBrand(vehicleData.make)) {
+            adjusted += 2.0f;
+            Log.d(TAG, "Applied luxury brand adjustment: +2.0 gal");
+        }
+
+        // Engine displacement adjustment
+        if (vehicleData.displacementL != null && !vehicleData.displacementL.isEmpty()) {
+            try {
+                float displacement = Float.parseFloat(vehicleData.displacementL);
+                if (displacement >= 5.0f) {
+                    // Large engines (5.0L+) often paired with larger tanks
+                    adjusted += 3.0f;
+                    Log.d(TAG, "Applied large engine adjustment: +3.0 gal");
+                } else if (displacement >= 3.5f) {
+                    // Mid-large engines (3.5L-5.0L)
+                    adjusted += 1.5f;
+                    Log.d(TAG, "Applied mid-large engine adjustment: +1.5 gal");
+                } else if (displacement <= 1.5f) {
+                    // Small engines (< 1.5L) often in economy cars
+                    adjusted -= 2.0f;
+                    Log.d(TAG, "Applied small engine adjustment: -2.0 gal");
+                }
+            } catch (NumberFormatException e) {
+                Log.d(TAG, "Could not parse displacement: " + vehicleData.displacementL);
+            }
+        }
+
+        // Hybrid/Electric adjustment (smaller fuel tanks)
+        if (vehicleData.electrificationLevel != null &&
+            !vehicleData.electrificationLevel.isEmpty() &&
+            !vehicleData.electrificationLevel.equalsIgnoreCase("Not Applicable")) {
+
+            String level = vehicleData.electrificationLevel.toLowerCase();
+            if (level.contains("plug-in hybrid") || level.contains("phev")) {
+                adjusted -= 4.0f;
+                Log.d(TAG, "Applied PHEV adjustment: -4.0 gal");
+            } else if (level.contains("hybrid")) {
+                adjusted -= 2.0f;
+                Log.d(TAG, "Applied hybrid adjustment: -2.0 gal");
+            }
+        }
+
+        // AWD/4WD adjustment (typically larger vehicles with bigger tanks)
+        if (vehicleData.driveType != null && !vehicleData.driveType.isEmpty()) {
+            String driveType = vehicleData.driveType.toLowerCase();
+            if (driveType.contains("4wd") || driveType.contains("awd") ||
+                driveType.contains("4-wheel") || driveType.contains("all-wheel")) {
+                adjusted += 1.0f;
+                Log.d(TAG, "Applied AWD/4WD adjustment: +1.0 gal");
+            }
+        }
+
+        return adjusted;
+    }
+
+    /**
+     * Determine if this is a large/luxury SUV
+     */
+    private boolean isLargeSUV(VehicleData vehicleData) {
+        // Check model name for large SUV indicators
+        String model = vehicleData.model;
+        if (model != null) {
+            model = model.toLowerCase();
+            // Common large SUV names
+            if (model.contains("expedition") || model.contains("suburban") ||
+                model.contains("tahoe") || model.contains("yukon") ||
+                model.contains("navigator") || model.contains("escalade") ||
+                model.contains("gls") || model.contains("gle") || // Mercedes large SUVs
+                model.contains("gx") || model.contains("lx") || // Lexus large SUVs
+                model.contains("x7") || model.contains("x5") || // BMW large SUVs
+                model.contains("q7") || model.contains("q8") || // Audi large SUVs
+                model.contains("cayenne") || model.contains("range rover") ||
+                model.contains("sequoia") || model.contains("land cruiser") ||
+                model.contains("armada") || model.contains("qx80") ||
+                model.contains("durango")) {
+                return true;
+            }
+        }
+
+        // Check if luxury brand (luxury SUVs tend to be larger)
+        if (isLuxuryBrand(vehicleData.make)) {
+            return true;
+        }
+
+        // Check displacement (large SUVs typically have bigger engines)
+        if (vehicleData.displacementL != null && !vehicleData.displacementL.isEmpty()) {
+            try {
+                float displacement = Float.parseFloat(vehicleData.displacementL);
+                if (displacement >= 3.5f) {
+                    return true; // Large engine suggests large SUV
+                }
+            } catch (NumberFormatException e) {
+                // Ignore
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if manufacturer is a luxury brand
+     */
+    private boolean isLuxuryBrand(String make) {
+        if (make == null || make.isEmpty()) {
+            return false;
+        }
+
+        make = make.toLowerCase();
+
+        return make.contains("mercedes") || make.contains("bmw") ||
+               make.contains("audi") || make.contains("lexus") ||
+               make.contains("porsche") || make.contains("tesla") ||
+               make.contains("cadillac") || make.contains("lincoln") ||
+               make.contains("infiniti") || make.contains("acura") ||
+               make.contains("jaguar") || make.contains("land rover") ||
+               make.contains("maserati") || make.contains("bentley") ||
+               make.contains("rolls-royce") || make.contains("aston martin") ||
+               make.contains("genesis") || make.contains("alfa romeo") ||
+               make.contains("volvo");
+    }
 }

@@ -22,6 +22,11 @@ public class VehiclePreferences {
     // Preference key patterns
     private static final String KEY_TANK_CAPACITY_PREFIX = "tank_capacity_";
     private static final String KEY_TANK_PROMPTED_PREFIX = "tank_prompted_";
+    private static final String KEY_VOLUMETRIC_EFFICIENCY_PREFIX = "volumetric_efficiency_";
+    private static final String KEY_CALIBRATION_PROMPTED_PREFIX = "calibration_prompted_";
+
+    // Default volumetric efficiency for uncalibrated vehicles (85% baseline)
+    private static final float DEFAULT_VE = 85.0f;
 
     private final SharedPreferences preferences;
 
@@ -100,6 +105,115 @@ public class VehiclePreferences {
     }
 
     /**
+     * Get the volumetric efficiency calibration for a specific VIN
+     *
+     * Volumetric Efficiency (VE) is used in MAP-based fuel consumption calculations
+     * to estimate how efficiently the engine fills its cylinders with air.
+     *
+     * @param vin Vehicle Identification Number (17 characters)
+     * @return VE percentage (50-130%), or null if not calibrated (use default 85%)
+     */
+    public Float getVolumetricEfficiency(String vin) {
+        if (!isValidVIN(vin)) {
+            Log.w(TAG, "getVolumetricEfficiency: Invalid VIN provided");
+            return null;
+        }
+
+        String key = KEY_VOLUMETRIC_EFFICIENCY_PREFIX + sanitizeVIN(vin);
+        if (!preferences.contains(key)) {
+            Log.d(TAG, "No VE calibration stored for VIN: " + maskVIN(vin) + " - using default " + DEFAULT_VE + "%");
+            return null; // Caller should use DEFAULT_VE
+        }
+
+        float ve = preferences.getFloat(key, DEFAULT_VE);
+        if (ve < 50f || ve > 130f) {
+            Log.w(TAG, "Invalid VE stored for VIN: " + maskVIN(vin) + " - " + ve + "% (out of range)");
+            return null;
+        }
+
+        Log.d(TAG, "Retrieved VE for VIN " + maskVIN(vin) + ": " + ve + "%");
+        return ve;
+    }
+
+    /**
+     * Set the volumetric efficiency calibration for a specific VIN
+     *
+     * This value is determined through real-world calibration by comparing
+     * app-calculated MPG to actual fill-up data.
+     *
+     * @param vin Vehicle Identification Number
+     * @param vePercent Volumetric efficiency percentage (must be between 50 and 130)
+     * @return true if saved successfully, false otherwise
+     */
+    public boolean setVolumetricEfficiency(String vin, float vePercent) {
+        if (!isValidVIN(vin)) {
+            Log.e(TAG, "setVolumetricEfficiency: Invalid VIN provided");
+            return false;
+        }
+
+        if (vePercent < 50f || vePercent > 130f) {
+            Log.e(TAG, "setVolumetricEfficiency: Invalid VE " + vePercent + "% (must be 50-130)");
+            return false;
+        }
+
+        String key = KEY_VOLUMETRIC_EFFICIENCY_PREFIX + sanitizeVIN(vin);
+        boolean success = preferences.edit()
+                .putFloat(key, vePercent)
+                .commit();
+
+        if (success) {
+            Log.i(TAG, "Saved VE for VIN " + maskVIN(vin) + ": " + vePercent + "%");
+        } else {
+            Log.e(TAG, "Failed to save VE for VIN " + maskVIN(vin));
+        }
+
+        return success;
+    }
+
+    /**
+     * Check if the user has been prompted for fuel economy calibration for this VIN
+     *
+     * @param vin Vehicle Identification Number
+     * @return true if user has been prompted, false otherwise
+     */
+    public boolean hasPromptedForCalibration(String vin) {
+        if (!isValidVIN(vin)) {
+            return false;
+        }
+
+        String key = KEY_CALIBRATION_PROMPTED_PREFIX + sanitizeVIN(vin);
+        boolean prompted = preferences.getBoolean(key, false);
+        Log.d(TAG, "Has prompted for calibration - VIN " + maskVIN(vin) + ": " + prompted);
+        return prompted;
+    }
+
+    /**
+     * Mark that the user has been prompted for fuel economy calibration for this VIN
+     *
+     * @param vin Vehicle Identification Number
+     * @return true if saved successfully, false otherwise
+     */
+    public boolean markCalibrationPrompted(String vin) {
+        if (!isValidVIN(vin)) {
+            Log.e(TAG, "markCalibrationPrompted: Invalid VIN provided");
+            return false;
+        }
+
+        String key = KEY_CALIBRATION_PROMPTED_PREFIX + sanitizeVIN(vin);
+        boolean success = preferences.edit()
+                .putBoolean(key, true)
+                .commit();
+
+        if (success) {
+            Log.d(TAG, "Marked calibration prompted for VIN " + maskVIN(vin));
+        } else {
+            Log.e(TAG, "Failed to mark calibration prompted for VIN " + maskVIN(vin));
+        }
+
+        return success;
+    }
+
+    /**
      * Check if the user has been prompted for tank size for this VIN
      *
      * @param vin Vehicle Identification Number
@@ -159,6 +273,8 @@ public class VehiclePreferences {
         boolean success = preferences.edit()
                 .remove(KEY_TANK_CAPACITY_PREFIX + sanitizedVIN)
                 .remove(KEY_TANK_PROMPTED_PREFIX + sanitizedVIN)
+                .remove(KEY_VOLUMETRIC_EFFICIENCY_PREFIX + sanitizedVIN)
+                .remove(KEY_CALIBRATION_PROMPTED_PREFIX + sanitizedVIN)
                 .commit();
 
         if (success) {
