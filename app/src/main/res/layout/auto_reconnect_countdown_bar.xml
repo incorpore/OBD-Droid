@@ -9,7 +9,7 @@
     android:clickable="true"
     android:focusable="true"
     android:visibility="gone"
-    android:paddingBottom="4dp">
+    android:paddingBottom="5dp">
 
     <!-- Progress bar at top -->
     <ProgressBar
