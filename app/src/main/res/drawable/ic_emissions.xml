@@ -1,0 +1,49 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Gauge arc -->
+    <path
+        android:pathData="M5,14 A7,7 0 0,1 19,14"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineCap="round"/>
+
+    <!-- Gauge needle pointing to ready position -->
+    <path
+        android:pathData="M12,14 L15,8"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"/>
+
+    <!-- Center circle -->
+    <path
+        android:pathData="M12,14 m-1.5,0 a1.5,1.5 0 1,1 3,0 a1.5,1.5 0 1,1 -3,0"
+        android:fillColor="#FFFFFF"/>
+
+    <!-- Checkmark at top -->
+    <path
+        android:pathData="M9.5,5 L11,6.5 L14.5,3"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+    <!-- Bottom eco wave lines -->
+    <path
+        android:pathData="M7,18 Q9,17 11,18 T15,18"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineCap="round"/>
+    <path
+        android:pathData="M7,20.5 Q9,19.5 11,20.5 T15,20.5"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineCap="round"/>
+</vector>

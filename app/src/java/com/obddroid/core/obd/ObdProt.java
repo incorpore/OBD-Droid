@@ -1479,8 +1479,8 @@ public class ObdProt extends ProtoHeader
                 cmdQueue.add(String.format("%02X", OBD_SVC_READ_CODES, 0));
                 cmdQueue.add(String.format("%02X", OBD_SVC_PENDINGCODES, 0));
                 cmdQueue.add(String.format("%02X", OBD_SVC_PERMACODES, 0));
-                // read PID number of codes ...
-                writeTelegram(emptyBuffer, OBD_SVC_DATA, 1);
+                // Send request in correct service context (was OBD_SVC_DATA - context mismatch!)
+                writeTelegram(emptyBuffer, obdService, 0);
                 break;
 
             case OBD_SVC_CLEAR_CODES:

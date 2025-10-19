@@ -492,13 +492,12 @@ public class MainActivity extends AppCompatActivity
 
                         // Check if we should skip status updates for fault codes mode
                         boolean skipStatusUpdate = false;
-                        if (CommService.elm != null &&
-                            (CommService.elm.getService() == ObdProt.OBD_SVC_READ_CODES ||
-                             CommService.elm.getService() == ObdProt.OBD_SVC_PENDINGCODES ||
-                             CommService.elm.getService() == ObdProt.OBD_SVC_PERMACODES) &&
-                            (state == ElmProt.STAT.NODATA || state == ElmProt.STAT.CONNECTING)) {
-                            // Skip status update for these states in fault codes mode
-                            // as "NO DATA" is normal response when there are no fault codes
+                        boolean viewingFaultCodes = (currDataAdapter == mDfcAdapter);
+
+                        // Simple rule: When viewing fault codes, suppress NODATA and CONNECTING states
+                        // These states are normal when reading codes or when background services poll
+                        // Keep showing the last good status (Connected/ECU Selected) instead
+                        if (viewingFaultCodes && (state == ElmProt.STAT.NODATA || state == ElmProt.STAT.CONNECTING)) {
                             skipStatusUpdate = true;
                         }
 
@@ -2366,6 +2365,15 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
+     * Launch the Emissions Diagnostics activity
+     */
+    void launchEmissionsActivity() {
+        log.info("Launching Emissions Diagnostics activity");
+        Intent intent = new Intent(this, EmissionsActivity.class);
+        startActivity(intent);
+    }
+
+    /**
      * Launch the AutoCheck Vehicle History activity
      */
     void launchAutoCheckActivity() {
@@ -3080,7 +3088,27 @@ public class MainActivity extends AppCompatActivity
                                 if (ObdProt.tCodes.size() <= 1) {
                                     SnackbarHelper.showSuccess(MainActivity.this, "Fault codes cleared successfully");
                                 } else {
-                                    SnackbarHelper.showWarning(MainActivity.this, "Codes cleared. Found " + (ObdProt.tCodes.size() - 1) + " code(s) still present");
+                                    // Check if remaining codes are permanent
+                                    int permanentCount = 0;
+                                    for (Object item : ObdProt.tCodes.values()) {
+                                        if (item instanceof com.obddroid.core.ecu.EcuCodeItem) {
+                                            com.obddroid.core.ecu.EcuCodeItem code = (com.obddroid.core.ecu.EcuCodeItem) item;
+                                            Integer status = (Integer) code.get(com.obddroid.core.ecu.EcuCodeItem.FID_STATUS);
+                                            if (status != null && status == ObdProt.OBD_SVC_PERMACODES) {
+                                                permanentCount++;
+                                            }
+                                        }
+                                    }
+
+                                    int totalRemaining = ObdProt.tCodes.size() - 1; // Subtract placeholder
+                                    if (permanentCount > 0) {
+                                        SnackbarHelper.showInfo(MainActivity.this,
+                                            "Active codes cleared. " + permanentCount + " permanent code(s) remain - " +
+                                            "these clear automatically after repair and successful drive cycle");
+                                    } else {
+                                        SnackbarHelper.showWarning(MainActivity.this,
+                                            "Codes cleared. Found " + totalRemaining + " code(s) still present");
+                                    }
                                 }
 
                                 // Restore the previous service after a short delay

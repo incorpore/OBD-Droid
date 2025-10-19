@@ -77,6 +77,40 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
     // Tank capacity management
     private com.obddroid.vehicle.VehiclePreferences vehiclePreferences;
+    private com.obddroid.vehicle.VehicleManager vehicleManager;
+    private final com.obddroid.vehicle.VehicleManager.VehicleChangeListener vehicleChangeListener =
+            new com.obddroid.vehicle.VehicleManager.SimpleVehicleChangeListener() {
+                @Override
+                public void onVINChanged(String vin) {
+                    runOnUiThread(() -> {
+                        clearTankCapacityCache();
+                        checkAndPromptForTankCapacity();
+                    });
+                }
+
+                @Override
+                public void onVehicleDecoded(io.github.vindecoder.nhtsa.VehicleData vehicleData) {
+                    runOnUiThread(() -> {
+                        clearTankCapacityCache();
+                        checkAndPromptForTankCapacity();
+                    });
+                }
+
+                @Override
+                public void onVehicleDisconnected() {
+                    runOnUiThread(() -> clearTankCapacityCache());
+                }
+
+                @Override
+                public void onDecodingError(String error) {
+                    runOnUiThread(() -> clearTankCapacityCache());
+                }
+
+                @Override
+                public void onVINRetrievalFailed() {
+                    runOnUiThread(() -> clearTankCapacityCache());
+                }
+            };
     private Float cachedTankCapacity = null; // Cache to avoid repeated lookups
 
     /**
@@ -93,8 +127,26 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         String calibrated = "No";    // "Yes" or "No"
     }
 
+    private void showRecordingStartError() {
+        com.google.android.material.snackbar.Snackbar.make(
+                findViewById(android.R.id.content),
+                "⚠️ Recording failed to start",
+                com.google.android.material.snackbar.Snackbar.LENGTH_SHORT
+        ).show();
+    }
+
     // Store the latest fuel calculation diagnostics for trip logging
     private FuelCalcDiagnostics lastFuelCalcDiagnostics = new FuelCalcDiagnostics();
+
+    private void markEstimationDiagnostics(String methodLabel, String calibratedState) {
+        lastFuelCalcDiagnostics.calcMethod = methodLabel;
+        lastFuelCalcDiagnostics.calibrated = calibratedState;
+        lastFuelCalcDiagnostics.mapKpa = 0f;
+        lastFuelCalcDiagnostics.iatCelsius = 0f;
+        lastFuelCalcDiagnostics.volumetricEfficiency = 0f;
+        lastFuelCalcDiagnostics.imap = 0f;
+        lastFuelCalcDiagnostics.syntheticMAF = 0f;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,7 +195,11 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         // Wire up footer overlay
         setupFooterOverlay();
 
-        // Initialize vehicle preferences
+        // Initialize vehicle manager and preferences
+        vehicleManager = com.obddroid.vehicle.VehicleManager.getInstance(this);
+        if (vehicleManager != null) {
+            vehicleManager.addListener(vehicleChangeListener);
+        }
         vehiclePreferences = new com.obddroid.vehicle.VehiclePreferences(this);
 
         // Check if we need to prompt for tank capacity
@@ -165,8 +221,10 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
     /**
      * Initialize trip data logging to CSV file
+     *
+     * @return true if logging was initialized successfully, false otherwise
      */
-    private void initializeTripDataLogging() {
+    private boolean initializeTripDataLogging() {
         try {
             tripStartTime = System.currentTimeMillis();
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
@@ -181,29 +239,42 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                 values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
 
                 Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
-                if (uri != null) {
-                    OutputStream outputStream = getContentResolver().openOutputStream(uri);
-                    tripDataLogger = new OutputStreamWriter(outputStream);
-
-                    // Write CSV header with enhanced fuel calculation diagnostics
-                    tripDataLogger.write("Timestamp,ElapsedSec,Speed_MPH,RPM,EngineLoad_%,ThrottlePos_%," +
-                            "FuelLevel_%,FuelFlow_GalH,InstantMPG,AvgMPG,Range_Mi,TimeToEmpty," +
-                            "MAP_kPa,IAT_C,VE_%,IMAP,SyntheticMAF_g/s,CalcMethod,Calibrated,PID,PIDValue\n");
-                    tripDataLogger.flush();
-
-                    log.info("Trip data logging initialized: Documents/OBDroid/" + tripLogFilename);
-                    com.google.android.material.snackbar.Snackbar.make(
-                        findViewById(android.R.id.content),
-                        "📊 Recording started: " + tripLogFilename,
-                        com.google.android.material.snackbar.Snackbar.LENGTH_LONG
-                    ).show();
+                if (uri == null) {
+                    log.severe("Failed to insert trip log into MediaStore (URI null)");
+                    showRecordingStartError();
+                    return false;
                 }
+
+                OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                if (outputStream == null) {
+                    log.severe("Failed to open output stream for trip logging");
+                    showRecordingStartError();
+                    return false;
+                }
+
+                tripDataLogger = new OutputStreamWriter(outputStream);
+
+                // Write CSV header with enhanced fuel calculation diagnostics
+                tripDataLogger.write("Timestamp,ElapsedSec,Speed_MPH,RPM,EngineLoad_%,ThrottlePos_%," +
+                        "FuelLevel_%,FuelFlow_GalH,InstantMPG,AvgMPG,Range_Mi,TimeToEmpty," +
+                        "MAP_kPa,IAT_C,VE_%,IMAP,SyntheticMAF_g/s,CalcMethod,Calibrated,PID,PIDValue\n");
+                tripDataLogger.flush();
+
+                log.info("Trip data logging initialized: Documents/OBDroid/" + tripLogFilename);
+                com.google.android.material.snackbar.Snackbar.make(
+                    findViewById(android.R.id.content),
+                    "📊 Recording started: " + tripLogFilename,
+                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                ).show();
+                return true;
             } else {
                 // Android 9 and below - Use legacy file system
                 File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
                 File obdroidDir = new File(documentsDir, "OBDroid");
-                if (!obdroidDir.exists()) {
-                    obdroidDir.mkdirs();
+                if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
+                    log.severe("Failed to create trip logging directory: " + obdroidDir.getAbsolutePath());
+                    showRecordingStartError();
+                    return false;
                 }
 
                 File csvFile = new File(obdroidDir, tripLogFilename);
@@ -221,15 +292,13 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                     "📊 Recording started: " + tripLogFilename,
                     com.google.android.material.snackbar.Snackbar.LENGTH_LONG
                 ).show();
+                return true;
             }
         } catch (IOException e) {
             log.severe("Failed to initialize trip data logging: " + e.getMessage());
-            com.google.android.material.snackbar.Snackbar.make(
-                findViewById(android.R.id.content),
-                "⚠️ Recording failed to start",
-                com.google.android.material.snackbar.Snackbar.LENGTH_SHORT
-            ).show();
+            showRecordingStartError();
         }
+        return false;
     }
 
     /**
@@ -305,6 +374,9 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     protected void onDestroy() {
         super.onDestroy();
         ObdProt.PidPvs.removePvChangeListener(this);
+        if (vehicleManager != null) {
+            vehicleManager.removeListener(vehicleChangeListener);
+        }
 
         // Auto-save if still recording
         if (isRecording) {
@@ -381,8 +453,12 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     }
 
     private void startRecording() {
-        initializeTripDataLogging();
-        isRecording = true;
+        boolean started = initializeTripDataLogging();
+        isRecording = started;
+        if (!started) {
+            tripDataLogger = null;
+            log.warning("Trip data logging could not be started");
+        }
     }
 
     private void stopRecording() {
@@ -591,9 +667,8 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         btnApply.setOnClickListener(v -> {
             try {
                 // Get current VIN
-                com.obddroid.vehicle.VehicleManager vehicleManager =
-                        com.obddroid.vehicle.VehicleManager.getInstance(this);
-                String vin = vehicleManager.getCurrentVIN();
+                com.obddroid.vehicle.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
+                String vin = vehicleManagerRef != null ? vehicleManagerRef.getCurrentVIN() : null;
 
                 if (vin == null || vin.isEmpty()) {
                     com.google.android.material.snackbar.Snackbar.make(dialogView,
@@ -812,19 +887,13 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                 return mapFuelRate;
             } else {
                 log.warning("MAP calculation returned invalid result, falling back to estimation");
+                String calibratedState = (getCalibratedVE() != null) ? "Yes" : "No";
+                markEstimationDiagnostics("Estimation-InvalidMAP", calibratedState);
             }
         } else {
             log.info("MAP sensors not available, using RPM/Load estimation");
+            markEstimationDiagnostics("Estimation-NoMAP", "N/A");
         }
-
-        // Fall back to estimation method and mark diagnostics
-        lastFuelCalcDiagnostics.calcMethod = "Estimation";
-        lastFuelCalcDiagnostics.calibrated = "N/A";
-        lastFuelCalcDiagnostics.mapKpa = 0f;
-        lastFuelCalcDiagnostics.iatCelsius = 0f;
-        lastFuelCalcDiagnostics.volumetricEfficiency = 0f;
-        lastFuelCalcDiagnostics.imap = 0f;
-        lastFuelCalcDiagnostics.syntheticMAF = 0f;
 
         return calculateEstimatedFuelRate(rpm, loadPercent, speedMph);
     }
@@ -873,11 +942,10 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
      * @return Displacement factor (normalized around 2.5L baseline)
      */
     private float getDisplacementFactor() {
-        com.obddroid.vehicle.VehicleManager vehicleManager =
-                com.obddroid.vehicle.VehicleManager.getInstance(this);
+        com.obddroid.vehicle.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
 
         io.github.vindecoder.nhtsa.VehicleData vehicleData =
-                vehicleManager.getCurrentVehicleData();
+                vehicleManagerRef != null ? vehicleManagerRef.getCurrentVehicleData() : null;
 
         if (vehicleData != null && vehicleData.displacementL != null &&
             !vehicleData.displacementL.isEmpty()) {
@@ -920,10 +988,9 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             return cachedTankCapacity;
         }
 
-        com.obddroid.vehicle.VehicleManager vehicleManager =
-                com.obddroid.vehicle.VehicleManager.getInstance(this);
+        com.obddroid.vehicle.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
 
-        String vin = vehicleManager.getCurrentVIN();
+        String vin = vehicleManagerRef != null ? vehicleManagerRef.getCurrentVIN() : null;
 
         // Try to get user-set capacity first
         if (vin != null && vehiclePreferences != null) {
@@ -937,7 +1004,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
         // Estimate from vehicle data
         io.github.vindecoder.nhtsa.VehicleData vehicleData =
-                vehicleManager.getCurrentVehicleData();
+                vehicleManagerRef != null ? vehicleManagerRef.getCurrentVehicleData() : null;
 
         if (vehicleData != null) {
             float estimated = vehicleManager.estimateTankCapacity(vehicleData);
@@ -957,12 +1024,11 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
      * Called once when activity starts
      */
     private void checkAndPromptForTankCapacity() {
-        com.obddroid.vehicle.VehicleManager vehicleManager =
-                com.obddroid.vehicle.VehicleManager.getInstance(this);
+        com.obddroid.vehicle.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
 
-        String vin = vehicleManager.getCurrentVIN();
+        String vin = vehicleManagerRef != null ? vehicleManagerRef.getCurrentVIN() : null;
         io.github.vindecoder.nhtsa.VehicleData vehicleData =
-                vehicleManager.getCurrentVehicleData();
+                vehicleManagerRef != null ? vehicleManagerRef.getCurrentVehicleData() : null;
 
         // Only prompt if we have vehicle data and haven't prompted before
         if (vin != null && vehicleData != null &&
@@ -1087,6 +1153,13 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private void clearTankCapacityCache() {
         cachedTankCapacity = null;
         log.fine("Cleared tank capacity cache");
+    }
+
+    private com.obddroid.vehicle.VehicleManager getVehicleManagerInstance() {
+        if (vehicleManager == null) {
+            vehicleManager = com.obddroid.vehicle.VehicleManager.getInstance(this);
+        }
+        return vehicleManager;
     }
 
     private void updateRange(float fuelRate, float avgMpg) {
@@ -1427,10 +1500,9 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private Float getCalibratedVE() {
         try {
             // Get current VIN from VehicleManager
-            com.obddroid.vehicle.VehicleManager vehicleManager =
-                    com.obddroid.vehicle.VehicleManager.getInstance(this);
+            com.obddroid.vehicle.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
 
-            String vin = vehicleManager.getCurrentVIN();
+            String vin = vehicleManagerRef != null ? vehicleManagerRef.getCurrentVIN() : null;
             if (vin == null || vin.isEmpty()) {
                 log.fine("No VIN available - cannot get calibrated VE");
                 return null;
@@ -1682,11 +1754,10 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
      */
     private float getEngineDisplacement() {
         try {
-            com.obddroid.vehicle.VehicleManager vehicleManager =
-                    com.obddroid.vehicle.VehicleManager.getInstance(this);
+            com.obddroid.vehicle.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
 
             io.github.vindecoder.nhtsa.VehicleData vehicleData =
-                    vehicleManager.getCurrentVehicleData();
+                    vehicleManagerRef != null ? vehicleManagerRef.getCurrentVehicleData() : null;
 
             if (vehicleData != null && vehicleData.displacementL != null &&
                 !vehicleData.displacementL.isEmpty()) {

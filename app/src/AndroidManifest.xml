@@ -105,6 +105,11 @@
             android:configChanges="touchscreen|orientation|screenSize"
             android:exported="false" />
         <activity
+            android:name="com.obddroid.ui.activities.EmissionsActivity"
+            android:label="Emissions Diagnostics"
+            android:configChanges="touchscreen|orientation|screenSize"
+            android:exported="false" />
+        <activity
             android:name="com.obddroid.ui.activities.AutoCheckActivity"
             android:label="Vehicle History"
             android:configChanges="touchscreen|orientation|screenSize"

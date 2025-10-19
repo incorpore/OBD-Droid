@@ -28,6 +28,7 @@ proguard/
 
 # Log Files
 *.log
+fuel_economy_trip_*.csv
 
 # Android Studio Navigation editor temp files
 .navigation/

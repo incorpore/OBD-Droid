@@ -115,6 +115,23 @@ final class DashboardUiHelper {
             log.warning("Fuel Economy card NOT found!");
         }
 
+        // Emissions card
+        View emissionsCard = activity.findViewById(R.id.card_emissions);
+        if (emissionsCard != null) {
+            addCardPressAnimation(emissionsCard);
+            emissionsCard.setOnClickListener(v -> {
+                log.info("Emissions card clicked!");
+                activity.launchEmissionsActivity();
+            });
+            emissionsCard.setOnLongClickListener(v -> showCardInfoDialog(
+                activity,
+                "Emissions Diagnostics",
+                "Check monitor readiness status and IUMPR performance data. Verify if your vehicle is ready for emissions testing."
+            ));
+        } else {
+            log.warning("Emissions card NOT found!");
+        }
+
         // Vehicle History card
         View vehicleHistoryCard = activity.findViewById(R.id.card_vehicle_history);
         if (vehicleHistoryCard != null) {

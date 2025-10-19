@@ -39,7 +39,26 @@ public class FaultCodeAdapter extends ObdItemAdapter
 	@SuppressWarnings("unchecked") // ProcessVar extends raw HashMap - values are always Objects in PvList
 	public Collection<Object> getPreferredItems(PvList pvs)
 	{
-		return pvs.values();
+		// Filter out P0000 (code key 0) - it's a placeholder for "no codes" and not a real fault code
+		java.util.List<Object> filteredItems = new java.util.ArrayList<>();
+		for (Object item : pvs.values())
+		{
+			if (item instanceof IndexedProcessVar)
+			{
+				IndexedProcessVar pv = (IndexedProcessVar) item;
+				Object keyObj = pv.get(EcuCodeItem.FID_CODE);
+				// Skip P0000 which has key 0 - this is just a placeholder message
+				if (keyObj != null)
+				{
+					String code = String.valueOf(keyObj);
+					if (!code.equals("P0000") && !code.equals("0"))
+					{
+						filteredItems.add(item);
+					}
+				}
+			}
+		}
+		return filteredItems;
 	}
 
 	/* (non-Javadoc)
@@ -81,28 +100,35 @@ public class FaultCodeAdapter extends ObdItemAdapter
 		try
 		{
 			Integer svc = (Integer)currPv.get(EcuCodeItem.FID_STATUS);
-			switch(svc)
-			{
-				case ObdProt.OBD_SVC_PENDINGCODES:
-					severityColor = COLOR_PENDING;
-					iconRes = R.drawable.ic_fault_pending;
-					severityText = "PENDING";
-					break;
+			if (svc != null) {
+				switch(svc)
+				{
+					case ObdProt.OBD_SVC_PENDINGCODES:
+						severityColor = COLOR_PENDING;
+						iconRes = R.drawable.ic_fault_pending;
+						severityText = "PENDING";
+						break;
 
-				case ObdProt.OBD_SVC_PERMACODES:
-					severityColor = COLOR_ERROR;
-					iconRes = R.drawable.ic_fault_error;
-					severityText = "PERMANENT";
-					break;
+					case ObdProt.OBD_SVC_PERMACODES:
+						severityColor = COLOR_ERROR;
+						iconRes = R.drawable.ic_fault_error;
+						severityText = "PERMANENT";
+						break;
 
-				default:
-					severityColor = COLOR_WARNING;
-					iconRes = R.drawable.ic_fault_warning;
-					severityText = "ACTIVE";
-					break;
+					default:
+						severityColor = COLOR_WARNING;
+						iconRes = R.drawable.ic_fault_warning;
+						severityText = "ACTIVE";
+						break;
+				}
+			} else {
+				// FID_STATUS not set - use default
+				android.util.Log.w("FaultCodeAdapter", "FID_STATUS not set for code: " + code);
 			}
 		}
-		catch(Exception ex) { /* ignore */ }
+		catch(Exception ex) {
+			android.util.Log.e("FaultCodeAdapter", "Error reading fault code status for: " + code, ex);
+		}
 
 		// Update severity indicator bar
 		severityIndicator.setBackgroundColor(severityColor);

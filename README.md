@@ -1,164 +1,219 @@
-# OBD-Droid Platform
+# OBD‑Droid Platform
 
-OBD-Droid is a full-stack vehicle intelligence suite that combines real-time OBD-II diagnostics with rich vehicle history and reusable automotive data modules for Android, Java, and Python applications.
+OBD‑Droid is a full-stack vehicle intelligence platform that combines Android-based live diagnostics, fuel economy analytics, emissions compliance reporting, and AutoCheck-powered vehicle history. This README consolidates every engineering note, analysis artifact, and status report created to date.
 
-## At a Glance
-- Android app with live diagnostics, VIN-aware dashboards, and AutoCheck-powered vehicle history.
-- Local AutoCheck service providing full reports via either official Experian API integration or Playwright-based browser automation.
-- Recall notification roadmap outlining integration with OEM data feeds (future work).
-- Reusable modules: world-class VIN decoder, comprehensive DTC database, and automotive logo library.
-- Detailed go-to-market plan, testing scripts, and business-grade roadmap to monetize history reports.
+---
 
-## Repository Layout
+## TL;DR – Where We Stand
+
+- **Android app:** Production-build ready with Bluetooth OBD-II stack, VIN-aware dashboards, rich fuel economy tooling, and an emissions readiness screen validated on a 2018 Mercedes GLE.
+- **Fuel economy:** New speed-density engine with calibration dialog, per-VIN preferences, and CSV trip logging (gal/h, MAP, IAT, VE, IMAP, synthetic MAF, calc method, calibration flag).
+- **Emissions diagnostics:** All EPA monitors parsed from Mode 9 IUMPR data; one outstanding counting bug because “No Data” monitors are still marked available.
+- **OBD service stability:** Deep comparison of Mode 9 vs. Fault Codes services uncovered five root causes for state flicker; phase-by-phase remediation plan defined.
+- **Vehicle history:** AutoCheck integration in place; relies on companion TypeScript scraper/API with Playwright or official Experian endpoints.
+
+Use this document as the single source for architecture, current feature status, key code locations, setup guides, validation procedures, and follow-up work.
+
+---
+
+## Repository Map
 
 ```
 OBD-Droid/
 ├── app/                         # Android application source
+│   └── src/java/com/obddroid/   # Core business logic
 ├── modules/
 │   ├── nhtsa-vin-decoder/       # Multi-language VIN decoder toolkit
 │   ├── dtc-database/            # Diagnostic trouble code database
-│   └── automotive-logo-library/ # Logo + WMI helpers for OEM branding
+│   └── automotive-logo-library/ # OEM branding assets + helpers
 ├── build.gradle | settings.gradle | gradle/  # Android build tooling
-├── MANIFEST.in | pom.xml | pyproject.toml    # Packaging metadata for modules
-└── README.md                     # This consolidated guide
+└── README.md                    # ← you are here (all other *.md consolidated)
 ```
 
-## Core Features
+---
 
-### OBD Diagnostics
-- Bluetooth OBD-II communication via `app/src/java/com/obddroid/services/CommService.java`.
-- Live data, DTC handling with freeze-frame information, and fuel economy tooling.
-- Component responsibilities outlined in the Contributing & Workflow section below.
+## Feature Overview & Status
 
-### Vehicle History & AutoCheck
-- AutoCheck report ingestion with structured models (`AutoCheckReport.java`) and network service layer (`AutoCheckService.java`) that dispatches results to the UI thread.
-- VIN auto-fill via Mode 09 PID 02 when available; manual entry fallback.
-- Mileage fraud detection opportunities by comparing AutoCheck odometer with OBD readings.
-- Dashboard card launches the Vehicle History flow and surfaces summary status, including quick stats for owners, mileage, service records, and model year with derived age.
+### Live Diagnostics
+- **Communication stack:** `comm/services/CommService.java`, `core/obd/ObdProt.java`, `core/obd/ElmProt.java`
+- **Current capabilities:** PID polling, Mode 9 VIN decode, fault-code retrieval, dashboard widgets with change listeners.
+- **Known debt:** Fault code reader triggers CONNECTING ↔ NODATA flicker because of service context mismatch, missing termination, and aggressive retries (see “OBD Service Reliability”).
 
-## AutoCheck Service Stack
+### Fuel Economy Suite (2025 refresh)
+- **Vehicle preferences:** `vehicle/VehiclePreferences.java` stores tank size, VE calibration, per-VIN prompts.
+- **Estimation stack:** `vehicle/VehicleManager.java` provides tank capacity heuristics based on body class, luxury brand, displacement, drivetrain, and electrification level.
+- **FuelEconomyActivity highlights:**
+  - Speed-density MAP-based calculation with ideal gas law (MAP, IAT, RPM, VE, displacement, stoich).
+  - Fallback RPM/load estimation when sensors unavailable.
+  - Calibration dialog: user enters miles and gallons to persist VE (50–130% range validation).
+  - Preferences-driven tank capacity prompt with VIN mask logging.
+  - Trip CSV logging (per second) capturing MAP_kPa, IAT_C, VE_%, IMAP, SyntheticMAF_g/s, CalcMethod (“MAP”, “Estimation-NoMAP”, “Estimation-InvalidMAP”), calibration state, plus throttle, range, time-to-empty.
+- **Outstanding work:** None for calculation accuracy; consider hooking tank prompt into VehicleManager change listener (already done) and optionally surface calc method badge in UI.
 
-### Companion Service Expectations
-- The Android client targets the companion repository at `/path/to/autocheck-api/`.
-- `AutoCheckService` calls the following endpoints:
-  - `GET /health` – readiness probe used on activity startup.
-  - `POST /api/autocheck/lookup` – returns a JSON payload consumed by `AutoCheckReport`.
-  - `POST /api/autocheck/decode` – optional VIN decode helper.
-- The current base URL is hard-coded to `http://192.168.0.153:3248`; update it to your machine’s IP when testing from a phone.
-- Both `fetchReport` and `fetchReportWithPdf` execute off the main thread and marshal results back to the UI handler.
+### Emissions Readiness
+- **Implementation:** `ui/activities/EmissionsActivity.java` parses Mode 9 PID 0x08 (IUMPR) and distinguishes continuous vs. non-continuous monitors.
+- **Validated monitors:** Misfire, Fuel, CCM, Catalyst, O2 Sensor, EGR, EVAP, Secondary Air, O2 Heater (with “No Data” fallback). Mercedes GLE test data confirmed large completions (e.g., O2 sensors 522,580/673,600; catalyst 1,103,820/783,680).
+- **UI:** Card-based layout with progress bars, status icons, ready/not-ready summary banner.
+- **Known bug:** Monitors showing “No Data” are still counted as available, so the summary banner reports “3 monitors need drive cycle” instead of “1” (EVAP). Fix by tightening `isAvailable` logic when completions/conditions = 0.
+- **Future enhancement:** Actively trigger Mode 1 PID 0x01 on page load rather than relying on cached data from other screens.
 
-### Running the Companion Service
-- Install dependencies and launch the Node/TypeScript service:
-  ```bash
-  cd /path/to/autocheck-api
-  npm install
-  cp .env.example .env
-  npm run dev
-  ```
-- By default the service uses Playwright to scrape AutoCheck; with Experian credentials you can switch the implementation in `ExperianAutoCheckService.ts` to hit official endpoints while preserving the same JSON contract.
+### Vehicle History (AutoCheck)
+- **Client components:**
+  - `vehicle/AutoCheckReport.java` – data model with helpers (`hasAccidents()`, etc.)
+  - `services/AutoCheckService.java` – network calls, background threading, UI callbacks.
+  - Dashboard card entry point with VIN prefill from `VehicleManager`.
+- **Companion service requirements:**
+  - Repo: `/path/to/autocheck-api`
+  - Endpoints: `GET /health`, `POST /api/autocheck/lookup`, `POST /api/autocheck/decode`
+  - Base URL (update to local IP for device testing): `http://192.168.0.153:3248`
+  - Launch: `npm install && npm run dev`
+  - Playwright scraping by default; Experian API drop-in supported.
+- **Scraper TODOs:** Owner count from icon filename, usage text, odometer rollback detection, boolean status from icon alt attributes (e.g., `structural-off`).
 
-### Troubleshooting from the Android Client
-- If the activity warns that the API is unreachable, ensure the service is running and the device can reach `http://<laptop-ip>:3248/health`.
-- Free port 3248 when needed (`lsof -ti:3248 | xargs kill -9` on macOS).
-- For slow or flaky scrapes, adjust headless/speed settings in the companion repo and watch its console logs.
+---
 
-### Companion Scraper Fix Checklist
-- **Owners & usage extraction:** pull owner count from the `owner-icon-X.svg` filename and usage text from the `.owner .use` section so the Android stats card renders correctly.
-- **Odometer checks:** inspect the `.odometer-box` tiles and flag rollback only when any tile deviates from "No issues reported".
-- **Safety booleans:** derive structural damage, airbag deployment, and total loss from their respective icon alt attributes (`*-off` indicates false).
-- **Reference VIN:** `4JGDA5HB7JB158144` should return owners `1`, usage `Lease`, and `odometerRollback=false` once the scraper logic is updated.
+## OBD Service Reliability – Executive Summary
 
-## Android Integration Details
+A deep comparison between Mode 9 (OBD_SVC_VEH_INFO) and Fault Code services revealed five issues explaining why fault-code loads flicker the UI:
 
-| Component | Path | Purpose |
-|-----------|------|---------|
-| Data model | `app/src/java/com/obddroid/vehicle/AutoCheckReport.java` | Parses API payload, exposes helpers like `hasAccidents()` |
-| Service | `app/src/java/com/obddroid/services/AutoCheckService.java` | Handles network calls, threading, and callbacks |
-| UI | Vehicle History activity & dashboard card | UX for VIN entry, loading states, and rich report presentation |
+| # | Issue | File / Line | Severity | Impact |
+|---|-------|-------------|----------|--------|
+| 1 | `writeTelegram` uses `OBD_SVC_DATA` instead of requested service | `ObdProt.java:1483` | CRITICAL | Command queue confusion |
+| 2 | No termination flag equivalent to `pidsWrapped` | `ElmProt.java:~825` | CRITICAL | Infinite polling loop |
+| 3 | Fault-code PV updates lack `PvChangeEvent.PV_MODIFIED` | `ObdProt.java:1218` | HIGH | UI receives no update |
+| 4 | Aggressive NODATA recovery with immediate retries | `ElmProt.java:1515-1569` | HIGH | CONNECTED ↔ NODATA flicker |
+| 5 | Cache restore order unclear | `ObdProt.java:1635` | MEDIUM | Intermittent data loss |
 
-### Next UI Enhancements
-- Create dedicated activity layout with loading indicators, error states, and report cards.
-- Add main menu entry point and persist VIN prefill from `VehicleManager`.
-- Introduce mileage discrepancy alerts and premium upsell hooks.
-- Optional upgrades: PDF export, VIN barcode scanner, batch lookup, recall alerts.
+**Remediation Plan**
+1. **Phase 1 (1–2h, unblock UI):** Fix service context, add `faultCodesRequestComplete` counter, break loop when all three code services queried.
+2. **Phase 2 (1–2h):** Emit `PV_MODIFIED`, verify cache restoration, add instrumentation to count status transitions.
+3. **Phase 3 (3–5h):** Back-off retries, align InitializationManager polling, consider batching responses similar to Mode 9.
 
-## Testing & Demo Guide
+**Validation Metrics (post-fix targets):**
+- Status transitions per load cycle: `< 5` (currently 15–20)
+- Time in NODATA: `< 5%` (currently 30–50%)
+- Visible flicker: none
+- Data persistence: consistent across service switches
 
-### Quick Start Checklist
+---
 
-1. **Verify backend health**
-   ```bash
-   cd /path/to/autocheck-api
-   curl http://localhost:3248/health
-   npm start # only if the previous check fails
-   ```
-2. **Confirm network connectivity**
-   - Laptop and phone on the same Wi-Fi network.
-   - From the phone browser, open `http://<laptop-ip>:3248/health` (example: `http://192.168.0.149:3248/health`).
-3. **Launch the app**
-   - Open OBD-Droid on the device or emulator.
-   - Ensure the dashboard shows the blue “Vehicle History” card in the grid.
-4. **Run a report**
-   - Tap the card, enter VIN `1HGBH41JXMN109186`, and press “Check Vehicle History”.
-   - Expect 30–60 seconds on first run while the scraper boots, logs in, and fetches data.
-5. **Observe results**
-   - Verify vehicle summary, AutoCheck score, owners, mileage, title status, accidents, recalls, and timeline entries.
-6. **Capture logs when debugging**
-   - Android: `adb logcat | grep -i autocheck`
-   - API: tail the Node server output for Playwright activity and rate-limit notices.
+## Key Code Map
 
-### Scenario Matrix
-- **Successful lookup** – VIN `1HGBH41JXMN109186`; sample data from the companion service returns ~75 score, three owners, ~108,904 miles, and one open recall.
-- **API offline** – Stop the Node server and repeat lookup; UI should surface a connectivity error banner/toast.
-- **Invalid VIN** – Use `123`; app shows “VIN must be exactly 17 characters”.
-- **Network mismatch** – Disconnect the phone from Wi-Fi (use LTE) and try again; expect timeout messaging.
-- **Repeated request** – Run the same VIN twice; second call should complete faster thanks to warm session caching.
+| Area | File | Notes |
+|------|------|-------|
+| OBD protocol state machine | `app/src/java/com/obddroid/core/obd/ObdProt.java` | `setService()`, `handleTelegram()`, caching |
+| ELM adapter state management | `app/src/java/com/obddroid/core/obd/ElmProt.java` | `setStatus()`, NODATA recovery |
+| Initialization orchestration | `app/src/java/com/obddroid/core/obd/InitializationManager.java` | Mode 9 + fault-code service sequencing |
+| Fuel economy activity | `app/src/java/com/obddroid/ui/activities/FuelEconomyActivity.java` | Speed-density calc, VE calibration, trip logging |
+| Emissions screen | `app/src/java/com/obddroid/ui/activities/EmissionsActivity.java` | IUMPR parsing, monitor availability |
+| Vehicle preferences | `app/src/java/com/obddroid/vehicle/VehiclePreferences.java` | Tank size, VE calibration, per-VIN prompts |
+| Vehicle manager | `app/src/java/com/obddroid/vehicle/VehicleManager.java` | VIN listeners, tank capacity heuristics |
+| AutoCheck integration | `app/src/java/com/obddroid/services/AutoCheckService.java` | Companion API calls |
 
-### Demo Flow (15 minutes)
-1. Show `http://localhost:3248/health` to prove service readiness.
-2. Perform a live VIN lookup (use customer/employee vehicle if available).
-3. Walk through key sections: score, owners, mileage, accidents, recalls.
-4. Highlight upcoming additions (VIN scanner, mileage fraud alerts, PDF export, recall notifications).
-5. Invite questions; keep troubleshooting cheatsheet handy.
+---
 
-### Troubleshooting Reference
-- Free port 3248: `lsof -ti:3248 | xargs kill -9`
-- Scraper flakiness: set `BROWSER_HEADLESS=false`, increase `BROWSER_SLOWMO`, or refresh credentials.
-- Connectivity issues: confirm IP, firewall rules, and Wi-Fi; update base URL in `AutoCheckService`.
-- VIN auto-read missing: verify Mode 09 PID 02 support; allow manual entry fallback.
-- Unexpected scraper errors: clear session storage, re-login, monitor Playwright console output.
+## Setup & Companion Services
 
-### Ready-to-Go Demo Script
-> “We pull the VIN straight from the vehicle, trigger a full AutoCheck report in about a minute, and surface it alongside live OBD diagnostics—no extra websites or per-report fees.”
+### Prerequisites
+- Android Studio / Gradle (JDK required for local builds).
+- Bluetooth OBD-II adapter (e.g., ELM327) for on-vehicle testing.
+- Node.js ≥ 18 for AutoCheck service.
 
-1. Start API (`npm start`) and open the health endpoint.
-2. On Android, tap Vehicle History, paste VIN, press “Check”.
-3. Narrate the returned insights (score trend, owners, mileage, recall count).
-4. Close with the roadmap: premium upsells, B2B API, recall alerts, mileage fraud detection.
-
-
-Dashboard card sketch:
+### AutoCheck Companion Setup
+```bash
+cd /path/to/autocheck-api
+npm install
+cp .env.example .env   # Configure credentials if available
+npm run dev
 ```
-┌─────────────────────────────────────────┐
-│ ⚠️  SAFETY RECALL NOTICE (2 open)       │
-│  • Airbag Inflator – HIGH               │
-│  • Fuel Pump Module – MODERATE          │
-│  [ View Details ]  [ Mark Resolved ]    │
-└─────────────────────────────────────────┘
+- Confirm readiness: `curl http://localhost:3248/health`
+- From device, ensure `http://<laptop-ip>:3248/health` is reachable.
+- Update base URL inside `AutoCheckService` when testing on device.
+
+### Android Build & Install
+```bash
+./gradlew assembleDebug        # requires local JDK
+./gradlew installDebug
 ```
 
-Detail dialog sketch:
-```
-┌─────────────────────────────────────────┐
-│ Campaign 23V456 – Airbag Inflator       │
-│ Severity: HIGH                          │
-│ Issue: Inflator may rupture...          │
-│ Remedy: Dealer replaces inflator free   │
-│ Contact: 1-800-XXX-XXXX                 │
-│ [ Schedule Repair ]  [ Dismiss ]        │
-└─────────────────────────────────────────┘
-```
+---
 
+## Validation Playbooks
+
+### Fuel Economy
+1. Connect to vehicle, open Fuel Economy screen.
+2. On first VIN use, verify tank capacity dialog with estimated gallons (can adjust).
+3. Confirm instant MPG stays within realistic bounds (20–40 MPG under cruise).
+4. Record a trip, then stop – check `Documents/OBDroid/fuel_economy_trip_*.csv` for full diagnostic columns.
+5. Use calibration dialog post fill-up to apply new VE; ensure snackbar confirmation.
+
+### Emissions Readiness
+1. Ensure Mode 9 data primed (visit Live Data or hook Mode 1 request).
+2. Open Emissions screen; expect cards populated with ratios, icons, helpful text.
+3. Verify summary banner counts (should go green once “No Data” monitors excluded).
+4. Capture logs (`adb logcat | grep EmissionsActivity`) if parsing issues appear.
+
+### OBD Fault Code Service (post-fix checklist)
+1. Trigger fault code refresh from dashboard or initialization flow.
+2. Monitor status transitions (`adb logcat | grep ElmProt` once instrumentation added).
+3. Confirm PV_MODIFIED events update UI without manual refresh.
+
+---
+
+## Roadmap & Outstanding Items
+
+| Area | Next Step | Owner | Effort |
+|------|-----------|-------|--------|
+| Fault codes | Implement termination flag + service context fix (Phase 1) | Engineering | 1–2h |
+| Fault codes | Emit PV_MODIFIED & add state counters (Phase 2) | Engineering | 1h |
+| Fault codes | Back-off retry logic (Phase 3) | Engineering | 2h |
+| Emissions | Refine monitor availability to exclude “No Data” cards | Engineering | 30m |
+| Emissions | Trigger Mode 1 PID 0x01 on page load | Engineering | 1h |
+| Fuel economy | Optional calc method badge + UI polish | Product | 1h |
+| Vehicle history | Complete scraper fixes (owner usage, rollback, booleans) | Backend | 2–3h |
+| Vehicle history | Add PDF export / VIN scanner (stretch) | Product | TBD |
+
+---
+
+## Appendix – Key Metrics from Real Vehicle (2018 Mercedes-Benz GLE)
+
+| Monitor | Status | Completions / Conditions | Notes |
+|---------|--------|--------------------------|-------|
+| Misfire | ✅ Ready | 51,360 / 51,360 | Continuous |
+| Fuel System | ✅ Ready | 51,360 / 51,360 | Continuous |
+| CCM | ✅ Ready | 51,360 / 51,360 | Continuous |
+| Catalyst | ✅ Ready | 1,103,820 / 783,680 | Bank 1 & 2 aggregated |
+| O2 Sensor | ✅ Ready | 522,580 / 673,600 | Includes secondary sensors |
+| EGR | ✅ Ready | 456,010 / 30,880 | |
+| EVAP | ⚠ Not Ready | 0 / 188 | Needs specific drive cycle |
+| O2 Heater | — No Data | 0 / 0 | Likely not equipped |
+| Secondary Air | — No Data | 0 / 0 | Likely not equipped |
+
+Fuel economy calibration result example (post fill-up):
+- Actual MPG: 29.3 (287.5 miles / 9.8 gallons)
+- App MPG pre-calibration: 25.1
+- VE adjustment ratio: 1.167 → new VE 99.2%
+- Stored per VIN in `VehiclePreferences`
+
+---
+
+## Contributing & Housekeeping
+
+- Trip CSV exports are ignored via `.gitignore` (`fuel_economy_trip_*.csv`).
+- Always instantiate `VehicleManager` once per activity and remove listeners in `onDestroy`.
+- When modifying `FuelEconomyActivity`, ensure `lastFuelCalcDiagnostics` is updated so CSVs remain accurate.
+- For emissions parsing, add verbose logs for new PID descriptions to aid future debugging.
+- **Do not** reintroduce per-screen markdown artifacts; update this README instead.
+
+---
+
+## Support & Contact
+
+- Companion API issues: check Playwright logs or Experian API credentials.
+- Bluetooth communication failures: inspect `ElmProt` logs for NODATA loops.
+- Feature questions: reference relevant sections in this README or the corresponding Java source.
+
+Happy hacking! 🚗💨
 ### Privacy & Offline Behavior
 - No account required; VINs can remain on-device with optional hashing if cloud sync is introduced.
 - Cached recall state persists offline, with timestamp showing last successful update.
