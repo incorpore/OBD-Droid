@@ -6,11 +6,6 @@
     android:orientation="vertical"
     >
 
-    <!-- Auto-reconnect countdown bar (hidden by default) -->
-    <include
-        android:id="@+id/auto_reconnect_countdown_bar"
-        layout="@layout/auto_reconnect_countdown_bar"/>
-
     <!-- Content area with overlay support -->
     <FrameLayout
         android:layout_width="match_parent"
@@ -381,6 +376,14 @@
         android:clickable="true"
         android:focusable="true"
         android:visibility="gone"/>
+
+    <!-- Auto-reconnect countdown bar (hidden by default, floats over content) -->
+    <include
+        android:id="@+id/auto_reconnect_countdown_bar"
+        layout="@layout/auto_reconnect_countdown_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"/>
 
     </FrameLayout>
 

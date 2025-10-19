@@ -82,6 +82,11 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ecu_list);
 
+        // Set navigation bar color to match footer
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setNavigationBarColor(0xFF212121);  // #212121
+        }
+
         // Set up action bar
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);

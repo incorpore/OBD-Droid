@@ -64,6 +64,11 @@ public class EcuComparisonActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ecu_comparison);
 
+        // Set navigation bar color to match footer
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setNavigationBarColor(0xFF212121);  // #212121
+        }
+
         // Set up action bar with back button
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -77,6 +82,13 @@ public class EcuComparisonActivity extends AppCompatActivity {
         changedCountView = findViewById(R.id.changed_count);
         unchangedCountView = findViewById(R.id.unchanged_count);
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);
+
+        // Set up vehicle info footer with overlay
+        View overlay = findViewById(R.id.footer_overlay);
+        if (vehicleInfoFooter != null && overlay != null) {
+            vehicleInfoFooter.setOverlayView(overlay);
+            log.info("Footer overlay wired up successfully");
+        }
 
         // Get data from intent
         this.baselineScan = (EcuScan) getIntent().getSerializableExtra(EXTRA_BASELINE_SCAN);
@@ -357,6 +369,25 @@ public class EcuComparisonActivity extends AppCompatActivity {
         } else {
             // No changes - use checkmark
             statusIcon.setImageResource(R.drawable.ic_ecu_status_ok);
+        }
+
+        // Show Cal ID and CVN (always visible)
+        LinearLayout calIdDisplayContainer = itemView.findViewById(R.id.calibration_id_container);
+        LinearLayout cvnDisplayContainer = itemView.findViewById(R.id.calibration_verification_container);
+        TextView calIdText = itemView.findViewById(R.id.ecu_calibration_id);
+        TextView cvnText = itemView.findViewById(R.id.ecu_calibration_verification);
+
+        String calId = displayEcu.getCalibrationId();
+        String cvn = displayEcu.getCalibrationVerification();
+
+        if (calId != null && !calId.isEmpty()) {
+            calIdDisplayContainer.setVisibility(View.VISIBLE);
+            calIdText.setText(calId);
+        }
+
+        if (cvn != null && !cvn.isEmpty()) {
+            cvnDisplayContainer.setVisibility(View.VISIBLE);
+            cvnText.setText(cvn);
         }
 
         // Show changes if applicable

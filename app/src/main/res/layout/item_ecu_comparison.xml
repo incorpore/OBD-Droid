@@ -3,7 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="6dp"
+    android:layout_marginStart="6dp"
+    android:layout_marginEnd="6dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="4dp"
     app:cardCornerRadius="6dp"
     app:cardElevation="2dp">
 
@@ -18,7 +21,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="12dp"
+            android:padding="10dp"
             android:gravity="center_vertical"
             android:background="@android:color/white">
 
@@ -51,9 +54,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="No changes"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     android:textColor="#4CAF50"
-                    android:layout_marginTop="2dp"/>
+                    android:layout_marginTop="1dp"/>
             </LinearLayout>
 
             <TextView
@@ -67,6 +70,76 @@
                 android:fontFamily="monospace"
                 android:padding="4dp"
                 android:background="@drawable/rounded_background"/>
+        </LinearLayout>
+
+        <!-- Cal ID and CVN Display (always visible) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="8dp"
+            android:paddingTop="0dp">
+
+            <!-- Calibration ID -->
+            <LinearLayout
+                android:id="@+id/calibration_id_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cal ID:"
+                    android:textSize="10sp"
+                    android:textColor="@android:color/darker_gray"
+                    android:textStyle="bold"
+                    android:layout_marginEnd="6dp"
+                    android:minWidth="50dp"/>
+
+                <TextView
+                    android:id="@+id/ecu_calibration_id"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CAL12345"
+                    android:textSize="11sp"
+                    android:textColor="@android:color/black"
+                    android:fontFamily="monospace" />
+            </LinearLayout>
+
+            <!-- Calibration Verification -->
+            <LinearLayout
+                android:id="@+id/calibration_verification_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CVN:"
+                    android:textSize="10sp"
+                    android:textColor="@android:color/darker_gray"
+                    android:textStyle="bold"
+                    android:layout_marginEnd="6dp"
+                    android:minWidth="50dp"/>
+
+                <TextView
+                    android:id="@+id/ecu_calibration_verification"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0x12345678"
+                    android:textSize="11sp"
+                    android:textColor="@android:color/black"
+                    android:fontFamily="monospace" />
+            </LinearLayout>
+
         </LinearLayout>
 
         <!-- Changes Container (hidden by default, shown only if ECU changed) -->

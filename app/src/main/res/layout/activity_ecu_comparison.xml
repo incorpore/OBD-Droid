@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:layout_height="match_parent">
+
+    <!-- Main content -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#F5F5F5"
+        android:paddingBottom="80dp">
 
     <!-- Header with comparison info -->
     <LinearLayout
@@ -101,7 +107,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="16dp"
+            android:padding="10dp"
             android:background="#212121"
             android:gravity="center">
 
@@ -117,7 +123,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="0"
-                    android:textSize="28sp"
+                    android:textSize="22sp"
                     android:textStyle="bold"
                     android:textColor="#F57C00"/>
 
@@ -125,14 +131,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Changed"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     android:textColor="#9E9E9E"
-                    android:layout_marginTop="4dp"/>
+                    android:layout_marginTop="2dp"/>
             </LinearLayout>
 
             <View
                 android:layout_width="1dp"
-                android:layout_height="50dp"
+                android:layout_height="40dp"
                 android:background="#424242"/>
 
             <LinearLayout
@@ -147,7 +153,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="3"
-                    android:textSize="28sp"
+                    android:textSize="22sp"
                     android:textStyle="bold"
                     android:textColor="#4CAF50"/>
 
@@ -155,18 +161,31 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Unchanged"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     android:textColor="#9E9E9E"
-                    android:layout_marginTop="4dp"/>
+                    android:layout_marginTop="2dp"/>
             </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>
 
-    <!-- Vehicle Info Footer -->
+    </LinearLayout>
+
+    <!-- Overlay that appears when footer is expanded -->
+    <View
+        android:id="@+id/footer_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true"/>
+
+    <!-- Vehicle Info Footer (overlays on top) -->
     <com.obddroid.ui.components.VehicleInfoFooter
         android:id="@+id/vehicle_footer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"/>
 
-</LinearLayout>
+</FrameLayout>
