@@ -1,7 +1,9 @@
 package com.obddroid.ui.activities;
 
+import android.app.AlertDialog;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -360,12 +362,53 @@ public class FaultCodesActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.fault_codes_menu, menu);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
+        int id = item.getItemId();
+
+        if (id == android.R.id.home) {
             finish();
             return true;
+        } else if (id == R.id.action_rescan) {
+            startScan();
+            return true;
+        } else if (id == R.id.action_info) {
+            showInfoDialog();
+            return true;
         }
+
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Show info dialog explaining fault codes
+     */
+    private void showInfoDialog() {
+        String message = "Diagnostic Trouble Codes (DTCs)\n\n" +
+                "• CONFIRMED CODES (Red)\n" +
+                "  Active faults detected by the vehicle. These codes indicate current issues that need attention.\n\n" +
+                "• PENDING CODES (Blue)\n" +
+                "  Intermittent issues detected but not yet confirmed. The ECU is monitoring these conditions.\n\n" +
+                "CODE PREFIXES:\n" +
+                "• P - Powertrain (Engine, Transmission)\n" +
+                "• C - Chassis (ABS, Suspension)\n" +
+                "• B - Body (Airbags, Climate Control)\n" +
+                "• U - Network/Communication\n\n" +
+                "How It Works:\n" +
+                "This page scans your vehicle's computer using OBD-II Mode 03 (confirmed codes) and Mode 07 (pending codes). " +
+                "Tap any code to view freeze frame data, search online for solutions, or get AI-powered analysis.";
+
+        new AlertDialog.Builder(this)
+                .setTitle("About Fault Codes")
+                .setMessage(message)
+                .setPositiveButton("Got it", null)
+                .setIcon(android.R.drawable.ic_menu_info_details)
+                .show();
     }
 
     @Override
