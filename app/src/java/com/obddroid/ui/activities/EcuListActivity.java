@@ -666,6 +666,7 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
     private void showSnackbar(String message, int duration) {
         Snackbar snackbar = Snackbar.make(snackbarAnchor, message, duration);
         snackbar.setAnchorView(vehicleInfoFooter);  // Position above the footer
+        snackbar.getView().setElevation(6f);  // Lower than footer's 8f so it slides from behind
         snackbar.show();
     }
 

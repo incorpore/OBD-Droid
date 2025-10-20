@@ -225,6 +225,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         com.google.android.material.snackbar.Snackbar snackbar =
             com.google.android.material.snackbar.Snackbar.make(snackbarAnchor, message, duration);
         snackbar.setAnchorView(vehicleInfoFooter);  // Position above the footer
+        snackbar.getView().setElevation(6f);  // Lower than footer's 8f so it slides from behind
         snackbar.show();
     }
 

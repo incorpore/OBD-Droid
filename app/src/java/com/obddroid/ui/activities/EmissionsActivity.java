@@ -205,6 +205,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
             com.google.android.material.snackbar.Snackbar.make(snackbarAnchor, message,
                 com.google.android.material.snackbar.Snackbar.LENGTH_SHORT);
         snackbar.setAnchorView(vehicleInfoFooter);  // Position above the footer
+        snackbar.getView().setElevation(6f);  // Lower than footer's 8f so it slides from behind
         snackbar.show();
     }
 
