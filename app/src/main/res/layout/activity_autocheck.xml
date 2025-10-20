@@ -3,7 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#1E1E1E">
 
     <!-- Main Content -->
     <FrameLayout
@@ -13,36 +14,32 @@
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fillViewport="true"
-            android:background="#F5F5F5">
+            android:fillViewport="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:paddingBottom="100dp"
-                android:paddingTop="8dp"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp">
+                android:paddingTop="16dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
 
                 <!-- Empty State / Generate Report Card -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/empty_state_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginRight="16dp"
-                    android:layout_marginTop="32dp"
                     android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="24dp"
-                    app:cardElevation="6dp"
-                    android:backgroundTint="#FFFFFF">
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp"
+                    app:cardBackgroundColor="#2C2C2C">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="48dp"
+                        android:padding="32dp"
                         android:gravity="center">
 
                         <!-- Hero Icon -->
@@ -60,7 +57,7 @@
                             android:text="Vehicle History Report"
                             android:textSize="24sp"
                             android:textStyle="bold"
-                            android:textColor="#1A1A1A"
+                            android:textColor="#FFFFFF"
                             android:gravity="center"
                             android:layout_marginBottom="12dp"/>
 
@@ -70,7 +67,7 @@
                             android:layout_height="wrap_content"
                             android:text="Get a comprehensive vehicle history report powered by AutoCheck. View ownership history, accident records, title status, and more."
                             android:textSize="15sp"
-                            android:textColor="#757575"
+                            android:textColor="#B0BEC5"
                             android:gravity="center"
                             android:lineSpacingExtra="4dp"
                             android:layout_marginBottom="32dp"/>
@@ -79,14 +76,14 @@
                         <Button
                             android:id="@+id/check_history_button"
                             android:layout_width="wrap_content"
-                            android:layout_height="64dp"
+                            android:layout_height="56dp"
                             android:minWidth="280dp"
                             android:text="Generate Report"
                             android:textSize="16sp"
                             android:textStyle="bold"
                             android:textAllCaps="false"
                             android:letterSpacing="0"
-                            android:backgroundTint="@color/colorPrimary"
+                            android:backgroundTint="#4CAF50"
                             android:textColor="#FFFFFF"/>
 
                         <!-- Loading Container -->
@@ -96,7 +93,7 @@
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
                             android:gravity="center"
-                            android:padding="32dp"
+                            android:padding="24dp"
                             android:layout_marginTop="24dp"
                             android:background="@drawable/stat_card_background"
                             android:visibility="gone">
@@ -105,14 +102,14 @@
                                 android:id="@+id/loading_spinner"
                                 android:layout_width="64dp"
                                 android:layout_height="64dp"
-                                android:indeterminateTint="@color/colorPrimary"/>
+                                android:indeterminateTint="#4CAF50"/>
 
                             <TextView
                                 android:id="@+id/loading_text"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="🔍 Analyzing vehicle history...\n\n📄 Generating detailed PDF report...\n\n⏱️ This may take 30-60 seconds"
-                                android:textColor="#424242"
+                                android:textColor="#B0BEC5"
                                 android:textSize="14sp"
                                 android:gravity="center"
                                 android:lineSpacingExtra="6dp"
@@ -128,38 +125,35 @@
                     android:id="@+id/error_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="8dp"
-                    android:layout_marginRight="8dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="8dp"
+                    android:layout_marginBottom="12dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp"
+                    app:cardBackgroundColor="#D32F2F"
                     android:visibility="gone">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="28dp"
-                        android:background="#FFEBEE">
+                        android:padding="20dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="⚠️ Error Generating Report"
-                            android:textSize="20sp"
+                            android:textSize="18sp"
                             android:textStyle="bold"
-                            android:textColor="#C62828"
+                            android:textColor="#FFFFFF"
                             android:letterSpacing="0.01"
-                            android:paddingBottom="16dp"/>
+                            android:paddingBottom="12dp"/>
 
                         <TextView
                             android:id="@+id/error_message"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:textColor="#B71C1C"
-                            android:textSize="15sp"
-                            android:lineSpacingExtra="6dp"/>
+                            android:textColor="#FFCDD2"
+                            android:textSize="14sp"
+                            android:lineSpacingExtra="4dp"/>
 
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
@@ -170,9 +164,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingLeft="8dp"
-                    android:paddingRight="8dp"
-                    android:paddingTop="4dp"
                     android:visibility="gone">
 
                     <!-- ═══════════════════════════════════════ -->
@@ -181,20 +172,16 @@
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="8dp"
-                        android:layout_marginRight="8dp"
-                        android:layout_marginTop="8dp"
                         android:layout_marginBottom="12dp"
-                        app:cardCornerRadius="24dp"
-                        app:cardElevation="8dp"
-                        android:backgroundTint="#FFFFFF">
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="4dp"
+                        app:cardBackgroundColor="#2C2C2C">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:background="@android:color/transparent"
-                            android:padding="32dp"
+                            android:padding="24dp"
                             android:gravity="center">
 
                             <!-- Vehicle Name -->
@@ -202,9 +189,9 @@
                                 android:id="@+id/vehicle_name"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:textSize="26sp"
+                                android:textSize="24sp"
                                 android:textStyle="bold"
-                                android:textColor="#1A1A1A"
+                                android:textColor="#FFFFFF"
                                 android:gravity="center"
                                 android:paddingBottom="8dp"/>
 
@@ -214,9 +201,9 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:textSize="12sp"
-                                android:textColor="#757575"
+                                android:textColor="#B0BEC5"
                                 android:gravity="center"
-                                android:paddingBottom="32dp"
+                                android:paddingBottom="24dp"
                                 android:fontFamily="monospace"/>
 
                             <!-- Circular Score Gauge -->
@@ -243,14 +230,14 @@
                                         android:layout_height="wrap_content"
                                         android:textSize="48sp"
                                         android:textStyle="bold"
-                                        android:textColor="#1A1A1A"/>
+                                        android:textColor="#FFFFFF"/>
 
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="SCORE"
                                         android:textSize="11sp"
-                                        android:textColor="#757575"
+                                        android:textColor="#B0BEC5"
                                         android:letterSpacing="0.1"/>
 
                                 </LinearLayout>
@@ -263,7 +250,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textSize="14sp"
-                                android:textColor="#757575"
+                                android:textColor="#B0BEC5"
                                 android:layout_marginTop="16dp"/>
 
                             <!-- Score Interpretation -->
@@ -273,6 +260,7 @@
                                 android:layout_height="wrap_content"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
+                                android:textColor="#FFFFFF"
                                 android:layout_marginTop="8dp"/>
 
                             <!-- Quick Status Badges -->
@@ -281,7 +269,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal"
-                                android:layout_marginTop="24dp"
+                                android:layout_marginTop="20dp"
                                 android:gravity="center">
                                 <!-- Badges will be added programmatically -->
                             </LinearLayout>
@@ -296,18 +284,16 @@
                         android:id="@+id/stats_card"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="8dp"
-                        android:layout_marginRight="8dp"
                         android:layout_marginBottom="12dp"
-                        app:cardCornerRadius="20dp"
-                        app:cardElevation="6dp"
-                        android:backgroundTint="#FFFFFF">
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="4dp"
+                        app:cardBackgroundColor="#2C2C2C">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="20dp">
+                            android:padding="16dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -315,7 +301,7 @@
                                 android:text="Key Statistics"
                                 android:textSize="18sp"
                                 android:textStyle="bold"
-                                android:textColor="#1A1A1A"
+                                android:textColor="#FFFFFF"
                                 android:paddingBottom="16dp"/>
 
                             <!-- 2x2 Grid -->
@@ -332,7 +318,7 @@
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_columnWeight="1"
-                                    android:layout_margin="8dp"
+                                    android:layout_margin="4dp"
                                     android:orientation="vertical"
                                     android:background="@drawable/stat_card_background"
                                     android:padding="16dp"
@@ -351,14 +337,14 @@
                                         android:layout_height="wrap_content"
                                         android:textSize="24sp"
                                         android:textStyle="bold"
-                                        android:textColor="#1A1A1A"/>
+                                        android:textColor="#FFFFFF"/>
 
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="Owners"
                                         android:textSize="12sp"
-                                        android:textColor="#757575"/>
+                                        android:textColor="#B0BEC5"/>
 
                                 </LinearLayout>
 
@@ -367,7 +353,7 @@
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_columnWeight="1"
-                                    android:layout_margin="8dp"
+                                    android:layout_margin="4dp"
                                     android:orientation="vertical"
                                     android:background="@drawable/stat_card_background"
                                     android:padding="16dp"
@@ -386,14 +372,14 @@
                                         android:layout_height="wrap_content"
                                         android:textSize="20sp"
                                         android:textStyle="bold"
-                                        android:textColor="#1A1A1A"/>
+                                        android:textColor="#FFFFFF"/>
 
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="Miles"
                                         android:textSize="12sp"
-                                        android:textColor="#757575"/>
+                                        android:textColor="#B0BEC5"/>
 
                                 </LinearLayout>
 
@@ -402,7 +388,7 @@
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_columnWeight="1"
-                                    android:layout_margin="8dp"
+                                    android:layout_margin="4dp"
                                     android:orientation="vertical"
                                     android:background="@drawable/stat_card_background"
                                     android:padding="16dp"
@@ -421,14 +407,14 @@
                                         android:layout_height="wrap_content"
                                         android:textSize="24sp"
                                         android:textStyle="bold"
-                                        android:textColor="#1A1A1A"/>
+                                        android:textColor="#FFFFFF"/>
 
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="Service Records"
                                         android:textSize="12sp"
-                                        android:textColor="#757575"/>
+                                        android:textColor="#B0BEC5"/>
 
                                 </LinearLayout>
 
@@ -437,7 +423,7 @@
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_columnWeight="1"
-                                    android:layout_margin="8dp"
+                                    android:layout_margin="4dp"
                                     android:orientation="vertical"
                                     android:background="@drawable/stat_card_background"
                                     android:padding="16dp"
@@ -456,14 +442,14 @@
                                         android:layout_height="wrap_content"
                                         android:textSize="24sp"
                                         android:textStyle="bold"
-                                        android:textColor="#1A1A1A"/>
+                                        android:textColor="#FFFFFF"/>
 
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="Model Year"
                                         android:textSize="12sp"
-                                        android:textColor="#757575"/>
+                                        android:textColor="#B0BEC5"/>
 
                                 </LinearLayout>
 
@@ -479,18 +465,16 @@
                         android:id="@+id/safety_card"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="8dp"
-                        android:layout_marginRight="8dp"
                         android:layout_marginBottom="12dp"
-                        app:cardCornerRadius="20dp"
-                        app:cardElevation="6dp"
-                        android:backgroundTint="#FFFFFF">
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="4dp"
+                        app:cardBackgroundColor="#2C2C2C">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="20dp">
+                            android:padding="16dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -498,7 +482,7 @@
                                 android:text="Safety &amp; Title Overview"
                                 android:textSize="18sp"
                                 android:textStyle="bold"
-                                android:textColor="#1A1A1A"
+                                android:textColor="#FFFFFF"
                                 android:paddingBottom="16dp"/>
 
                             <!-- Title Brand -->
@@ -516,7 +500,7 @@
                                     android:layout_weight="1"
                                     android:text="Title Status"
                                     android:textSize="15sp"
-                                    android:textColor="#424242"/>
+                                    android:textColor="#B0BEC5"/>
 
                                 <TextView
                                     android:id="@+id/title_brand_value"
@@ -535,7 +519,8 @@
                             <View
                                 android:layout_width="match_parent"
                                 android:layout_height="1dp"
-                                android:background="#E0E0E0"
+                                android:background="#404040"
+                                android:alpha="0.5"
                                 android:layout_marginTop="8dp"
                                 android:layout_marginBottom="8dp"/>
 
@@ -554,21 +539,23 @@
                                     android:layout_weight="1"
                                     android:text="Accident/Damage"
                                     android:textSize="15sp"
-                                    android:textColor="#424242"/>
+                                    android:textColor="#B0BEC5"/>
 
                                 <TextView
                                     android:id="@+id/accident_value"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:textSize="14sp"
-                                    android:textStyle="bold"/>
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"/>
 
                             </LinearLayout>
 
                             <View
                                 android:layout_width="match_parent"
                                 android:layout_height="1dp"
-                                android:background="#E0E0E0"
+                                android:background="#404040"
+                                android:alpha="0.5"
                                 android:layout_marginTop="8dp"
                                 android:layout_marginBottom="8dp"/>
 
@@ -587,21 +574,23 @@
                                     android:layout_weight="1"
                                     android:text="Structural Damage"
                                     android:textSize="15sp"
-                                    android:textColor="#424242"/>
+                                    android:textColor="#B0BEC5"/>
 
                                 <TextView
                                     android:id="@+id/structural_value"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:textSize="14sp"
-                                    android:textStyle="bold"/>
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"/>
 
                             </LinearLayout>
 
                             <View
                                 android:layout_width="match_parent"
                                 android:layout_height="1dp"
-                                android:background="#E0E0E0"
+                                android:background="#404040"
+                                android:alpha="0.5"
                                 android:layout_marginTop="8dp"
                                 android:layout_marginBottom="8dp"/>
 
@@ -620,21 +609,23 @@
                                     android:layout_weight="1"
                                     android:text="Airbag Deployment"
                                     android:textSize="15sp"
-                                    android:textColor="#424242"/>
+                                    android:textColor="#B0BEC5"/>
 
                                 <TextView
                                     android:id="@+id/airbag_value"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:textSize="14sp"
-                                    android:textStyle="bold"/>
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"/>
 
                             </LinearLayout>
 
                             <View
                                 android:layout_width="match_parent"
                                 android:layout_height="1dp"
-                                android:background="#E0E0E0"
+                                android:background="#404040"
+                                android:alpha="0.5"
                                 android:layout_marginTop="8dp"
                                 android:layout_marginBottom="8dp"/>
 
@@ -653,14 +644,15 @@
                                     android:layout_weight="1"
                                     android:text="Odometer Rollback"
                                     android:textSize="15sp"
-                                    android:textColor="#424242"/>
+                                    android:textColor="#B0BEC5"/>
 
                                 <TextView
                                     android:id="@+id/rollback_value"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:textSize="14sp"
-                                    android:textStyle="bold"/>
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"/>
 
                             </LinearLayout>
 
@@ -674,18 +666,16 @@
                         android:id="@+id/details_card"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="8dp"
-                        android:layout_marginRight="8dp"
                         android:layout_marginBottom="12dp"
-                        app:cardCornerRadius="20dp"
-                        app:cardElevation="6dp"
-                        android:backgroundTint="#FFFFFF">
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="4dp"
+                        app:cardBackgroundColor="#2C2C2C">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="20dp">
+                            android:padding="16dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -693,7 +683,7 @@
                                 android:text="Vehicle Specifications"
                                 android:textSize="18sp"
                                 android:textStyle="bold"
-                                android:textColor="#1A1A1A"
+                                android:textColor="#FFFFFF"
                                 android:paddingBottom="16dp"/>
 
                             <TextView
@@ -701,7 +691,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:textSize="14sp"
-                                android:textColor="#424242"
+                                android:textColor="#B0BEC5"
                                 android:lineSpacingExtra="6dp"/>
 
                         </LinearLayout>
@@ -714,18 +704,16 @@
                         android:id="@+id/timeline_card"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="8dp"
-                        android:layout_marginRight="8dp"
                         android:layout_marginBottom="16dp"
-                        app:cardCornerRadius="20dp"
-                        app:cardElevation="6dp"
-                        android:backgroundTint="#FFFFFF">
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="4dp"
+                        app:cardBackgroundColor="#2C2C2C">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="20dp">
+                            android:padding="16dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -733,7 +721,7 @@
                                 android:text="Vehicle History Timeline"
                                 android:textSize="18sp"
                                 android:textStyle="bold"
-                                android:textColor="#1A1A1A"
+                                android:textColor="#FFFFFF"
                                 android:paddingBottom="8dp"/>
 
                             <TextView
@@ -741,7 +729,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textSize="13sp"
-                                android:textColor="#757575"
+                                android:textColor="#B0BEC5"
                                 android:paddingBottom="16dp"/>
 
                             <!-- Timeline Container -->
@@ -791,6 +779,7 @@
         android:src="@android:drawable/ic_menu_save"
         android:contentDescription="View PDF Report"
         android:visibility="gone"
+        app:backgroundTint="#4CAF50"
         app:fabSize="normal"
         app:tint="#FFFFFF"/>
 
