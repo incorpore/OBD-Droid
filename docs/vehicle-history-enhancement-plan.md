@@ -1,5 +1,7 @@
 # Vehicle History Page Enhancement Plan
 
+> **Program context:** This document feeds into `docs/platform-enhancement-master-plan.md`, which aggregates cross-initiative status (Vehicle History, Process Variable refactor, ECU module refactor). Update both when scope changes.
+
 ## Current Status
 
 - Phase 1 deliverables (readability tweaks, Score Analysis card, expanded At a Glance checks) have been implemented and are pending final QA sign-off before public release.

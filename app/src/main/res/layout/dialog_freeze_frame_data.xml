@@ -1,174 +1,193 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/dialog_background">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="8dp"
+    app:cardBackgroundColor="@color/background_secondary">
 
-    <!-- Header with fault code info -->
-    <LinearLayout
-        android:id="@+id/header_container"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:background="#1976D2"
-        android:gravity="center_vertical"
-        android:layout_alignParentTop="true">
+        android:layout_height="match_parent">
 
-        <ImageView
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_snowflake_24"
-            android:tint="@android:color/white"/>
-
+        <!-- Header with fault code info -->
         <LinearLayout
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginStart="12dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Freeze Frame Data"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"/>
-
-            <TextView
-                android:id="@+id/freeze_frame_code"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="P0301 - Cylinder 1 Misfire"
-                android:textSize="14sp"
-                android:textColor="#B3E5FC"/>
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- Bottom button container - anchored to bottom -->
-    <LinearLayout
-        android:id="@+id/button_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_alignParentBottom="true">
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#E0E0E0"/>
-
-        <LinearLayout
+            android:id="@+id/header_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center"
-            android:padding="12dp">
-
-            <Button
-                android:id="@+id/btn_refresh"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:text="Refresh"
-                android:textColor="#1976D2"
-                android:textSize="14sp"
-                android:background="?android:attr/selectableItemBackground"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
-                android:layout_marginEnd="16dp"
-                android:visibility="gone"/>
-
-            <Button
-                android:id="@+id/btn_close"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:text="Close"
-                android:textColor="#757575"
-                android:textSize="14sp"
-                android:background="?android:attr/selectableItemBackground"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"/>
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- Content area - between header and buttons -->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/header_container"
-        android:layout_above="@id/button_container">
-
-        <!-- Loading indicator - centered -->
-        <LinearLayout
-            android:id="@+id/loading_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:visibility="visible">
-
-            <ProgressBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="12dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Loading freeze frame data..."
-                android:textSize="16sp"
-                android:textColor="#757575"/>
-        </LinearLayout>
-
-        <!-- Data container -->
-        <ScrollView
-            android:id="@+id/data_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:id="@+id/freeze_frame_data_list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="8dp">
-                <!-- Data items will be added programmatically -->
-            </LinearLayout>
-        </ScrollView>
-
-        <!-- No data message - centered -->
-        <LinearLayout
-            android:id="@+id/no_data_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:visibility="gone">
+            android:padding="20dp"
+            android:background="@color/background_primary"
+            android:gravity="center_vertical"
+            android:layout_alignParentTop="true">
 
             <ImageView
-                android:layout_width="64dp"
-                android:layout_height="64dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:src="@drawable/ic_snowflake_24"
-                android:tint="#BDBDBD"
-                android:alpha="0.5"/>
+                android:tint="@color/fault_success"/>
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="No freeze frame data available"
-                android:textSize="16sp"
-                android:textColor="#757575"
-                android:layout_marginTop="16dp"/>
+                android:orientation="vertical"
+                android:layout_marginStart="16dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="This code may not have captured snapshot data"
-                android:textSize="14sp"
-                android:textColor="#9E9E9E"
-                android:layout_marginTop="4dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Freeze Frame Data"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary_dark"/>
+
+                <TextView
+                    android:id="@+id/freeze_frame_code"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="P0301 - Cylinder 1 Misfire"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary_dark"
+                    android:layout_marginTop="4dp"/>
+            </LinearLayout>
         </LinearLayout>
-    </FrameLayout>
 
-</RelativeLayout>
+        <!-- Bottom button container -->
+        <LinearLayout
+            android:id="@+id/button_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_alignParentBottom="true">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#404040"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end"
+                android:padding="16dp">
+
+                <Button
+                    android:id="@+id/btn_refresh"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="REFRESH"
+                    android:textColor="@color/colorAccent"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:layout_marginEnd="8dp"
+                    android:visibility="gone"/>
+
+                <Button
+                    android:id="@+id/btn_close"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="CLOSE"
+                    android:textColor="@color/fault_success"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Content area -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/header_container"
+            android:layout_above="@id/button_container"
+            android:background="@color/background_secondary">
+
+            <!-- Loading indicator -->
+            <LinearLayout
+                android:id="@+id/loading_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="visible">
+
+                <ProgressBar
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:indeterminateTint="@color/fault_success"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Loading freeze frame data..."
+                    android:textSize="16sp"
+                    android:textColor="@color/text_secondary_dark"
+                    android:layout_marginTop="16dp"/>
+            </LinearLayout>
+
+            <!-- Data container -->
+            <ScrollView
+                android:id="@+id/data_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/freeze_frame_data_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+                    <!-- Data items will be added programmatically -->
+                </LinearLayout>
+            </ScrollView>
+
+            <!-- No data message -->
+            <LinearLayout
+                android:id="@+id/no_data_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="32dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:src="@drawable/ic_snowflake_24"
+                    android:tint="@color/text_secondary_dark"
+                    android:alpha="0.3"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No Freeze Frame Available"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary_dark"
+                    android:layout_marginTop="16dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="This code may not have captured snapshot data"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary_dark"
+                    android:textAlignment="center"
+                    android:gravity="center"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+        </FrameLayout>
+
+    </RelativeLayout>
+
+</androidx.cardview.widget.CardView>
