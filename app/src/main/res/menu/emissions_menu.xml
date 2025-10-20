@@ -3,23 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_overflow"
-        android:title="Actions"
-        android:icon="@android:drawable/ic_menu_more"
-        app:showAsAction="always"
-        android:orderInCategory="100">
-        <menu>
-            <item
-                android:id="@+id/action_rescan"
-                android:title="Rescan Emissions Data"
-                android:icon="@android:drawable/ic_menu_rotate"
-                app:showAsAction="never" />
-            <item
-                android:id="@+id/action_export"
-                android:title="Export to CSV"
-                android:icon="@android:drawable/ic_menu_save"
-                app:showAsAction="never" />
-        </menu>
-    </item>
+        android:id="@+id/action_rescan"
+        android:title="Rescan Emissions Data"
+        android:icon="@android:drawable/ic_menu_rotate"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_export"
+        android:title="Export to CSV"
+        android:icon="@android:drawable/ic_menu_save"
+        app:showAsAction="never" />
 
 </menu>
