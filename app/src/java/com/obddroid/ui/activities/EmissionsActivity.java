@@ -20,8 +20,8 @@ import androidx.cardview.widget.CardView;
 import com.obddroid.R;
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.pvs.PvChangeEvent;
-import com.obddroid.core.pvs.PvChangeListener;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
 import com.obddroid.services.CommService;
 import com.obddroid.ui.components.VehicleInfoFooter;
 
@@ -286,8 +286,15 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
             return true;
         } else if (item.getItemId() == R.id.action_rescan) {
             log.info("Rescan requested from overflow menu");
-            updateDisplay();
-            showSnackbar("Refreshing emissions data...");
+            showSnackbar("Rescanning emissions data...");
+            // Clear existing data and request fresh data from vehicle
+            if (CommService.elm != null) {
+                log.info("Clearing cached emissions data for fresh scan");
+                // Request fresh data from vehicle
+                startEmissionsDataRequest();
+            } else {
+                showSnackbar("Not connected to vehicle");
+            }
             return true;
         } else if (item.getItemId() == R.id.action_export) {
             log.info("Export requested from overflow menu");
@@ -302,6 +309,11 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         runOnUiThread(this::updateDisplay);
     }
 
+    /**
+     * Request emissions data from the vehicle
+     * This is called when the activity loads to display existing cached data
+     * For fresh data requests, use startEmissionsDataRequest()
+     */
     private void requestEmissionsData() {
         log.info("=== Checking for emissions data ===");
 
@@ -313,28 +325,67 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
 
         if (CommService.elm == null) {
             log.warning("Not connected to vehicle - will display cached data if available");
-        } else {
-            log.info("Connected - current OBD service: " + CommService.elm.getService());
-        }
-
-        // Always try to update display with whatever data exists
-        log.info("Updating display with available data...");
-        updateDisplay();
-
-        // If we have both types of data, we're done
-        if (hasPidData && hasVidData) {
-            log.info("Both PidPvs and VidPvs have data - emissions page populated");
+            updateDisplay();
             return;
         }
 
-        // If missing data and connected, suggest user to navigate to other screens first
-        if (CommService.elm != null && (!hasPidData || !hasVidData)) {
-            log.info("Some data missing - user should visit Live Data or Vehicle Info tabs first");
-            updateHandler.postDelayed(() -> {
-                String message = "Tip: Visit 'Live Data' and 'Vehicle Info' tabs first to populate emissions data";
-                showSnackbar(message);
-            }, 1000);
+        log.info("Connected - current OBD service: " + CommService.elm.getService());
+
+        // If we don't have data and we're connected, start requesting it
+        if (!hasPidData || !hasVidData) {
+            log.info("Missing emissions data - starting data request from vehicle");
+            startEmissionsDataRequest();
+        } else {
+            log.info("Cached emissions data available - displaying");
+            updateDisplay();
         }
+    }
+
+    /**
+     * Start a fresh emissions data request from the vehicle
+     * This switches OBD services to Mode 1 and Mode 9 to retrieve the data
+     */
+    private void startEmissionsDataRequest() {
+        if (CommService.elm == null) {
+            log.warning("Cannot request emissions data - not connected to vehicle");
+            showSnackbar("Not connected to vehicle");
+            return;
+        }
+
+        if (dataQueryInProgress) {
+            log.info("Data query already in progress, skipping duplicate request");
+            return;
+        }
+
+        // Save the current service so we can restore it later
+        previousService = CommService.elm.getService();
+        log.info("Starting emissions data request (previous service: " + previousService + ")");
+        dataQueryInProgress = true;
+
+        // Start with Mode 1 to get monitor readiness status
+        // The service will automatically request all supported PIDs from Mode 1
+        // Don't clear existing data (clearLists=false) to preserve good data
+        log.info("Switching to Mode 1 (OBD_SVC_DATA) to request monitor readiness");
+        CommService.elm.setService(ObdProt.OBD_SVC_DATA, false);
+
+        // After 3 seconds, switch to Mode 9 to get IUMPR data
+        // This gives Mode 1 time to retrieve monitor status data
+        updateHandler.postDelayed(() -> {
+            if (CommService.elm != null && dataQueryInProgress) {
+                log.info("Switching to Mode 9 (OBD_SVC_VEH_INFO) to request IUMPR data");
+                CommService.elm.setService(ObdProt.OBD_SVC_VEH_INFO, false);
+
+                // After another 3 seconds, update the display
+                updateHandler.postDelayed(() -> {
+                    log.info("Emissions data request complete - updating display");
+                    updateDisplay();
+
+                    // Mark query as complete but keep the service active for continuous updates
+                    // Don't restore the previous service - let the user navigate away naturally
+                    dataQueryInProgress = false;
+                }, 3000);
+            }
+        }, 3000);
     }
 
     private void startPeriodicUpdates() {
@@ -513,8 +564,10 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         log.info("updateMonitorReadiness: Parsing " + ObdProt.PidPvs.size() + " PID entries...");
 
         // Iterate through PidPvs to find monitor status entries
+        // Make a copy of the keys to avoid ConcurrentModificationException
         int foundCount = 0;
-        for (Object key : ObdProt.PidPvs.keySet()) {
+        java.util.List<Object> keys = new java.util.ArrayList<>(ObdProt.PidPvs.keySet());
+        for (Object key : keys) {
             Object value = ObdProt.PidPvs.get(key);
             if (value instanceof EcuDataPv) {
                 EcuDataPv pv = (EcuDataPv) value;
@@ -523,46 +576,86 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
 
                 if (description == null || formattedVal == null) continue;
 
-                String statusStr = formattedVal.toString();
+                String lowerDescription = description.toLowerCase(Locale.US);
+                String monitorKey = null;
 
-                // Parse the status string format:
-                // "(*) Available\n(*) Complete" or "(  ) Not available\n(  ) Incomplete"
-                boolean isAvailable = statusStr.contains("(*) Available") || statusStr.contains("(*) Complete");
-                boolean isComplete = statusStr.contains("(*) Complete");
-
-                // Map descriptions to monitors
-                MonitorData monitor = null;
-                if (description.toLowerCase().contains("misfire")) {
-                    monitor = monitorDataMap.get("MISFIRE");
-                } else if (description.toLowerCase().contains("fuel system")) {
-                    monitor = monitorDataMap.get("FUEL");
-                } else if (description.toLowerCase().contains("component")) {
-                    monitor = monitorDataMap.get("CCM");
-                } else if (description.toLowerCase().contains("catalyst")) {
-                    monitor = monitorDataMap.get("CATALYST");
-                } else if (description.toLowerCase().contains("evap")) {
-                    monitor = monitorDataMap.get("EVAP");
-                } else if (description.toLowerCase().contains("oxygen sensor heater")) {
-                    monitor = monitorDataMap.get("O2HEATER");
-                } else if (description.toLowerCase().contains("oxygen sensor")) {
-                    monitor = monitorDataMap.get("O2SENSOR");
-                } else if (description.toLowerCase().contains("egr")) {
-                    monitor = monitorDataMap.get("EGR");
-                } else if (description.toLowerCase().contains("secondary air") || description.toLowerCase().contains("air system")) {
-                    monitor = monitorDataMap.get("AIR");
+                if (lowerDescription.contains("misfire")) {
+                    monitorKey = "MISFIRE";
+                } else if (lowerDescription.contains("fuel system")) {
+                    monitorKey = "FUEL";
+                } else if (lowerDescription.contains("component")) {
+                    monitorKey = "CCM";
+                } else if (lowerDescription.contains("catalyst")) {
+                    monitorKey = "CATALYST";
+                } else if (lowerDescription.contains("evap")) {
+                    monitorKey = "EVAP";
+                } else if (lowerDescription.contains("oxygen sensor heater")) {
+                    monitorKey = "O2HEATER";
+                } else if (lowerDescription.contains("oxygen sensor")) {
+                    monitorKey = "O2SENSOR";
+                } else if (lowerDescription.contains("egr")) {
+                    monitorKey = "EGR";
+                } else if (lowerDescription.contains("secondary air") || lowerDescription.contains("air system")) {
+                    monitorKey = "AIR";
                 }
 
-                if (monitor != null) {
-                    monitor.isAvailable = isAvailable;
-                    // Mode 01 PID 01 readiness status is AUTHORITATIVE for emissions testing
-                    // This takes precedence over IUMPR ratio (Mode 09)
-                    monitor.isReady = isComplete;
-                    foundCount++;
-                    log.info("  Found monitor: " + description.substring(0, Math.min(40, description.length())) + " -> available=" + isAvailable + ", complete=" + isComplete);
+                if (monitorKey != null) {
+                    MonitorData monitor = monitorDataMap.get(monitorKey);
+                    if (monitor != null) {
+                        applyMonitorStatusFromPid(monitorKey, monitor, formattedVal, description);
+                        foundCount++;
+                    }
                 }
             }
         }
         log.info("updateMonitorReadiness: Found " + foundCount + " monitor status entries");
+    }
+
+    private void applyMonitorStatusFromPid(String monitorKey, MonitorData monitor, Object valueObj, String description) {
+        boolean isAvailable = false;
+        boolean isComplete = false;
+
+        if (valueObj instanceof Number) {
+            int raw = ((Number) valueObj).intValue();
+            boolean isContinuous = isContinuousMonitorKey(monitorKey);
+
+            if (isContinuous) {
+                isAvailable = (raw & 0x01) != 0;
+                boolean incompleteBitSet = (raw & 0x10) != 0;
+                isComplete = isAvailable && !incompleteBitSet;
+            } else {
+                isAvailable = (raw & 0x100) != 0;
+                boolean incompleteBitSet = (raw & 0x01) != 0;
+                isComplete = isAvailable && !incompleteBitSet;
+            }
+
+            log.info(String.format(Locale.US,
+                "  Monitor bits [%s] raw=0x%03X -> available=%s, complete=%s (desc=%s)",
+                monitorKey,
+                raw & 0x1FF,
+                isAvailable,
+                isComplete,
+                description));
+        } else {
+            String statusStr = String.valueOf(valueObj);
+            isAvailable = statusStr.contains("(*) Available") || statusStr.contains("(*) Complete");
+            isComplete = statusStr.contains("(*) Complete");
+            log.info(String.format(Locale.US,
+                "  Monitor text [%s] \"%s\" -> available=%s, complete=%s",
+                monitorKey,
+                statusStr.replace("\n", " | "),
+                isAvailable,
+                isComplete));
+        }
+
+        monitor.isAvailable = isAvailable;
+        monitor.isReady = isComplete && isAvailable;
+    }
+
+    private boolean isContinuousMonitorKey(String monitorKey) {
+        return "MISFIRE".equals(monitorKey)
+            || "FUEL".equals(monitorKey)
+            || "CCM".equals(monitorKey);
     }
 
     private void updateIUMPRData() {
@@ -593,7 +686,9 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         int hccatComp = 0, hccatCond = 0;
 
         // Iterate through all VidPvs entries
-        for (Object key : ObdProt.VidPvs.keySet()) {
+        // Make a copy of the keys to avoid ConcurrentModificationException
+        java.util.List<Object> vidKeys = new java.util.ArrayList<>(ObdProt.VidPvs.keySet());
+        for (Object key : vidKeys) {
             Object value = ObdProt.VidPvs.get(key);
             if (value instanceof EcuDataPv) {
                 EcuDataPv pv = (EcuDataPv) value;
@@ -608,14 +703,33 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
                 }
 
                 // Match descriptions to data fields
-                if (description.contains("OBD Monitoring Conditions Encountered")) {
-                    obdConditions = intValue;
-                    foundIUMPRCount++;
-                    log.info("  Found: OBD Conditions = " + intValue);
-                } else if (description.contains("Ignition Counter")) {
-                    ignitionCounter = intValue;
-                    foundIUMPRCount++;
-                    log.info("  Found: Ignition Counter = " + intValue);
+                // IMPORTANT: Match OBD Conditions and Ignition Counter EXACTLY to avoid false matches
+                // IMPORTANT: Vehicle may return duplicate entries with 0 values - only use non-zero values
+
+                if (description.equals("OBD Monitoring Conditions Encountered Counts") ||
+                    description.equals("OBD Monitoring Conditions")) {
+                    // Only update if new value is non-zero, or if we don't have a value yet
+                    if (intValue > 0 || obdConditions == 0) {
+                        if (intValue > obdConditions) {
+                            obdConditions = intValue;
+                            foundIUMPRCount++;
+                            log.info("  Found: OBD Conditions = " + intValue);
+                        } else if (intValue == 0 && obdConditions > 0) {
+                            log.info("  Ignoring duplicate OBD Conditions with value 0 (keeping " + obdConditions + ")");
+                        }
+                    }
+                } else if (description.equals("Ignition Counter") ||
+                          description.equals("Ignition Cycles")) {
+                    // Only update if new value is non-zero, or if we don't have a value yet
+                    if (intValue > 0 || ignitionCounter == 0) {
+                        if (intValue > ignitionCounter) {
+                            ignitionCounter = intValue;
+                            foundIUMPRCount++;
+                            log.info("  Found: Ignition Counter = " + intValue);
+                        } else if (intValue == 0 && ignitionCounter > 0) {
+                            log.info("  Ignoring duplicate Ignition Counter with value 0 (keeping " + ignitionCounter + ")");
+                        }
+                    }
                 }
                 // Catalyst Monitor
                 else if (description.contains("Catalyst Monitor Completion") && description.contains("Bank 1")) {
@@ -691,9 +805,15 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         try {
             Object dataValue = pv.get(EcuDataPv.FID_VALUE);
             if (dataValue != null) {
-                String valStr = dataValue.toString().replaceAll("[^0-9]", "");
+                // Handle numeric types directly to avoid decimal point removal bug
+                if (dataValue instanceof Number) {
+                    return ((Number) dataValue).intValue();
+                }
+                // Handle string values (parse as float first to handle decimals correctly)
+                String valStr = dataValue.toString().trim();
                 if (!valStr.isEmpty()) {
-                    return Integer.parseInt(valStr);
+                    // Parse as float first, then convert to int (avoids "5136.0" → "51360" bug)
+                    return (int) Float.parseFloat(valStr);
                 }
             }
         } catch (Exception e) {
