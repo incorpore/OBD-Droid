@@ -214,7 +214,7 @@
 **QA & Analytics**
 - VIN matrix covering: vehicles with multiple recalls, vehicles with mixed usage history, odometer discrepancies, clean records.
 - Accessibility validation (TalkBack focus, dynamic type, contrast).
-- Dashboard updates in Looker with weekly monitoring post-launch.
+- Dashboard updates in Looker with ongoing monitoring post-launch.
 
 **Phase 3 Outlook**
 - Owner timeline visualization (per-owner cards, event clusters).
@@ -264,15 +264,15 @@
 - Align with PV refactor timelines—PID runtime objects will rely on new typed PV interfaces.
 - Engage QA early to capture conversion accuracy benchmarks and targeted regression suites.
 
-### Sequencing & Timeline (Proposed)
+### Sequencing Plan
 
-1. **Sprint 1-2:** Lock Vehicle History Phase 2 designs/content; begin recall module implementation behind feature flag. Draft `PvChange` model and migrate one pilot listener.
-2. **Sprint 3-4:** Complete Vehicle History usage badges + odometer module; roll out analytics. Expand PV migration to remaining listeners; introduce PV interface abstractions.
-3. **Sprint 5-6:** Initiate ECU refactor renames leveraging stabilized PV infrastructure; build conversion tests and catalog interfaces. Kick off Vehicle History Phase 3 discovery workshops.
+1. Lock Vehicle History Phase 2 designs/content; begin recall module implementation behind feature flag. Draft `PvChange` model and migrate one pilot listener.
+2. Complete Vehicle History usage badges + odometer module; roll out analytics. Expand PV migration to remaining listeners; introduce PV interface abstractions.
+3. Initiate ECU refactor renames leveraging stabilized PV infrastructure; build conversion tests and catalog interfaces. Kick off Vehicle History Phase 3 discovery workshops.
 
 ### Risks & Mitigations
 
-- **Design/Content Drift:** Weekly sync with Design/Content to prevent requirements churn; store finalized specs in versioned repository.
+- **Design/Content Drift:** Maintain regular syncs with Design/Content to prevent requirements churn; store finalized specs in versioned repository.
 - **Feature Flag Coordination:** Maintain rollout checklist ensuring flags default to off in production; document monitoring/rollback procedures.
 - **API Contract Changes:** Add schema validation tests for AutoCheck payloads and PV/ECU serialization formats prior to release.
 - **Testing Gaps:** Expand automated coverage (Compose, JUnit) before large refactors land; share VIN/PID regression matrix with QA.
@@ -588,7 +588,7 @@
 
 - Events: `vehicle_history_recall_expand`, `vehicle_history_usage_badge_tap`, `vehicle_history_odometer_expand`.
 - KPIs: percentage of sessions interacting with new modules, dwell time on Vehicle History page, tap-through rate on "Contact dealer" CTA.
-- Dashboards: add Looker tiles to existing Vehicle History report, with weekly monitoring during launch window.
+- Dashboards: add Looker tiles to existing Vehicle History report, with ongoing monitoring during launch.
 
 ### Risks & Mitigations
 
@@ -659,7 +659,6 @@ public static class OdometerChecks {
 ### Estimated Impact
 
 - **User Value:** ⭐⭐⭐⭐⭐ (Significantly more comprehensive)
-- **Development Time:** 4-6 hours
 - **Complexity:** Medium
 - **Risk:** Low (additive only, no breaking changes)
 

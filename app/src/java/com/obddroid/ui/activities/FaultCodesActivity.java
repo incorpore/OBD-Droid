@@ -18,11 +18,11 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.snackbar.Snackbar;
 import com.obddroid.R;
 import com.obddroid.services.FaultCodeService;
 import com.obddroid.ui.adapters.FaultCodeListAdapter;
 import com.obddroid.ui.components.VehicleInfoFooter;
+import com.obddroid.utils.SnackbarHelper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -146,11 +146,9 @@ public class FaultCodesActivity extends AppCompatActivity {
         showEmptyState();
 
         String message = extractErrorMessage(error);
-        Snackbar.make(
-            findViewById(android.R.id.content),
+        SnackbarHelper.showError(this,
             getString(R.string.fault_codes_scan_failed, message),
-            Snackbar.LENGTH_LONG
-        ).show();
+            SnackbarHelper.Duration.LONG);
     }
 
     private void clearCodes() {
@@ -171,19 +169,15 @@ public class FaultCodesActivity extends AppCompatActivity {
             .thenAccept(success -> runOnUiThread(() -> {
                 isScanning = false;
                 if (success) {
-                    Snackbar.make(
-                        findViewById(android.R.id.content),
-                        R.string.fault_codes_clear_success,
-                        Snackbar.LENGTH_SHORT
-                    ).show();
+                    SnackbarHelper.showSuccess(this,
+                        getString(R.string.fault_codes_clear_success),
+                        SnackbarHelper.Duration.SHORT);
                     startScan();
                 } else {
                     hideProgress();
-                    Snackbar.make(
-                        findViewById(android.R.id.content),
+                    SnackbarHelper.showError(this,
                         getString(R.string.fault_codes_clear_failed, getString(R.string.fault_codes_generic_error)),
-                        Snackbar.LENGTH_LONG
-                    ).show();
+                        SnackbarHelper.Duration.LONG);
                 }
             }))
             .exceptionally(error -> {
@@ -191,11 +185,9 @@ public class FaultCodesActivity extends AppCompatActivity {
                     isScanning = false;
                     hideProgress();
                     String message = extractErrorMessage(error);
-                    Snackbar.make(
-                        findViewById(android.R.id.content),
+                    SnackbarHelper.showError(this,
                         getString(R.string.fault_codes_clear_failed, message),
-                        Snackbar.LENGTH_LONG
-                    ).show();
+                        SnackbarHelper.Duration.LONG);
                 });
                 return null;
             });

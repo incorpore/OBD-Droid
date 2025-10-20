@@ -303,7 +303,7 @@
 
 - Events: `vehicle_history_recall_expand`, `vehicle_history_usage_badge_tap`, `vehicle_history_odometer_expand`.
 - KPIs: percentage of sessions interacting with new modules, dwell time on Vehicle History page, tap-through rate on "Contact dealer" CTA.
-- Dashboards: add Looker tiles to existing Vehicle History report, with weekly monitoring during launch window.
+- Dashboards: add Looker tiles to existing Vehicle History report, with ongoing monitoring during launch.
 
 ### Risks & Mitigations
 
@@ -374,7 +374,6 @@ public static class OdometerChecks {
 ### Estimated Impact
 
 - **User Value:** ⭐⭐⭐⭐⭐ (Significantly more comprehensive)
-- **Development Time:** 4-6 hours
 - **Complexity:** Medium
 - **Risk:** Low (additive only, no breaking changes)
 
