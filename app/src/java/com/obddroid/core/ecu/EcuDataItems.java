@@ -61,6 +61,8 @@ public class EcuDataItems extends HashMap<Integer, HashMap<Integer, Vector<EcuDa
 	private static final Logger log = Logger.getLogger("data.items");
 	// map of MNEMONIC data item
 	public static final HashMap<String, EcuDataItem> byMnemonic = new HashMap<>();
+	// staged PID definitions keyed by mnemonic for new API consumers
+	public static final HashMap<String, LegacyEcuDataItemBridge> bridgesByMnemonic = new HashMap<>();
 
 	/**
 	 * Create data items from default CSV pidResource files
@@ -169,6 +171,7 @@ public class EcuDataItems extends HashMap<Integer, HashMap<Integer, Vector<EcuDa
 
 				// Add item to mnemonic map
 				byMnemonic.put(params[FLD.MNEMONIC.ordinal()], newItm);
+				bridgesByMnemonic.put(params[FLD.MNEMONIC.ordinal()], LegacyEcuDataItemBridge.from(newItm));
 
 				// enter data item for all specified services
 				String[] services = params[FLD.SVC.ordinal()].split(","); //$NON-NLS-1$
@@ -183,6 +186,28 @@ public class EcuDataItems extends HashMap<Integer, HashMap<Integer, Vector<EcuDa
 		{
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Retrieve immutable PID definition for the given mnemonic.
+	 * @param mnemonic mnemonic key
+	 * @return PID definition or {@code null} if unknown
+	 */
+	public static PidDefinition getDefinitionForMnemonic(String mnemonic)
+	{
+		LegacyEcuDataItemBridge bridge = bridgesByMnemonic.get(mnemonic);
+		return bridge != null ? bridge.getDefinition() : null;
+	}
+
+	/**
+	 * Retrieve runtime container for the given mnemonic.
+	 * @param mnemonic mnemonic key
+	 * @return PID runtime or {@code null} if unknown
+	 */
+	public static PidRuntime getRuntimeForMnemonic(String mnemonic)
+	{
+		LegacyEcuDataItemBridge bridge = bridgesByMnemonic.get(mnemonic);
+		return bridge != null ? bridge.getRuntime() : null;
 	}
 
 	/**
@@ -304,4 +329,3 @@ public class EcuDataItems extends HashMap<Integer, HashMap<Integer, Vector<EcuDa
 	}
 
 }
-

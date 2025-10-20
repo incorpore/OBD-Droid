@@ -1,6 +1,7 @@
 package com.obddroid.ui.activities;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
@@ -113,7 +114,7 @@ public class FaultCodesActivity extends AppCompatActivity {
         intent.putExtra(FaultCodeDetailsActivity.EXTRA_FAULT_DESCRIPTION, code.description);
         intent.putExtra(FaultCodeDetailsActivity.EXTRA_IS_PENDING, code.isPending);
         intent.putExtra(FaultCodeDetailsActivity.EXTRA_HAS_FREEZE, code.hasFreeze);
-        intent.putExtra(FaultCodeDetailsActivity.EXTRA_DTC_VALUE, code.dtcValue);
+        intent.putExtra(FaultCodeDetailsActivity.EXTRA_DTC_VALUE, code.dtcNumber);
         startActivity(intent);
     }
 

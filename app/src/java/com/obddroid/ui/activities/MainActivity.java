@@ -47,9 +47,13 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
+import com.obddroid.core.ecu.DtcCatalog;
+import com.obddroid.core.ecu.DtcCatalogProvider;
+import com.obddroid.core.ecu.EcuConversions;
 import com.obddroid.core.ecu.EcuDataItem;
 import com.obddroid.core.ecu.EcuDataItems;
 import com.obddroid.core.ecu.EcuDataPv;
+import com.obddroid.core.ecu.ObdCodeList;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.core.pvs.ProcessVariables.ProcessVar;
@@ -421,7 +425,7 @@ public class MainActivity extends AppCompatActivity
                         Object source = sourcePv != null ? sourcePv : null;
                         switch (change.getPrimaryType())
                         {
-                            case PvChangeType.ADDED:
+                            case ADDED:
                                 if (currDataAdapter != null) {
                                     currDataAdapter.setPvList(currDataAdapter.pvs);
                                 }
@@ -456,7 +460,7 @@ public class MainActivity extends AppCompatActivity
                                 }
                                 break;
 
-                            case PvChangeType.MODIFIED:
+                            case MODIFIED:
                                 // Debug: Log event source
                                 log.info("PV_MODIFIED event - source: " + (source != null ? source.getClass().getName() : "null") +
                                         ", VidPvs: " + ObdProt.VidPvs.getClass().getName() +
@@ -475,7 +479,7 @@ public class MainActivity extends AppCompatActivity
                                 }
                                 break;
 
-                            case PvChangeType.CLEARED:
+                            case CLEARED:
                                 if (currDataAdapter != null) {
                                     currDataAdapter.clear();
                                 }
@@ -684,15 +688,15 @@ public class MainActivity extends AppCompatActivity
         // Initialize VehicleManager with context
         VehicleManager.getInstance(this);
 
-        // Initialize DTC Database for comprehensive code lookup (28K+ codes)
-        com.obddroid.core.ecu.DTCDatabaseCodeList dtcDatabase =
-            new com.obddroid.core.ecu.DTCDatabaseCodeList(this);
-
-        // Set as singleton instance for ObdCodeList
-        com.obddroid.core.ecu.ObdCodeList.setDatabaseInstance(dtcDatabase);
-
-        // Also set in EcuConversions for fault code lookups
-        com.obddroid.core.ecu.EcuConversions.codeList = dtcDatabase;
+        // Initialize DTC catalogue (resource or database-backed depending on feature toggle)
+        DtcCatalogProvider catalogProvider = new DtcCatalogProvider(
+            () -> true // TODO: wire to remote config/experiments when available
+        );
+        DtcCatalog catalog = catalogProvider.provide(this);
+        if (catalog instanceof ObdCodeList) {
+            ObdCodeList.setDatabaseInstance((ObdCodeList) catalog);
+            EcuConversions.codeList = (ObdCodeList) catalog;
+        }
 
         // Set status bar and navigation bar colors to match our theme right away
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

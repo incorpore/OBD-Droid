@@ -629,13 +629,13 @@ final class FaultCodeUiHelper
         SnackbarHelper.showSuccess(context, "Copied: " + code);
     }
 
-    private static boolean hasDirectNondaVideo(String faultCode)
+    static boolean hasDirectNondaVideo(String faultCode)
     {
         String normalized = normalizeFaultCode(faultCode);
         return normalized != null && NONDA_VIDEO_MAP.containsKey(normalized);
     }
 
-    private static String getNondaVideoUrl(String faultCode)
+    static String getNondaVideoUrl(String faultCode)
     {
         String normalized = normalizeFaultCode(faultCode);
         if (normalized == null)
@@ -739,8 +739,8 @@ final class FaultCodeUiHelper
         map.put(code.toUpperCase(Locale.US), url);
     }
 
-    private static void showFreezeFrameDialogForCode(AppCompatActivity activity,
-                                                      FaultCodeService.FaultCodeInfo faultCode)
+    static void showFreezeFrameDialogForCode(AppCompatActivity activity,
+                                              FaultCodeService.FaultCodeInfo faultCode)
     {
         // Find the DTC index from the fault code
         // For now, we'll use 0 as the index since we don't have the exact position
@@ -897,7 +897,7 @@ final class FaultCodeUiHelper
         }
     }
 
-    private static void showAiAnalysisDialog(AppCompatActivity activity, String code, String description)
+    static void showAiAnalysisDialog(AppCompatActivity activity, String code, String description)
     {
         try
         {

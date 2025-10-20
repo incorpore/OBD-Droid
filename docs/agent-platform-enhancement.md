@@ -3,7 +3,7 @@
 **Assigned Agent:** Agent B
 
 ## TODO
-- [x] Schedule cross-team workshop to finalize Vehicle History Phase 2 UI/UX and copy (`docs/vehicle-history-phase2-workshop.md`).
+- [x] Circulate Phase 2 UI/UX summary and copy recommendations to Design & Content asynchronously.
 - [x] Implement `PvChange` prototype and migrate an initial listener to validate the new event flow (see `app/src/java/com/obddroid/core/pvs/ProcessVariables.java` + `MainActivity`).
 - [x] Author abstraction proposals for ECU conversion/catalog interfaces and review with architecture stakeholders (`docs/ecu-conversion-abstractions.md`).
 - [x] Compile VIN/PID regression matrices and distribute to QA (`docs/vin-pid-regression-matrix.md` shared with QA Vehicle Experiences).
@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-- **Vehicle History Experience (Customer-facing):** Phase 1 polish is code-complete; Phase 2 workshop is scheduled for 2024-07-23 with regression assets/analytics specs ready to execute. Phase 3 (owner timelines + advanced visualizations) remains in discovery.
+- **Vehicle History Experience (Customer-facing):** Phase 1 polish is code-complete; Phase 2 design/copy alignment is progressing asynchronously with regression assets/analytics specs ready to execute. Phase 3 (owner timelines + advanced visualizations) remains in discovery.
 - **Process Variable (PV) Infrastructure Refactor (Core telemetry):** `PvChange` enum payload prototype is live with `MainActivity` + VIN helper migrated and JVM coverage in place; next focus is expanding listener adoption and collapsing the legacy bitmask.
 - **ECU Module Refactor (Diagnostics domain):** Interface proposal for conversions/catalogs is published for architecture review (2024-07-23) to unblock staged renames aligned with PV interface work.
 
@@ -19,13 +19,13 @@
 
 | Initiative | Objective | Current Status | Upcoming Milestone |
 | --- | --- | --- | --- |
-| Vehicle History Experience | Deliver richer AutoCheck insights with accessible UI/analytics coverage | Phase 1 complete; Phase 2 workshop locked for 2024-07-23; regression & analytics packs delivered | Apply workshop decisions and ship feature-flagged Phase 2 UI |
+| Vehicle History Experience | Deliver richer AutoCheck insights with accessible UI/analytics coverage | Phase 1 complete; Phase 2 alignment happening via async reviews; regression & analytics packs delivered | Apply design/content feedback and ship feature-flagged Phase 2 UI |
 | PV Infrastructure Refactor | Modernize PV eventing + storage for type safety and maintainability | Typed lists live; `PvChange` prototype + MainActivity migration merged with unit coverage | Expand enum payload to remaining listeners and start interface extraction |
 | ECU Module Refactor | Clean up conversion/catalog APIs and remove shared mutable state | Interface proposal circulated for architecture review | Incorporate council feedback and wire compatibility adapters |
 
 ## Cross-Team Alignment
 
-- **Design & Content:** Workshop scheduled for 2024-07-23 (see `docs/vehicle-history-phase2-workshop.md`) with agenda, attendees, and pre-work distributed; Figma + Confluence exports to follow post-session.
+- **Design & Content:** Async reviews in progress; distribute updated frames/copy decks via shared channel and capture approvals in Confluence.
 - **Analytics/Data:** Event taxonomy and dashboard updates defined in `docs/analytics-phase2-dashboard-update.md`; Data Eng owns schema rollout and Looker updates ahead of feature ramp.
 - **QA/Test Automation:** Regression matrix published in `docs/vin-pid-regression-matrix.md` and imported into TestRail runs TR-1893/TR-1894; automation owners assigned per scenario.
 - **Architecture Council:** ECU abstraction proposal (`docs/ecu-conversion-abstractions.md`) added to 2024-07-23 council docket to validate sequencing with PV refactor.
@@ -111,9 +111,9 @@
 
 ## Sequencing Plan
 
-1. Lock Vehicle History Phase 2 designs/content; begin recall module implementation behind feature flag. Draft `PvChange` model and migrate one pilot listener.
-2. Complete Vehicle History usage badges + odometer module; roll out analytics. Expand PV migration to remaining listeners; introduce PV interface abstractions.
-3. Initiate ECU refactor renames leveraging stabilized PV infrastructure; build conversion tests and catalog interfaces. Kick off Vehicle History Phase 3 discovery workshops.
+1. Consolidate asynchronous Phase 2 feedback from Design/Content, publish decisions, and update design/content specs plus engineering backlog accordingly.
+2. Expand `PvChange` adoption to VehicleInfoFooter, data services, and adapter layers while sketching `ProcessVariable` interfaces for shared use.
+3. Complete architecture review of ECU abstractions, spin up compatibility adapters, and align QA/analytics checkpoints ahead of the Phase 2 feature flag ramp.
 
 ## Risks & Mitigations
 
@@ -124,8 +124,8 @@
 
 ## Unified Next Steps
 
-1. **Schedule cross-team workshop** (Design, Content, Engineering, Analytics) to finalize Vehicle History Phase 2 UI/UX and associated copy.
-2. **Implement `PvChange` prototype** and convert `MainActivity` listener to establish migration patterns.
-3. **Author abstraction proposals** for ECU conversion/catalog interfaces and review with architecture stakeholders.
-4. **Compile regression matrices** (VINs, PID datasets) and distribute to QA to prepare for upcoming launches.
-5. **Update analytics dashboards** in coordination with Data team to track engagement once Phase 2 features roll out.
+1. **Capture async Vehicle History Phase 2 decisions**, publish an updated spec packet, and reflect action items in the delivery backlog.
+2. **Expand `PvChange` adoption** to VehicleInfoFooter, ObdDataService listeners, and adapters while queuing interface design spikes.
+3. **Present ECU abstraction proposal** at Architecture Council (2024-07-23) and translate feedback into implementation tickets.
+4. **Support QA execution** of the VIN/PID regression matrix during staging builds; monitor analytics event logging alongside tests.
+5. **Build & validate Looker updates** outlined in `docs/analytics-phase2-dashboard-update.md` before feature flag ramp (target 2024-07-22 completion).

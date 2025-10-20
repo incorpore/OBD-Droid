@@ -146,6 +146,7 @@
 - Added immutable `PidDefinition`, mutable `PidRuntime`, and `LegacyEcuDataItemBridge` to stage the migration away from `EcuDataItem`.
 - Created `DtcCatalog` interface with a `DtcCatalogProvider` that switches between resource and database catalogues via a supplied feature toggle.
 - Registered Gradle placeholder tasks (`testEcuConversions`, `testPidDefinitions`) ready for CI wiring.
+- Exposed PID definitions/runtimes via `EcuDataItems.bridgesByMnemonic` helpers for early adopters and attached `DtcCatalogProvider` to the Android entry point.
 
 ### CI Test Matrix
 
@@ -156,10 +157,9 @@
 
 ### Immediate Action Items
 
-- Author unit tests targeting `LegacyConversionAdapter` and the new bridge classes.
-- Begin migrating high-traffic call sites (`EcuDataItem`, `EcuDataItems`) to consume `PidDefinition`/`PidRuntime`.
-- Wire the `DtcCatalogProvider` into the application dependency graph and connect feature toggle plumbing.
-- Populate the new Gradle tasks with actual test suite invocations once coverage is in place.
+- [ ] Migrate high-traffic consumers (`EcuConversions`, fault-code services) to retrieve `PidDefinition`/`PidRuntime` via the new bridge helpers.
+- [ ] Replace ad-hoc boolean toggle in `MainActivity` with a real feature flag (remote config or settings) driving `DtcCatalogProvider`.
+- [ ] Populate `testEcuConversions` / `testPidDefinitions` with concrete suites and verify in CI once JDK is available locally.
 
 ### Open Questions / Pending Investigations
 
