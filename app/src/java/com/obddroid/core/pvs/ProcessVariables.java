@@ -235,11 +235,11 @@ public final class ProcessVariables {
         /** flag if to allow ChangeEvents to be fired */
         boolean allowEvents = false;
         /** list of process var change listeners */
-        private transient Map<PvChangeListener, Integer> PvChangeListeners =
-            Collections.synchronizedMap(new HashMap<PvChangeListener, Integer>());
+        private transient Map<PvChangeListener, Integer> PvChangeListeners = new HashMap<>();
         /** Map of attribute changes */
-        private final Map<Object, PvChangeEvent> changes =
-            Collections.synchronizedMap(new HashMap<Object, PvChangeEvent>());
+        private final Map<Object, PvChangeEvent> changes = new HashMap<>();
+        /** Lock guarding access to internal state. */
+        private final transient ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
         /** The logger object */
         public static final Logger log = Logger.getLogger(ProcessVar.class.getPackage().getName());
 
@@ -263,23 +263,29 @@ public final class ProcessVariables {
         /**
          * Merge a map of attributes into the PV while issuing a single change event.
          */
-        public synchronized void putAll(Map map, int action, boolean allowChildEvents) {
-            boolean oldAllowEvents = allowEvents;
-            allowEvents = allowChildEvents;
-            int oldAction = defaultAction;
-            defaultAction = action;
-            super.putAll(map);
-            defaultAction = oldAction;
-            allowEvents = oldAllowEvents;
-            firePvChanged(new PvChangeEvent(this, getKeyAttribute(), map.values().toArray(), action));
+        public void putAll(Map map, int action, boolean allowChildEvents) {
+            Object[] changedValues = map.values().toArray();
+            lock.writeLock().lock();
+            try {
+                boolean oldAllowEvents = allowEvents;
+                allowEvents = allowChildEvents;
+                int oldAction = defaultAction;
+                defaultAction = action;
+                super.putAll(map);
+                defaultAction = oldAction;
+                allowEvents = oldAllowEvents;
+            } finally {
+                lock.writeLock().unlock();
+            }
+            firePvChanged(new PvChangeEvent(this, getKeyAttribute(), changedValues, action));
         }
 
-        private synchronized void putAll(Map map, int action) {
+        private void putAll(Map map, int action) {
             putAll(map, action, true);
         }
 
         @Override
-        public synchronized void putAll(Map map) {
+        public void putAll(Map map) {
             putAll(map, defaultAction);
         }
 
@@ -301,46 +307,52 @@ public final class ProcessVariables {
         /**
          * Insert or replace an attribute and emit a change event with the supplied action.
          */
-        public synchronized Object put(Object key, Object value, int action) {
+        public Object put(Object key, Object value, int action) {
             Object oldvalue;
+            int resultingAction = action;
 
-            if (value instanceof ProcessVar) {
-                oldvalue = get(key);
-                if (oldvalue instanceof ProcessVar) {
-                    ((HashMap) oldvalue).putAll((Map) value);
+            lock.writeLock().lock();
+            try {
+                if (value instanceof ProcessVar) {
+                    oldvalue = super.get(key);
+                    if (oldvalue instanceof ProcessVar) {
+                        ((HashMap) oldvalue).putAll((Map) value);
+                    } else {
+                        oldvalue = super.put(key, value);
+                    }
                 } else {
                     oldvalue = super.put(key, value);
                 }
-            } else {
-                oldvalue = super.put(key, value);
-            }
 
-            if (oldvalue == null) {
-                if (value != null) {
-                    action |= PvChangeEvent.PV_ADDED;
-                    if (value instanceof ProcessVar) {
-                        ((ProcessVar) value).addPvChangeListener(this);
+                if (oldvalue == null) {
+                    if (value != null) {
+                        resultingAction |= PvChangeEvent.PV_ADDED;
+                        if (value instanceof ProcessVar) {
+                            ((ProcessVar) value).addPvChangeListener(this);
+                        }
                     }
-                }
-            } else {
-                if (!oldvalue.equals(value)) {
-                    action |= PvChangeEvent.PV_MODIFIED;
                 } else {
-                    PvChangeEvent lstChange = changes.get(key);
-                    if (lstChange != null && (lstChange.getType() & PvChangeEvent.PV_MANUAL_MOD) != 0) {
-                        action |= PvChangeEvent.PV_CONFIRMED;
+                    if (!oldvalue.equals(value)) {
+                        resultingAction |= PvChangeEvent.PV_MODIFIED;
+                    } else {
+                        PvChangeEvent lstChange = changes.get(key);
+                        if (lstChange != null && (lstChange.getType() & PvChangeEvent.PV_MANUAL_MOD) != 0) {
+                            resultingAction |= PvChangeEvent.PV_CONFIRMED;
+                        }
                     }
                 }
+            } finally {
+                lock.writeLock().unlock();
             }
 
-            firePvChanged(new PvChangeEvent(this, key, value, action));
-            return (oldvalue);
+            firePvChanged(new PvChangeEvent(this, key, value, resultingAction));
+            return oldvalue;
         }
 
         @Override
-        public synchronized Object put(Object key, Object value) {
+        public Object put(Object key, Object value) {
             int action = containsKey(key) ? defaultAction : PvChangeEvent.PV_ADDED;
-            return (put(key, value, action));
+            return put(key, value, action);
         }
 
         @Override
