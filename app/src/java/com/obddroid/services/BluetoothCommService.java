@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
 /**
@@ -29,11 +30,17 @@ import java.util.logging.Level;
 @SuppressLint("NewApi")
 public class BluetoothCommService extends CommService
 {
-	
+
 	private BtConnectThread mBtConnectThread;
 	private BtWorkerThread mBtWorkerThread;
 	/** communication stream handler */
 	private final StreamHandler ser = new StreamHandler();
+	/** Lock for thread-safe connection state management */
+	private final ReentrantLock connectionLock = new ReentrantLock();
+	/** Timeout for thread cleanup operations in milliseconds */
+	private static final long THREAD_CLEANUP_TIMEOUT_MS = 2000;
+	/** Post-connection stabilization delay in milliseconds */
+	private static final long POST_CONNECTION_DELAY_MS = 300;
 	
 	
 	/**
@@ -85,21 +92,18 @@ public class BluetoothCommService extends CommService
 	{
 		log.log(Level.FINE, "start");
 
-		// Cancel any thread attempting to make a connection
-		if (mBtConnectThread != null)
-		{
-			mBtConnectThread.cancel();
-			mBtConnectThread = null;
-		}
+		connectionLock.lock();
+		try {
+			// Cancel and wait for any thread attempting to make a connection
+			cleanupConnectThread();
 
-		// Cancel any thread currently running a connection
-		if (mBtWorkerThread != null)
-		{
-			mBtWorkerThread.cancel();
-			mBtWorkerThread = null;
-		}
+			// Cancel and wait for any thread currently running a connection
+			cleanupWorkerThread();
 
-		setState(STATE.LISTEN);
+			setState(STATE.LISTEN);
+		} finally {
+			connectionLock.unlock();
+		}
 	}
 
 	/**
@@ -113,28 +117,20 @@ public class BluetoothCommService extends CommService
 	{
 		log.log(Level.FINE, "connect to: " + device);
 
-		// Cancel any thread attempting to make a connection
-		if (mState == STATE.CONNECTING)
-		{
-			if (mBtConnectThread != null)
-			{
-				mBtConnectThread.cancel();
-				mBtConnectThread = null;
-			}
+		connectionLock.lock();
+		try {
+			// Clean up any existing connection threads before starting new connection
+			cleanupConnectThread();
+			cleanupWorkerThread();
+
+			setState(STATE.CONNECTING);
+
+			// Start the thread to connect with the given device
+			mBtConnectThread = new BtConnectThread((BluetoothDevice)device, secure);
+			mBtConnectThread.start();
+		} finally {
+			connectionLock.unlock();
 		}
-
-		// Cancel any thread currently running a connection
-		if (mBtWorkerThread != null)
-		{
-			mBtWorkerThread.cancel();
-			mBtWorkerThread = null;
-		}
-
-		setState(STATE.CONNECTING);
-
-		// Start the thread to connect with the given device
-		mBtConnectThread = new BtConnectThread((BluetoothDevice)device, secure);
-		mBtConnectThread.start();
 	}
 
 	/**
@@ -148,37 +144,34 @@ public class BluetoothCommService extends CommService
 	{
 		log.log(Level.FINE, "connected, Socket Type:" + socketType);
 
-		// Cancel the thread that completed the connection
-		if (mBtConnectThread != null)
-		{
-			mBtConnectThread.cancel();
-			mBtConnectThread = null;
-		}
+		connectionLock.lock();
+		try {
+			// Cancel the thread that completed the connection
+			cleanupConnectThread();
 
-		// Cancel any thread currently running a connection
-		if (mBtWorkerThread != null)
-		{
-			mBtWorkerThread.cancel();
-			mBtWorkerThread = null;
-		}
+			// Cancel any thread currently running a connection
+			cleanupWorkerThread();
 
-		// Delay connection for 500ms (Fix issue AndrOBD/#233)
-		try
-		{
-			Thread.sleep(500);
-		}
-		catch (InterruptedException e)
-		{
-			e.printStackTrace();
-		}
+			// Brief delay for connection stabilization (reduced from 500ms)
+			if (POST_CONNECTION_DELAY_MS > 0) {
+				try {
+					Thread.sleep(POST_CONNECTION_DELAY_MS);
+				} catch (InterruptedException e) {
+					log.log(Level.WARNING, "Connection delay interrupted", e);
+					Thread.currentThread().interrupt();
+				}
+			}
 
-		// Start the thread to manage the connection and perform transmissions
-		mBtWorkerThread = new BtWorkerThread(socket, socketType);
-		mBtWorkerThread.start();
+			// Start the thread to manage the connection and perform transmissions
+			mBtWorkerThread = new BtWorkerThread(socket, socketType);
+			mBtWorkerThread.start();
 
-        // we are connected -> signal connection established
-        connectionEstablished(device.getName());
-    }
+			// we are connected -> signal connection established
+			connectionEstablished(device.getName());
+		} finally {
+			connectionLock.unlock();
+		}
+	}
 
 	/**
 	 * Stop all threads
@@ -187,21 +180,69 @@ public class BluetoothCommService extends CommService
 	public synchronized void stop()
 	{
 		log.log(Level.FINE, "stop");
-		elm.removeTelegramWriter(ser);
 
+		connectionLock.lock();
+		try {
+			elm.removeTelegramWriter(ser);
+
+			// Properly cleanup all threads with timeout
+			cleanupConnectThread();
+			cleanupWorkerThread();
+
+			setState(STATE.OFFLINE);
+		} finally {
+			connectionLock.unlock();
+		}
+	}
+
+	/**
+	 * Cleanup connect thread with proper join and timeout
+	 */
+	private void cleanupConnectThread()
+	{
 		if (mBtConnectThread != null)
 		{
+			log.log(Level.FINE, "Cleaning up connect thread");
 			mBtConnectThread.cancel();
+			try {
+				// Wait for thread to finish with timeout
+				mBtConnectThread.join(THREAD_CLEANUP_TIMEOUT_MS);
+				if (mBtConnectThread.isAlive()) {
+					log.log(Level.WARNING, "Connect thread did not terminate within timeout");
+					// Interrupt the thread as last resort
+					mBtConnectThread.interrupt();
+				}
+			} catch (InterruptedException e) {
+				log.log(Level.WARNING, "Interrupted while waiting for connect thread cleanup", e);
+				Thread.currentThread().interrupt();
+			}
 			mBtConnectThread = null;
 		}
+	}
 
+	/**
+	 * Cleanup worker thread with proper join and timeout
+	 */
+	private void cleanupWorkerThread()
+	{
 		if (mBtWorkerThread != null)
 		{
+			log.log(Level.FINE, "Cleaning up worker thread");
 			mBtWorkerThread.cancel();
+			try {
+				// Wait for thread to finish with timeout
+				mBtWorkerThread.join(THREAD_CLEANUP_TIMEOUT_MS);
+				if (mBtWorkerThread.isAlive()) {
+					log.log(Level.WARNING, "Worker thread did not terminate within timeout");
+					// Interrupt the thread as last resort
+					mBtWorkerThread.interrupt();
+				}
+			} catch (InterruptedException e) {
+				log.log(Level.WARNING, "Interrupted while waiting for worker thread cleanup", e);
+				Thread.currentThread().interrupt();
+			}
 			mBtWorkerThread = null;
 		}
-
-		setState(STATE.OFFLINE);
 	}
 
 	/**
@@ -226,6 +267,7 @@ public class BluetoothCommService extends CommService
 		private final BluetoothDevice mmDevice;
 		private BluetoothSocket mmSocket;
 		private final String mSocketType;
+		private volatile boolean running = true;
 
 		@SuppressLint("MissingPermission")
 		BtConnectThread(BluetoothDevice device, boolean secure)
@@ -300,6 +342,12 @@ public class BluetoothCommService extends CommService
 		{
 			log.log(Level.INFO, "BEGIN mBtConnectThread SocketType:" + mSocketType);
 
+			// Check if we should still be running
+			if (!running) {
+				log.log(Level.INFO, "Connect thread cancelled before start");
+				return;
+			}
+
 			// Make a connection to the BluetoothSocket
 			try
 			{
@@ -311,31 +359,51 @@ public class BluetoothCommService extends CommService
 			}
 			catch (IOException e)
 			{
+				// Check if cancelled during connection attempt
+				if (!running) {
+					log.log(Level.INFO, "Connect thread cancelled during connection");
+					return;
+				}
+
 				log.log(Level.FINE, e.getMessage());
 				cancel();
-				
+
 				log.log(Level.INFO, "Fallback attempt to create RfComm socket");
 				BluetoothSocket sockFallback;
 				Class<?> clazz = mmSocket.getRemoteDevice().getClass();
 				Class<?>[] paramTypes = new Class<?>[]{Integer.TYPE};
 				try {
+					// Check again if we should continue
+					if (!running) {
+						log.log(Level.INFO, "Connect thread cancelled before fallback");
+						return;
+					}
+
 					//noinspection JavaReflectionMemberAccess
 					Method m = clazz.getMethod("createRfcommSocket", paramTypes);
 					Object[] params = new Object[]{1};
 					sockFallback = (BluetoothSocket) m.invoke(mmSocket.getRemoteDevice(), params);
 					mmSocket = sockFallback;
-					
+
 					logSocketUuids(mmSocket, "Fallback socket");
-					
+
 					// connect fallback socket
 					mmSocket.connect();
 				}
 				catch (Exception e2)
 				{
 					log.log(Level.SEVERE, e2.getMessage());
-					connectionFailed();
+					if (running) {
+						connectionFailed();
+					}
 					return;
 				}
+			}
+
+			// Final check before proceeding to connected state
+			if (!running) {
+				log.log(Level.INFO, "Connect thread cancelled after connection");
+				return;
 			}
 
 			// Reset the BtConnectThread because we're done
@@ -350,13 +418,16 @@ public class BluetoothCommService extends CommService
 
 		synchronized void cancel()
 		{
+			running = false;
 			try
 			{
-				log.log(Level.INFO, "Closing BT socket");
-				mmSocket.close();
+				if (mmSocket != null) {
+					log.log(Level.INFO, "Closing BT connect socket");
+					mmSocket.close();
+				}
 			} catch (IOException e)
 			{
-				log.log(Level.SEVERE, e.getMessage());
+				log.log(Level.WARNING, "Error closing connect socket: " + e.getMessage());
 			}
 		}
 	}
@@ -370,6 +441,7 @@ public class BluetoothCommService extends CommService
 		private final BluetoothSocket mmSocket;
 		private final InputStream mmInStream;
 		private final OutputStream mmOutStream;
+		private volatile boolean running = true;
 
 		BtWorkerThread(BluetoothSocket socket, String socketType)
 		{
@@ -400,16 +472,31 @@ public class BluetoothCommService extends CommService
 		public void run()
 		{
 			log.log(Level.INFO, "BEGIN mBtWorkerThread");
+
+			// Check if we should still be running
+			if (!running) {
+				log.log(Level.INFO, "Worker thread cancelled before start");
+				return;
+			}
+
 			try
 			{
 				// run the communication thread
 				ser.run();
 			} catch (Exception ex)
 			{
-				// Intentionally ignore
-                log.log(Level.SEVERE, "Comm thread aborted", ex);
+				// Only log if we're still supposed to be running (not cancelled)
+				if (running) {
+					log.log(Level.SEVERE, "Comm thread aborted", ex);
+				} else {
+					log.log(Level.INFO, "Comm thread stopped (cancelled)");
+				}
 			}
-			connectionLost();
+
+			// Only report connection lost if we were still supposed to be running
+			if (running) {
+				connectionLost();
+			}
 		}
 
 		/**
@@ -419,18 +506,25 @@ public class BluetoothCommService extends CommService
 		 */
 		synchronized void write(byte[] buffer)
 		{
-			ser.writeTelegram(new String(buffer).toCharArray());
+			if (running) {
+				ser.writeTelegram(new String(buffer).toCharArray());
+			} else {
+				log.log(Level.WARNING, "Attempted write to cancelled worker thread");
+			}
 		}
-		
+
 		synchronized void cancel()
 		{
+			running = false;
 			try
 			{
-				log.log(Level.INFO, "Closing BT socket");
-				mmSocket.close();
+				if (mmSocket != null) {
+					log.log(Level.INFO, "Closing BT worker socket");
+					mmSocket.close();
+				}
 			} catch (IOException e)
 			{
-				log.log(Level.SEVERE, e.getMessage());
+				log.log(Level.WARNING, "Error closing worker socket: " + e.getMessage());
 			}
 		}
 
