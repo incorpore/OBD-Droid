@@ -23,19 +23,6 @@
                 android:orientation="vertical"
                 android:padding="@dimen/spacing_large">
 
-                <!-- Scan button -->
-                <Button
-                    android:id="@+id/scan_button"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/fault_codes_button_scan"
-                    android:textAllCaps="false"
-                    android:textColor="@color/text_primary_dark"
-                    android:textStyle="bold"
-                    android:background="@color/fault_success"
-                    android:padding="@dimen/spacing_medium"
-                    android:layout_marginBottom="@dimen/spacing_large"/>
-
                 <!-- MIL Status Card -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/mil_status_card"
@@ -152,6 +139,17 @@
                 android:textAlignment="center"
                 android:gravity="center"
                 android:layout_marginBottom="@dimen/spacing_xxl" />
+
+            <!-- Scan Button -->
+            <Button
+                android:id="@+id/scan_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/fault_codes_button_scan"
+                android:textSize="@dimen/text_caption"
+                android:textStyle="bold"
+                android:backgroundTint="@color/fault_success"
+                android:textColor="@color/text_primary_dark" />
         </LinearLayout>
 
         <!-- Progress Bar -->
