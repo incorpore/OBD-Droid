@@ -174,7 +174,11 @@ public class BaselineScanSelectionActivity extends AppCompatActivity {
             card.setCardElevation(dpToPx(4));
             card.setClickable(true);
             card.setFocusable(true);
-            card.setForeground(getDrawable(android.R.attr.selectableItemBackground));
+
+            // Get the ripple effect from theme
+            android.util.TypedValue outValue = new android.util.TypedValue();
+            getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+            card.setForeground(getDrawable(outValue.resourceId));
 
             // Create text view inside card
             TextView scanItem = new TextView(this);
