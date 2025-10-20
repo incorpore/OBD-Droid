@@ -97,45 +97,6 @@
 
                         </LinearLayout>
 
-                        <!-- Divider line -->
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:background="@color/text_hint_dark"
-                            android:alpha="0.3"/>
-
-                        <!-- Clear Codes button -->
-                        <LinearLayout
-                            android:id="@+id/clear_codes_button"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:padding="@dimen/spacing_large"
-                            android:background="?android:attr/selectableItemBackground"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:gravity="center_vertical"
-                            android:visibility="gone">
-
-                            <ImageView
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:src="@drawable/ic_delete_24"
-                                android:tint="@color/fault_error"
-                                android:padding="@dimen/spacing_small"/>
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_weight="1"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="@dimen/card_padding_standard"
-                                android:text="@string/fault_codes_clear_button"
-                                android:textColor="@color/fault_error"
-                                android:textSize="@dimen/text_body"
-                                android:textStyle="bold"/>
-
-                        </LinearLayout>
-
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 

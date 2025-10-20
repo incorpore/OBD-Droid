@@ -44,7 +44,6 @@ public class FaultCodesActivity extends AppCompatActivity {
     private ImageView milStatusIcon;
     private TextView milStatusText;
     private TextView milStatusSubtitle;
-    private LinearLayout clearCodesButton;
     private RecyclerView faultCodesList;
     private ProgressBar progressBar;
     private Button scanButton;
@@ -91,7 +90,6 @@ public class FaultCodesActivity extends AppCompatActivity {
         milStatusIcon = findViewById(R.id.mil_status_icon);
         milStatusText = findViewById(R.id.mil_status_text);
         milStatusSubtitle = findViewById(R.id.mil_status_subtitle);
-        clearCodesButton = findViewById(R.id.clear_codes_button);
         faultCodesList = findViewById(R.id.fault_codes_list);
         progressBar = findViewById(R.id.progress_bar);
         scanButton = findViewById(R.id.scan_button);
@@ -111,7 +109,6 @@ public class FaultCodesActivity extends AppCompatActivity {
 
     private void setupClickListeners() {
         scanButton.setOnClickListener(v -> startScan());
-        clearCodesButton.setOnClickListener(v -> clearCodes());
     }
 
     private void startScan() {
@@ -186,7 +183,6 @@ public class FaultCodesActivity extends AppCompatActivity {
                     startScan();
                 } else {
                     hideProgress();
-                    setClearButtonEnabled(true);
                     Snackbar.make(
                         findViewById(android.R.id.content),
                         getString(R.string.fault_codes_clear_failed, getString(R.string.fault_codes_generic_error)),
@@ -198,7 +194,6 @@ public class FaultCodesActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     isScanning = false;
                     hideProgress();
-                    setClearButtonEnabled(!currentCodes.isEmpty());
                     String message = extractErrorMessage(error);
                     Snackbar.make(
                         findViewById(android.R.id.content),
@@ -233,9 +228,7 @@ public class FaultCodesActivity extends AppCompatActivity {
         int confirmed = count - pending;
         milStatusSubtitle.setText(getString(R.string.fault_codes_status_summary, confirmed, pending));
 
-        clearCodesButton.setVisibility(View.VISIBLE);
         adapter.setFaultCodes(codes);
-        setClearButtonEnabled(true);
         scanButton.setText(R.string.fault_codes_button_rescan);
     }
 
@@ -252,9 +245,7 @@ public class FaultCodesActivity extends AppCompatActivity {
         milStatusText.setText(R.string.fault_codes_no_codes);
         milStatusSubtitle.setText(R.string.fault_codes_engine_ok);
 
-        clearCodesButton.setVisibility(View.GONE);
         adapter.setFaultCodes(Collections.emptyList());
-        setClearButtonEnabled(false);
         scanButton.setText(R.string.fault_codes_button_rescan);
     }
 
@@ -262,10 +253,8 @@ public class FaultCodesActivity extends AppCompatActivity {
         emptyView.setVisibility(View.VISIBLE);
         faultCodesList.setVisibility(View.GONE);
         milStatusCard.setVisibility(View.GONE);
-        clearCodesButton.setVisibility(View.GONE);
 
         adapter.setFaultCodes(Collections.emptyList());
-        setClearButtonEnabled(false);
         scanButton.setText(R.string.fault_codes_button_scan);
     }
 
@@ -273,19 +262,11 @@ public class FaultCodesActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         emptyView.setVisibility(View.GONE);
         scanButton.setEnabled(false);
-        setClearButtonEnabled(false);
     }
 
     private void hideProgress() {
         progressBar.setVisibility(View.GONE);
         scanButton.setEnabled(true);
-        setClearButtonEnabled(!currentCodes.isEmpty());
-    }
-
-    private void setClearButtonEnabled(boolean enabled) {
-        clearCodesButton.setEnabled(enabled);
-        clearCodesButton.setClickable(enabled);
-        clearCodesButton.setAlpha(enabled ? 1f : 0.5f);
     }
 
     private String extractErrorMessage(Throwable throwable) {
@@ -315,6 +296,9 @@ public class FaultCodesActivity extends AppCompatActivity {
             return true;
         } else if (id == R.id.action_rescan) {
             startScan();
+            return true;
+        } else if (id == R.id.action_clear_codes) {
+            clearCodes();
             return true;
         } else if (id == R.id.action_info) {
             showInfoDialog();
