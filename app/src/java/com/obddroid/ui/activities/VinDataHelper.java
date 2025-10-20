@@ -101,10 +101,26 @@ final class VinDataHelper
             else if (eventKey != null)
             {
                 log.info("Trying to get EcuDataPv from VidPvs using key: " + eventKey);
-                Object item = ObdProt.VidPvs.get(eventKey);
-                if (item instanceof EcuDataPv)
+                EcuDataPv item = null;
+                if (eventKey instanceof Integer)
                 {
-                    dataPv = (EcuDataPv) item;
+                    item = ObdProt.VidPvs.getTyped((Integer) eventKey);
+                }
+                else
+                {
+                    try
+                    {
+                        int numericKey = Integer.parseInt(String.valueOf(eventKey));
+                        item = ObdProt.VidPvs.getTyped(numericKey);
+                    }
+                    catch (NumberFormatException ignored)
+                    {
+                        // Ignore non-numeric keys
+                    }
+                }
+                if (item != null)
+                {
+                    dataPv = item;
                     log.info("Successfully retrieved EcuDataPv from VidPvs");
                 }
             }

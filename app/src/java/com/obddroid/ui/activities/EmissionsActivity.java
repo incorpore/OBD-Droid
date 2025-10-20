@@ -905,13 +905,12 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         log.info("updateMonitorReadiness: Parsing " + ObdProt.PidPvs.size() + " PID entries...");
 
         // Iterate through PidPvs to find monitor status entries
-        // Make a copy of the keys to avoid ConcurrentModificationException
         int foundCount = 0;
-        java.util.List<Object> keys = new java.util.ArrayList<>(ObdProt.PidPvs.keySet());
-        for (Object key : keys) {
-            Object value = ObdProt.PidPvs.get(key);
-            if (value instanceof EcuDataPv) {
-                EcuDataPv pv = (EcuDataPv) value;
+        java.util.List<Map.Entry<String, EcuDataPv>> entries =
+            new java.util.ArrayList<>(ObdProt.PidPvs.entrySetTyped());
+        for (Map.Entry<String, EcuDataPv> entry : entries) {
+            EcuDataPv pv = entry.getValue();
+            if (pv != null) {
                 String description = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
                 Object formattedVal = pv.get(EcuDataPv.FID_VALUE);
 
@@ -1046,13 +1045,12 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         // O2 Heater data
         int hccatComp = 0, hccatCond = 0;
 
-        // Iterate through all VidPvs entries
-        // Make a copy of the keys to avoid ConcurrentModificationException
-        java.util.List<Object> vidKeys = new java.util.ArrayList<>(ObdProt.VidPvs.keySet());
-        for (Object key : vidKeys) {
-            Object value = ObdProt.VidPvs.get(key);
-            if (value instanceof EcuDataPv) {
-                EcuDataPv pv = (EcuDataPv) value;
+        // Iterate through all VidPvs entries using a snapshot to avoid concurrent modification
+        java.util.List<Map.Entry<Integer, EcuDataPv>> vidEntries =
+            new java.util.ArrayList<>(ObdProt.VidPvs.entrySetTyped());
+        for (Map.Entry<Integer, EcuDataPv> entry : vidEntries) {
+            EcuDataPv pv = entry.getValue();
+            if (pv != null) {
                 String description = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
                 int intValue = getIntValue(pv);
 

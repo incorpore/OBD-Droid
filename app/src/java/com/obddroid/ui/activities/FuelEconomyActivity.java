@@ -1000,10 +1000,10 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         // Get current RPM from OBD data (PID 0x0C)
         // Key format is "PID.SENSOR.BANK" e.g. "0C.0.0"
         try {
-            Object rpmPv = ObdProt.PidPvs.get("0C.0.0");
+            EcuDataPv rpmPv = ObdProt.PidPvs.getTyped("0C.0.0");
             log.info("RPM PV lookup: " + (rpmPv != null ? "FOUND" : "NULL"));
-            if (rpmPv instanceof EcuDataPv) {
-                Object value = ((EcuDataPv) rpmPv).get(EcuDataPv.FID_VALUE);
+            if (rpmPv != null) {
+                Object value = rpmPv.get(EcuDataPv.FID_VALUE);
                 log.info("RPM value: " + value);
                 if (value != null) {
                     float rpm = Float.parseFloat(value.toString());
@@ -1111,10 +1111,10 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
      */
     private float getIntakeAirTemp() {
         try {
-            Object iatPv = ObdProt.PidPvs.get("0F.0.0");
+            EcuDataPv iatPv = ObdProt.PidPvs.getTyped("0F.0.0");
             log.fine("IAT PV lookup: " + (iatPv != null ? "FOUND" : "NULL"));
-            if (iatPv instanceof EcuDataPv) {
-                Object value = ((EcuDataPv) iatPv).get(EcuDataPv.FID_VALUE);
+            if (iatPv != null) {
+                Object value = iatPv.get(EcuDataPv.FID_VALUE);
                 if (value != null) {
                     float iatCelsius = Float.parseFloat(value.toString());
                     log.fine("IAT: " + iatCelsius + "°C");

@@ -89,10 +89,12 @@ public class EcuManager {
                 log.info("EcuManager: Loading existing Mode 9 data, VidPvs size: " + ObdProt.VidPvs.size());
 
                 // Process all existing Mode 9 data
-                for (Object key : ObdProt.VidPvs.keySet()) {
-                    Object item = ObdProt.VidPvs.get(key);
-                    if (item instanceof EcuDataPv) {
-                        processMode9Data((EcuDataPv) item);
+                java.util.List<Map.Entry<Integer, EcuDataPv>> mode9Entries =
+                    new java.util.ArrayList<>(ObdProt.VidPvs.entrySetTyped());
+                for (Map.Entry<Integer, EcuDataPv> entry : mode9Entries) {
+                    EcuDataPv item = entry.getValue();
+                    if (item != null) {
+                        processMode9Data(item);
                     }
                 }
 

@@ -23,13 +23,13 @@ import com.obddroid.core.obd.ElmProt;
 import com.automotivelogolibrary.AutomotiveLogoLibraryAndroid;
 import com.obddroid.vehicle.VehicleManager;
 import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.pvs.ProcessVariables.PvList;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.core.obd.Messages;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Footer bar that displays decoded vehicle information
@@ -848,7 +848,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
     @SuppressWarnings("deprecation")
     private void addMode9Section() {
         // Get Mode 9 data from VidPvs
-        PvList vidPvs = ObdProt.VidPvs;
+        com.obddroid.core.pvs.ProcessVariables.TypedPvList<Integer, EcuDataPv> vidPvs = ObdProt.VidPvs;
 
         if (vidPvs == null || vidPvs.isEmpty()) {
             // No Mode 9 data available
@@ -865,10 +865,11 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         categorizedData.put("Other Information", new java.util.ArrayList<>());
 
         // Process all Mode 9 items
-        for (Object key : vidPvs.keySet()) {
-            Object value = vidPvs.get(key);
-            if (value instanceof EcuDataPv) {
-                EcuDataPv pv = (EcuDataPv) value;
+        java.util.List<Map.Entry<Integer, EcuDataPv>> entries =
+            new java.util.ArrayList<>(vidPvs.entrySetTyped());
+        for (Map.Entry<Integer, EcuDataPv> entry : entries) {
+            EcuDataPv pv = entry.getValue();
+            if (pv != null) {
                 String description = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
                 Object dataValue = pv.get(EcuDataPv.FID_VALUE);
 

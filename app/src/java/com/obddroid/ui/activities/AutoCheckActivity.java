@@ -755,6 +755,331 @@ public class AutoCheckActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Show dialog to choose export format (PDF, CSV, or JSON)
+     */
+    private void showSaveReportDialog() {
+        if (currentReport == null) {
+            Toast.makeText(this, "No report available to export", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_save_report);
+        dialog.setCancelable(true);
+
+        // PDF option - save a copy of the existing PDF
+        View pdfOption = dialog.findViewById(R.id.option_export_pdf);
+        pdfOption.setOnClickListener(v -> {
+            dialog.dismiss();
+            savePDFCopy();
+        });
+
+        // CSV option
+        View csvOption = dialog.findViewById(R.id.option_export_csv);
+        csvOption.setOnClickListener(v -> {
+            dialog.dismiss();
+            exportAsCSV();
+        });
+
+        // JSON option
+        View jsonOption = dialog.findViewById(R.id.option_export_json);
+        jsonOption.setOnClickListener(v -> {
+            dialog.dismiss();
+            exportAsJSON();
+        });
+
+        // Cancel button
+        View cancelBtn = dialog.findViewById(R.id.btn_cancel);
+        cancelBtn.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+    /**
+     * Save a copy of the PDF report to Documents/OBDroid
+     */
+    private void savePDFCopy() {
+        if (currentPdfFilePath == null || currentPdfFilePath.isEmpty()) {
+            Toast.makeText(this, "PDF not available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            File sourcePdf = new File(currentPdfFilePath);
+            if (!sourcePdf.exists()) {
+                Toast.makeText(this, "PDF file not found", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+            String fileName = "vehicle_history_" + currentReport.getVin() + "_" + timestamp + ".pdf";
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+
+                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
+                if (uri == null) {
+                    throw new IOException("Failed to create MediaStore entry");
+                }
+
+                OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                if (outputStream == null) {
+                    throw new IOException("Failed to open output stream");
+                }
+
+                // Copy file
+                FileInputStream inputStream = new FileInputStream(sourcePdf);
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+                inputStream.close();
+                outputStream.close();
+            } else {
+                File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+                File obdroidDir = new File(documentsDir, "OBDroid");
+                if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
+                    throw new IOException("Unable to create export directory");
+                }
+                File destPdf = new File(obdroidDir, fileName);
+
+                // Copy file
+                FileChannel source = new FileInputStream(sourcePdf).getChannel();
+                FileChannel destination = new FileOutputStream(destPdf).getChannel();
+                destination.transferFrom(source, 0, source.size());
+                source.close();
+                destination.close();
+            }
+
+            Toast.makeText(this, "PDF saved: " + fileName, Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Failed to save PDF: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Export report as CSV for spreadsheets
+     */
+    private void exportAsCSV() {
+        if (currentReport == null) return;
+
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        String displayTimestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
+        String fileName = "vehicle_history_" + currentReport.getVin() + "_" + timestamp + ".csv";
+
+        OutputStreamWriter writer = null;
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+
+                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
+                if (uri == null) {
+                    throw new IOException("Failed to create MediaStore entry");
+                }
+
+                OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                if (outputStream == null) {
+                    throw new IOException("Failed to open output stream");
+                }
+                writer = new OutputStreamWriter(outputStream);
+            } else {
+                File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+                File obdroidDir = new File(documentsDir, "OBDroid");
+                if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
+                    throw new IOException("Unable to create export directory");
+                }
+                File csvFile = new File(obdroidDir, fileName);
+                writer = new OutputStreamWriter(new FileOutputStream(csvFile));
+            }
+
+            if (writer == null) {
+                throw new IOException("Output stream writer was null");
+            }
+
+            // Write header
+            writer.write("OBD-Droid Vehicle History Report," + displayTimestamp + "\n\n");
+
+            // Vehicle info
+            writer.write("Vehicle Information\n");
+            writer.write("VIN," + currentReport.getVin() + "\n");
+            if (currentReport.getYear() != null) writer.write("Year," + currentReport.getYear() + "\n");
+            if (currentReport.getMake() != null) writer.write("Make," + currentReport.getMake() + "\n");
+            if (currentReport.getModel() != null) writer.write("Model," + currentReport.getModel() + "\n");
+            if (currentReport.getStyle() != null) writer.write("Style," + currentReport.getStyle() + "\n");
+
+            // Score
+            writer.write("\nAutoCheck Score\n");
+            if (currentReport.getScore() != null) {
+                writer.write("Score," + currentReport.getScore() + "\n");
+                if (currentReport.getScoreRange() != null) {
+                    writer.write("Range," + currentReport.getScoreRange().low + "-" + currentReport.getScoreRange().high + "\n");
+                }
+            }
+
+            // Safety section
+            writer.write("\nSafety Information\n");
+            writer.write("Category,Value\n");
+            if (currentReport.getTitleBrand() != null) writer.write("Title Brand," + currentReport.getTitleBrand() + "\n");
+            if (currentReport.getAccidentDamage() != null) writer.write("Accident Damage," + currentReport.getAccidentDamage() + "\n");
+            writer.write("Total Loss," + (currentReport.getTotalLoss() != null && currentReport.getTotalLoss() ? "Yes" : "No") + "\n");
+            writer.write("Structural Damage," + (currentReport.getStructuralDamage() != null && currentReport.getStructuralDamage() ? "Yes" : "No") + "\n");
+            writer.write("Airbag Deployed," + (currentReport.getAirbagDeployed() != null && currentReport.getAirbagDeployed() ? "Yes" : "No") + "\n");
+            writer.write("Odometer Rollback," + (currentReport.getOdometerRollback() != null && currentReport.getOdometerRollback() ? "Yes" : "No") + "\n");
+
+            // History events
+            if (currentReport.getHistoryEvents() != null && !currentReport.getHistoryEvents().isEmpty()) {
+                writer.write("\nHistory Events\n");
+                writer.write("Date,Location,Odometer,Source,Details\n");
+                for (AutoCheckReport.HistoryEvent event : currentReport.getHistoryEvents()) {
+                    writer.write(String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        event.date != null ? event.date : "",
+                        event.location != null ? event.location.replace("\"", "\"\"") : "",
+                        event.odometer != null ? event.odometer : "",
+                        event.source != null ? event.source.replace("\"", "\"\"") : "",
+                        event.details != null ? event.details.replace("\"", "\"\"") : ""
+                    ));
+                }
+            }
+
+            writer.flush();
+            Toast.makeText(this, "CSV saved: " + fileName, Toast.LENGTH_SHORT).show();
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Failed to export CSV: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException ignored) {
+                }
+            }
+        }
+    }
+
+    /**
+     * Export report as JSON for APIs and developers
+     */
+    private void exportAsJSON() {
+        if (currentReport == null) return;
+
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        String displayTimestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
+        String fileName = "vehicle_history_" + currentReport.getVin() + "_" + timestamp + ".json";
+
+        OutputStreamWriter writer = null;
+        try {
+            // Build JSON structure
+            JSONObject root = new JSONObject();
+            root.put("report_type", "OBD-Droid Vehicle History Report");
+            root.put("generated_at", displayTimestamp);
+            root.put("timestamp", new Date().getTime());
+
+            JSONObject vehicle = new JSONObject();
+            vehicle.put("vin", currentReport.getVin());
+            if (currentReport.getYear() != null) vehicle.put("year", currentReport.getYear());
+            if (currentReport.getMake() != null) vehicle.put("make", currentReport.getMake());
+            if (currentReport.getModel() != null) vehicle.put("model", currentReport.getModel());
+            if (currentReport.getStyle() != null) vehicle.put("style", currentReport.getStyle());
+            if (currentReport.getEngine() != null) vehicle.put("engine", currentReport.getEngine());
+            root.put("vehicle", vehicle);
+
+            if (currentReport.getScore() != null) {
+                JSONObject score = new JSONObject();
+                score.put("value", currentReport.getScore());
+                if (currentReport.getScoreRange() != null) {
+                    score.put("range_low", currentReport.getScoreRange().low);
+                    score.put("range_high", currentReport.getScoreRange().high);
+                }
+                root.put("autocheck_score", score);
+            }
+
+            JSONObject stats = new JSONObject();
+            if (currentReport.getOwners() != null) stats.put("owners", currentReport.getOwners());
+            if (currentReport.getLastOdometer() != null) stats.put("last_odometer", currentReport.getLastOdometer());
+            if (currentReport.getServiceRecords() != null) stats.put("service_records", currentReport.getServiceRecords());
+            if (currentReport.getVehicleAge() != null) stats.put("vehicle_age", currentReport.getVehicleAge());
+            root.put("stats", stats);
+
+            JSONObject safety = new JSONObject();
+            if (currentReport.getTitleBrand() != null) safety.put("title_brand", currentReport.getTitleBrand());
+            if (currentReport.getAccidentDamage() != null) safety.put("accident_damage", currentReport.getAccidentDamage());
+            safety.put("total_loss", currentReport.getTotalLoss() != null && currentReport.getTotalLoss());
+            safety.put("structural_damage", currentReport.getStructuralDamage() != null && currentReport.getStructuralDamage());
+            safety.put("airbag_deployed", currentReport.getAirbagDeployed() != null && currentReport.getAirbagDeployed());
+            safety.put("odometer_rollback", currentReport.getOdometerRollback() != null && currentReport.getOdometerRollback());
+            root.put("safety", safety);
+
+            if (currentReport.getHistoryEvents() != null && !currentReport.getHistoryEvents().isEmpty()) {
+                JSONArray events = new JSONArray();
+                for (AutoCheckReport.HistoryEvent event : currentReport.getHistoryEvents()) {
+                    JSONObject eventObj = new JSONObject();
+                    if (event.date != null) eventObj.put("date", event.date);
+                    if (event.location != null) eventObj.put("location", event.location);
+                    if (event.odometer != null) eventObj.put("odometer", event.odometer);
+                    if (event.source != null) eventObj.put("source", event.source);
+                    if (event.details != null) eventObj.put("details", event.details);
+                    events.put(eventObj);
+                }
+                root.put("history_events", events);
+            }
+
+            // Save to file
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "application/json");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+
+                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
+                if (uri == null) {
+                    throw new IOException("Failed to create MediaStore entry");
+                }
+
+                OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                if (outputStream == null) {
+                    throw new IOException("Failed to open output stream");
+                }
+                writer = new OutputStreamWriter(outputStream);
+            } else {
+                File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+                File obdroidDir = new File(documentsDir, "OBDroid");
+                if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
+                    throw new IOException("Unable to create export directory");
+                }
+                File jsonFile = new File(obdroidDir, fileName);
+                writer = new OutputStreamWriter(new FileOutputStream(jsonFile));
+            }
+
+            if (writer == null) {
+                throw new IOException("Output stream writer was null");
+            }
+
+            writer.write(root.toString(2)); // Pretty print with 2-space indent
+            writer.flush();
+
+            Toast.makeText(this, "JSON saved: " + fileName, Toast.LENGTH_SHORT).show();
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Failed to export JSON: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException ignored) {
+                }
+            }
+        }
+    }
+
     private void showError(String error) {
         errorCard.setVisibility(View.VISIBLE);
         errorMessage.setText(error);
