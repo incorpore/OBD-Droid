@@ -905,6 +905,9 @@ public class AutoCheckActivity extends AppCompatActivity {
             return;
         }
 
+        Uri savedUri = null;
+        File destPdf = null;
+
         try {
             File sourcePdf = new File(currentPdfFilePath);
             if (!sourcePdf.exists()) {
@@ -921,12 +924,12 @@ public class AutoCheckActivity extends AppCompatActivity {
                 values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
                 values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
 
-                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
-                if (uri == null) {
+                savedUri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
+                if (savedUri == null) {
                     throw new IOException("Failed to create MediaStore entry");
                 }
 
-                OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                OutputStream outputStream = getContentResolver().openOutputStream(savedUri);
                 if (outputStream == null) {
                     throw new IOException("Failed to open output stream");
                 }
@@ -946,7 +949,7 @@ public class AutoCheckActivity extends AppCompatActivity {
                 if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
                     throw new IOException("Unable to create export directory");
                 }
-                File destPdf = new File(obdroidDir, fileName);
+                destPdf = new File(obdroidDir, fileName);
 
                 // Copy file
                 FileChannel source = new FileInputStream(sourcePdf).getChannel();
@@ -957,6 +960,14 @@ public class AutoCheckActivity extends AppCompatActivity {
             }
 
             Toast.makeText(this, "PDF saved: " + fileName, Toast.LENGTH_SHORT).show();
+
+            // Open the saved PDF
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && savedUri != null) {
+                openFile(savedUri, "application/pdf", fileName);
+            } else if (destPdf != null) {
+                Uri fileUri = FileProvider.getUriForFile(this, getPackageName() + ".provider", destPdf);
+                openFile(fileUri, "application/pdf", fileName);
+            }
         } catch (Exception e) {
             Toast.makeText(this, "Failed to save PDF: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
@@ -973,6 +984,9 @@ public class AutoCheckActivity extends AppCompatActivity {
         String fileName = "vehicle_history_" + currentReport.getVin() + "_" + timestamp + ".csv";
 
         OutputStreamWriter writer = null;
+        Uri savedUri = null;
+        File savedFile = null;
+
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 ContentValues values = new ContentValues();
@@ -980,12 +994,12 @@ public class AutoCheckActivity extends AppCompatActivity {
                 values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
                 values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
 
-                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
-                if (uri == null) {
+                savedUri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
+                if (savedUri == null) {
                     throw new IOException("Failed to create MediaStore entry");
                 }
 
-                OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                OutputStream outputStream = getContentResolver().openOutputStream(savedUri);
                 if (outputStream == null) {
                     throw new IOException("Failed to open output stream");
                 }
@@ -996,8 +1010,8 @@ public class AutoCheckActivity extends AppCompatActivity {
                 if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
                     throw new IOException("Unable to create export directory");
                 }
-                File csvFile = new File(obdroidDir, fileName);
-                writer = new OutputStreamWriter(new FileOutputStream(csvFile));
+                savedFile = new File(obdroidDir, fileName);
+                writer = new OutputStreamWriter(new FileOutputStream(savedFile));
             }
 
             if (writer == null) {
@@ -1050,7 +1064,17 @@ public class AutoCheckActivity extends AppCompatActivity {
             }
 
             writer.flush();
+            writer.close();
+
             Toast.makeText(this, "CSV saved: " + fileName, Toast.LENGTH_SHORT).show();
+
+            // Open the saved CSV
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && savedUri != null) {
+                openFile(savedUri, "text/csv", fileName);
+            } else if (savedFile != null) {
+                Uri fileUri = FileProvider.getUriForFile(this, getPackageName() + ".provider", savedFile);
+                openFile(fileUri, "text/csv", fileName);
+            }
 
         } catch (Exception e) {
             Toast.makeText(this, "Failed to export CSV: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -1075,6 +1099,9 @@ public class AutoCheckActivity extends AppCompatActivity {
         String fileName = "vehicle_history_" + currentReport.getVin() + "_" + timestamp + ".json";
 
         OutputStreamWriter writer = null;
+        Uri savedUri = null;
+        File savedFile = null;
+
         try {
             // Build JSON structure
             JSONObject root = new JSONObject();
@@ -1138,12 +1165,12 @@ public class AutoCheckActivity extends AppCompatActivity {
                 values.put(MediaStore.MediaColumns.MIME_TYPE, "application/json");
                 values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
 
-                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
-                if (uri == null) {
+                savedUri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
+                if (savedUri == null) {
                     throw new IOException("Failed to create MediaStore entry");
                 }
 
-                OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                OutputStream outputStream = getContentResolver().openOutputStream(savedUri);
                 if (outputStream == null) {
                     throw new IOException("Failed to open output stream");
                 }
@@ -1154,8 +1181,8 @@ public class AutoCheckActivity extends AppCompatActivity {
                 if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
                     throw new IOException("Unable to create export directory");
                 }
-                File jsonFile = new File(obdroidDir, fileName);
-                writer = new OutputStreamWriter(new FileOutputStream(jsonFile));
+                savedFile = new File(obdroidDir, fileName);
+                writer = new OutputStreamWriter(new FileOutputStream(savedFile));
             }
 
             if (writer == null) {
@@ -1164,8 +1191,17 @@ public class AutoCheckActivity extends AppCompatActivity {
 
             writer.write(root.toString(2)); // Pretty print with 2-space indent
             writer.flush();
+            writer.close();
 
             Toast.makeText(this, "JSON saved: " + fileName, Toast.LENGTH_SHORT).show();
+
+            // Open the saved JSON
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && savedUri != null) {
+                openFile(savedUri, "application/json", fileName);
+            } else if (savedFile != null) {
+                Uri fileUri = FileProvider.getUriForFile(this, getPackageName() + ".provider", savedFile);
+                openFile(fileUri, "application/json", fileName);
+            }
 
         } catch (Exception e) {
             Toast.makeText(this, "Failed to export JSON: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -1176,6 +1212,30 @@ public class AutoCheckActivity extends AppCompatActivity {
                 } catch (IOException ignored) {
                 }
             }
+        }
+    }
+
+    /**
+     * Helper method to open a saved file with the appropriate app
+     */
+    private void openFile(Uri fileUri, String mimeType, String fileName) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(fileUri, mimeType);
+            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NO_HISTORY);
+
+            try {
+                startActivity(intent);
+            } catch (android.content.ActivityNotFoundException e) {
+                // No app available to open this file type, show share sheet instead
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType(mimeType);
+                shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivity(Intent.createChooser(shareIntent, "Open " + fileName + " with..."));
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Saved to Documents/OBDroid", Toast.LENGTH_SHORT).show();
         }
     }
 
