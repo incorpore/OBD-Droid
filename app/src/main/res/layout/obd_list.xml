@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LinearLayout
+    android:id="@+id/obd_list"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background_primary">
+
+    <Spinner
+        android:id="@+id/ff_selector"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:prompt="@string/select_fault_code"
+        android:spinnerMode="dialog"
+        android:visibility="visible"
+        android:background="@color/background_secondary"
+        android:padding="12dp"/>
+
+    <ListView
+        android:id="@android:id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/background_secondary"
+        android:choiceMode="multipleChoice"
+        android:dividerHeight="1dp"
+        android:divider="@color/background_primary"
+        android:padding="0dp"
+        android:clipToPadding="false"/>
+
+</LinearLayout>
