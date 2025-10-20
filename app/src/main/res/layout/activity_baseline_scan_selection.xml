@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="#1E1E1E">
 
     <!-- Content area with overlay support -->
     <FrameLayout
@@ -12,57 +13,54 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <!-- Main content container -->
-        <LinearLayout
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:fillViewport="true">
 
-            <!-- Info card -->
-            <androidx.cardview.widget.CardView
+            <!-- Main content container -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="#E3F2FD">
+                android:orientation="vertical"
+                android:padding="16dp">
 
-                <LinearLayout
+                <!-- Info card -->
+                <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="12dp"
-                    android:gravity="center_vertical">
+                    android:layout_marginBottom="24dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="8dp"
+                    app:cardBackgroundColor="#4CAF50">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="ℹ️"
-                        android:textSize="20sp"
-                        android:layout_marginEnd="12dp"/>
+                        android:orientation="vertical"
+                        android:padding="20dp">
 
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Select a previous scan to compare against your current ECU data. This helps identify changes in calibration IDs and CVNs over time."
-                        android:textSize="13sp"
-                        android:textColor="#1565C0"
-                        android:lineSpacingExtra="2dp"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📊 SELECT BASELINE SCAN"
+                            android:textColor="#FFFFFF"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
 
-                </LinearLayout>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="Select a previous scan to compare against your current ECU data. This helps identify changes in calibration IDs and CVNs over time."
+                            android:textColor="#E8F5E9"
+                            android:textSize="14sp" />
 
-            </androidx.cardview.widget.CardView>
+                    </LinearLayout>
 
-            <!-- Scrollable scan list -->
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:fillViewport="false"
-                android:scrollbars="vertical">
+                </androidx.cardview.widget.CardView>
 
+                <!-- Scan list container -->
                 <LinearLayout
                     android:id="@+id/scan_list_container"
                     android:layout_width="match_parent"
@@ -70,9 +68,15 @@
                     android:orientation="vertical">
                     <!-- Scan items will be added programmatically -->
                 </LinearLayout>
-            </ScrollView>
 
-        </LinearLayout>
+                <!-- Spacer for vehicle info footer -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="80dp" />
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
 
         <!-- Overlay that appears when footer is expanded -->
         <View

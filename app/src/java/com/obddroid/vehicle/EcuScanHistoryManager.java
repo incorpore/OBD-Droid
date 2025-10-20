@@ -139,6 +139,39 @@ public class EcuScanHistoryManager {
     }
 
     /**
+     * Clear all scans for a specific VIN
+     */
+    public boolean clearScansForVin(String vin) {
+        try {
+            File historyDir = new File(context.getFilesDir(), HISTORY_DIR);
+            if (!historyDir.exists()) {
+                return true;
+            }
+
+            String vinSafe = vin != null ? vin.replaceAll("[^a-zA-Z0-9]", "_") : "unknown";
+
+            File[] files = historyDir.listFiles((dir, name) ->
+                    name.startsWith(vinSafe + "_") && name.endsWith(".json"));
+
+            boolean allDeleted = true;
+            if (files != null) {
+                for (File file : files) {
+                    if (!file.delete()) {
+                        allDeleted = false;
+                        Log.w(TAG, "Failed to delete scan file: " + file.getName());
+                    }
+                }
+                Log.i(TAG, "Cleared " + files.length + " scans for VIN: " + vin);
+            }
+
+            return allDeleted;
+        } catch (Exception e) {
+            Log.e(TAG, "Error clearing scans for VIN: " + e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
      * Clean up old scans, keeping only the most recent MAX_SCANS_PER_VIN
      */
     private void cleanupOldScans(String vin) {

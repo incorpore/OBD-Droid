@@ -1,14 +1,17 @@
 package com.obddroid.ui.activities;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
 import com.obddroid.R;
 import com.obddroid.ui.components.VehicleInfoFooter;
@@ -96,9 +99,43 @@ public class BaselineScanSelectionActivity extends AppCompatActivity {
             setResult(RESULT_OK, resultIntent);
             finish();
             return true;
+        } else if (id == R.id.action_clear_all) {
+            clearAllScans();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Clear all saved scans for the current VIN
+     */
+    private void clearAllScans() {
+        if (scans == null || scans.isEmpty()) {
+            return;
+        }
+
+        // Show confirmation dialog
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("Clear All Scans?")
+            .setMessage("This will permanently delete all " + scans.size() + " saved scans for this vehicle. This action cannot be undone.")
+            .setPositiveButton("Clear All", (dialog, which) -> {
+                // Get current VIN
+                String vin = VehicleManager.getInstance(this).getCurrentVIN();
+                if (vin != null && !vin.isEmpty()) {
+                    // Clear all scans for this VIN
+                    scanHistoryManager.clearScansForVin(vin);
+
+                    // Reload the scan list
+                    scans = scanHistoryManager.getScansForVin(vin);
+                    populateScans();
+
+                    log.info("Cleared all scans for VIN: " + vin);
+                }
+            })
+            .setNegativeButton("Cancel", null)
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            .show();
     }
 
     /**
@@ -113,7 +150,7 @@ public class BaselineScanSelectionActivity extends AppCompatActivity {
             emptyText.setTextSize(16);
             emptyText.setPadding(32, 32, 32, 32);
             emptyText.setGravity(android.view.Gravity.CENTER);
-            emptyText.setTextColor(getResources().getColor(android.R.color.darker_gray));
+            emptyText.setTextColor(Color.parseColor("#CCCCCC"));
             scanListContainer.addView(emptyText);
             return;
         }
@@ -122,16 +159,34 @@ public class BaselineScanSelectionActivity extends AppCompatActivity {
 
         for (int i = 0; i < scans.size(); i++) {
             EcuScan scan = scans.get(i);
+
+            // Create card for scan item
+            CardView card = new CardView(this);
+            LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            cardParams.topMargin = dpToPx(6);
+            cardParams.bottomMargin = dpToPx(6);
+            card.setLayoutParams(cardParams);
+            card.setCardBackgroundColor(Color.parseColor("#2C2C2C"));
+            card.setRadius(dpToPx(12));
+            card.setCardElevation(dpToPx(4));
+            card.setClickable(true);
+            card.setFocusable(true);
+            card.setForeground(getDrawable(android.R.attr.selectableItemBackground));
+
+            // Create text view inside card
             TextView scanItem = new TextView(this);
             scanItem.setText(sdf.format(scan.getDate()) + " (" + scan.getEcus().size() + " ECUs)");
-            scanItem.setTextSize(16);
-            scanItem.setPadding(32, 32, 32, 32);
-            scanItem.setBackground(getDrawable(android.R.drawable.list_selector_background));
-            scanItem.setClickable(true);
-            scanItem.setFocusable(true);
+            scanItem.setTextSize(15);
+            scanItem.setTextColor(Color.parseColor("#FFFFFF"));
+            scanItem.setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16));
+
+            card.addView(scanItem);
 
             final int index = i;
-            scanItem.setOnClickListener(v -> {
+            card.setOnClickListener(v -> {
                 // Return selected scan
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra(EXTRA_SELECTED_SCAN, scans.get(index));
@@ -139,7 +194,15 @@ public class BaselineScanSelectionActivity extends AppCompatActivity {
                 finish();
             });
 
-            scanListContainer.addView(scanItem);
+            scanListContainer.addView(card);
         }
+    }
+
+    /**
+     * Convert dp to pixels
+     */
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 }

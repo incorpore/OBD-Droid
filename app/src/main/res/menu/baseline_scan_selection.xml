@@ -6,6 +6,12 @@
         android:id="@+id/action_import_csv"
         android:title="Import CSV"
         android:icon="@android:drawable/ic_menu_upload"
-        app:showAsAction="always" />
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_clear_all"
+        android:title="Clear All Scans"
+        android:icon="@android:drawable/ic_menu_delete"
+        app:showAsAction="never" />
 
 </menu>
