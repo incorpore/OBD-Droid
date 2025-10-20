@@ -125,40 +125,13 @@
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- Freeze Frame Selector -->
-                <Spinner
-                    android:id="@+id/ff_selector"
+                <!-- Fault Codes RecyclerView -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/fault_codes_list"
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginBottom="@dimen/spacing_small"
-                    android:prompt="@string/select_fault_code"
-                    android:spinnerMode="dialog"
-                    android:visibility="visible"
-                    android:background="@color/background_secondary"
-                    android:padding="@dimen/spacing_medium"
-                    android:elevation="@dimen/elevation_content_card"/>
-
-                <!-- ListView Container -->
-                <FrameLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <ListView
-                        android:id="@android:id/list"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@color/background_secondary"
-                        android:choiceMode="multipleChoice"
-                        android:dividerHeight="1dp"
-                        android:divider="@color/background_primary"
-                        android:fastScrollEnabled="true"
-                        android:padding="0dp"
-                        android:clipToPadding="false"
-                        android:scrollbarStyle="insideOverlay"
-                        android:scrollbars="none"
-                        android:elevation="@dimen/elevation_content_card"/>
-
-                </FrameLayout>
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:nestedScrollingEnabled="false"/>
 
                 <!-- Footer Spacer -->
                 <View
@@ -167,6 +140,64 @@
 
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
+
+        <!-- Empty State -->
+        <LinearLayout
+            android:id="@+id/empty_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="@dimen/card_padding_standard"
+            android:visibility="visible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔍"
+                android:textSize="64sp"
+                android:layout_marginBottom="@dimen/spacing_large" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ready to Scan"
+                android:textSize="@dimen/text_section_header"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary_dark"
+                android:layout_marginBottom="@dimen/spacing_small" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tap the scan button to check for fault codes"
+                android:textSize="@dimen/text_caption"
+                android:textColor="@color/text_tertiary_dark"
+                android:textAlignment="center"
+                android:gravity="center"
+                android:layout_marginBottom="@dimen/spacing_xxl" />
+
+            <!-- Scan Button -->
+            <Button
+                android:id="@+id/scan_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Scan for Codes"
+                android:textSize="@dimen/text_caption"
+                android:textStyle="bold"
+                android:backgroundTint="@color/fault_success"
+                android:textColor="@color/text_primary_dark" />
+        </LinearLayout>
+
+        <!-- Progress Bar -->
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:indeterminateTint="@color/fault_success" />
 
         <!-- Overlay -->
         <View

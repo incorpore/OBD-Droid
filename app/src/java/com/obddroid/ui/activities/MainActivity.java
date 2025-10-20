@@ -2401,6 +2401,15 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
+     * Launch the Fault Codes activity
+     */
+    void launchFaultCodesActivity() {
+        log.info("Launching Fault Codes activity");
+        Intent intent = new Intent(this, FaultCodesActivity.class);
+        startActivity(intent);
+    }
+
+    /**
      * Initialize the auto-reconnect countdown bar and its click handlers
      */
     private void initializeCountdownBar() {
