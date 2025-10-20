@@ -1,12 +1,23 @@
 package com.obddroid.services;
 
-import android.util.Log;
+import android.os.SystemClock;
+
 import com.obddroid.core.obd.RawTelegramListener;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -23,29 +34,40 @@ import java.util.logging.Logger;
  * 3. Parses DTC responses (e.g., "43 02 01 33 00 00" → "P0133")
  * 4. Returns list of fault codes via CompletableFuture
  * 5. Can clear codes using Mode 04
- *
- * @author Wal33D <aquataze@yahoo.com>
  */
 public class FaultCodeService implements RawTelegramListener {
-    private static final String TAG = "FaultCodeService";
-    private static final Logger log = Logger.getLogger(TAG);
 
-    // Scan state
-    private final List<FaultCodeInfo> discoveredCodes = new ArrayList<>();
-    private CompletableFuture<List<FaultCodeInfo>> currentScan;
+    private static final Logger log = Logger.getLogger(FaultCodeService.class.getSimpleName());
+    private static final String PROMPT = ">";
+    private static final long SCAN_TIMEOUT_MS = 2_500L;
+    private static final long CLEAR_TIMEOUT_MS = 1_500L;
+
+    private enum ScanMode { CONFIRMED, PENDING }
+
+    // Execution and state management
+    private final ExecutorService scanExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread thread = new Thread(r, "FaultCodeService");
+        thread.setDaemon(true);
+        return thread;
+    });
     private final AtomicBoolean isScanning = new AtomicBoolean(false);
-    private StringBuilder responseBuffer = new StringBuilder();
-    private boolean expectingResponse = false;
+    private volatile CompletableFuture<List<FaultCodeInfo>> currentScan;
+
+    // Response synchronization
+    private final Object responseLock = new Object();
+    private final StringBuilder responseBuffer = new StringBuilder();
+    private final AtomicBoolean expectingResponse = new AtomicBoolean(false);
+    private boolean waitingForPrompt;
 
     /**
      * Fault code information
      */
     public static class FaultCodeInfo {
-        public final String code;           // "P0301"
-        public final String description;    // "Cylinder 1 Misfire Detected"
-        public final boolean isPending;     // true = pending, false = confirmed
-        public final boolean hasFreeze;     // Has freeze frame data available
-        public final int dtcNumber;         // Raw DTC number for freeze frame lookup
+        public final String code;
+        public final String description;
+        public final boolean isPending;
+        public final boolean hasFreeze;
+        public final int dtcNumber;
 
         public FaultCodeInfo(String code, String description, boolean isPending, boolean hasFreeze, int dtcNumber) {
             this.code = code;
@@ -54,93 +76,27 @@ public class FaultCodeService implements RawTelegramListener {
             this.hasFreeze = hasFreeze;
             this.dtcNumber = dtcNumber;
         }
-
-        @Override
-        public String toString() {
-            return String.format("%s: %s (pending=%s, freeze=%s)", code, description, isPending, hasFreeze);
-        }
     }
 
     /**
-     * Scan for all fault codes (both current and pending).
-     *
-     * This is a non-blocking operation that returns immediately with a CompletableFuture.
-     * The scan process runs in a background thread.
-     *
-     * @return CompletableFuture that completes with list of fault codes
+     * Scan for confirmed (Mode 03) fault codes.
      */
     public CompletableFuture<List<FaultCodeInfo>> scanFaultCodes() {
-        if (isScanning.get()) {
-            Log.w(TAG, "Scan already in progress");
-            return currentScan;
-        }
+        return startScan(EnumSet.of(ScanMode.CONFIRMED));
+    }
 
-        if (CommService.elm == null) {
-            Log.e(TAG, "ELM protocol not available - cannot scan fault codes");
-            return CompletableFuture.failedFuture(new IllegalStateException("ELM not available"));
-        }
+    /**
+     * Scan for pending (Mode 07) fault codes.
+     */
+    public CompletableFuture<List<FaultCodeInfo>> scanPendingCodes() {
+        return startScan(EnumSet.of(ScanMode.PENDING));
+    }
 
-        currentScan = new CompletableFuture<>();
-        discoveredCodes.clear();
-        responseBuffer.setLength(0);
-
-        new Thread(() -> {
-            try {
-                isScanning.set(true);
-                Log.i(TAG, "========== FAULT CODE SCAN START ==========");
-
-                // Add ourselves as a RAW telegram listener
-                CommService.elm.addRawTelegramListener(this);
-                Log.i(TAG, "Registered as RAW telegram listener");
-
-                // Step 1: Request Mode 03 (Read Confirmed DTCs)
-                Log.i(TAG, "Step 1: Requesting confirmed fault codes (03)");
-                expectingResponse = true;
-                sendRawCommand("03");
-                Thread.sleep(800);  // Wait for response
-
-                // Parse Mode 03 responses
-                if (responseBuffer.length() > 0) {
-                    parseFaultCodes(responseBuffer.toString(), false);
-                    responseBuffer.setLength(0);
-                }
-
-                // Step 2: Request Mode 07 (Read Pending DTCs)
-                Log.i(TAG, "Step 2: Requesting pending fault codes (07)");
-                expectingResponse = true;
-                sendRawCommand("07");
-                Thread.sleep(800);  // Wait for response
-
-                // Parse Mode 07 responses
-                if (responseBuffer.length() > 0) {
-                    parseFaultCodes(responseBuffer.toString(), true);
-                    responseBuffer.setLength(0);
-                }
-
-                // Remove raw listener
-                CommService.elm.removeRawTelegramListener(this);
-                Log.i(TAG, "Unregistered RAW telegram listener");
-
-                // Complete scan
-                Log.i(TAG, "========== FAULT CODE SCAN COMPLETE ==========");
-                Log.i(TAG, "Found " + discoveredCodes.size() + " fault codes:");
-                for (FaultCodeInfo code : discoveredCodes) {
-                    Log.i(TAG, "  " + code.toString());
-                }
-
-                currentScan.complete(new ArrayList<>(discoveredCodes));
-
-            } catch (Exception e) {
-                Log.e(TAG, "Fault code scan failed: " + e.getMessage(), e);
-                CommService.elm.removeRawTelegramListener(this);
-                currentScan.completeExceptionally(e);
-            } finally {
-                isScanning.set(false);
-                expectingResponse = false;
-            }
-        }, "FaultCode-Scan-Thread").start();
-
-        return currentScan;
+    /**
+     * Scan for both confirmed and pending fault codes in a single request chain.
+     */
+    public CompletableFuture<List<FaultCodeInfo>> scanAllCodes() {
+        return startScan(EnumSet.of(ScanMode.CONFIRMED, ScanMode.PENDING));
     }
 
     /**
@@ -153,31 +109,134 @@ public class FaultCodeService implements RawTelegramListener {
             return CompletableFuture.failedFuture(new IllegalStateException("ELM not available"));
         }
 
-        CompletableFuture<Boolean> clearFuture = new CompletableFuture<>();
-
-        new Thread(() -> {
+        return CompletableFuture.supplyAsync(() -> {
             try {
-                Log.i(TAG, "========== CLEARING FAULT CODES ==========");
-                sendRawCommand("04");
-                Thread.sleep(500);  // Wait for clear to complete
-                Log.i(TAG, "Fault codes cleared successfully");
-                clearFuture.complete(true);
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to clear fault codes: " + e.getMessage(), e);
-                clearFuture.completeExceptionally(e);
+                log.info("Clearing fault codes (Mode 04)");
+                CommService.elm.addRawTelegramListener(this);
+                try {
+                    String response = sendAndAwait("04", CLEAR_TIMEOUT_MS);
+                    log.fine(() -> "Clear response: " + response);
+                    return response.toUpperCase(Locale.US).contains("OK")
+                        || response.toUpperCase(Locale.US).contains("NODATA");
+                } finally {
+                    CommService.elm.removeRawTelegramListener(this);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new CompletionException(e);
+            } catch (TimeoutException e) {
+                throw new CompletionException(e);
             }
-        }, "FaultCode-Clear-Thread").start();
-
-        return clearFuture;
+        }, scanExecutor);
     }
 
     /**
-     * Send raw command to ELM adapter
+     * Start scanning based on the requested modes.
+     */
+    private CompletableFuture<List<FaultCodeInfo>> startScan(EnumSet<ScanMode> modes) {
+        if (CommService.elm == null) {
+            return CompletableFuture.failedFuture(new IllegalStateException("ELM not available"));
+        }
+
+        if (!isScanning.compareAndSet(false, true)) {
+            log.warning("Scan already in progress – returning existing future");
+            return currentScan != null
+                ? currentScan
+                : CompletableFuture.failedFuture(new IllegalStateException("Scan already in progress"));
+        }
+
+        CompletableFuture<List<FaultCodeInfo>> future = CompletableFuture.supplyAsync(() -> {
+            try {
+                return executeScan(modes);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new CompletionException(e);
+            } catch (TimeoutException e) {
+                throw new CompletionException(e);
+            }
+        }, scanExecutor);
+
+        currentScan = future;
+        future.whenComplete((result, throwable) -> {
+            isScanning.set(false);
+            expectingResponse.set(false);
+            synchronized (responseLock) {
+                waitingForPrompt = false;
+                responseBuffer.setLength(0);
+                responseLock.notifyAll();
+            }
+        });
+
+        return future;
+    }
+
+    /**
+     * Execute the actual scan sequence synchronously on the scan executor thread.
+     */
+    private List<FaultCodeInfo> executeScan(EnumSet<ScanMode> modes) throws InterruptedException, TimeoutException {
+        log.info(() -> "Starting fault code scan for modes: " + modes);
+
+        List<FaultCodeInfo> results = new ArrayList<>();
+        CommService.elm.addRawTelegramListener(this);
+        try {
+            if (modes.contains(ScanMode.CONFIRMED)) {
+                String response = sendAndAwait("03", SCAN_TIMEOUT_MS);
+                log.fine(() -> "Mode 03 response: " + response);
+                results.addAll(parseFaultCodes(response, false));
+            }
+            if (modes.contains(ScanMode.PENDING)) {
+                String response = sendAndAwait("07", SCAN_TIMEOUT_MS);
+                log.fine(() -> "Mode 07 response: " + response);
+                results.addAll(parseFaultCodes(response, true));
+            }
+        } finally {
+            CommService.elm.removeRawTelegramListener(this);
+        }
+
+        // Sort confirmed codes first, then alphabetically.
+        results.sort(Comparator
+            .comparing((FaultCodeInfo code) -> code.isPending)
+            .thenComparing(code -> code.code));
+
+        log.info(() -> "Scan complete. Found " + results.size() + " codes.");
+        return results;
+    }
+
+    /**
+     * Send a raw command and wait for the trailing prompt.
+     */
+    private String sendAndAwait(String command, long timeoutMs) throws InterruptedException, TimeoutException {
+        synchronized (responseLock) {
+            responseBuffer.setLength(0);
+            waitingForPrompt = true;
+            expectingResponse.set(true);
+        }
+
+        sendRawCommand(command);
+
+        long deadline = SystemClock.uptimeMillis() + timeoutMs;
+        synchronized (responseLock) {
+            while (waitingForPrompt) {
+                long remaining = deadline - SystemClock.uptimeMillis();
+                if (remaining <= 0) {
+                    waitingForPrompt = false;
+                    expectingResponse.set(false);
+                    throw new TimeoutException("Timed out waiting for response to command " + command);
+                }
+                responseLock.wait(remaining);
+            }
+            expectingResponse.set(false);
+            return responseBuffer.toString().trim();
+        }
+    }
+
+    /**
+     * Send raw command to ELM adapter.
      */
     private void sendRawCommand(String command) {
         if (CommService.elm != null) {
+            log.fine(() -> "TX: " + command);
             CommService.elm.sendTelegram(command.toCharArray());
-            Log.d(TAG, "TX: " + command);
         }
     }
 
@@ -187,99 +246,87 @@ public class FaultCodeService implements RawTelegramListener {
     @Override
     public int handleRawTelegram(char[] buffer) {
         String response = new String(buffer).trim();
-
         if (response.isEmpty()) {
-            return 0;
+            return buffer.length;
         }
 
-        Log.d(TAG, "RX: " + response);
+        log.finest(() -> "RX: " + response);
 
-        // Ignore prompts and AT responses
-        if (response.equals(">") || response.startsWith("OK") ||
-            response.startsWith("AT") || response.startsWith("SEARCH")) {
-            return response.length();
+        if (!expectingResponse.get()) {
+            return buffer.length;
         }
 
-        // Accumulate response data
-        if (expectingResponse && !response.equals("NO DATA")) {
-            responseBuffer.append(response).append(" ");
+        if (response.startsWith("AT") || response.startsWith("SEARCHING") || response.startsWith("OK")) {
+            return buffer.length;
         }
 
-        return response.length();
+        synchronized (responseLock) {
+            if (PROMPT.equals(response)) {
+                waitingForPrompt = false;
+                responseLock.notifyAll();
+            } else {
+                responseBuffer.append(response).append(' ');
+            }
+        }
+
+        return buffer.length;
     }
 
     /**
-     * Parse fault codes from Mode 03 or Mode 07 response.
-     *
-     * Format examples:
-     * - "43 02 01 33 00 00" → 2 codes: P0133, P0000 (ignore P0000)
-     * - "47 01 01 33" → 1 pending code: P0133
-     *
-     * DTC Format:
-     * - First 2 bits determine prefix: 00=P, 01=C, 10=B, 11=U
-     * - Remaining 14 bits are hex digits
-     * - Example: 0133 → P0133
-     *
-     * @param response Raw response string
-     * @param isPending true if these are pending codes (Mode 07), false if confirmed (Mode 03)
+     * Parse fault codes from a response string.
      */
-    private void parseFaultCodes(String response, boolean isPending) {
-        try {
-            // Remove all spaces and convert to uppercase
-            String cleanData = response.replaceAll("\\s+", "").toUpperCase();
-            Log.d(TAG, "Parsing fault codes from: " + cleanData);
-
-            // Find mode response (43 for Mode 03, 47 for Mode 07)
-            String modePrefix = isPending ? "47" : "43";
-            int start = cleanData.indexOf(modePrefix);
-            if (start == -1) {
-                Log.d(TAG, "No " + modePrefix + " response found");
-                return;
-            }
-
-            // Skip mode byte (43/47) and count byte
-            start += 4;  // Skip "43XX" or "47XX"
-
-            // Parse DTCs in pairs of bytes
-            while (start + 4 <= cleanData.length()) {
-                String dtcHex = cleanData.substring(start, start + 4);
-                start += 4;
-
-                // Convert hex to DTC code
-                int dtcValue = Integer.parseInt(dtcHex, 16);
-
-                // Skip P0000 (no fault)
-                if (dtcValue == 0) {
-                    continue;
-                }
-
-                String dtcCode = convertToDtcCode(dtcValue);
-                String description = getDtcDescription(dtcCode);
-                boolean hasFreeze = !isPending;  // Only confirmed codes have freeze frames
-
-                FaultCodeInfo codeInfo = new FaultCodeInfo(dtcCode, description, isPending, hasFreeze, dtcValue);
-                discoveredCodes.add(codeInfo);
-                Log.i(TAG, "Found fault code: " + codeInfo.toString());
-            }
-
-        } catch (Exception e) {
-            Log.w(TAG, "Failed to parse fault codes: " + e.getMessage());
+    private List<FaultCodeInfo> parseFaultCodes(String response, boolean isPending) {
+        List<FaultCodeInfo> codes = new ArrayList<>();
+        Set<Integer> seen = new HashSet<>();
+        if (response == null || response.isEmpty()) {
+            return codes;
         }
+
+        String cleanData = response.replaceAll("\\s+", "").toUpperCase(Locale.US);
+        if (cleanData.contains("NODATA") || cleanData.length() < 4) {
+            return codes;
+        }
+
+        String modePrefix = isPending ? "47" : "43";
+        int cursor = cleanData.indexOf(modePrefix);
+        while (cursor >= 0 && cursor + 4 <= cleanData.length()) {
+            int count;
+            try {
+                count = Integer.parseInt(cleanData.substring(cursor + 2, cursor + 4), 16);
+            } catch (NumberFormatException ex) {
+                log.log(Level.WARNING, "Invalid DTC count in response segment: " + cleanData, ex);
+                break;
+            }
+
+            int index = cursor + 4;
+            for (int i = 0; i < count && index + 4 <= cleanData.length(); i++) {
+                String dtcHex = cleanData.substring(index, index + 4);
+                index += 4;
+
+                try {
+                    int dtcValue = Integer.parseInt(dtcHex, 16);
+                    if (dtcValue == 0 || !seen.add(dtcValue)) {
+                        continue;
+                    }
+                    String dtcCode = convertToDtcCode(dtcValue);
+                    String description = getDtcDescription(dtcCode);
+                    boolean hasFreeze = !isPending;
+                    codes.add(new FaultCodeInfo(dtcCode, description, isPending, hasFreeze, dtcValue));
+                } catch (NumberFormatException ex) {
+                    log.log(Level.WARNING, "Failed to parse DTC value: " + dtcHex, ex);
+                }
+            }
+
+            cursor = cleanData.indexOf(modePrefix, index);
+        }
+
+        return codes;
     }
 
     /**
      * Convert DTC value to standard code format.
-     *
-     * First 2 bits determine prefix:
-     * - 00 = P (Powertrain)
-     * - 01 = C (Chassis)
-     * - 10 = B (Body)
-     * - 11 = U (Network)
-     *
-     * Example: 0x0133 → P0133
      */
     private String convertToDtcCode(int dtcValue) {
-        // Extract first 2 bits for prefix
         int prefix = (dtcValue >> 14) & 0x03;
         char prefixChar;
         switch (prefix) {
@@ -290,18 +337,15 @@ public class FaultCodeService implements RawTelegramListener {
             default: prefixChar = 'P'; break;
         }
 
-        // Extract remaining 14 bits as 4 hex digits
         int codeValue = dtcValue & 0x3FFF;
-        return String.format("%c%04X", prefixChar, codeValue);
+        return String.format(Locale.US, "%c%04X", prefixChar, codeValue);
     }
 
     /**
      * Get human-readable description for DTC code.
-     * This is a simplified version - real implementation would use DTC database.
+     * TODO: Replace with lookup from bundled DTC database.
      */
     private String getDtcDescription(String code) {
-        // TODO: Integrate with DTC database
-        // For now, return generic description
         switch (code) {
             case "P0133": return "O2 Sensor Circuit Slow Response (Bank 1, Sensor 1)";
             case "P0301": return "Cylinder 1 Misfire Detected";
@@ -316,7 +360,7 @@ public class FaultCodeService implements RawTelegramListener {
     }
 
     /**
-     * Check if scan is currently in progress
+     * Check if scan is currently in progress.
      */
     public boolean isScanning() {
         return isScanning.get();

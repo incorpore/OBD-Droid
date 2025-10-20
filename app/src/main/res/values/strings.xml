@@ -72,6 +72,29 @@ Other manufacturer specific clearing/resetting actions may occur.\n
 The loss of data may cause the vehicle to run poorly for a short \n
 period of time while the ECU recalibrates itself.
     </string>
+    <string name="fault_codes_title">Fault Codes</string>
+    <string name="fault_codes_empty_title">Ready to scan</string>
+    <string name="fault_codes_empty_message">Tap the scan button to check for diagnostic trouble codes.</string>
+    <string name="fault_codes_button_scan">Scan for codes</string>
+    <string name="fault_codes_button_rescan">Scan again</string>
+    <string name="fault_codes_generic_error">Unexpected error</string>
+    <string name="fault_codes_scan_failed">Scan failed: %1$s</string>
+    <string name="fault_codes_clear_success">Fault codes cleared successfully</string>
+    <string name="fault_codes_clear_failed">Failed to clear codes: %1$s</string>
+    <string name="fault_codes_status_summary">%1$d confirmed / %2$d pending</string>
+    <string name="fault_codes_no_codes">No fault codes</string>
+    <string name="fault_codes_engine_ok">Engine running normally</string>
+    <string name="fault_codes_clear_button">Clear fault codes</string>
+    <string name="fault_codes_status_confirmed">CONFIRMED</string>
+    <string name="fault_codes_status_pending">PENDING</string>
+    <string name="fault_codes_item_clicked">Selected %1$s</string>
+    <string name="fault_codes_info_title">About Fault Codes</string>
+    <string name="fault_codes_info_ack">Got it</string>
+    <string name="fault_codes_info_message">Diagnostic Trouble Codes (DTCs)\n\nCONFIRMED CODES (Red)\nActive faults detected by the vehicle. These codes indicate current issues that need attention.\n\nPENDING CODES (Blue)\nIntermittent issues detected but not yet confirmed. The ECU is monitoring these conditions.\n\nCODE PREFIXES:\nP - Powertrain (Engine, Transmission)\nC - Chassis (ABS, Suspension)\nB - Body (Airbags, Climate Control)\nU - Network or Communication\n\nHow It Works:\nThis page scans your vehicle using OBD-II Mode 03 (confirmed codes) and Mode 07 (pending codes). Tap any code to inspect details, clear the MIL, or research fixes.</string>
+    <plurals name="fault_codes_count">
+        <item quantity="one">%d fault code found</item>
+        <item quantity="other">%d fault codes found</item>
+    </plurals>
     <string name="obd_test_progress">OBD test control in progress.\n
         Please check vehicle reaction.</string>
     <string name="obd_test_confirm">OBD test control requested.\n\n

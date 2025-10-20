@@ -23,12 +23,29 @@
                 android:orientation="vertical"
                 android:padding="@dimen/spacing_large">
 
+                <!-- Scan button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/scan_button"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="@string/fault_codes_button_scan"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_primary_dark"
+                    app:backgroundTint="@color/fault_success"
+                    app:cornerRadius="@dimen/card_corner_radius"
+                    app:iconTint="@color/text_primary_dark"
+                    android:layout_marginBottom="@dimen/spacing_large"/>
+
                 <!-- MIL Status Card -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/mil_status_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="@dimen/spacing_large"
+                    android:visibility="gone"
                     app:cardCornerRadius="@dimen/card_corner_radius"
                     app:cardElevation="@dimen/elevation_hero_card"
                     app:cardBackgroundColor="@color/fault_success">
@@ -65,7 +82,7 @@
                                     android:id="@+id/mil_status_text"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="No Fault Codes"
+                                    android:text="@string/fault_codes_no_codes"
                                     android:textSize="@dimen/text_section_header"
                                     android:textColor="@color/text_primary_dark"
                                     android:textStyle="bold"/>
@@ -74,7 +91,7 @@
                                     android:id="@+id/mil_status_subtitle"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Engine running normally"
+                                    android:text="@string/fault_codes_engine_ok"
                                     android:textSize="@dimen/text_caption"
                                     android:textColor="@color/text_hint_dark"
                                     android:layout_marginTop="@dimen/spacing_xs"/>
@@ -115,7 +132,7 @@
                                 android:layout_weight="1"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="@dimen/card_padding_standard"
-                                android:text="Clear Fault Codes"
+                                android:text="@string/fault_codes_clear_button"
                                 android:textColor="@color/fault_error"
                                 android:textSize="@dimen/text_body"
                                 android:textStyle="bold"/>
@@ -152,17 +169,17 @@
             android:padding="@dimen/card_padding_standard"
             android:visibility="visible">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🔍"
-                android:textSize="64sp"
+            <ImageView
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:src="@drawable/ic_check_engine"
+                android:tint="@color/fault_success"
                 android:layout_marginBottom="@dimen/spacing_large" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ready to Scan"
+                android:text="@string/fault_codes_empty_title"
                 android:textSize="@dimen/text_section_header"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary_dark"
@@ -171,23 +188,12 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tap the scan button to check for fault codes"
+                android:text="@string/fault_codes_empty_message"
                 android:textSize="@dimen/text_caption"
                 android:textColor="@color/text_tertiary_dark"
                 android:textAlignment="center"
                 android:gravity="center"
                 android:layout_marginBottom="@dimen/spacing_xxl" />
-
-            <!-- Scan Button -->
-            <Button
-                android:id="@+id/scan_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Scan for Codes"
-                android:textSize="@dimen/text_caption"
-                android:textStyle="bold"
-                android:backgroundTint="@color/fault_success"
-                android:textColor="@color/text_primary_dark" />
         </LinearLayout>
 
         <!-- Progress Bar -->

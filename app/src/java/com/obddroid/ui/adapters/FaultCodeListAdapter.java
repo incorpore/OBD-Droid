@@ -1,5 +1,7 @@
 package com.obddroid.ui.adapters;
 
+import android.content.Context;
+import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,6 +10,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.core.widget.ImageViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.obddroid.R;
@@ -18,33 +23,26 @@ import java.util.List;
 
 /**
  * RecyclerView adapter for displaying fault codes in FaultCodesActivity.
- *
- * @author Wal33D <aquataze@yahoo.com>
  */
 public class FaultCodeListAdapter extends RecyclerView.Adapter<FaultCodeListAdapter.ViewHolder> {
 
     private List<FaultCodeService.FaultCodeInfo> faultCodes = new ArrayList<>();
     private OnCodeClickListener clickListener;
 
-    /**
-     * Interface for handling fault code clicks
-     */
     public interface OnCodeClickListener {
         void onCodeClick(FaultCodeService.FaultCodeInfo code);
     }
 
-    /**
-     * Set click listener
-     */
     public void setOnCodeClickListener(OnCodeClickListener listener) {
         this.clickListener = listener;
     }
 
-    /**
-     * Update the fault codes list
-     */
     public void setFaultCodes(List<FaultCodeService.FaultCodeInfo> codes) {
-        this.faultCodes = codes != null ? codes : new ArrayList<>();
+        if (codes == null) {
+            this.faultCodes = new ArrayList<>();
+        } else {
+            this.faultCodes = new ArrayList<>(codes);
+        }
         notifyDataSetChanged();
     }
 
@@ -52,7 +50,7 @@ public class FaultCodeListAdapter extends RecyclerView.Adapter<FaultCodeListAdap
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.fault_code_list_item, parent, false);
+            .inflate(R.layout.fault_code_list_item, parent, false);
         return new ViewHolder(view);
     }
 
@@ -67,9 +65,6 @@ public class FaultCodeListAdapter extends RecyclerView.Adapter<FaultCodeListAdap
         return faultCodes.size();
     }
 
-    /**
-     * ViewHolder for fault code items
-     */
     static class ViewHolder extends RecyclerView.ViewHolder {
         private final CardView cardView;
         private final ImageView statusIcon;
@@ -87,27 +82,29 @@ public class FaultCodeListAdapter extends RecyclerView.Adapter<FaultCodeListAdap
         }
 
         void bind(FaultCodeService.FaultCodeInfo code, OnCodeClickListener listener) {
-            // Set fault code and description
+            Context context = cardView.getContext();
+
             codeText.setText(code.code);
             descriptionText.setText(code.description);
 
-            // Set status badge
-            if (code.isPending) {
-                statusBadge.setText("PENDING");
-                statusBadge.setBackgroundColor(0xFF42A5F5);  // Blue for pending
-            } else {
-                statusBadge.setText("CONFIRMED");
-                statusBadge.setBackgroundColor(0xFFEF5350);  // Red for confirmed
-            }
+            int pendingColor = ContextCompat.getColor(context, R.color.fault_pending);
+            int confirmedColor = ContextCompat.getColor(context, R.color.fault_error);
+            int tintColor = code.isPending ? pendingColor : confirmedColor;
 
-            // Set icon color based on status
-            if (code.isPending) {
-                statusIcon.setColorFilter(0xFF42A5F5);  // Blue
-            } else {
-                statusIcon.setColorFilter(0xFFEF5350);  // Red
-            }
+            statusBadge.setText(code.isPending
+                ? R.string.fault_codes_status_pending
+                : R.string.fault_codes_status_confirmed);
 
-            // Set click listener
+            if (statusBadge.getBackground() != null) {
+                DrawableCompat.setTint(
+                    DrawableCompat.wrap(statusBadge.getBackground()).mutate(),
+                    tintColor
+                );
+            } else {
+                statusBadge.setBackgroundColor(tintColor);
+            }
+            ImageViewCompat.setImageTintList(statusIcon, ColorStateList.valueOf(tintColor));
+
             cardView.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onCodeClick(code);

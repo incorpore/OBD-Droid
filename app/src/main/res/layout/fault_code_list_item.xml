@@ -57,20 +57,20 @@
         </LinearLayout>
 
         <!-- Status Badge -->
-        <TextView
-            android:id="@+id/status_badge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="CONFIRMED"
-            android:textSize="@dimen/text_label"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary_dark"
-            android:paddingStart="@dimen/spacing_small"
-            android:paddingEnd="@dimen/spacing_small"
-            android:paddingTop="@dimen/spacing_xs"
-            android:paddingBottom="@dimen/spacing_xs"
-            android:background="@color/fault_error"
-            android:layout_marginStart="@dimen/spacing_small"/>
+            <TextView
+                android:id="@+id/status_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/fault_codes_status_confirmed"
+                android:textSize="@dimen/text_label"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary_dark"
+                android:paddingStart="@dimen/spacing_small"
+                android:paddingEnd="@dimen/spacing_small"
+                android:paddingTop="@dimen/spacing_xs"
+                android:paddingBottom="@dimen/spacing_xs"
+                android:background="@drawable/bg_fault_status_badge"
+                android:layout_marginStart="@dimen/spacing_small"/>
 
     </LinearLayout>
 

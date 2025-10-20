@@ -7,36 +7,40 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.obddroid.R;
 import com.obddroid.services.FaultCodeService;
 import com.obddroid.ui.adapters.FaultCodeListAdapter;
 import com.obddroid.ui.components.VehicleInfoFooter;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 
 /**
  * Activity for displaying fault codes (DTCs) from the vehicle.
  * Shows current and pending fault codes with ability to scan and clear codes.
- *
- * @author Wal33D <aquataze@yahoo.com>
  */
 public class FaultCodesActivity extends AppCompatActivity {
 
-    private static final Logger log = Logger.getLogger(FaultCodesActivity.class.getName());
+    private static final Logger log = Logger.getLogger(FaultCodesActivity.class.getSimpleName());
 
-    // UI Components
+    // UI components
     private CardView milStatusCard;
     private ImageView milStatusIcon;
     private TextView milStatusText;
@@ -44,50 +48,42 @@ public class FaultCodesActivity extends AppCompatActivity {
     private LinearLayout clearCodesButton;
     private RecyclerView faultCodesList;
     private ProgressBar progressBar;
-    private Button scanButton;
+    private MaterialButton scanButton;
     private LinearLayout emptyView;
     private VehicleInfoFooter vehicleInfoFooter;
 
-    // Service and Adapter
+    // Service and adapter
     private FaultCodeService faultCodeService;
     private FaultCodeListAdapter adapter;
 
     // State
-    private List<FaultCodeService.FaultCodeInfo> currentCodes;
-    private boolean isScanning = false;
+    private List<FaultCodeService.FaultCodeInfo> currentCodes = Collections.emptyList();
+    private boolean isScanning;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fault_codes);
 
-        // Set navigation bar color to match footer
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setNavigationBarColor(0xFF2C2C2C);  // Match footer
+            getWindow().setNavigationBarColor(ContextCompat.getColor(this, R.color.background_secondary));
         }
 
-        // Set up action bar with back button
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Fault Codes");
+            getSupportActionBar().setTitle(R.string.fault_codes_title);
         }
 
-        // Initialize views
-        initializeViews();
-
-        // Initialize service
         faultCodeService = new FaultCodeService();
 
-        // Set up click listeners
+        initializeViews();
         setupClickListeners();
 
-        // Initialize vehicle footer
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);
         if (vehicleInfoFooter != null) {
             vehicleInfoFooter.setOverlayView(findViewById(R.id.footer_overlay));
         }
 
-        // Show empty state initially
         showEmptyState();
     }
 
@@ -102,128 +98,112 @@ public class FaultCodesActivity extends AppCompatActivity {
         scanButton = findViewById(R.id.scan_button);
         emptyView = findViewById(R.id.empty_view);
 
-        // Setup RecyclerView with adapter
         faultCodesList.setLayoutManager(new LinearLayoutManager(this));
         faultCodesList.setNestedScrollingEnabled(false);
 
         adapter = new FaultCodeListAdapter();
         faultCodesList.setAdapter(adapter);
-
-        // Set click listener for fault code items
-        adapter.setOnCodeClickListener(code -> {
-            // TODO: Show fault code options dialog (freeze frame, search online, etc.)
-            Snackbar.make(
-                findViewById(android.R.id.content),
-                "Clicked: " + code.code,
-                Snackbar.LENGTH_SHORT
-            ).show();
-        });
+        adapter.setOnCodeClickListener(code -> Snackbar.make(
+            findViewById(android.R.id.content),
+            getString(R.string.fault_codes_item_clicked, code.code),
+            Snackbar.LENGTH_SHORT
+        ).show());
     }
 
     private void setupClickListeners() {
-        // Scan button click
-        if (scanButton != null) {
-            scanButton.setOnClickListener(v -> startScan());
-        }
-
-        // Clear codes button click
-        if (clearCodesButton != null) {
-            clearCodesButton.setOnClickListener(v -> clearCodes());
-        }
+        scanButton.setOnClickListener(v -> startScan());
+        clearCodesButton.setOnClickListener(v -> clearCodes());
     }
 
-    /**
-     * Start scanning for fault codes
-     */
     private void startScan() {
         if (isScanning) {
-            log.info("Scan already in progress");
+            log.fine("Scan request ignored – already scanning");
             return;
         }
 
-        log.info("Starting fault code scan");
         isScanning = true;
-
-        // Show progress, hide empty state
         showProgress();
 
-        // Start scan using FaultCodeService
-        faultCodeService.scanFaultCodes()
-            .thenAccept(codes -> {
-                runOnUiThread(() -> {
-                    handleScanComplete(codes);
-                });
-            })
+        faultCodeService.scanAllCodes()
+            .thenAccept(codes -> runOnUiThread(() -> handleScanComplete(codes)))
             .exceptionally(error -> {
-                runOnUiThread(() -> {
-                    handleScanError(error);
-                });
+                runOnUiThread(() -> handleScanError(error));
                 return null;
             });
     }
 
-    /**
-     * Handle successful scan completion
-     */
     private void handleScanComplete(List<FaultCodeService.FaultCodeInfo> codes) {
-        log.info("Scan complete - found " + codes.size() + " fault codes");
         isScanning = false;
-        currentCodes = codes;
+        currentCodes = codes != null ? new ArrayList<>(codes) : Collections.emptyList();
 
         hideProgress();
 
-        if (codes.isEmpty()) {
-            // No codes found - show success state
+        if (currentCodes.isEmpty()) {
             showNoCodesState();
         } else {
-            // Codes found - show them
-            showFaultCodes(codes);
+            showFaultCodes(currentCodes);
         }
     }
 
-    /**
-     * Handle scan error
-     */
     private void handleScanError(Throwable error) {
-        log.severe("Fault code scan failed: " + error.getMessage());
+        log.severe("Fault code scan failed: " + error);
         isScanning = false;
+        currentCodes = Collections.emptyList();
 
         hideProgress();
         showEmptyState();
 
+        String message = extractErrorMessage(error);
         Snackbar.make(
             findViewById(android.R.id.content),
-            "Scan failed: " + error.getMessage(),
+            getString(R.string.fault_codes_scan_failed, message),
             Snackbar.LENGTH_LONG
         ).show();
     }
 
-    /**
-     * Clear all fault codes
-     */
     private void clearCodes() {
-        log.info("Clearing fault codes");
+        if (isScanning) {
+            log.fine("Clear request ignored – operation already in progress");
+            return;
+        }
+
+        if (currentCodes.isEmpty()) {
+            log.fine("Clear request ignored – no codes to clear");
+            return;
+        }
+
+        isScanning = true;
+        showProgress();
 
         faultCodeService.clearFaultCodes()
-            .thenAccept(success -> {
-                runOnUiThread(() -> {
-                    if (success) {
-                        Snackbar.make(
-                            findViewById(android.R.id.content),
-                            "Fault codes cleared successfully",
-                            Snackbar.LENGTH_SHORT
-                        ).show();
-
-                        // Re-scan to confirm
-                        startScan();
-                    }
-                });
-            })
-            .exceptionally(error -> {
-                runOnUiThread(() -> {
+            .thenAccept(success -> runOnUiThread(() -> {
+                isScanning = false;
+                if (success) {
                     Snackbar.make(
                         findViewById(android.R.id.content),
-                        "Failed to clear codes: " + error.getMessage(),
+                        R.string.fault_codes_clear_success,
+                        Snackbar.LENGTH_SHORT
+                    ).show();
+                    startScan();
+                } else {
+                    hideProgress();
+                    setClearButtonEnabled(true);
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
+                        getString(R.string.fault_codes_clear_failed, getString(R.string.fault_codes_generic_error)),
+                        Snackbar.LENGTH_LONG
+                    ).show();
+                }
+            }))
+            .exceptionally(error -> {
+                runOnUiThread(() -> {
+                    isScanning = false;
+                    hideProgress();
+                    setClearButtonEnabled(!currentCodes.isEmpty());
+                    String message = extractErrorMessage(error);
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
+                        getString(R.string.fault_codes_clear_failed, message),
                         Snackbar.LENGTH_LONG
                     ).show();
                 });
@@ -231,134 +211,95 @@ public class FaultCodesActivity extends AppCompatActivity {
             });
     }
 
-    /**
-     * Show fault codes in list
-     */
     private void showFaultCodes(List<FaultCodeService.FaultCodeInfo> codes) {
-        // Hide empty state
-        if (emptyView != null) {
-            emptyView.setVisibility(View.GONE);
-        }
+        emptyView.setVisibility(View.GONE);
+        faultCodesList.setVisibility(View.VISIBLE);
+        milStatusCard.setVisibility(View.VISIBLE);
 
-        // Show MIL status card (red - codes present)
-        if (milStatusCard != null) {
-            milStatusCard.setVisibility(View.VISIBLE);
-            milStatusCard.setCardBackgroundColor(0xFFEF5350);  // Red for errors
-        }
+        int cardColor = ContextCompat.getColor(this, R.color.fault_error);
+        int iconColor = ContextCompat.getColor(this, R.color.text_primary_dark);
+        milStatusCard.setCardBackgroundColor(cardColor);
+        milStatusIcon.setColorFilter(iconColor);
 
-        if (milStatusIcon != null) {
-            milStatusIcon.setColorFilter(0xFFFFFFFF);  // White icon
-        }
+        int count = codes.size();
+        String header = getResources().getQuantityString(R.plurals.fault_codes_count, count, count);
+        milStatusText.setText(header);
 
-        if (milStatusText != null) {
-            milStatusText.setText(codes.size() + " Fault Code" + (codes.size() > 1 ? "s" : "") + " Found");
+        int pending = 0;
+        for (FaultCodeService.FaultCodeInfo code : codes) {
+            if (code.isPending) {
+                pending++;
+            }
         }
+        int confirmed = count - pending;
+        milStatusSubtitle.setText(getString(R.string.fault_codes_status_summary, confirmed, pending));
 
-        if (milStatusSubtitle != null) {
-            long pending = codes.stream().filter(c -> c.isPending).count();
-            long confirmed = codes.size() - pending;
-            milStatusSubtitle.setText(confirmed + " confirmed • " + pending + " pending");
-        }
-
-        // Show clear codes button
-        if (clearCodesButton != null) {
-            clearCodesButton.setVisibility(View.VISIBLE);
-        }
-
-        // Update RecyclerView with fault codes
-        if (faultCodesList != null && adapter != null) {
-            adapter.setFaultCodes(codes);
-            faultCodesList.setVisibility(View.VISIBLE);
-        }
+        clearCodesButton.setVisibility(View.VISIBLE);
+        adapter.setFaultCodes(codes);
+        setClearButtonEnabled(true);
+        scanButton.setText(R.string.fault_codes_button_rescan);
     }
 
-    /**
-     * Show "no codes found" success state
-     */
     private void showNoCodesState() {
-        // Hide empty state
-        if (emptyView != null) {
-            emptyView.setVisibility(View.GONE);
-        }
+        emptyView.setVisibility(View.GONE);
+        faultCodesList.setVisibility(View.GONE);
+        milStatusCard.setVisibility(View.VISIBLE);
 
-        // Show MIL status card (green - no codes)
-        if (milStatusCard != null) {
-            milStatusCard.setVisibility(View.VISIBLE);
-            milStatusCard.setCardBackgroundColor(0xFF4CAF50);  // Green
-        }
+        int cardColor = ContextCompat.getColor(this, R.color.fault_success);
+        int iconColor = ContextCompat.getColor(this, R.color.text_primary_dark);
+        milStatusCard.setCardBackgroundColor(cardColor);
+        milStatusIcon.setColorFilter(iconColor);
 
-        if (milStatusIcon != null) {
-            milStatusIcon.setColorFilter(0xFFFFFFFF);  // White icon
-        }
+        milStatusText.setText(R.string.fault_codes_no_codes);
+        milStatusSubtitle.setText(R.string.fault_codes_engine_ok);
 
-        if (milStatusText != null) {
-            milStatusText.setText("No Fault Codes");
-        }
-
-        if (milStatusSubtitle != null) {
-            milStatusSubtitle.setText("Engine running normally");
-        }
-
-        // Hide clear codes button
-        if (clearCodesButton != null) {
-            clearCodesButton.setVisibility(View.GONE);
-        }
-
-        // Hide fault codes list
-        if (faultCodesList != null) {
-            faultCodesList.setVisibility(View.GONE);
-        }
+        clearCodesButton.setVisibility(View.GONE);
+        adapter.setFaultCodes(Collections.emptyList());
+        setClearButtonEnabled(false);
+        scanButton.setText(R.string.fault_codes_button_rescan);
     }
 
-    /**
-     * Show empty state (before scan)
-     */
     private void showEmptyState() {
-        if (emptyView != null) {
-            emptyView.setVisibility(View.VISIBLE);
-        }
+        emptyView.setVisibility(View.VISIBLE);
+        faultCodesList.setVisibility(View.GONE);
+        milStatusCard.setVisibility(View.GONE);
+        clearCodesButton.setVisibility(View.GONE);
 
-        if (milStatusCard != null) {
-            milStatusCard.setVisibility(View.GONE);
-        }
-
-        if (faultCodesList != null) {
-            faultCodesList.setVisibility(View.GONE);
-        }
-
-        if (clearCodesButton != null) {
-            clearCodesButton.setVisibility(View.GONE);
-        }
+        adapter.setFaultCodes(Collections.emptyList());
+        setClearButtonEnabled(false);
+        scanButton.setText(R.string.fault_codes_button_scan);
     }
 
-    /**
-     * Show progress indicator
-     */
     private void showProgress() {
-        if (progressBar != null) {
-            progressBar.setVisibility(View.VISIBLE);
-        }
-
-        if (emptyView != null) {
-            emptyView.setVisibility(View.GONE);
-        }
-
-        if (scanButton != null) {
-            scanButton.setEnabled(false);
-        }
+        progressBar.setVisibility(View.VISIBLE);
+        emptyView.setVisibility(View.GONE);
+        scanButton.setEnabled(false);
+        setClearButtonEnabled(false);
     }
 
-    /**
-     * Hide progress indicator
-     */
     private void hideProgress() {
-        if (progressBar != null) {
-            progressBar.setVisibility(View.GONE);
-        }
+        progressBar.setVisibility(View.GONE);
+        scanButton.setEnabled(true);
+        setClearButtonEnabled(!currentCodes.isEmpty());
+    }
 
-        if (scanButton != null) {
-            scanButton.setEnabled(true);
+    private void setClearButtonEnabled(boolean enabled) {
+        clearCodesButton.setEnabled(enabled);
+        clearCodesButton.setClickable(enabled);
+        clearCodesButton.setAlpha(enabled ? 1f : 0.5f);
+    }
+
+    private String extractErrorMessage(Throwable throwable) {
+        if (throwable instanceof CompletionException || throwable instanceof ExecutionException) {
+            Throwable cause = throwable.getCause();
+            if (cause != null) {
+                return extractErrorMessage(cause);
+            }
         }
+        if (throwable == null || throwable.getMessage() == null || throwable.getMessage().trim().isEmpty()) {
+            return getString(R.string.fault_codes_generic_error);
+        }
+        return throwable.getMessage();
     }
 
     @Override
@@ -370,7 +311,6 @@ public class FaultCodesActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-
         if (id == android.R.id.home) {
             finish();
             return true;
@@ -381,39 +321,15 @@ public class FaultCodesActivity extends AppCompatActivity {
             showInfoDialog();
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * Show info dialog explaining fault codes
-     */
     private void showInfoDialog() {
-        String message = "Diagnostic Trouble Codes (DTCs)\n\n" +
-                "• CONFIRMED CODES (Red)\n" +
-                "  Active faults detected by the vehicle. These codes indicate current issues that need attention.\n\n" +
-                "• PENDING CODES (Blue)\n" +
-                "  Intermittent issues detected but not yet confirmed. The ECU is monitoring these conditions.\n\n" +
-                "CODE PREFIXES:\n" +
-                "• P - Powertrain (Engine, Transmission)\n" +
-                "• C - Chassis (ABS, Suspension)\n" +
-                "• B - Body (Airbags, Climate Control)\n" +
-                "• U - Network/Communication\n\n" +
-                "How It Works:\n" +
-                "This page scans your vehicle's computer using OBD-II Mode 03 (confirmed codes) and Mode 07 (pending codes). " +
-                "Tap any code to view freeze frame data, search online for solutions, or get AI-powered analysis.";
-
         new AlertDialog.Builder(this)
-                .setTitle("About Fault Codes")
-                .setMessage(message)
-                .setPositiveButton("Got it", null)
-                .setIcon(android.R.drawable.ic_menu_info_details)
-                .show();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        // Cleanup if needed
+            .setTitle(R.string.fault_codes_info_title)
+            .setMessage(R.string.fault_codes_info_message)
+            .setPositiveButton(R.string.fault_codes_info_ack, null)
+            .setIcon(android.R.drawable.ic_menu_info_details)
+            .show();
     }
 }
