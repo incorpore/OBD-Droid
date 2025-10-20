@@ -1,11 +1,6 @@
 package com.obddroid.ui.activities;
 
 import android.app.AlertDialog;
-import android.app.SearchManager;
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
-import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
@@ -105,7 +100,7 @@ public class FaultCodesActivity extends AppCompatActivity {
 
         adapter = new FaultCodeListAdapter();
         faultCodesList.setAdapter(adapter);
-        adapter.setOnCodeClickListener(code -> showFaultCodeOptionsDialog(code));
+        adapter.setOnCodeClickListener(code -> FaultCodeUiHelper.showFaultCodeOptionsModal(this, code));
     }
 
     private void setupClickListeners() {
@@ -315,43 +310,5 @@ public class FaultCodesActivity extends AppCompatActivity {
             .setPositiveButton(R.string.fault_codes_info_ack, null)
             .setIcon(android.R.drawable.ic_menu_info_details)
             .show();
-    }
-
-    private void showFaultCodeOptionsDialog(FaultCodeService.FaultCodeInfo code) {
-        String title = code.code + (code.isPending ? " (Pending)" : " (Confirmed)");
-        String message = code.description;
-
-        new AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton("Search Web", (dialog, which) -> searchFaultCodeOnWeb(code.code))
-            .setNeutralButton("Copy Code", (dialog, which) -> copyFaultCodeToClipboard(code.code, code.description))
-            .setNegativeButton("Close", null)
-            .setIcon(android.R.drawable.ic_dialog_info)
-            .show();
-    }
-
-    private void searchFaultCodeOnWeb(String code) {
-        try {
-            Intent intent = new Intent(Intent.ACTION_WEB_SEARCH);
-            intent.putExtra(SearchManager.QUERY, "OBD " + code);
-            startActivity(intent);
-        } catch (Exception e) {
-            Snackbar.make(findViewById(android.R.id.content),
-                "Unable to search: " + e.getMessage(),
-                Snackbar.LENGTH_SHORT).show();
-        }
-    }
-
-    private void copyFaultCodeToClipboard(String code, String description) {
-        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        if (clipboard != null) {
-            String text = code + " - " + description;
-            ClipData clip = ClipData.newPlainText("OBD Fault Code", text);
-            clipboard.setPrimaryClip(clip);
-            Snackbar.make(findViewById(android.R.id.content),
-                "Copied: " + code,
-                Snackbar.LENGTH_SHORT).show();
-        }
     }
 }

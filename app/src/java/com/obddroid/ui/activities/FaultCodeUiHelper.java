@@ -15,6 +15,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.obddroid.R;
 import com.obddroid.core.ecu.EcuCodeItem;
 import com.obddroid.core.ecu.EcuDataPv;
@@ -23,6 +25,7 @@ import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.core.pvs.ProcessVariables.PvList;
 import com.obddroid.services.CommService;
+import com.obddroid.services.FaultCodeService;
 import com.obddroid.ui.adapters.ObdItemAdapter;
 import com.obddroid.utils.OpenAiService;
 import com.obddroid.utils.SnackbarHelper;
@@ -50,6 +53,145 @@ final class FaultCodeUiHelper
         // Utility class
     }
 
+    /**
+     * Show fault code options modal for FaultCodesActivity.
+     * This is the new standalone Fault Codes page.
+     */
+    static void showFaultCodeOptionsModal(FaultCodesActivity activity,
+                                          FaultCodeService.FaultCodeInfo faultCode)
+    {
+        // Check connection state
+        boolean isConnected = CommService.elm != null &&
+                (CommService.elm.getStatus() == ElmProt.STAT.CONNECTED ||
+                 CommService.elm.getStatus() == ElmProt.STAT.ECU_DETECTED);
+
+        LayoutInflater inflater = activity.getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_fault_code_options, null);
+
+        TextView codeNumber = dialogView.findViewById(R.id.fault_code_number);
+        TextView codeDesc = dialogView.findViewById(R.id.fault_code_description);
+        TextView codeType = dialogView.findViewById(R.id.fault_code_type);
+        ImageView statusIcon = dialogView.findViewById(R.id.fault_code_status_icon);
+
+        codeNumber.setText(faultCode.code);
+        codeDesc.setText(faultCode.description);
+
+        // Set code type and icon based on pending status
+        if (faultCode.isPending)
+        {
+            codeType.setText("Pending Code");
+            statusIcon.setImageResource(android.R.drawable.ic_menu_recent_history);
+            statusIcon.setColorFilter(Color.parseColor("#FF9800"));
+        }
+        else
+        {
+            codeType.setText("Confirmed Code");
+            statusIcon.setImageResource(android.R.drawable.ic_menu_myplaces);
+            statusIcon.setColorFilter(Color.parseColor("#F57C00"));
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(activity)
+                .setView(dialogView)
+                .create();
+
+        View freezeFrameOption = dialogView.findViewById(R.id.option_freeze_frame);
+        View searchOption = dialogView.findViewById(R.id.option_search_web);
+        View nondaOption = dialogView.findViewById(R.id.option_watch_nonda);
+        View askAiOption = dialogView.findViewById(R.id.option_ask_ai);
+        View copyOption = dialogView.findViewById(R.id.option_copy_code);
+        Button closeButton = dialogView.findViewById(R.id.btn_close);
+
+        TextView freezeStatus = dialogView.findViewById(R.id.freeze_frame_status);
+        if (!isConnected || !faultCode.hasFreeze)
+        {
+            if (freezeStatus != null)
+            {
+                freezeStatus.setText(!isConnected ? "Connect to vehicle first" : "No freeze frame available");
+            }
+            freezeFrameOption.setAlpha(0.5f);
+            freezeFrameOption.setEnabled(false);
+        }
+        else
+        {
+            freezeFrameOption.setOnClickListener(v ->
+            {
+                dialog.dismiss();
+                showFreezeFrameDialogForCode(activity, faultCode);
+            });
+        }
+
+        searchOption.setOnClickListener(v ->
+        {
+            dialog.dismiss();
+            searchFaultCodeOnWeb(activity, faultCode.code);
+        });
+
+        if (nondaOption != null)
+        {
+            TextView nondaStatus = dialogView.findViewById(R.id.nonda_video_status);
+            boolean hasDirectVideo = hasDirectNondaVideo(faultCode.code);
+            if (nondaStatus != null)
+            {
+                nondaStatus.setText(hasDirectVideo
+                        ? "Watch nonda's step-by-step guide"
+                        : "Search nonda's channel for this code");
+            }
+
+            nondaOption.setOnClickListener(v ->
+            {
+                dialog.dismiss();
+                String videoUrl = getNondaVideoUrl(faultCode.code);
+                if (videoUrl == null)
+                {
+                    SnackbarHelper.showWarning(activity, "Could not open YouTube for this code");
+                    return;
+                }
+                if (!hasDirectVideo)
+                {
+                    SnackbarHelper.showInfo(activity, "Opening nonda search results for " + faultCode.code);
+                }
+                launchNondaVideo(activity, videoUrl);
+            });
+        }
+
+        if (askAiOption != null)
+        {
+            OpenAiService aiService = new OpenAiService(activity);
+            TextView askAiStatus = dialogView.findViewById(R.id.ask_ai_status);
+
+            if (!aiService.isApiKeyConfigured())
+            {
+                if (askAiStatus != null)
+                {
+                    askAiStatus.setText("Configure API key in settings first");
+                }
+                askAiOption.setAlpha(0.5f);
+                askAiOption.setEnabled(false);
+            }
+            else
+            {
+                askAiOption.setOnClickListener(v ->
+                {
+                    dialog.dismiss();
+                    showAiAnalysisDialog(activity, faultCode.code, faultCode.description);
+                });
+            }
+        }
+
+        copyOption.setOnClickListener(v ->
+        {
+            copyFaultCodeToClipboard(activity, faultCode.code, faultCode.description);
+            dialog.dismiss();
+        });
+
+        closeButton.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    /**
+     * Show fault code options modal for MainActivity.
+     * This is the legacy implementation.
+     */
     static void showFaultCodeOptionsModal(MainActivity activity,
                                           ObdItemAdapter adapter,
                                           int position,
@@ -434,13 +576,12 @@ final class FaultCodeUiHelper
         }
     }
 
-    private static void searchFaultCodeOnWeb(Context context, EcuCodeItem dfc)
+    private static void searchFaultCodeOnWeb(Context context, String code)
     {
         try
         {
             Intent intent = new Intent(Intent.ACTION_WEB_SEARCH);
-            intent.putExtra(SearchManager.QUERY,
-                    "OBD " + String.valueOf(dfc.get(EcuCodeItem.FID_CODE)));
+            intent.putExtra(SearchManager.QUERY, "OBD " + code);
             context.startActivity(intent);
         }
         catch (Exception e)
@@ -448,6 +589,11 @@ final class FaultCodeUiHelper
             log.log(Level.SEVERE, "WebSearch DFC", e);
             SnackbarHelper.showError(context, e.getMessage());
         }
+    }
+
+    private static void searchFaultCodeOnWeb(Context context, EcuCodeItem dfc)
+    {
+        searchFaultCodeOnWeb(context, String.valueOf(dfc.get(EcuCodeItem.FID_CODE)));
     }
 
     private static void copyFaultCodeToClipboard(Context context, String code, String description)
@@ -489,17 +635,17 @@ final class FaultCodeUiHelper
         return "https://www.youtube.com/results?search_query=" + encodedQuery;
     }
 
-    private static void launchNondaVideo(MainActivity activity, String url)
+    private static void launchNondaVideo(Context context, String url)
     {
         try
         {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-            activity.startActivity(intent);
+            context.startActivity(intent);
         }
         catch (Exception ex)
         {
             log.log(Level.WARNING, "Failed to open nonda video link: " + url, ex);
-            SnackbarHelper.showError(activity, "Unable to open YouTube. Please try again later.");
+            SnackbarHelper.showError(context, "Unable to open YouTube. Please try again later.");
         }
     }
 
@@ -575,7 +721,159 @@ final class FaultCodeUiHelper
         map.put(code.toUpperCase(Locale.US), url);
     }
 
-    private static void showAiAnalysisDialog(MainActivity activity, String code, String description)
+    private static void showFreezeFrameDialogForCode(AppCompatActivity activity,
+                                                      FaultCodeService.FaultCodeInfo faultCode)
+    {
+        // Find the DTC index from the fault code
+        // For now, we'll use 0 as the index since we don't have the exact position
+        // This can be improved later if needed
+        int dtcIndex = 0;
+
+        try
+        {
+            LayoutInflater inflater = activity.getLayoutInflater();
+            View dialogView = inflater.inflate(R.layout.dialog_freeze_frame_data, null);
+
+            TextView codeText = dialogView.findViewById(R.id.freeze_frame_code);
+            String codeInfo = faultCode.code + " - " + faultCode.description;
+            codeText.setText(codeInfo);
+
+            View loadingContainer = dialogView.findViewById(R.id.loading_container);
+            View dataContainer = dialogView.findViewById(R.id.data_container);
+            View noDataContainer = dialogView.findViewById(R.id.no_data_container);
+            LinearLayout dataList = dialogView.findViewById(R.id.freeze_frame_data_list);
+            Button closeButton = dialogView.findViewById(R.id.btn_close);
+            Button refreshButton = dialogView.findViewById(R.id.btn_refresh);
+
+            AlertDialog freezeDialog = new AlertDialog.Builder(activity)
+                    .setView(dialogView)
+                    .create();
+
+            closeButton.setOnClickListener(v -> freezeDialog.dismiss());
+
+            Consumer<Boolean> loadFreezeFrameData = forceRefreshObj ->
+            {
+                boolean forceRefresh = Boolean.TRUE.equals(forceRefreshObj);
+                int frameIndex = Math.max(dtcIndex, 0);
+
+                activity.runOnUiThread(() ->
+                {
+                    loadingContainer.setVisibility(View.VISIBLE);
+                    dataContainer.setVisibility(View.GONE);
+                    noDataContainer.setVisibility(View.GONE);
+                    dataList.removeAllViews();
+                    refreshButton.setVisibility(View.GONE);
+                });
+
+                try
+                {
+                    if (!forceRefresh)
+                    {
+                        PvList cachedFrame = CommService.elm.getCachedFreezeFrame(frameIndex);
+                        if (cachedFrame == null || cachedFrame.isEmpty())
+                        {
+                            FreezeFrameManager manager = CommService.elm.getFreezeFrameManager();
+                            if (manager != null)
+                            {
+                                FreezeFrameManager.FreezeFrameData cachedData =
+                                    manager.getFreezeFrame(frameIndex);
+                                if (cachedData != null && cachedData.data != null && !cachedData.data.isEmpty())
+                                {
+                                    cachedFrame = cachedData.data;
+                                }
+                            }
+                        }
+
+                        if (cachedFrame != null && !cachedFrame.isEmpty())
+                        {
+                            final PvList displayData = cachedFrame;
+                            activity.runOnUiThread(() ->
+                            {
+                                populateFreezeFrameList(activity, dataList, displayData);
+                                loadingContainer.setVisibility(View.GONE);
+                                dataContainer.setVisibility(View.VISIBLE);
+                                noDataContainer.setVisibility(View.GONE);
+                                refreshButton.setVisibility(View.VISIBLE);
+                            });
+                            return;
+                        }
+                    }
+
+                    CommService.elm.requestFreezeFrameSnapshot(frameIndex);
+
+                    PvList freezeFrameData = null;
+                    long start = System.currentTimeMillis();
+                    while (System.currentTimeMillis() - start < 3000)
+                    {
+                        freezeFrameData = CommService.elm.getCachedFreezeFrame(frameIndex);
+                        if (freezeFrameData != null && !freezeFrameData.isEmpty())
+                        {
+                            break;
+                        }
+                        try
+                        {
+                            Thread.sleep(200);
+                        }
+                        catch (InterruptedException ie)
+                        {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
+
+                    if (freezeFrameData == null || freezeFrameData.isEmpty())
+                    {
+                        freezeFrameData = ObdProt.getDataService().getFreezeFrameData(frameIndex);
+                    }
+
+                    final PvList displayData = freezeFrameData;
+                    activity.runOnUiThread(() ->
+                    {
+                        if (displayData != null && !displayData.isEmpty())
+                        {
+                            populateFreezeFrameList(activity, dataList, displayData);
+                            loadingContainer.setVisibility(View.GONE);
+                            dataContainer.setVisibility(View.VISIBLE);
+                            noDataContainer.setVisibility(View.GONE);
+                            refreshButton.setVisibility(View.VISIBLE);
+                        }
+                        else
+                        {
+                            log.warning("Freeze Frame: No data available after request");
+                            loadingContainer.setVisibility(View.GONE);
+                            noDataContainer.setVisibility(View.VISIBLE);
+                            refreshButton.setVisibility(View.VISIBLE);
+                        }
+                    });
+                }
+                catch (Exception e)
+                {
+                    log.log(Level.SEVERE, "Show freeze frame modal", e);
+                    activity.runOnUiThread(() ->
+                            SnackbarHelper.showError(activity,
+                                    "Error showing freeze frame data: " + e.getMessage()));
+                }
+            };
+
+            refreshButton.setOnClickListener(v -> new Thread(() -> loadFreezeFrameData.accept(Boolean.TRUE)).start());
+            new Thread(() -> loadFreezeFrameData.accept(Boolean.FALSE)).start();
+
+            freezeDialog.show();
+            if (freezeDialog.getWindow() != null)
+            {
+                freezeDialog.getWindow().setLayout(
+                        (int) (activity.getResources().getDisplayMetrics().widthPixels * 0.9),
+                        (int) (activity.getResources().getDisplayMetrics().heightPixels * 0.7));
+            }
+        }
+        catch (Exception e)
+        {
+            log.log(Level.SEVERE, "Show freeze frame modal", e);
+            SnackbarHelper.showError(activity, "Error showing freeze frame data: " + e.getMessage());
+        }
+    }
+
+    private static void showAiAnalysisDialog(AppCompatActivity activity, String code, String description)
     {
         try
         {
