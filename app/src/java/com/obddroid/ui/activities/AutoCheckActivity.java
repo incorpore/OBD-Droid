@@ -56,7 +56,6 @@ public class AutoCheckActivity extends AppCompatActivity {
 
     private static final String PREFS_NAME = "AutoCheckCache";
     private static final String PREFS_KEY_PREFIX = "report_";
-    private static final int REQUEST_CODE_IMPORT_FILE = 1001;
 
     // Input views
     private CardView emptyStateCard;
@@ -178,10 +177,7 @@ public class AutoCheckActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_import_report) {
-            openFilePicker();
-            return true;
-        } else if (item.getItemId() == R.id.action_save_report) {
+        if (item.getItemId() == R.id.action_save_report) {
             showSaveReportDialog();
             return true;
         } else if (item.getItemId() == android.R.id.home) {
@@ -909,6 +905,9 @@ public class AutoCheckActivity extends AppCompatActivity {
             return;
         }
 
+        Uri savedUri = null;
+        File destPdf = null;
+
         try {
             File sourcePdf = new File(currentPdfFilePath);
             if (!sourcePdf.exists()) {
@@ -918,8 +917,6 @@ public class AutoCheckActivity extends AppCompatActivity {
 
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
             String fileName = "vehicle_history_" + currentReport.getVin() + "_" + timestamp + ".pdf";
-            Uri destUri = null;
-            File destPdf = null;
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 ContentValues values = new ContentValues();
@@ -927,12 +924,12 @@ public class AutoCheckActivity extends AppCompatActivity {
                 values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
                 values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
 
-                destUri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
-                if (destUri == null) {
+                savedUri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
+                if (savedUri == null) {
                     throw new IOException("Failed to create MediaStore entry");
                 }
 
-                OutputStream outputStream = getContentResolver().openOutputStream(destUri);
+                OutputStream outputStream = getContentResolver().openOutputStream(savedUri);
                 if (outputStream == null) {
                     throw new IOException("Failed to open output stream");
                 }
@@ -965,8 +962,8 @@ public class AutoCheckActivity extends AppCompatActivity {
             Toast.makeText(this, "PDF saved: " + fileName, Toast.LENGTH_SHORT).show();
 
             // Open the saved PDF
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && destUri != null) {
-                openFile(destUri, "application/pdf", fileName);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && savedUri != null) {
+                openFile(savedUri, "application/pdf", fileName);
             } else if (destPdf != null) {
                 Uri fileUri = FileProvider.getUriForFile(this, getPackageName() + ".provider", destPdf);
                 openFile(fileUri, "application/pdf", fileName);
@@ -1239,267 +1236,6 @@ public class AutoCheckActivity extends AppCompatActivity {
             }
         } catch (Exception e) {
             Toast.makeText(this, "Saved to Documents/OBDroid", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    /**
-     * Open file picker to import a report (CSV or JSON)
-     */
-    private void openFilePicker() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("*/*");
-        String[] mimeTypes = {"text/csv", "text/comma-separated-values", "application/json", "text/json"};
-        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
-
-        try {
-            startActivityForResult(intent, REQUEST_CODE_IMPORT_FILE);
-        } catch (android.content.ActivityNotFoundException e) {
-            Toast.makeText(this, "No file manager found", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == REQUEST_CODE_IMPORT_FILE && resultCode == RESULT_OK) {
-            if (data != null && data.getData() != null) {
-                Uri fileUri = data.getData();
-                importReportFromUri(fileUri);
-            }
-        }
-    }
-
-    /**
-     * Import report from selected file URI
-     */
-    private void importReportFromUri(Uri fileUri) {
-        try {
-            String fileName = getFileNameFromUri(fileUri);
-            if (fileName == null) {
-                Toast.makeText(this, "Unable to read file", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // Read file content
-            java.io.InputStream inputStream = getContentResolver().openInputStream(fileUri);
-            if (inputStream == null) {
-                Toast.makeText(this, "Unable to open file", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(inputStream));
-            StringBuilder content = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                content.append(line).append("\n");
-            }
-            reader.close();
-
-            // Determine file type and parse
-            if (fileName.toLowerCase().endsWith(".json")) {
-                importFromJSON(content.toString());
-            } else if (fileName.toLowerCase().endsWith(".csv")) {
-                importFromCSV(content.toString());
-            } else {
-                Toast.makeText(this, "Unsupported file type. Please select a CSV or JSON file.", Toast.LENGTH_SHORT).show();
-            }
-
-        } catch (Exception e) {
-            Toast.makeText(this, "Failed to import: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    /**
-     * Get filename from URI
-     */
-    private String getFileNameFromUri(Uri uri) {
-        String fileName = null;
-        try {
-            android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-            if (cursor != null && cursor.moveToFirst()) {
-                int nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
-                if (nameIndex >= 0) {
-                    fileName = cursor.getString(nameIndex);
-                }
-                cursor.close();
-            }
-        } catch (Exception e) {
-            // Fallback: get from path
-            fileName = uri.getLastPathSegment();
-        }
-        return fileName;
-    }
-
-    /**
-     * Import report from JSON string
-     */
-    private void importFromJSON(String jsonContent) {
-        try {
-            JSONObject root = new JSONObject(jsonContent);
-
-            // Extract vehicle info
-            JSONObject vehicle = root.optJSONObject("vehicle");
-            if (vehicle == null) {
-                Toast.makeText(this, "Invalid JSON format", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            String vin = vehicle.optString("vin");
-            if (vin == null || vin.isEmpty()) {
-                Toast.makeText(this, "VIN not found in file", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            AutoCheckReport report = new AutoCheckReport(vin);
-
-            // Vehicle details
-            if (vehicle.has("year")) report.setYear(vehicle.optString("year"));
-            if (vehicle.has("make")) report.setMake(vehicle.optString("make"));
-            if (vehicle.has("model")) report.setModel(vehicle.optString("model"));
-            if (vehicle.has("style")) report.setStyle(vehicle.optString("style"));
-            if (vehicle.has("engine")) report.setEngine(vehicle.optString("engine"));
-
-            // Score
-            JSONObject score = root.optJSONObject("autocheck_score");
-            if (score != null) {
-                if (score.has("value")) report.setScore(score.optInt("value"));
-                if (score.has("range_low") && score.has("range_high")) {
-                    report.setScoreRange(new AutoCheckReport.ScoreRange(
-                        score.optInt("range_low"),
-                        score.optInt("range_high")
-                    ));
-                }
-            }
-
-            // Stats
-            JSONObject stats = root.optJSONObject("stats");
-            if (stats != null) {
-                if (stats.has("owners")) report.setOwners(stats.optInt("owners"));
-                if (stats.has("last_odometer")) report.setLastOdometer(stats.optInt("last_odometer"));
-                if (stats.has("service_records")) report.setServiceRecords(stats.optInt("service_records"));
-                if (stats.has("vehicle_age")) report.setVehicleAge(stats.optInt("vehicle_age"));
-            }
-
-            // Safety
-            JSONObject safety = root.optJSONObject("safety");
-            if (safety != null) {
-                if (safety.has("title_brand")) report.setTitleBrand(safety.optString("title_brand"));
-                if (safety.has("accident_damage")) report.setAccidentDamage(safety.optString("accident_damage"));
-                if (safety.has("total_loss")) report.setTotalLoss(safety.optBoolean("total_loss"));
-                if (safety.has("structural_damage")) report.setStructuralDamage(safety.optBoolean("structural_damage"));
-                if (safety.has("airbag_deployed")) report.setAirbagDeployed(safety.optBoolean("airbag_deployed"));
-                if (safety.has("odometer_rollback")) report.setOdometerRollback(safety.optBoolean("odometer_rollback"));
-            }
-
-            // History events
-            JSONArray events = root.optJSONArray("history_events");
-            if (events != null) {
-                for (int i = 0; i < events.length(); i++) {
-                    JSONObject eventObj = events.getJSONObject(i);
-                    AutoCheckReport.HistoryEvent event = new AutoCheckReport.HistoryEvent(
-                        eventObj.optString("date"),
-                        eventObj.optString("details")
-                    );
-                    if (eventObj.has("location")) event.location = eventObj.optString("location");
-                    if (eventObj.has("odometer")) event.odometer = eventObj.optString("odometer");
-                    if (eventObj.has("source")) event.source = eventObj.optString("source");
-                    report.addHistoryEvent(event);
-                }
-            }
-
-            // Display the imported report
-            displayReport(report);
-            Toast.makeText(this, "Report imported successfully", Toast.LENGTH_SHORT).show();
-
-        } catch (Exception e) {
-            Toast.makeText(this, "Failed to parse JSON: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    /**
-     * Import report from CSV string
-     */
-    private void importFromCSV(String csvContent) {
-        try {
-            String[] lines = csvContent.split("\n");
-            if (lines.length < 5) {
-                Toast.makeText(this, "Invalid CSV format", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            AutoCheckReport report = null;
-            String section = "";
-
-            for (String line : lines) {
-                line = line.trim();
-                if (line.isEmpty()) continue;
-
-                // Detect sections
-                if (line.equals("Vehicle Information")) {
-                    section = "vehicle";
-                    continue;
-                } else if (line.equals("AutoCheck Score")) {
-                    section = "score";
-                    continue;
-                } else if (line.equals("Safety Information") || line.equals("Category,Value")) {
-                    section = "safety";
-                    continue;
-                } else if (line.equals("History Events") || line.equals("Date,Location,Odometer,Source,Details")) {
-                    section = "events";
-                    continue;
-                }
-
-                // Parse data based on section
-                String[] parts = line.split(",", 2);
-                if (parts.length < 2) continue;
-
-                String key = parts[0].trim();
-                String value = parts[1].trim().replace("\"", "");
-
-                if (section.equals("vehicle")) {
-                    if (key.equals("VIN")) {
-                        report = new AutoCheckReport(value);
-                    } else if (report != null) {
-                        if (key.equals("Year")) report.setYear(value);
-                        else if (key.equals("Make")) report.setMake(value);
-                        else if (key.equals("Model")) report.setModel(value);
-                        else if (key.equals("Style")) report.setStyle(value);
-                    }
-                } else if (section.equals("score") && report != null) {
-                    if (key.equals("Score")) {
-                        report.setScore(Integer.parseInt(value));
-                    } else if (key.equals("Range")) {
-                        String[] range = value.split("-");
-                        if (range.length == 2) {
-                            report.setScoreRange(new AutoCheckReport.ScoreRange(
-                                Integer.parseInt(range[0].trim()),
-                                Integer.parseInt(range[1].trim())
-                            ));
-                        }
-                    }
-                } else if (section.equals("safety") && report != null) {
-                    if (key.equals("Title Brand")) report.setTitleBrand(value);
-                    else if (key.equals("Accident Damage")) report.setAccidentDamage(value);
-                    else if (key.equals("Total Loss")) report.setTotalLoss(value.equalsIgnoreCase("Yes"));
-                    else if (key.equals("Structural Damage")) report.setStructuralDamage(value.equalsIgnoreCase("Yes"));
-                    else if (key.equals("Airbag Deployed")) report.setAirbagDeployed(value.equalsIgnoreCase("Yes"));
-                    else if (key.equals("Odometer Rollback")) report.setOdometerRollback(value.equalsIgnoreCase("Yes"));
-                }
-            }
-
-            if (report == null) {
-                Toast.makeText(this, "VIN not found in CSV", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // Display the imported report
-            displayReport(report);
-            Toast.makeText(this, "Report imported successfully", Toast.LENGTH_SHORT).show();
-
-        } catch (Exception e) {
-            Toast.makeText(this, "Failed to parse CSV: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 

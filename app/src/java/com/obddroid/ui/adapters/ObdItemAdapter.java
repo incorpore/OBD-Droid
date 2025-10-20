@@ -122,11 +122,9 @@ public class ObdItemAdapter extends ArrayAdapter<Object>
                 }
                 pidsToShow = allKeys;
             } else {
-                Set<String> allKeys = new HashSet<>();
-                for (Object key : pvs.keySet()) {
-                    allKeys.add(String.valueOf(key));
-                }
-                pidsToShow = allKeys;
+                @SuppressWarnings("unchecked")
+                Set<String> rawKeys = (Set<String>) pvs.keySet();
+                pidsToShow = rawKeys;
             }
         }
 

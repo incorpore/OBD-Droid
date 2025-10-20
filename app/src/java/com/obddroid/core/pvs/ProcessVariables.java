@@ -1,11 +1,9 @@
 package com.obddroid.core.pvs;
 
 import java.io.Serializable;
-import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.EventListener;
 import java.util.EventObject;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -62,61 +60,22 @@ public final class ProcessVariables {
     public static class PvChangeEvent extends EventObject {
 
         private static final long serialVersionUID = 4378855847270229897L;
-
-        /**
-         * High-level change semantics for a PV mutation. These augment the legacy bitmask to
-         * provide a richer API to callers.
-         */
-        public enum ChangeKind {
-            ADDED(PV_ADDED),
-            DELETED(PV_DELETED),
-            MODIFIED(PV_MODIFIED),
-            CONFIRMED(PV_CONFIRMED),
-            MANUAL_MODIFIED(PV_MANUAL_MOD),
-            CLEARED(PV_CLEARED),
-            ERROR(PV_ERROR),
-            ELIMINATED(PV_ELIMINATED),
-            CHILD_CHANGED(PV_CHILDCHANGE);
-
-            private final int bitmask;
-
-            ChangeKind(int bitmask) {
-                this.bitmask = bitmask;
-            }
-
-            int bitmask() {
-                return bitmask;
-            }
-        }
-
-        public static final int PV_NOACTION = 0x00;             /**< NO specified PV action */
-        public static final int PV_ADDED = 0x01;                 /**< new Process var was added */
-        public static final int PV_DELETED = 0x02;               /**< process var was deleted */
-        public static final int PV_MODIFIED = 0x04;              /**< process var was modified */
-        public static final int PV_CONFIRMED = 0x08;             /**< process var was confirmed */
-        public static final int PV_MANUAL_MOD = 0x10;            /**< process var was modified manually */
-        public static final int PV_CLEARED = 0x20;               /**< process var was cleared */
-        public static final int PV_ERROR = 0x40;                 /**< process var has an error */
-        public static final int PV_ELIMINATED = 0x80;            /**< process var got eliminated */
-        public static final int PV_CHILDCHANGE = 0x8000000;      /**< child process var change */
-        private static final int PV_ALLACTIONS = ~PV_CHILDCHANGE; /**< mask for all actions */
-        public static final int PV_ALLEVENTS = 0xFFFFFFFF;       /**< mask for all change types */
-        private static final ChangeKind[] PRIORITY_ORDER = {
-            ChangeKind.ADDED,
-            ChangeKind.MODIFIED,
-            ChangeKind.DELETED,
-            ChangeKind.CLEARED,
-            ChangeKind.CONFIRMED,
-            ChangeKind.MANUAL_MODIFIED,
-            ChangeKind.ERROR,
-            ChangeKind.ELIMINATED
-        };
-
+        public static final int PV_NOACTION = 0x00; 							/**< NO specified PV action */
+        public static final int PV_ADDED = 0x01; 									/**< new Process var was added */
+        public static final int PV_DELETED = 0x02; 								/**< process var was deleted */
+        public static final int PV_MODIFIED = 0x04; 							/**< process var was modified */
+        public static final int PV_CONFIRMED = 0x08; 							/**< process var was confirmed */
+        public static final int PV_MANUAL_MOD = 0x10; 						/**< process var was modified manually */
+        public static final int PV_CLEARED = 0x20; 								/**< process var was cleared */
+        public static final int PV_ERROR = 0x40; 									/**< process var has an error */
+        public static final int PV_ELIMINATED = 0x80; 						/**< process var got eliminated */
+        public static final int PV_CHILDCHANGE = 0x8000000; 			/**< child process var change */
+        private static final int PV_ALLACTIONS = ~PV_CHILDCHANGE;	/**< mask for all actions */
+        public static final int PV_ALLEVENTS = 0xFFFFFFFF; 				/**< mask for all change types */
         private int type = PV_MODIFIED;
         private Object key = ProcessVar.DEF_KEYNAME;
         private Object value = ProcessVar.DEF_KEYNAME;
         private long time = System.currentTimeMillis();
-        private EnumSet<ChangeKind> changeKinds = EnumSet.noneOf(ChangeKind.class);
 
         public PvChangeEvent(Object source, Object key, Object value, int type) {
             super(source);
@@ -129,65 +88,12 @@ public final class ProcessVariables {
             return (type & PV_ALLACTIONS);
         }
 
-        /**
-         * Returns the change kinds represented by this event as an immutable snapshot.
-         */
-        public EnumSet<ChangeKind> getChangeKinds() {
-            return changeKinds.isEmpty() ? EnumSet.noneOf(ChangeKind.class) : changeKinds.clone();
-        }
-
-        /** Convenience predicate for checking a specific change kind. */
-        public boolean hasChange(ChangeKind kind) {
-            return changeKinds.contains(kind);
-        }
-
-        /** Indicates whether the event contains no actionable change bits. */
-        public boolean isNoop() {
-            return changeKinds.isEmpty();
-        }
-
-        /**
-         * Returns the highest-priority change kind for this event, or {@code null} if none.
-         */
-        public ChangeKind primaryChange() {
-            for (ChangeKind kind : PRIORITY_ORDER) {
-                if (changeKinds.contains(kind)) {
-                    return kind;
-                }
-            }
-            return changeKinds.contains(ChangeKind.CHILD_CHANGED) ? ChangeKind.CHILD_CHANGED : null;
-        }
-
-        /** Converts the provided change kinds into the legacy bitmask representation. */
-        public static int toBitmask(EnumSet<ChangeKind> kinds) {
-            if (kinds == null || kinds.isEmpty()) {
-                return PV_NOACTION;
-            }
-            int mask = PV_NOACTION;
-            for (ChangeKind kind : kinds) {
-                mask |= kind.bitmask();
-            }
-            return mask;
-        }
-
-        /** Creates a snapshot {@link EnumSet} from a legacy bitmask. */
-        public static EnumSet<ChangeKind> fromBitmask(int mask) {
-            EnumSet<ChangeKind> kinds = EnumSet.noneOf(ChangeKind.class);
-            for (ChangeKind kind : ChangeKind.values()) {
-                if ((mask & kind.bitmask()) != 0) {
-                    kinds.add(kind);
-                }
-            }
-            return kinds;
-        }
-
         public boolean isChildEvent() {
             return (type & PV_CHILDCHANGE) != 0;
         }
 
         private void setType(int newType) {
             type = newType;
-            changeKinds = fromBitmask(newType & PV_ALLEVENTS);
         }
 
         private void setKey(Object newKey) {
@@ -220,6 +126,7 @@ public final class ProcessVariables {
             this.time = time;
         }
     }
+
     /**
      * Utility for clamping PV values within a configured range.
      */
@@ -429,7 +336,7 @@ public final class ProcessVariables {
                         resultingAction |= PvChangeEvent.PV_MODIFIED;
                     } else {
                         PvChangeEvent lstChange = changes.get(key);
-                        if (lstChange != null && lstChange.hasChange(PvChangeEvent.ChangeKind.MANUAL_MODIFIED)) {
+                        if (lstChange != null && (lstChange.getType() & PvChangeEvent.PV_MANUAL_MOD) != 0) {
                             resultingAction |= PvChangeEvent.PV_CONFIRMED;
                         }
                     }
@@ -449,98 +356,64 @@ public final class ProcessVariables {
         }
 
         @Override
-        public Object get(Object key) {
-            lock.readLock().lock();
-            try {
-                return super.get(key);
-            } finally {
-                lock.readLock().unlock();
-            }
+        public synchronized Object get(Object key) {
+            return (super.get(key));
         }
 
-        int getAsInt(Object key) {
-            lock.readLock().lock();
+        synchronized int getAsInt(Object key) {
+            int result = 0;
+            Object val = get(key);
             try {
-                int result = 0;
-                Object val = super.get(key);
                 if (val != null) {
-                    try {
-                        result = Integer.parseInt(val.toString());
-                    } catch (NumberFormatException e) {
-                        // Intentionally ignore malformed numbers and return 0.
-                    }
+                    result = Integer.valueOf(val.toString()).intValue();
                 }
-                return result;
-            } finally {
-                lock.readLock().unlock();
+            } catch (NumberFormatException e) {
+                // Intentionally do nothing
             }
+            return (result);
         }
 
-        void putAsInt(Object key, int value) {
+        synchronized void putAsInt(Object key, int value) {
             put(key, Integer.valueOf(value));
         }
 
         @Override
-        public Object remove(Object key) {
-            Object result;
-            boolean child = false;
-            lock.writeLock().lock();
-            try {
-                result = super.remove(key);
-                if (result instanceof ProcessVar) {
-                    child = true;
-                }
-            } finally {
-                lock.writeLock().unlock();
-            }
+        public synchronized Object remove(Object key) {
+            Object result = super.remove(key);
 
             if (result != null) {
                 firePvChanged(new PvChangeEvent(this, key, null, PvChangeEvent.PV_DELETED));
-                if (child) {
-                    ((ProcessVar) result).removePvChangeListener(this);
-                }
             }
 
-            return result;
+            if (result instanceof ProcessVar) {
+                ((ProcessVar) result).removePvChangeListener(this);
+            }
+
+            return (result);
         }
 
         @Override
         /**
          * Clear all attributes and notify listeners that the PV was reset.
          */
-        public void clear() {
-            lock.writeLock().lock();
-            try {
-                super.clear();
-            } finally {
-                lock.writeLock().unlock();
-            }
+        public synchronized void clear() {
+            super.clear();
             firePvChanged(new PvChangeEvent(this, null, null, PvChangeEvent.PV_CLEARED));
         }
 
         /** get object/name of key attribute */
         public Object getKeyAttribute() {
-            lock.readLock().lock();
-            try {
-                return (KeyAttribute != null ? KeyAttribute : DEF_KEYNAME);
-            } finally {
-                lock.readLock().unlock();
-            }
+            return (KeyAttribute != null ? KeyAttribute : DEF_KEYNAME);
         }
 
         /** set object/name of key attribute */
         public void setKeyAttribute(Object newKeyAttribute) {
-            lock.writeLock().lock();
-            try {
-                KeyAttribute = newKeyAttribute;
-            } finally {
-                lock.writeLock().unlock();
-            }
+            KeyAttribute = newKeyAttribute;
         }
 
         /** get value of key attribute */
         public Object getKeyValue() {
-            return get(getKeyAttribute());
+            return (get(getKeyAttribute()));
         }
 
         /** set value of key attribute */
@@ -560,50 +433,21 @@ public final class ProcessVariables {
          * Handling for list of PvChangeListeners
          */
         /** remove listener for Pv changes */
-        public void removePvChangeListener(PvChangeListener l) {
-            lock.writeLock().lock();
-            try {
-                ensurePvChangeListeners();
-                PvChangeListeners.remove(l);
-                allowEvents = !PvChangeListeners.isEmpty();
-                log.finer("-PvListener:" + toString() + "->" + String.valueOf(l));
-            } finally {
-                lock.writeLock().unlock();
-            }
+        public synchronized void removePvChangeListener(PvChangeListener l) {
+            ensurePvChangeListeners();
+            PvChangeListeners.remove(l);
+            allowEvents = !PvChangeListeners.isEmpty();
+            log.finer("-PvListener:" + toString() + "->" + String.valueOf(l));
         }
 
         /**
          * Register a listener for a subset of change events.
          */
-        public void addPvChangeListener(PvChangeListener l, int eventMask) {
-            lock.writeLock().lock();
-            try {
-                ensurePvChangeListeners();
-                PvChangeListeners.put(l, Integer.valueOf(eventMask));
-                allowEvents = true;
-                log.finer("+PvListener:" + toString() + "->" + String.valueOf(l));
-            } finally {
-                lock.writeLock().unlock();
-            }
-        }
-
-        /**
-         * Register a listener using the richer {@link ChangeKind} metadata instead of raw bitmasks.
-         */
-        public void addPvChangeListener(PvChangeListener l, EnumSet<PvChangeEvent.ChangeKind> kinds) {
-            int mask = PvChangeEvent.toBitmask(kinds);
-            addPvChangeListener(l, mask);
-        }
-
-        /**
-         * Convenience overload that accepts a vararg of change kinds.
-         */
-        public void addPvChangeListener(PvChangeListener l, PvChangeEvent.ChangeKind... kinds) {
-            EnumSet<PvChangeEvent.ChangeKind> mask = EnumSet.noneOf(PvChangeEvent.ChangeKind.class);
-            if (kinds != null) {
-                Collections.addAll(mask, kinds);
-            }
-            addPvChangeListener(l, mask);
+        public synchronized void addPvChangeListener(PvChangeListener l, int eventMask) {
+            ensurePvChangeListeners();
+            PvChangeListeners.put(l, Integer.valueOf(eventMask));
+            allowEvents = true;
+            log.finer("+PvListener:" + toString() + "->" + String.valueOf(l));
         }
 
         /**
@@ -611,49 +455,42 @@ public final class ProcessVariables {
          *
          * @param l event listener to be registered
          */
-        public void addPvChangeListener(PvChangeListener l) {
+        public synchronized void addPvChangeListener(PvChangeListener l) {
             addPvChangeListener(l, PvChangeEvent.PV_ALLEVENTS);
         }
 
         /**
          * Dispatch a change event to all registered listeners.
          */
-        public void firePvChanged(PvChangeEvent e) {
-            Map<PvChangeListener, Integer> snapshot;
-            lock.writeLock().lock();
-            try {
-                if (!allowEvents || e.isNoop()) {
-                    return;
-                }
+        public synchronized void firePvChanged(PvChangeEvent e) {
+            if (allowEvents && e.getType() != PvChangeEvent.PV_NOACTION) {
+                log.finer("PvChange:" + e.toString());
+
+                Integer evtMask;
+                Map.Entry curr;
+
                 ensurePvChangeListeners();
-                snapshot = new HashMap<>(PvChangeListeners);
-            } finally {
-                lock.writeLock().unlock();
-            }
+                // loop through all registered listeners ...
+                Set entries = PvChangeListeners.entrySet();
+                Iterator it = entries.iterator();
 
-            log.finer("PvChange:" + e.toString());
+                while (it.hasNext()) {
+                    curr = (Map.Entry) it.next();
 
-            for (Map.Entry<PvChangeListener, Integer> entry : snapshot.entrySet()) {
-                PvChangeListener listener = entry.getKey();
-                if (listener != null && listener != this) {
-                    Integer evtMask = entry.getValue();
-                    if (evtMask != null && (evtMask.intValue() & e.getType()) != 0) {
-                        try {
-                            listener.pvChanged(e);
-                        } catch (Exception listenerEx) {
-                            log.warning("Listener threw exception: " + listenerEx.getMessage());
+                    if (curr.getKey() != null && curr.getKey() != this) {
+                        // check if listener wants to be notified by this event
+                        evtMask = (Integer) curr.getValue();
+
+                        if ((evtMask.intValue() & e.getType()) != 0) {
+                            log.finer("Notify:" + curr);
+                            ((PvChangeListener) curr.getKey()).pvChanged(e);
                         }
                     }
                 }
-            }
-
-            lock.writeLock().lock();
-            try {
+                // set time and type of last change
                 lastChange = e.getTime();
                 lastChangeType = e.getType();
                 changes.put(e.getKey(), e);
-            } finally {
-                lock.writeLock().unlock();
             }
         }
 
@@ -662,14 +499,9 @@ public final class ProcessVariables {
          *
          * @return Value of property values.
          */
-        @SuppressWarnings("unchecked")
         public Map getValueMap() {
-            lock.readLock().lock();
-            try {
-                return new HashMap<Object, Object>(this);
-            } finally {
-                lock.readLock().unlock();
-            }
+
+            return this;
         }
 
         /**
@@ -756,28 +588,26 @@ public final class ProcessVariables {
         /**
          * Merge a raw attribute map into the list, instantiating child PVs on demand.
          */
-        private Object handleData(Map data, int action, boolean allowChildEvents) {
-            if (!data.containsKey(getKeyAttribute())) {
-                return null;
-            }
+        private synchronized Object handleData(Map data, int action, boolean allowChildEvents) {
+            Object result = null;
 
-            Object result;
-            lock.writeLock().lock();
-            try {
+
+            if (data.containsKey(getKeyAttribute())) {
+                // remember flag for event creation
                 boolean oldAllowEvents = allowEvents;
+                // set flag for event creation
                 allowEvents = allowChildEvents;
-                ProcessVar dataset = (ProcessVar) super.get(data.get(getKeyAttribute()));
+                ProcessVar dataset = (ProcessVar) get(data.get(getKeyAttribute()));
                 if (dataset == null) {
                     dataset = new ProcessVar();
                     dataset.setKeyAttribute(getKeyAttribute());
                 }
                 dataset.putAll(data, action, allowChildEvents);
+                // restore flag for event creation
                 allowEvents = oldAllowEvents;
                 result = put(dataset.getKeyValue(), dataset, action);
-            } finally {
-                lock.writeLock().unlock();
             }
-            return result;
+            return (result);
         }
 
         /**
@@ -788,9 +618,10 @@ public final class ProcessVariables {
          * @return previous value of corresponding data item
          */
         @SuppressWarnings("rawtypes")
-        private Object handleData(Map data, int action) {
-            return handleData(data, action, false);
+        private synchronized Object handleData(Map data, int action) {
+            return (handleData(data, action, false));
         }
+
         /**
          * handle a set/map of data attributes with default notification action
          *
@@ -798,8 +629,8 @@ public final class ProcessVariables {
          * @return previous value of corresponding data item
          */
         @SuppressWarnings("rawtypes")
-        public Object handleData(Map data) {
-            return handleData(data, defaultAction);
+        public synchronized Object handleData(Map data) {
+            return (handleData(data, defaultAction));
         }
     }
 
@@ -818,33 +649,28 @@ public final class ProcessVariables {
         }
 
         @SuppressWarnings("unchecked")
-        public V putTyped(K key, V value) {
+        public synchronized V putTyped(K key, V value) {
             return (V) super.put(key, value);
         }
 
         @SuppressWarnings("unchecked")
-        public V getTyped(Object key) {
+        public synchronized V getTyped(Object key) {
             return (V) super.get(key);
         }
 
         @SuppressWarnings("unchecked")
-        public V removeTyped(Object key) {
+        public synchronized V removeTyped(Object key) {
             return (V) super.remove(key);
         }
 
         @SuppressWarnings({"unchecked", "rawtypes"})
-        public void putAllTyped(Map<? extends K, ? extends V> map) {
+        public synchronized void putAllTyped(Map<? extends K, ? extends V> map) {
             super.putAll((Map) map);
         }
 
         @SuppressWarnings("unchecked")
-        public Set<Map.Entry<K, V>> entrySetTyped() {
-            Map<Object, Object> snapshotMap = getValueMap();
-            Set<Map.Entry<K, V>> snapshot = new HashSet<>();
-            for (Map.Entry<Object, Object> entry : snapshotMap.entrySet()) {
-                snapshot.add(new AbstractMap.SimpleEntry<>((K) entry.getKey(), (V) entry.getValue()));
-            }
-            return snapshot;
+        public synchronized Set<Map.Entry<K, V>> entrySetTyped() {
+            return (Set) super.entrySet();
         }
     }
 
@@ -875,12 +701,7 @@ public final class ProcessVariables {
 
         @SuppressWarnings("unchecked")
         public Set<Map.Entry<K, PV>> entrySetTyped() {
-            Map<Object, Object> snapshotMap = getValueMap();
-            Set<Map.Entry<K, PV>> snapshot = new HashSet<>();
-            for (Map.Entry<Object, Object> entry : snapshotMap.entrySet()) {
-                snapshot.add(new AbstractMap.SimpleEntry<>((K) entry.getKey(), (PV) entry.getValue()));
-            }
-            return snapshot;
+            return (Set) super.entrySet();
         }
     }
 }

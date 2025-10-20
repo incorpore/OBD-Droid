@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="20dp"
+        android:padding="@dimen/card_padding_standard"
         android:gravity="center_vertical">
 
         <ImageView
@@ -25,14 +25,14 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginStart="16dp">
+            android:layout_marginStart="@dimen/spacing_large">
 
             <TextView
                 android:id="@+id/fault_code_number"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="P0301"
-                android:textSize="20sp"
+                android:textSize="@dimen/text_section_header"
                 android:textStyle="bold"
                 android:textColor="#212121"/>
 
@@ -41,18 +41,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Cylinder 1 Misfire Detected"
-                android:textSize="14sp"
+                android:textSize="@dimen/text_caption"
                 android:textColor="#757575"
-                android:layout_marginTop="2dp"/>
+                android:layout_marginTop="@dimen/spacing_xs"/>
 
             <TextView
                 android:id="@+id/fault_code_type"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Confirmed Code"
-                android:textSize="12sp"
+                android:textSize="@dimen/text_label"
                 android:textColor="#9E9E9E"
-                android:layout_marginTop="4dp"/>
+                android:layout_marginTop="@dimen/spacing_xs"/>
         </LinearLayout>
     </LinearLayout>
 
@@ -61,16 +61,16 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#E0E0E0"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"/>
+        android:layout_marginStart="@dimen/spacing_large"
+        android:layout_marginEnd="@dimen/spacing_large"/>
 
     <!-- Options List -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp">
+        android:paddingTop="@dimen/spacing_small"
+        android:paddingBottom="@dimen/spacing_small">
 
         <!-- View Freeze Frame Option -->
         <LinearLayout
@@ -80,8 +80,8 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="?android:attr/selectableItemBackground"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
+            android:paddingStart="@dimen/card_padding_standard"
+            android:paddingEnd="@dimen/card_padding_standard"
             android:clickable="true"
             android:focusable="true">
 
@@ -95,13 +95,13 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginStart="20dp">
+                android:layout_marginStart="@dimen/card_padding_standard">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="View Freeze Frame"
-                    android:textSize="16sp"
+                    android:textSize="@dimen/text_small_value"
                     android:textColor="#424242"/>
 
                 <TextView
@@ -109,7 +109,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Snapshot when fault occurred"
-                    android:textSize="12sp"
+                    android:textSize="@dimen/text_label"
                     android:textColor="#9E9E9E"/>
             </LinearLayout>
         </LinearLayout>
@@ -122,8 +122,8 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="?android:attr/selectableItemBackground"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
+            android:paddingStart="@dimen/card_padding_standard"
+            android:paddingEnd="@dimen/card_padding_standard"
             android:clickable="true"
             android:focusable="true">
 
@@ -137,20 +137,20 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginStart="20dp">
+                android:layout_marginStart="@dimen/card_padding_standard">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Search Online"
-                    android:textSize="16sp"
+                    android:textSize="@dimen/text_small_value"
                     android:textColor="#424242"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Find solutions and information"
-                    android:textSize="12sp"
+                    android:textSize="@dimen/text_label"
                     android:textColor="#9E9E9E"/>
             </LinearLayout>
         </LinearLayout>
@@ -163,8 +163,8 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="?android:attr/selectableItemBackground"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
+            android:paddingStart="@dimen/card_padding_standard"
+            android:paddingEnd="@dimen/card_padding_standard"
             android:clickable="true"
             android:focusable="true">
 
@@ -178,13 +178,13 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginStart="20dp">
+                android:layout_marginStart="@dimen/card_padding_standard">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Watch Nonda Video"
-                    android:textSize="16sp"
+                    android:textSize="@dimen/text_small_value"
                     android:textColor="#424242"/>
 
                 <TextView
@@ -192,7 +192,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Open the nonda YouTube guide"
-                    android:textSize="12sp"
+                    android:textSize="@dimen/text_label"
                     android:textColor="#9E9E9E"/>
             </LinearLayout>
         </LinearLayout>
@@ -205,8 +205,8 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="?android:attr/selectableItemBackground"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
+            android:paddingStart="@dimen/card_padding_standard"
+            android:paddingEnd="@dimen/card_padding_standard"
             android:clickable="true"
             android:focusable="true">
 
@@ -220,13 +220,13 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginStart="20dp">
+                android:layout_marginStart="@dimen/card_padding_standard">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Ask AI"
-                    android:textSize="16sp"
+                    android:textSize="@dimen/text_small_value"
                     android:textColor="#424242"/>
 
                 <TextView
@@ -234,7 +234,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Get AI-powered analysis"
-                    android:textSize="12sp"
+                    android:textSize="@dimen/text_label"
                     android:textColor="#9E9E9E"/>
             </LinearLayout>
         </LinearLayout>
@@ -247,8 +247,8 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="?android:attr/selectableItemBackground"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
+            android:paddingStart="@dimen/card_padding_standard"
+            android:paddingEnd="@dimen/card_padding_standard"
             android:clickable="true"
             android:focusable="true">
 
@@ -262,20 +262,20 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginStart="20dp">
+                android:layout_marginStart="@dimen/card_padding_standard">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Copy Code"
-                    android:textSize="16sp"
+                    android:textSize="@dimen/text_small_value"
                     android:textColor="#424242"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Copy to clipboard"
-                    android:textSize="12sp"
+                    android:textSize="@dimen/text_label"
                     android:textColor="#9E9E9E"/>
             </LinearLayout>
         </LinearLayout>
@@ -292,7 +292,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="end"
-        android:padding="8dp">
+        android:padding="@dimen/spacing_small">
 
         <Button
             android:id="@+id/btn_close"
@@ -300,10 +300,10 @@
             android:layout_height="36dp"
             android:text="Close"
             android:textColor="#757575"
-            android:textSize="14sp"
+            android:textSize="@dimen/text_caption"
             android:background="?android:attr/selectableItemBackground"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"/>
+            android:paddingStart="@dimen/spacing_large"
+            android:paddingEnd="@dimen/spacing_large"/>
     </LinearLayout>
 
 </LinearLayout>
