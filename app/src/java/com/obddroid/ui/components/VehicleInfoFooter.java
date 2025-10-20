@@ -103,7 +103,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         contentLayout = new LinearLayout(getContext());
         contentLayout.setOrientation(LinearLayout.HORIZONTAL);
         contentLayout.setGravity(Gravity.CENTER_VERTICAL);
-        contentLayout.setPadding(dpToPx(16), dpToPx(4), dpToPx(16), dpToPx(4));
+        contentLayout.setPadding(dpToPx(16), dpToPx(2), dpToPx(16), dpToPx(2));
         LinearLayout.LayoutParams contentParams = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
@@ -116,8 +116,8 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         // No background - transparent for PNG logos
         iconContainer.setBackground(null);
         LinearLayout.LayoutParams iconContainerParams = new LinearLayout.LayoutParams(
-            dpToPx(72),
-            dpToPx(72)
+            dpToPx(79),
+            dpToPx(79)
         );
         iconContainerParams.rightMargin = dpToPx(12);
 
