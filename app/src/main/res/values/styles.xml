@@ -71,4 +71,18 @@
         <item name="android:textStyle">bold</item>
         <item name="android:textAllCaps">true</item>
     </style>
+
+    <!-- Design System Text Appearances -->
+    <style name="TextAppearance.HeroTitle" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">@dimen/text_hero_title</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_primary_dark</item>
+    </style>
+
+    <style name="TextAppearance.SectionHeader" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">@dimen/text_section_header</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_primary_dark</item>
+        <item name="android:letterSpacing">0.02</item>
+    </style>
 </resources>

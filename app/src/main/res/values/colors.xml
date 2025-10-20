@@ -17,4 +17,15 @@
     <color name="fault_pending">#42A5F5</color>
     <color name="fault_info">#757575</color>
     <color name="fault_success">#4CAF50</color>
+
+    <!-- Dark Theme Colors -->
+    <color name="background_primary">#1E1E1E</color>
+    <color name="background_secondary">#2C2C2C</color>
+    <color name="background_overlay">#80000000</color>
+
+    <!-- Text Colors - Dark Theme -->
+    <color name="text_primary_dark">#FFFFFF</color>
+    <color name="text_secondary_dark">#B0BEC5</color>
+    <color name="text_tertiary_dark">#CCCCCC</color>
+    <color name="text_hint_dark">#E8F5E9</color>
 </resources>
