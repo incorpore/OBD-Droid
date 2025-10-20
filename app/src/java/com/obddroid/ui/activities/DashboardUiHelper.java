@@ -84,18 +84,16 @@ final class DashboardUiHelper {
         if (faultCodesCard != null) {
             addCardPressAnimation(faultCodesCard);
             faultCodesCard.setOnClickListener(v -> {
-                ElmProt.STAT ecuState = activity.getEcuConnectionState();
-                if (ecuState == ElmProt.STAT.ECU_DETECTED || ecuState == ElmProt.STAT.CONNECTED) {
-                    activity.setObdService(ObdProt.OBD_SVC_READ_CODES, "Fault Codes");
-                } else {
-                    SnackbarHelper.showWarning(activity, "Please connect to vehicle first");
-                }
+                log.info("Fault Codes card clicked!");
+                activity.launchFaultCodesActivity();
             });
             faultCodesCard.setOnLongClickListener(v -> showCardInfoDialog(
                 activity,
                 "Fault Codes",
                 "Read, decode, and clear diagnostic trouble codes stored by the vehicle."
             ));
+        } else {
+            log.warning("Fault Codes card NOT found!");
         }
 
         // Fuel Economy card
