@@ -38,6 +38,12 @@ public class AutoCheckReport {
     private Integer serviceRecords;
     private List<HistoryEvent> historyEvents;
 
+    // Score Analysis (NEW)
+    private String vehicleComparison;
+    private String vehicleOutlook;
+    private List<String> increasingFactors;
+    private List<String> decreasingFactors;
+
     // Nested classes
     public static class ScoreRange {
         public int low;
@@ -66,6 +72,8 @@ public class AutoCheckReport {
     public AutoCheckReport(String vin) {
         this.vin = vin;
         this.historyEvents = new ArrayList<>();
+        this.increasingFactors = new ArrayList<>();
+        this.decreasingFactors = new ArrayList<>();
     }
 
     // Parse from JSON
@@ -137,6 +145,24 @@ public class AutoCheckReport {
             }
         }
 
+        // Score Analysis fields
+        if (json.has("vehicleComparison")) report.vehicleComparison = json.getString("vehicleComparison");
+        if (json.has("vehicleOutlook")) report.vehicleOutlook = json.getString("vehicleOutlook");
+
+        if (json.has("increasingFactors")) {
+            JSONArray factors = json.getJSONArray("increasingFactors");
+            for (int i = 0; i < factors.length(); i++) {
+                report.increasingFactors.add(factors.getString(i));
+            }
+        }
+
+        if (json.has("decreasingFactors")) {
+            JSONArray factors = json.getJSONArray("decreasingFactors");
+            for (int i = 0; i < factors.length(); i++) {
+                report.decreasingFactors.add(factors.getString(i));
+            }
+        }
+
         return report;
     }
 
@@ -186,6 +212,12 @@ public class AutoCheckReport {
     public String getRecalls() { return recalls; }
     public Integer getServiceRecords() { return serviceRecords; }
     public List<HistoryEvent> getHistoryEvents() { return historyEvents; }
+
+    // Score Analysis getters
+    public String getVehicleComparison() { return vehicleComparison; }
+    public String getVehicleOutlook() { return vehicleOutlook; }
+    public List<String> getIncreasingFactors() { return increasingFactors; }
+    public List<String> getDecreasingFactors() { return decreasingFactors; }
 
     // Helper methods
     public String getVehicleName() {

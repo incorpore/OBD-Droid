@@ -278,6 +278,146 @@
                     </androidx.cardview.widget.CardView>
 
                     <!-- ═══════════════════════════════════════ -->
+                    <!-- SCORE ANALYSIS -->
+                    <!-- ═══════════════════════════════════════ -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/score_analysis_card"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="4dp"
+                        app:cardBackgroundColor="#2C2C2C"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="20dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📊 Score Analysis"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:paddingBottom="16dp"/>
+
+                            <!-- Vehicle Comparison -->
+                            <LinearLayout
+                                android:id="@+id/comparison_container"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:background="@drawable/stat_card_background"
+                                android:padding="16dp"
+                                android:layout_marginBottom="16dp"
+                                android:visibility="gone">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Vehicle Comparison"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#B0BEC5"
+                                    android:letterSpacing="0.05"
+                                    android:paddingBottom="8dp"/>
+
+                                <TextView
+                                    android:id="@+id/vehicle_comparison"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="15sp"
+                                    android:textColor="#FFFFFF"
+                                    android:lineSpacingExtra="4dp"/>
+                            </LinearLayout>
+
+                            <!-- Vehicle Outlook -->
+                            <LinearLayout
+                                android:id="@+id/outlook_container"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:background="@drawable/stat_card_background"
+                                android:padding="16dp"
+                                android:layout_marginBottom="16dp"
+                                android:visibility="gone">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Vehicle Outlook"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#B0BEC5"
+                                    android:letterSpacing="0.05"
+                                    android:paddingBottom="8dp"/>
+
+                                <TextView
+                                    android:id="@+id/vehicle_outlook"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="15sp"
+                                    android:textColor="#FFFFFF"
+                                    android:lineSpacingExtra="4dp"/>
+                            </LinearLayout>
+
+                            <!-- Increasing Factors -->
+                            <LinearLayout
+                                android:id="@+id/increasing_factors_container"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:layout_marginBottom="12dp"
+                                android:visibility="gone">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="✅ Positive Factors"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#4CAF50"
+                                    android:paddingBottom="12dp"/>
+
+                                <LinearLayout
+                                    android:id="@+id/increasing_factors_list"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"/>
+                            </LinearLayout>
+
+                            <!-- Decreasing Factors -->
+                            <LinearLayout
+                                android:id="@+id/decreasing_factors_container"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:visibility="gone">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="⚠️ Watch Points"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#FFC107"
+                                    android:paddingBottom="12dp"/>
+
+                                <LinearLayout
+                                    android:id="@+id/decreasing_factors_list"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"/>
+                            </LinearLayout>
+
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- ═══════════════════════════════════════ -->
                     <!-- QUICK STATS GRID -->
                     <!-- ═══════════════════════════════════════ -->
                     <androidx.cardview.widget.CardView

@@ -1,14 +1,20 @@
 package com.obddroid.ui.activities;
 
+import android.app.Dialog;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -28,7 +34,19 @@ import com.obddroid.vehicle.AutoCheckReport;
 import com.obddroid.vehicle.VehicleManager;
 import com.obddroid.ui.components.VehicleInfoFooter;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.channels.FileChannel;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * World-Class AutoCheck Vehicle History Activity
@@ -63,6 +81,17 @@ public class AutoCheckActivity extends AppCompatActivity {
     private TextView scoreInterpretation;
     private LinearLayout quickStatusContainer;
 
+    // Score Analysis Section (NEW)
+    private CardView scoreAnalysisCard;
+    private LinearLayout comparisonContainer;
+    private TextView vehicleComparison;
+    private LinearLayout outlookContainer;
+    private TextView vehicleOutlook;
+    private LinearLayout increasingFactorsContainer;
+    private LinearLayout increasingFactorsList;
+    private LinearLayout decreasingFactorsContainer;
+    private LinearLayout decreasingFactorsList;
+
     // Stats Grid
     private CardView statsCard;
     private TextView statOwners;
@@ -87,7 +116,8 @@ public class AutoCheckActivity extends AppCompatActivity {
     private TextView timelineSummary;
     private LinearLayout timelineContainer;
 
-    // PDF tracking
+    // Report data and PDF tracking
+    private AutoCheckReport currentReport;
     private String currentPdfFilePath;
     private boolean isPdfAvailable = false;
 
@@ -138,16 +168,16 @@ public class AutoCheckActivity extends AppCompatActivity {
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        MenuItem pdfItem = menu.findItem(R.id.action_save_pdf);
-        if (pdfItem != null) {
-            pdfItem.setVisible(isPdfAvailable);
+        MenuItem saveItem = menu.findItem(R.id.action_save_report);
+        if (saveItem != null) {
+            saveItem.setVisible(currentReport != null);
         }
         return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_save_pdf) {
+        if (item.getItemId() == R.id.action_save_report) {
             openPdf();
             return true;
         } else if (item.getItemId() == android.R.id.home) {
@@ -314,6 +344,10 @@ public class AutoCheckActivity extends AppCompatActivity {
      * Display report with world-class visualization
      */
     private void displayReport(AutoCheckReport report) {
+        // Store current report for export
+        this.currentReport = report;
+        invalidateOptionsMenu();
+
         // Hide error and empty state, show report
         errorCard.setVisibility(View.GONE);
         emptyStateCard.setVisibility(View.GONE);
