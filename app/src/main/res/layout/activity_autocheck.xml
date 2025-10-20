@@ -768,19 +768,4 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"/>
 
-    <!-- PDF Button - Positioned above footer -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/pdf_fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="90dp"
-        android:src="@android:drawable/ic_menu_save"
-        android:contentDescription="View PDF Report"
-        android:visibility="gone"
-        app:backgroundTint="#4CAF50"
-        app:fabSize="normal"
-        app:tint="#FFFFFF"/>
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

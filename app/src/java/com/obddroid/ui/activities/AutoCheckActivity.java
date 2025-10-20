@@ -19,7 +19,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.FileProvider;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import android.view.Menu;
+import android.view.MenuItem;
 import com.google.gson.Gson;
 import com.obddroid.R;
 import com.obddroid.services.AutoCheckService;
@@ -86,9 +87,9 @@ public class AutoCheckActivity extends AppCompatActivity {
     private TextView timelineSummary;
     private LinearLayout timelineContainer;
 
-    // PDF button
-    private FloatingActionButton pdfFab;
+    // PDF tracking
     private String currentPdfFilePath;
+    private boolean isPdfAvailable = false;
 
     private VehicleInfoFooter vehicleInfoFooter;
     private AutoCheckService autoCheckService;
@@ -121,13 +122,39 @@ public class AutoCheckActivity extends AppCompatActivity {
 
         // Set button click listeners
         checkHistoryButton.setOnClickListener(v -> fetchVehicleHistory());
-        pdfFab.setOnClickListener(v -> openPdf());
 
         // Try to load cached report for current VIN
         loadCachedReport();
 
         // Check API health on startup
         checkApiHealth();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.vehicle_history_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem pdfItem = menu.findItem(R.id.action_save_pdf);
+        if (pdfItem != null) {
+            pdfItem.setVisible(isPdfAvailable);
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_save_pdf) {
+            openPdf();
+            return true;
+        } else if (item.getItemId() == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void findViews() {
@@ -173,9 +200,6 @@ public class AutoCheckActivity extends AppCompatActivity {
         timelineCard = findViewById(R.id.timeline_card);
         timelineSummary = findViewById(R.id.timeline_summary);
         timelineContainer = findViewById(R.id.timeline_container);
-
-        // PDF button
-        pdfFab = findViewById(R.id.pdf_fab);
     }
 
     private void setupFooterOverlay() {
@@ -236,7 +260,8 @@ public class AutoCheckActivity extends AppCompatActivity {
         // Hide previous results and errors
         errorCard.setVisibility(View.GONE);
         reportContainer.setVisibility(View.GONE);
-        pdfFab.setVisibility(View.GONE);
+        isPdfAvailable = false;
+        invalidateOptionsMenu();
 
         // Show loading
         checkHistoryButton.setEnabled(false);
@@ -261,7 +286,8 @@ public class AutoCheckActivity extends AppCompatActivity {
 
                 // Show PDF button if PDF was generated
                 if (pdfFilePath != null && !pdfFilePath.isEmpty()) {
-                    pdfFab.setVisibility(View.VISIBLE);
+                    isPdfAvailable = true;
+                    invalidateOptionsMenu();
                     Toast.makeText(AutoCheckActivity.this,
                         "Report loaded! PDF available",
                         Toast.LENGTH_LONG).show();
@@ -699,7 +725,8 @@ public class AutoCheckActivity extends AppCompatActivity {
         errorCard.setVisibility(View.VISIBLE);
         errorMessage.setText(error);
         reportContainer.setVisibility(View.GONE);
-        pdfFab.setVisibility(View.GONE);
+        isPdfAvailable = false;
+        invalidateOptionsMenu();
     }
 
     /**
@@ -760,7 +787,8 @@ public class AutoCheckActivity extends AppCompatActivity {
                         File pdfFile = new File(cachedPdfPath);
                         if (pdfFile.exists()) {
                             currentPdfFilePath = cachedPdfPath;
-                            pdfFab.setVisibility(View.VISIBLE);
+                            isPdfAvailable = true;
+                    invalidateOptionsMenu();
                         } else {
                             // PDF was deleted, clear from cache
                             prefs.edit().remove(cacheKey + "_pdf").apply();
@@ -782,7 +810,8 @@ public class AutoCheckActivity extends AppCompatActivity {
                                 }
 
                                 currentPdfFilePath = mostRecentPdf.getAbsolutePath();
-                                pdfFab.setVisibility(View.VISIBLE);
+                                isPdfAvailable = true;
+                    invalidateOptionsMenu();
 
                                 // Save to cache for next time
                                 prefs.edit().putString(cacheKey + "_pdf", currentPdfFilePath).apply();
