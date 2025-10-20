@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1E1E1E">
+    android:background="@color/background_primary">
 
     <!-- Main Content -->
     <FrameLayout
@@ -20,20 +20,19 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingBottom="100dp"
-                android:paddingTop="16dp"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp">
+                android:paddingTop="@dimen/spacing_large"
+                android:paddingLeft="@dimen/spacing_large"
+                android:paddingRight="@dimen/spacing_large">
 
                 <!-- Empty State / Generate Report Card -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/empty_state_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#2C2C2C">
+                    android:layout_marginBottom="@dimen/spacing_large"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardElevation="@dimen/elevation_content_card"
+                    app:cardBackgroundColor="@color/background_secondary">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -890,6 +889,11 @@
 
                 </LinearLayout>
 
+                <!-- Footer Spacer -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/footer_spacer_height" />
+
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 
@@ -898,7 +902,7 @@
             android:id="@+id/footer_overlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#80000000"
+            android:background="@color/background_overlay"
             android:clickable="true"
             android:focusable="true"
             android:visibility="gone"/>
@@ -910,6 +914,8 @@
         android:id="@+id/vehicle_footer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"/>
+        android:layout_gravity="bottom"
+        android:background="@color/background_secondary"
+        android:elevation="@dimen/elevation_footer"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

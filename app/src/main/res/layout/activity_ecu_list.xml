@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#1E1E1E">
+    android:background="@color/background_primary">
 
-    <!-- Content area with overlay support -->
+    <!-- Main Content -->
     <FrameLayout
         android:id="@+id/content_frame"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="match_parent">
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
@@ -22,38 +21,38 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="@dimen/spacing_large">
 
-                <!-- Info Card -->
+                <!-- Hero Info Card -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="8dp"
-                    app:cardBackgroundColor="#4CAF50">
+                    android:layout_marginBottom="@dimen/spacing_xxl"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardElevation="@dimen/elevation_hero_card"
+                    app:cardBackgroundColor="@color/fault_success">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="20dp">
+                        android:padding="@dimen/card_padding_standard">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="🔧 ECU MODULES"
-                            android:textColor="#FFFFFF"
-                            android:textSize="20sp"
+                            android:textColor="@color/text_primary_dark"
+                            android:textSize="@dimen/text_section_header"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="@dimen/spacing_small"
                             android:text="Discover and view all Electronic Control Units (ECUs) in your vehicle. Compare scans to detect calibration changes and potential tampering."
-                            android:textColor="#E8F5E9"
-                            android:textSize="14sp" />
+                            android:textColor="@color/text_hint_dark"
+                            android:textSize="@dimen/text_caption" />
 
                     </LinearLayout>
 
@@ -67,16 +66,16 @@
                     android:clipToPadding="false"
                     android:nestedScrollingEnabled="false" />
 
-                <!-- Spacer for vehicle info footer -->
+                <!-- Footer Spacer -->
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="80dp" />
+                    android:layout_height="@dimen/footer_spacer_height" />
 
             </LinearLayout>
 
         </androidx.core.widget.NestedScrollView>
 
-        <!-- Empty View -->
+        <!-- Empty State -->
         <LinearLayout
             android:id="@+id/empty_view"
             android:layout_width="wrap_content"
@@ -84,7 +83,7 @@
             android:layout_gravity="center"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="32dp"
+            android:padding="@dimen/spacing_xxl"
             android:visibility="visible">
 
             <TextView
@@ -92,36 +91,37 @@
                 android:layout_height="wrap_content"
                 android:text="🔌"
                 android:textSize="64sp"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="@dimen/spacing_large" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="No ECUs Found"
-                android:textSize="20sp"
+                android:textSize="@dimen/text_section_header"
                 android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:layout_marginBottom="8dp" />
+                android:textColor="@color/text_primary_dark"
+                android:layout_marginBottom="@dimen/spacing_small" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Connect to your vehicle and tap the scan button to discover ECUs"
-                android:textSize="14sp"
-                android:textColor="#CCCCCC"
+                android:textSize="@dimen/text_caption"
+                android:textColor="@color/text_tertiary_dark"
                 android:textAlignment="center"
                 android:gravity="center"
-                android:layout_marginBottom="24dp" />
+                android:layout_marginBottom="@dimen/spacing_xxl" />
 
-            <!-- Scan Button (centered below text) -->
+            <!-- Scan Button -->
             <Button
                 android:id="@+id/scan_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Scan ECUs"
-                android:textSize="14sp"
-                android:backgroundTint="#4CAF50"
-                android:textColor="#FFFFFF" />
+                android:textSize="@dimen/text_caption"
+                android:textStyle="bold"
+                android:backgroundTint="@color/fault_success"
+                android:textColor="@color/text_primary_dark" />
         </LinearLayout>
 
         <!-- Progress Bar -->
@@ -131,24 +131,27 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:visibility="gone"
-            android:indeterminateTint="#4CAF50" />
+            android:indeterminateTint="@color/fault_success" />
 
-        <!-- Overlay that appears when footer is expanded -->
+        <!-- Overlay -->
         <View
             android:id="@+id/footer_overlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#80000000"
+            android:background="@color/background_overlay"
             android:clickable="true"
             android:focusable="true"
             android:visibility="gone"/>
 
     </FrameLayout>
 
-    <!-- Vehicle Info Footer -->
+    <!-- Footer -->
     <com.obddroid.ui.components.VehicleInfoFooter
         android:id="@+id/vehicle_footer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/background_secondary"
+        android:elevation="@dimen/elevation_footer"/>
 
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
