@@ -624,9 +624,29 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
                 boolean incompleteBitSet = (raw & 0x10) != 0;
                 isComplete = isAvailable && !incompleteBitSet;
             } else {
-                isAvailable = (raw & 0x100) != 0;
-                boolean incompleteBitSet = (raw & 0x01) != 0;
-                isComplete = isAvailable && !incompleteBitSet;
+                // Per OBD-II Mode 1 PID 0x01 standard:
+                // Bit=1: Monitor is supported and INCOMPLETE
+                // Bit=0: Monitor is NOT SUPPORTED or COMPLETE (ambiguous!)
+                // Use IUMPR data to disambiguate when bit=0
+                boolean incompleteBitSet = (raw & 0x100) != 0;
+
+                if (incompleteBitSet) {
+                    // Bit set = supported but incomplete
+                    isAvailable = true;
+                    isComplete = false;
+                } else {
+                    // Bit clear = not supported OR complete
+                    // Check if monitor has IUMPR data to know if it's supported
+                    if (monitor.conditions > 0) {
+                        // Has IUMPR data = supported and complete!
+                        isAvailable = true;
+                        isComplete = true;
+                    } else {
+                        // No IUMPR data = not supported
+                        isAvailable = false;
+                        isComplete = false;
+                    }
+                }
             }
 
             log.info(String.format(Locale.US,

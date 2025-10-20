@@ -14,8 +14,10 @@ import com.obddroid.core.ecu.ObdPid;
 import com.obddroid.core.obd.ProtoHeader;
 import com.obddroid.core.obd.TelegramListener;
 import com.obddroid.core.obd.TelegramWriter;
-import com.obddroid.core.pvs.PvChangeEvent;
-import com.obddroid.core.pvs.PvList;
+import com.obddroid.core.pvs.ProcessVariables.ProcessVar;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
+import com.obddroid.core.pvs.ProcessVariables.PvList;
+import com.obddroid.core.pvs.ProcessVariables.TypedPvList;
 import com.obddroid.services.ObdDataService;
 import com.obddroid.services.IDataManager;
 
@@ -314,28 +316,28 @@ public class ObdProt extends ProtoHeader
      * @deprecated Use getDataService().getDataForService(OBD_SVC_DATA) instead
      */
     @Deprecated
-    public static PvList PidPvs = createServiceBackedPvList(OBD_SVC_DATA);
+    public static TypedPvList<String, EcuDataPv> PidPvs = createServiceBackedPvList(OBD_SVC_DATA);
 
     /**
      * OBD vehicle identification items
      * @deprecated Use getDataService().getDataForService(OBD_SVC_VEH_INFO) instead
      */
     @Deprecated
-    public static PvList VidPvs = createServiceBackedPvList(OBD_SVC_VEH_INFO);
+    public static TypedPvList<Integer, EcuDataPv> VidPvs = createServiceBackedPvList(OBD_SVC_VEH_INFO);
 
     /**
      * OBD test control items (Mode 8 TIDs)
      * @deprecated Use getDataService().getDataForService(OBD_SVC_CTRL_MODE) instead
      */
     @Deprecated
-    public static PvList TidPvs = createServiceBackedPvList(OBD_SVC_CTRL_MODE);
+    public static TypedPvList<Integer, ProcessVar> TidPvs = createServiceBackedPvList(OBD_SVC_CTRL_MODE);
 
     /**
      * current fault codes
      * @deprecated Use getDataService().getDataForService(OBD_SVC_READ_CODES) instead
      */
     @Deprecated
-    public static PvList tCodes = createServiceBackedPvList(OBD_SVC_READ_CODES);
+    public static TypedPvList<Integer, ProcessVar> tCodes = createServiceBackedPvList(OBD_SVC_READ_CODES);
 
     /**
      * Get the current known fault codes list
@@ -360,8 +362,9 @@ public class ObdProt extends ProtoHeader
      * Create a PvList that is backed by the data service
      * This maintains backward compatibility while routing data through the service
      */
-    private static PvList createServiceBackedPvList(final int service) {
-        return new PvList() {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static <K, PV extends ProcessVar> TypedPvList<K, PV> createServiceBackedPvList(final int service) {
+        return new TypedPvList<K, PV>() {
             @Override
             public void clear() {
                 super.clear();
@@ -372,9 +375,9 @@ public class ObdProt extends ProtoHeader
             public Object put(Object key, Object value) {
                 Object result = super.put(key, value);
                 // Also update data service
-                PvList serviceData = dataService.getDataForService(service);
-                if (serviceData != null && serviceData != this) {
-                    serviceData.put(key, value);
+                TypedPvList<Object, ProcessVar> serviceData = dataService.getTypedStoreForService(service);
+                if (serviceData != null) {
+                    serviceData.put(key, (ProcessVar) value);
                 }
                 return result;
             }
@@ -383,8 +386,8 @@ public class ObdProt extends ProtoHeader
             public void putAll(Map m) {
                 super.putAll(m);
                 // Also update data service
-                PvList serviceData = dataService.getDataForService(service);
-                if (serviceData != null && serviceData != this) {
+                TypedPvList<Object, ProcessVar> serviceData = dataService.getTypedStoreForService(service);
+                if (serviceData != null) {
                     serviceData.putAll(m);
                 }
             }
