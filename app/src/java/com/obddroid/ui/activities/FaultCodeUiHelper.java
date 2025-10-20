@@ -94,6 +94,12 @@ final class FaultCodeUiHelper
                 .setView(dialogView)
                 .create();
 
+        // Set transparent background to prevent white corners
+        if (dialog.getWindow() != null)
+        {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
         View freezeFrameOption = dialogView.findViewById(R.id.option_freeze_frame);
         View searchOption = dialogView.findViewById(R.id.option_search_web);
         View nondaOption = dialogView.findViewById(R.id.option_watch_nonda);
@@ -246,6 +252,12 @@ final class FaultCodeUiHelper
                 .setView(dialogView)
                 .create();
 
+        // Set transparent background to prevent white corners
+        if (dialog.getWindow() != null)
+        {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
         View freezeFrameOption = dialogView.findViewById(R.id.option_freeze_frame);
         View searchOption = dialogView.findViewById(R.id.option_search_web);
         View nondaOption = dialogView.findViewById(R.id.option_watch_nonda);
@@ -366,6 +378,12 @@ final class FaultCodeUiHelper
             AlertDialog freezeDialog = new AlertDialog.Builder(activity)
                     .setView(dialogView)
                     .create();
+
+            // Set transparent background to prevent white corners
+            if (freezeDialog.getWindow() != null)
+            {
+                freezeDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            }
 
             closeButton.setOnClickListener(v -> freezeDialog.dismiss());
 
@@ -749,6 +767,12 @@ final class FaultCodeUiHelper
                     .setView(dialogView)
                     .create();
 
+            // Set transparent background to prevent white corners
+            if (freezeDialog.getWindow() != null)
+            {
+                freezeDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            }
+
             closeButton.setOnClickListener(v -> freezeDialog.dismiss());
 
             Consumer<Boolean> loadFreezeFrameData = forceRefreshObj ->
@@ -916,6 +940,12 @@ final class FaultCodeUiHelper
                     .setView(dialogView)
                     .setCancelable(true)
                     .create();
+
+            // Set transparent background to prevent white corners
+            if (aiDialog.getWindow() != null)
+            {
+                aiDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            }
 
             Consumer<Boolean> performAnalysis = retry ->
             {

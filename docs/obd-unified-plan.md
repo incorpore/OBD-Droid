@@ -1,6 +1,13 @@
 # OBD-Droid Unified Planning Notes
 
+## Chunk Assignment Index
+- [Agent A – ECU Module Refactor Workstream](agent-ecu-module-refactor.md)
+- [Agent B – Platform Enhancement Master Plan](agent-platform-enhancement.md)
+- [Agent C – Telemetry & Vehicle History Workstreams](agent-telemetry-and-history.md)
+
 ## ECU Module Refactor Notes
+
+> Detailed plan: [agent-ecu-module-refactor.md](agent-ecu-module-refactor.md)
 
 ### TODO
 - [ ] Draft `RawToPhysicalConverter` + adapter implementation; submit for review to validate interface naming.
@@ -150,6 +157,8 @@
 
 ## Platform Enhancement Master Plan
 
+> Detailed plan: [agent-platform-enhancement.md](agent-platform-enhancement.md)
+
 ### TODO
 - [ ] Schedule cross-team workshop to finalize Vehicle History Phase 2 UI/UX and copy.
 - [ ] Implement `PvChange` prototype and migrate an initial listener to validate the new event flow.
@@ -278,6 +287,8 @@
 
 ## Process Variable Refactor Progress
 
+> Detailed plan: [agent-telemetry-and-history.md](agent-telemetry-and-history.md)
+
 ### TODO
 - [x] Introduce typed wrappers for `ProcessVar`/`PvList` – `TypedProcessVar`/`TypedPvList` live alongside the legacy structures.
 - [x] Migrate `ObdDataService` and `ObdProt` to typed APIs – service-backed stores now expose `TypedPvList` instances while keeping compatibility shims in place.
@@ -365,6 +376,8 @@
 4. Document testing touchpoints for the above changes (unit test harness or instrumentation smoke tests).
 
 ## Vehicle History Page Enhancement Plan
+
+> Detailed plan: [agent-telemetry-and-history.md](agent-telemetry-and-history.md)
 
 ### TODO
 - [ ] Implement Phase 2 UI (recall module, usage badges, odometer sub-checks) behind feature flags.
