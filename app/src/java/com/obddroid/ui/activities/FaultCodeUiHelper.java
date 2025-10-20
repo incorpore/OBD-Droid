@@ -21,7 +21,7 @@ import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.FreezeFrameManager;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.pvs.PvList;
+import com.obddroid.core.pvs.ProcessVariables.PvList;
 import com.obddroid.services.CommService;
 import com.obddroid.ui.adapters.ObdItemAdapter;
 import com.obddroid.utils.OpenAiService;

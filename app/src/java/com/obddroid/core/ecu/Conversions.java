@@ -1,6 +1,6 @@
 package com.obddroid.core.ecu;
 
-import com.obddroid.core.pvs.PvLimits;
+import com.obddroid.core.pvs.ProcessVariables.PvLimits;
 
 import java.text.DecimalFormat;
 

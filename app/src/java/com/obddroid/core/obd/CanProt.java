@@ -3,7 +3,7 @@ package com.obddroid.core.obd;
 import com.obddroid.core.ecu.Conversions;
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ProtoHeader;
-import com.obddroid.core.pvs.PvList;
+import com.obddroid.core.pvs.ProcessVariables.PvList;
 
 import java.util.HashMap;
 import java.util.Iterator;

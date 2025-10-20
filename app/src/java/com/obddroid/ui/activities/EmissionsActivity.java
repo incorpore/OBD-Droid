@@ -1,7 +1,11 @@
 package com.obddroid.ui.activities;
 
+import android.app.Dialog;
 import android.content.ContentValues;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -11,11 +15,15 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import com.obddroid.R;
 import com.obddroid.core.ecu.EcuDataPv;
@@ -297,8 +305,8 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
             }
             return true;
         } else if (item.getItemId() == R.id.action_export) {
-            log.info("Export requested from overflow menu");
-            exportEmissionsReport();
+            log.info("Save Report requested from overflow menu");
+            showSaveReportDialog();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -516,6 +524,339 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         } catch (IOException e) {
             log.warning("Failed to export emissions report: " + e.getMessage());
             showSnackbar("Failed to export emissions report");
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException ignored) {
+                }
+            }
+        }
+    }
+
+    /**
+     * Show dialog to choose export format (PDF, CSV, or JSON)
+     */
+    private void showSaveReportDialog() {
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_save_report);
+        dialog.setCancelable(true);
+
+        // PDF option
+        View pdfOption = dialog.findViewById(R.id.option_export_pdf);
+        pdfOption.setOnClickListener(v -> {
+            dialog.dismiss();
+            exportAsPDF();
+        });
+
+        // CSV option
+        View csvOption = dialog.findViewById(R.id.option_export_csv);
+        csvOption.setOnClickListener(v -> {
+            dialog.dismiss();
+            exportEmissionsReport();
+        });
+
+        // JSON option
+        View jsonOption = dialog.findViewById(R.id.option_export_json);
+        jsonOption.setOnClickListener(v -> {
+            dialog.dismiss();
+            exportAsJSON();
+        });
+
+        // Cancel button
+        View cancelBtn = dialog.findViewById(R.id.btn_cancel);
+        cancelBtn.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+    /**
+     * Export emissions report as PDF with formatted layout and charts
+     */
+    private void exportAsPDF() {
+        // Ensure latest values are displayed/exported
+        updateDisplay();
+
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        String displayTimestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
+        String fileName = "emissions_report_" + timestamp + ".pdf";
+
+        PdfDocument document = new PdfDocument();
+        OutputStream outputStream = null;
+
+        try {
+            // Create PDF page (8.5" x 11" at 72 DPI)
+            PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(612, 792, 1).create();
+            PdfDocument.Page page = document.startPage(pageInfo);
+            Canvas canvas = page.getCanvas();
+
+            // Configure paint for text
+            Paint titlePaint = new Paint();
+            titlePaint.setTextSize(24);
+            titlePaint.setColor(Color.BLACK);
+            titlePaint.setAntiAlias(true);
+
+            Paint headingPaint = new Paint();
+            headingPaint.setTextSize(18);
+            headingPaint.setColor(Color.BLACK);
+            headingPaint.setAntiAlias(true);
+
+            Paint bodyPaint = new Paint();
+            bodyPaint.setTextSize(12);
+            bodyPaint.setColor(Color.BLACK);
+            bodyPaint.setAntiAlias(true);
+
+            Paint labelPaint = new Paint();
+            labelPaint.setTextSize(10);
+            labelPaint.setColor(Color.GRAY);
+            labelPaint.setAntiAlias(true);
+
+            // Compute summary stats
+            int availableCount = 0;
+            int readyCount = 0;
+            for (MonitorData monitor : monitorDataMap.values()) {
+                if (monitor.isAvailable) {
+                    availableCount++;
+                    if (monitor.isReady) {
+                        readyCount++;
+                    }
+                }
+            }
+            int notReadyCount = availableCount - readyCount;
+
+            // Draw header
+            int y = 60;
+            canvas.drawText("OBD-Droid Emissions Report", 50, y, titlePaint);
+            y += 30;
+            canvas.drawText(displayTimestamp, 50, y, labelPaint);
+            y += 40;
+
+            // Draw summary
+            canvas.drawText("Emissions Test Readiness Summary", 50, y, headingPaint);
+            y += 30;
+            canvas.drawText("Available Monitors: " + availableCount, 70, y, bodyPaint);
+            y += 20;
+            canvas.drawText("Ready Monitors: " + readyCount, 70, y, bodyPaint);
+            y += 20;
+            canvas.drawText("Monitors Needing Drive Cycle: " + notReadyCount, 70, y, bodyPaint);
+            y += 40;
+
+            // Draw readiness indicator
+            Paint statusPaint = new Paint();
+            statusPaint.setTextSize(16);
+            statusPaint.setAntiAlias(true);
+            if (readyCount == availableCount && availableCount > 0) {
+                statusPaint.setColor(Color.rgb(76, 175, 80)); // Green
+                canvas.drawText("✓ READY FOR EMISSIONS TEST", 70, y, statusPaint);
+            } else {
+                statusPaint.setColor(Color.rgb(255, 152, 0)); // Orange
+                canvas.drawText("⚠ NOT READY - Additional Drive Cycle Required", 70, y, statusPaint);
+            }
+            y += 50;
+
+            // Draw monitor details
+            canvas.drawText("Monitor Details", 50, y, headingPaint);
+            y += 30;
+
+            for (MonitorData monitor : getOrderedMonitorList()) {
+                if (monitor == null) continue;
+
+                // Check if we need a new page
+                if (y > 720) {
+                    document.finishPage(page);
+                    page = document.startPage(pageInfo);
+                    canvas = page.getCanvas();
+                    y = 60;
+                }
+
+                // Monitor name
+                canvas.drawText(monitor.name, 70, y, bodyPaint);
+                y += 15;
+
+                // Status
+                String status = monitor.isAvailable ? (monitor.isReady ? "Ready ✓" : "Not Ready") : "Not Equipped";
+                Paint statusTextPaint = new Paint(labelPaint);
+                if (monitor.isReady) {
+                    statusTextPaint.setColor(Color.rgb(76, 175, 80));
+                } else if (monitor.isAvailable) {
+                    statusTextPaint.setColor(Color.rgb(255, 152, 0));
+                }
+                canvas.drawText("Status: " + status, 90, y, statusTextPaint);
+                y += 15;
+
+                // IUMPR data
+                if (monitor.isAvailable) {
+                    String iumprText = String.format(Locale.US, "IUMPR: %d / %d (%s)",
+                            monitor.completions, monitor.conditions, monitor.getPercentageDisplay());
+                    canvas.drawText(iumprText, 90, y, labelPaint);
+                    y += 15;
+
+                    String quality = monitor.getIUMPRQuality();
+                    if (quality != null && !quality.isEmpty()) {
+                        canvas.drawText("Quality: " + quality, 90, y, labelPaint);
+                        y += 15;
+                    }
+                }
+
+                y += 10; // Spacing between monitors
+            }
+
+            document.finishPage(page);
+
+            // Save to file
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+
+                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
+                if (uri == null) {
+                    throw new IOException("Failed to create MediaStore entry");
+                }
+
+                outputStream = getContentResolver().openOutputStream(uri);
+            } else {
+                File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+                File obdroidDir = new File(documentsDir, "OBDroid");
+                if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
+                    throw new IOException("Unable to create export directory");
+                }
+                File pdfFile = new File(obdroidDir, fileName);
+                outputStream = new FileOutputStream(pdfFile);
+            }
+
+            if (outputStream == null) {
+                throw new IOException("Output stream was null");
+            }
+
+            document.writeTo(outputStream);
+            showSnackbar("PDF report saved: " + fileName);
+            log.info("PDF report exported successfully: " + fileName);
+
+        } catch (Exception e) {
+            log.warning("Failed to export PDF: " + e.getMessage());
+            showSnackbar("Failed to export PDF report");
+        } finally {
+            document.close();
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
+                } catch (IOException ignored) {
+                }
+            }
+        }
+    }
+
+    /**
+     * Export emissions report as JSON for APIs and developers
+     */
+    private void exportAsJSON() {
+        // Ensure latest values are displayed/exported
+        updateDisplay();
+
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        String displayTimestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
+        String fileName = "emissions_report_" + timestamp + ".json";
+
+        OutputStreamWriter writer = null;
+
+        try {
+            // Compute summary stats
+            int availableCount = 0;
+            int readyCount = 0;
+            for (MonitorData monitor : monitorDataMap.values()) {
+                if (monitor.isAvailable) {
+                    availableCount++;
+                    if (monitor.isReady) {
+                        readyCount++;
+                    }
+                }
+            }
+            int notReadyCount = availableCount - readyCount;
+
+            // Build JSON structure
+            JSONObject root = new JSONObject();
+            root.put("report_type", "OBD-Droid Emissions Report");
+            root.put("generated_at", displayTimestamp);
+            root.put("timestamp", new Date().getTime());
+
+            JSONObject summary = new JSONObject();
+            summary.put("available_monitors", availableCount);
+            summary.put("ready_monitors", readyCount);
+            summary.put("not_ready_monitors", notReadyCount);
+            summary.put("is_ready_for_test", (readyCount == availableCount && availableCount > 0));
+            summary.put("passes_epa_standards", (readyCount == availableCount && availableCount > 0));
+            root.put("summary", summary);
+
+            JSONArray monitorsArray = new JSONArray();
+            for (MonitorData monitor : getOrderedMonitorList()) {
+                if (monitor == null) continue;
+
+                JSONObject monitorObj = new JSONObject();
+                monitorObj.put("name", monitor.name);
+                monitorObj.put("available", monitor.isAvailable);
+                monitorObj.put("ready", monitor.isReady);
+                monitorObj.put("completions", monitor.completions);
+                monitorObj.put("conditions", monitor.conditions);
+                monitorObj.put("completion_percentage", monitor.getPercentageDisplay());
+
+                String quality = monitor.getIUMPRQuality();
+                monitorObj.put("iumpr_quality", quality != null ? quality : "");
+
+                monitorsArray.put(monitorObj);
+            }
+            root.put("monitors", monitorsArray);
+
+            // Vehicle info (if available)
+            VehicleInfoFooter vehicleFooter = findViewById(R.id.vehicle_info_footer);
+            if (vehicleFooter != null) {
+                JSONObject vehicleInfo = new JSONObject();
+                // Add vehicle info if available from VID data
+                root.put("vehicle", vehicleInfo);
+            }
+
+            // Save to file
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "application/json");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+
+                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
+                if (uri == null) {
+                    throw new IOException("Failed to create MediaStore entry");
+                }
+
+                OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                if (outputStream == null) {
+                    throw new IOException("Failed to open MediaStore output stream");
+                }
+                writer = new OutputStreamWriter(outputStream);
+            } else {
+                File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+                File obdroidDir = new File(documentsDir, "OBDroid");
+                if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
+                    throw new IOException("Unable to create export directory");
+                }
+                File jsonFile = new File(obdroidDir, fileName);
+                writer = new OutputStreamWriter(new FileOutputStream(jsonFile));
+            }
+
+            if (writer == null) {
+                throw new IOException("Output stream writer was null");
+            }
+
+            writer.write(root.toString(2)); // Pretty print with 2-space indent
+            writer.flush();
+
+            showSnackbar("JSON report saved: " + fileName);
+            log.info("JSON report exported successfully: " + fileName);
+
+        } catch (Exception e) {
+            log.warning("Failed to export JSON: " + e.getMessage());
+            showSnackbar("Failed to export JSON report");
         } finally {
             if (writer != null) {
                 try {

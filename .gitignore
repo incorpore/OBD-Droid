@@ -118,5 +118,9 @@ Thumbs.db
 .claude/
 CLAUDE.md
 
+# Docs tracking (allow checked-in markdown progress files)
+!/docs/*.md
+
 # DTC Database (copied from submodule during build)
 app/src/main/assets/dtc_codes.db
+/.jdk

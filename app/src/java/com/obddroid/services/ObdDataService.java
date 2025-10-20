@@ -5,9 +5,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
-import com.obddroid.core.pvs.PvList;
-import com.obddroid.core.pvs.PvChangeEvent;
-import com.obddroid.core.pvs.PvChangeListener;
+import com.obddroid.core.pvs.ProcessVariables.ProcessVar;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
+import com.obddroid.core.pvs.ProcessVariables.PvList;
+import com.obddroid.core.pvs.ProcessVariables.TypedPvList;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.core.ecu.EcuDataPv;
 
@@ -21,13 +23,13 @@ public class ObdDataService implements IDataManager {
     private static final Logger log = Logger.getLogger(ObdDataService.class.getName());
 
     // Separate data stores for each service type
-    private final Map<Integer, PvList> serviceDataStores = new ConcurrentHashMap<>();
+    private final Map<Integer, TypedPvList<Object, ProcessVar>> serviceDataStores = new ConcurrentHashMap<>();
 
     // Special storage for freeze frame data indexed by DTC
-    private final Map<Integer, PvList> freezeFrameStores = new ConcurrentHashMap<>();
+    private final Map<Integer, TypedPvList<Object, ProcessVar>> freezeFrameStores = new ConcurrentHashMap<>();
 
     // Cache for the last known good data for each service
-    private final Map<Integer, PvList> dataCache = new ConcurrentHashMap<>();
+    private final Map<Integer, TypedPvList<Object, ProcessVar>> dataCache = new ConcurrentHashMap<>();
 
     // Current active service
     private int currentService = ObdProt.OBD_SVC_NONE;
@@ -61,13 +63,13 @@ public class ObdDataService implements IDataManager {
      */
     private void initializeDataStores() {
         // Create separate PvList for each service type
-        serviceDataStores.put(ObdProt.OBD_SVC_DATA, new PvList());
-        serviceDataStores.put(ObdProt.OBD_SVC_FREEZEFRAME, new PvList());
-        serviceDataStores.put(ObdProt.OBD_SVC_READ_CODES, new PvList());
-        serviceDataStores.put(ObdProt.OBD_SVC_PENDINGCODES, new PvList());
-        serviceDataStores.put(ObdProt.OBD_SVC_PERMACODES, new PvList());
-        serviceDataStores.put(ObdProt.OBD_SVC_VEH_INFO, new PvList());
-        serviceDataStores.put(ObdProt.OBD_SVC_CTRL_MODE, new PvList());
+        serviceDataStores.put(ObdProt.OBD_SVC_DATA, new TypedPvList<>());
+        serviceDataStores.put(ObdProt.OBD_SVC_FREEZEFRAME, new TypedPvList<>());
+        serviceDataStores.put(ObdProt.OBD_SVC_READ_CODES, new TypedPvList<>());
+        serviceDataStores.put(ObdProt.OBD_SVC_PENDINGCODES, new TypedPvList<>());
+        serviceDataStores.put(ObdProt.OBD_SVC_PERMACODES, new TypedPvList<>());
+        serviceDataStores.put(ObdProt.OBD_SVC_VEH_INFO, new TypedPvList<>());
+        serviceDataStores.put(ObdProt.OBD_SVC_CTRL_MODE, new TypedPvList<>());
 
         log.info("ObdDataService initialized with separate data stores for each service");
     }
@@ -76,9 +78,9 @@ public class ObdDataService implements IDataManager {
     public synchronized void onDataReceived(int service, int pid, byte[] data) {
         log.fine("Data received for service " + service + ", PID " + pid);
 
-        PvList store = serviceDataStores.get(service);
+        TypedPvList<Object, ProcessVar> store = serviceDataStores.get(service);
         if (store == null) {
-            store = new PvList();
+            store = new TypedPvList<>();
             serviceDataStores.put(service, store);
         }
 
@@ -92,10 +94,10 @@ public class ObdDataService implements IDataManager {
 
         // Cache the current data before switching
         if (oldService != ObdProt.OBD_SVC_NONE) {
-            PvList currentData = serviceDataStores.get(oldService);
+            TypedPvList<Object, ProcessVar> currentData = serviceDataStores.get(oldService);
             if (currentData != null && !currentData.isEmpty()) {
                 // Create a copy for the cache
-                PvList cached = new PvList();
+                TypedPvList<Object, ProcessVar> cached = new TypedPvList<>();
                 cached.putAll(currentData, PvChangeEvent.PV_ADDED, false);
                 dataCache.put(oldService, cached);
                 log.fine("Cached data for service " + oldService);
@@ -111,7 +113,7 @@ public class ObdDataService implements IDataManager {
     @Override
     public void clearService(int service) {
         log.info("Clearing data for service " + service);
-        PvList store = serviceDataStores.get(service);
+        TypedPvList<Object, ProcessVar> store = serviceDataStores.get(service);
         if (store != null) {
             store.clear();
         }
@@ -122,7 +124,7 @@ public class ObdDataService implements IDataManager {
 
     @Override
     public PvList getDataForService(int service) {
-        PvList data = serviceDataStores.get(service);
+        TypedPvList<Object, ProcessVar> data = serviceDataStores.get(service);
 
         // If no current data, try to return cached data
         if ((data == null || data.isEmpty()) && dataCache.containsKey(service)) {
@@ -131,42 +133,56 @@ public class ObdDataService implements IDataManager {
         }
 
         // Always return a non-null list
-        return data != null ? data : new PvList();
+        return data != null ? data : new TypedPvList<>();
+    }
+
+    /**
+     * Internal typed accessor for service-backed data store.
+     */
+    public TypedPvList<Object, ProcessVar> getTypedStoreForService(int service) {
+        return serviceDataStores.get(service);
     }
 
     @Override
     public PvList getFreezeFrameData(int dtcIndex) {
         // First check if we have specific freeze frame data for this DTC
-        PvList freezeData = freezeFrameStores.get(dtcIndex);
+        TypedPvList<Object, ProcessVar> freezeData = freezeFrameStores.get(dtcIndex);
         if (freezeData != null && !freezeData.isEmpty()) {
             return freezeData;
         }
 
         // Fall back to general freeze frame service data
-        PvList serviceData = serviceDataStores.get(ObdProt.OBD_SVC_FREEZEFRAME);
+        TypedPvList<Object, ProcessVar> serviceData = serviceDataStores.get(ObdProt.OBD_SVC_FREEZEFRAME);
         if (serviceData != null && !serviceData.isEmpty()) {
             return serviceData;
         }
 
         // If still no data, check if we have cached live data we can use
         // This allows freeze frame to work even without explicit freeze frame PIDs
-        PvList liveData = serviceDataStores.get(ObdProt.OBD_SVC_DATA);
+        TypedPvList<Object, ProcessVar> liveData = serviceDataStores.get(ObdProt.OBD_SVC_DATA);
         if (liveData != null && !liveData.isEmpty()) {
             log.fine("Using live data as fallback for freeze frame DTC " + dtcIndex);
             // Create a copy so modifications don't affect live data
-            PvList copy = new PvList();
+            TypedPvList<Object, ProcessVar> copy = new TypedPvList<>();
             copy.putAll(liveData, PvChangeEvent.PV_ADDED, false);
             return copy;
         }
 
         // Return empty list if no data available
-        return new PvList();
+        return new TypedPvList<>();
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void storeFreezeFrameData(int dtcIndex, PvList data) {
         log.fine("Storing freeze frame data for DTC index " + dtcIndex);
-        freezeFrameStores.put(dtcIndex, data);
+        if (data instanceof TypedPvList) {
+            freezeFrameStores.put(dtcIndex, (TypedPvList<Object, ProcessVar>) data);
+        } else {
+            TypedPvList<Object, ProcessVar> typed = new TypedPvList<>();
+            typed.putAll(data, PvChangeEvent.PV_ADDED, false);
+            freezeFrameStores.put(dtcIndex, typed);
+        }
     }
 
     /**
@@ -174,7 +190,7 @@ public class ObdDataService implements IDataManager {
      */
     private void storeFreezeFrameDataInternal(int pid, byte[] data) {
         // Store in both the service store and DTC-specific store
-        PvList freezeStore = serviceDataStores.get(ObdProt.OBD_SVC_FREEZEFRAME);
+        TypedPvList<Object, ProcessVar> freezeStore = serviceDataStores.get(ObdProt.OBD_SVC_FREEZEFRAME);
         if (freezeStore != null) {
             // Create or update the PV for this PID
             EcuDataPv pv = new EcuDataPv();
@@ -195,7 +211,7 @@ public class ObdDataService implements IDataManager {
         dataListeners.put(listener, service);
 
         // Also register with the actual PvList if it exists
-        PvList store = serviceDataStores.get(service);
+        TypedPvList<Object, ProcessVar> store = serviceDataStores.get(service);
         if (store != null && listener instanceof PvChangeListener) {
             store.addPvChangeListener((PvChangeListener) listener,
                 PvChangeEvent.PV_ADDED | PvChangeEvent.PV_CLEARED | PvChangeEvent.PV_MODIFIED);
@@ -208,7 +224,7 @@ public class ObdDataService implements IDataManager {
 
         // Also unregister from the PvList
         if (service != null) {
-            PvList store = serviceDataStores.get(service);
+            TypedPvList<Object, ProcessVar> store = serviceDataStores.get(service);
             if (store != null && listener instanceof PvChangeListener) {
                 store.removePvChangeListener((PvChangeListener) listener);
             }
@@ -235,10 +251,10 @@ public class ObdDataService implements IDataManager {
         log.info("Pre-populating freeze frame data");
 
         // Get current live data
-        PvList liveData = serviceDataStores.get(ObdProt.OBD_SVC_DATA);
+        TypedPvList<Object, ProcessVar> liveData = serviceDataStores.get(ObdProt.OBD_SVC_DATA);
         if (liveData != null && !liveData.isEmpty()) {
             // Copy live data to freeze frame store
-            PvList freezeData = serviceDataStores.get(ObdProt.OBD_SVC_FREEZEFRAME);
+            TypedPvList<Object, ProcessVar> freezeData = serviceDataStores.get(ObdProt.OBD_SVC_FREEZEFRAME);
             if (freezeData != null) {
                 freezeData.putAll(liveData, PvChangeEvent.PV_ADDED, false);
                 log.fine("Copied " + liveData.size() + " PIDs from live data to freeze frame");

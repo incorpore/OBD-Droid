@@ -1,7 +1,7 @@
 package com.obddroid.services;
 
-import com.obddroid.core.pvs.PvList;
-import com.obddroid.core.pvs.PvChangeEvent;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
+import com.obddroid.core.pvs.ProcessVariables.PvList;
 
 /**
  * Interface for managing OBD data independently of protocol implementation

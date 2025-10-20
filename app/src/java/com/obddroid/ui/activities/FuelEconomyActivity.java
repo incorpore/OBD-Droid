@@ -13,8 +13,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.obddroid.R;
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.pvs.PvChangeEvent;
-import com.obddroid.core.pvs.PvChangeListener;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
 import com.obddroid.ui.components.FuelEconomyChart;
 import com.obddroid.ui.components.FuelFlowGauge;
 import com.obddroid.ui.components.VehicleInfoFooter;
@@ -224,15 +224,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
     @Override
     public boolean onCreateOptionsMenu(android.view.Menu menu) {
-        // Add calibration icon to action bar
-        menu.add(0, 3, 0, "Calibrate")
-            .setIcon(android.R.drawable.ic_menu_manage)
-            .setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_IF_ROOM);
-
-        // Add info icon to action bar (right side)
-        menu.add(0, 2, 1, "Info")
-            .setIcon(android.R.drawable.ic_menu_info_details)
-            .setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
+        getMenuInflater().inflate(R.menu.fuel_economy_menu, menu);
         return true;
     }
 
@@ -240,10 +232,10 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     public boolean onOptionsItemSelected(android.view.MenuItem item) {
         int itemId = item.getItemId();
 
-        if (itemId == 2) {
+        if (itemId == R.id.action_info) {
             showInfoDialog();
             return true;
-        } else if (itemId == 3) {
+        } else if (itemId == R.id.action_calibrate) {
             showCalibrationDialog();
             return true;
         }
@@ -953,18 +945,8 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private void updateDisplayedValues() {
         // This method is called periodically - actively pull OBD data as backup to PV listener
         try {
-            log.info("=== updateDisplayedValues() called - PidPvs size: " + ObdProt.PidPvs.size());
-
-            // Debug: Log all PIDs in the collection
-            try {
-                java.util.Set<Object> keys = ObdProt.PidPvs.keySet();
-                log.info("PidPvs keys: " + keys.toString());
-            } catch (Exception e) {
-                log.warning("Could not get PidPvs keys: " + e.getMessage());
-            }
-
-            // Force MPG calculation update from current OBD values
-            updateMPGCalculation();
+        // Force MPG calculation update from current OBD values
+        updateMPGCalculation();
 
             // Update throttle position
             float throttle = getThrottlePosition();
@@ -975,9 +957,9 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
             // Update fuel level if available
             // Key format is "PID.SENSOR.BANK" e.g. "2F.0.0"
-            Object fuelLevelPv = ObdProt.PidPvs.get("2F.0.0");
-            if (fuelLevelPv instanceof EcuDataPv) {
-                Object value = ((EcuDataPv) fuelLevelPv).get(EcuDataPv.FID_VALUE);
+            EcuDataPv fuelLevelPv = ObdProt.PidPvs.getTyped("2F.0.0");
+            if (fuelLevelPv != null) {
+                Object value = fuelLevelPv.get(EcuDataPv.FID_VALUE);
                 if (value != null) {
                     float fuelLevel = Float.parseFloat(value.toString());
                     fuelLevelValue.setText(String.format("%.1f", fuelLevel));
@@ -995,10 +977,10 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         // Get current speed from OBD data (PID 0x0D)
         // Key format is "PID.SENSOR.BANK" e.g. "0D.0.0"
         try {
-            Object speedPv = ObdProt.PidPvs.get("0D.0.0");
+            EcuDataPv speedPv = ObdProt.PidPvs.getTyped("0D.0.0");
             log.info("Speed PV lookup: " + (speedPv != null ? "FOUND" : "NULL"));
-            if (speedPv instanceof EcuDataPv) {
-                Object value = ((EcuDataPv) speedPv).get(EcuDataPv.FID_VALUE);
+            if (speedPv != null) {
+                Object value = speedPv.get(EcuDataPv.FID_VALUE);
                 log.info("Speed value: " + value);
                 if (value != null) {
                     float kmh = Float.parseFloat(value.toString());
@@ -1040,10 +1022,10 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         // Get current engine load from OBD data (PID 0x04)
         // Key format is "PID.SENSOR.BANK" e.g. "04.0.0"
         try {
-            Object loadPv = ObdProt.PidPvs.get("04.0.0");
+            EcuDataPv loadPv = ObdProt.PidPvs.getTyped("04.0.0");
             log.info("Load PV lookup: " + (loadPv != null ? "FOUND" : "NULL"));
-            if (loadPv instanceof EcuDataPv) {
-                Object value = ((EcuDataPv) loadPv).get(EcuDataPv.FID_VALUE);
+            if (loadPv != null) {
+                Object value = loadPv.get(EcuDataPv.FID_VALUE);
                 log.info("Load value: " + value);
                 if (value != null) {
                     float load = Float.parseFloat(value.toString());
@@ -1062,9 +1044,9 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         // Get throttle position from OBD data (PID 0x11)
         // Key format is "PID.SENSOR.BANK" e.g. "11.0.0"
         try {
-            Object throttlePv = ObdProt.PidPvs.get("11.0.0");
-            if (throttlePv instanceof EcuDataPv) {
-                Object value = ((EcuDataPv) throttlePv).get(EcuDataPv.FID_VALUE);
+            EcuDataPv throttlePv = ObdProt.PidPvs.getTyped("11.0.0");
+            if (throttlePv != null) {
+                Object value = throttlePv.get(EcuDataPv.FID_VALUE);
                 if (value != null) {
                     float throttle = Float.parseFloat(value.toString());
                     return throttle;
@@ -1089,10 +1071,10 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
      */
     private float getManifoldPressure() {
         try {
-            Object mapPv = ObdProt.PidPvs.get("0B.0.0");
+            EcuDataPv mapPv = ObdProt.PidPvs.getTyped("0B.0.0");
             log.fine("MAP PV lookup: " + (mapPv != null ? "FOUND" : "NULL"));
-            if (mapPv instanceof EcuDataPv) {
-                Object value = ((EcuDataPv) mapPv).get(EcuDataPv.FID_VALUE);
+            if (mapPv != null) {
+                Object value = mapPv.get(EcuDataPv.FID_VALUE);
                 if (value != null) {
                     float mapKpa = Float.parseFloat(value.toString());
                     log.fine("MAP: " + mapKpa + " kPa");

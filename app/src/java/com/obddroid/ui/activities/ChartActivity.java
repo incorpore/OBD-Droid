@@ -26,7 +26,6 @@ import com.obddroid.core.obd.ObdProt;
 
 import com.obddroid.ui.components.AutoHider;
 import com.obddroid.utils.ExportTask;
-import com.obddroid.utils.Screenshot;
 import com.obddroid.ui.adapters.ColorAdapter;
 import com.obddroid.ui.adapters.ObdItemAdapter;
 import com.obddroid.R;
@@ -256,9 +255,9 @@ public class ChartActivity extends AppCompatActivity
 				new ExportTask(this).execute(sensorData);
 				break;
 
-			case R.id.snapshot:
-				Screenshot.takeScreenShot(this, getWindow().peekDecorView());
-				break;
+			// case R.id.snapshot:
+			// 	Screenshot.takeScreenShot(this, getWindow().peekDecorView());
+			// 	break;
 		}
 		return super.onOptionsItemSelected(item);
 	}

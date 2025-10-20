@@ -52,10 +52,10 @@ import com.obddroid.core.ecu.EcuDataItems;
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.pvs.ProcessVar;
-import com.obddroid.core.pvs.PvChangeEvent;
-import com.obddroid.core.pvs.PvChangeListener;
-import com.obddroid.core.pvs.PvList;
+import com.obddroid.core.pvs.ProcessVariables.ProcessVar;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
+import com.obddroid.core.pvs.ProcessVariables.PvList;
 
 import com.obddroid.ui.adapters.FaultCodeAdapter;
 import com.obddroid.ui.adapters.ObdItemAdapter;

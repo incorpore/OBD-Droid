@@ -15,10 +15,11 @@ import android.widget.TextView;
 import com.obddroid.core.ecu.Conversion;
 import com.obddroid.core.ecu.EcuDataItem;
 import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.pvs.IndexedProcessVar;
-import com.obddroid.core.pvs.PvChangeEvent;
-import com.obddroid.core.pvs.PvChangeListener;
-import com.obddroid.core.pvs.PvList;
+import com.obddroid.core.pvs.ProcessVariables.IndexedProcessVar;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
+import com.obddroid.core.pvs.ProcessVariables.PvList;
+import com.obddroid.core.pvs.ProcessVariables.TypedPvList;
 
 import org.achartengine.model.XYSeries;
 
@@ -27,6 +28,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.obddroid.ui.activities.SettingsActivity;
@@ -104,7 +106,6 @@ public class ObdItemAdapter extends ArrayAdapter<Object>
      * @param pvs list of PVs to be handled
      * @return Set of filtered data items
      */
-    @SuppressWarnings("unchecked") // ProcessVar extends raw HashMap - keys are always Strings in PvList
     Collection getPreferredItems(PvList pvs)
     {
         // Get preference selections
@@ -113,7 +114,18 @@ public class ObdItemAdapter extends ArrayAdapter<Object>
         // If no preferences set, or preferences are empty, show all available PIDs
         if (pidsToShow == null || pidsToShow.isEmpty()) {
             // Show all available PIDs by default
-            pidsToShow = (Set<String>) pvs.keySet();
+            if (pvs instanceof TypedPvList) {
+                TypedPvList<String, ?> typed = (TypedPvList<String, ?>) pvs;
+                Set<String> allKeys = new HashSet<>();
+                for (Map.Entry<String, ?> entry : typed.entrySetTyped()) {
+                    allKeys.add(entry.getKey());
+                }
+                pidsToShow = allKeys;
+            } else {
+                @SuppressWarnings("unchecked")
+                Set<String> rawKeys = (Set<String>) pvs.keySet();
+                pidsToShow = rawKeys;
+            }
         }
 
         return getMatchingItems(pvs, pidsToShow);

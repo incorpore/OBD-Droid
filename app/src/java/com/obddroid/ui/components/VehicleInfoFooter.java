@@ -23,11 +23,11 @@ import com.obddroid.core.obd.ElmProt;
 import com.automotivelogolibrary.AutomotiveLogoLibraryAndroid;
 import com.obddroid.vehicle.VehicleManager;
 import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.pvs.PvList;
+import com.obddroid.core.pvs.ProcessVariables.PvList;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.core.obd.Messages;
-import com.obddroid.core.pvs.PvChangeListener;
-import com.obddroid.core.pvs.PvChangeEvent;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.Locale;
 
@@ -717,6 +717,15 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
      */
     public void collapse() {
         if (isExpanded) {
+            toggleExpanded();
+        }
+    }
+
+    /**
+     * Expand the footer if it's collapsed
+     */
+    public void expand() {
+        if (!isExpanded) {
             toggleExpanded();
         }
     }

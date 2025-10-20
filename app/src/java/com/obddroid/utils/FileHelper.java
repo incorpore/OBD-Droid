@@ -8,9 +8,13 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.pvs.PvList;
+import com.obddroid.core.pvs.ProcessVariables.ProcessVar;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
+import com.obddroid.core.pvs.ProcessVariables.PvList;
+import com.obddroid.core.pvs.ProcessVariables.TypedPvList;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -18,6 +22,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -206,9 +211,9 @@ public class FileHelper
 	 * @param uri URI of file to be loaded
 	 */
 	// Suppress deprecation - Using deprecated ObdProt fields for backward-compatible deserialization
-	@SuppressLint("DefaultLocale")
-	@SuppressWarnings({"UnusedReturnValue", "deprecation"})
-	private synchronized int loadData(final Uri uri)
+    @SuppressLint("DefaultLocale")
+    @SuppressWarnings({"UnusedReturnValue", "deprecation", "unchecked"})
+    private synchronized int loadData(final Uri uri)
 	{
 		int numBytesLoaded = 0;
 		String msg;
@@ -226,9 +231,12 @@ public class FileHelper
 			/* if data was saved in mode 0, keep current mode */
 			if(currService != 0) elm.setService(currService, false);
 			/* read in the data */
-			ObdProt.PidPvs = (PvList) oIn.readObject();
-			ObdProt.VidPvs = (PvList) oIn.readObject();
-			ObdProt.tCodes = (PvList) oIn.readObject();
+            Object pidObj = oIn.readObject();
+            mergePvList(ObdProt.PidPvs, pidObj);
+            Object vidObj = oIn.readObject();
+            mergePvList(ObdProt.VidPvs, vidObj);
+            Object codeObj = oIn.readObject();
+            mergePvList(ObdProt.tCodes, codeObj);
 			// Plugin data removed - try to skip if present in old files
 			try {
 				oIn.readObject(); // Skip plugin data if present
@@ -246,5 +254,20 @@ public class FileHelper
 			log.log(Level.SEVERE, uri.toString(), ex);
 		}
 		return numBytesLoaded;
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void mergePvList(PvList target, Object source) {
+		if (target == null || source == null) {
+			return;
+		}
+
+		if (source instanceof PvList) {
+			target.clear();
+			target.putAll((PvList) source, PvChangeEvent.PV_ADDED, false);
+		} else if (source instanceof Map) {
+			target.clear();
+			target.putAll((Map) source);
+		}
 	}
 }
