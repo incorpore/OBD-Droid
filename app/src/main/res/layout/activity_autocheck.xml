@@ -108,11 +108,11 @@
                                 android:id="@+id/loading_text"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="🔍 Analyzing vehicle history...\n\n📄 Generating detailed PDF report...\n\n⏱️ This may take 30-60 seconds"
+                                android:text="🔍 Analyzing vehicle history...\n\n📄 Generating comprehensive report...\n\n⏱️ This may take 30-60 seconds"
                                 android:textColor="#B0BEC5"
-                                android:textSize="14sp"
-                                android:gravity="center"
+                                android:textSize="15sp"
                                 android:lineSpacingExtra="6dp"
+                                android:gravity="center"
                                 android:layout_marginTop="20dp"/>
 
                         </LinearLayout>
@@ -439,10 +439,11 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Key Statistics"
-                                android:textSize="18sp"
+                                android:textSize="20sp"
                                 android:textStyle="bold"
                                 android:textColor="#FFFFFF"
-                                android:paddingBottom="16dp"/>
+                                android:paddingBottom="16dp"
+                                android:letterSpacing="0.02"/>
 
                             <!-- 2x2 Grid -->
                             <GridLayout
@@ -620,10 +621,11 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Safety &amp; Title Overview"
-                                android:textSize="18sp"
+                                android:textSize="20sp"
                                 android:textStyle="bold"
                                 android:textColor="#FFFFFF"
-                                android:paddingBottom="16dp"/>
+                                android:paddingBottom="16dp"
+                                android:letterSpacing="0.02"/>
 
                             <!-- Title Brand -->
                             <LinearLayout
@@ -821,18 +823,19 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Vehicle Specifications"
-                                android:textSize="18sp"
+                                android:textSize="20sp"
                                 android:textStyle="bold"
                                 android:textColor="#FFFFFF"
-                                android:paddingBottom="16dp"/>
+                                android:paddingBottom="16dp"
+                                android:letterSpacing="0.02"/>
 
                             <TextView
                                 android:id="@+id/vehicle_details_text"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:textSize="14sp"
+                                android:textSize="15sp"
                                 android:textColor="#B0BEC5"
-                                android:lineSpacingExtra="6dp"/>
+                                android:lineSpacingExtra="8dp"/>
 
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
@@ -859,10 +862,11 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Vehicle History Timeline"
-                                android:textSize="18sp"
+                                android:textSize="20sp"
                                 android:textStyle="bold"
                                 android:textColor="#FFFFFF"
-                                android:paddingBottom="8dp"/>
+                                android:paddingBottom="8dp"
+                                android:letterSpacing="0.02"/>
 
                             <TextView
                                 android:id="@+id/timeline_summary"
