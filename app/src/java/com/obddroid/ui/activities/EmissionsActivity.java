@@ -1,9 +1,14 @@
 package com.obddroid.ui.activities;
 
+import android.content.ContentValues;
 import android.graphics.Color;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -23,10 +28,14 @@ import com.obddroid.utils.SnackbarHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 
 /**
  * Emissions Diagnostics Activity
@@ -54,7 +63,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
     private View snackbarAnchor;  // Anchor view for snackbars
 
     // Monitor tracking
-    private Map<String, MonitorData> monitorDataMap = new HashMap<>();
+    private Map<String, MonitorData> monitorDataMap = new java.util.LinkedHashMap<>();
 
     // Update handler
     private Handler updateHandler = new Handler(Looper.getMainLooper());
@@ -270,20 +279,19 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        log.info("onOptionsItemSelected: ID=" + item.getItemId() + ", R.id.action_refresh=" + R.id.action_refresh);
+        log.info("onOptionsItemSelected: ID=" + item.getItemId());
 
         if (item.getItemId() == android.R.id.home) {
             finish();
             return true;
-        } else if (item.getItemId() == R.id.action_refresh) {
-            log.info("Refresh button clicked!");
-            // Trigger immediate data refresh
+        } else if (item.getItemId() == R.id.action_rescan) {
+            log.info("Rescan requested from overflow menu");
             updateDisplay();
-
-            // Show feedback to user
-            log.info("Showing Snackbar...");
             showSnackbar("Refreshing emissions data...");
-            log.info("Snackbar shown");
+            return true;
+        } else if (item.getItemId() == R.id.action_export) {
+            log.info("Export requested from overflow menu");
+            exportEmissionsReport();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -337,6 +345,134 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
                 updateHandler.postDelayed(this, UPDATE_INTERVAL);
             }
         }, UPDATE_INTERVAL);
+    }
+
+    private boolean hasExportableData() {
+        for (MonitorData monitor : monitorDataMap.values()) {
+            if (monitor.isAvailable || monitor.conditions > 0 || monitor.completions > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private java.util.List<MonitorData> getOrderedMonitorList() {
+        java.util.List<MonitorData> ordered = new java.util.ArrayList<>();
+        ordered.add(monitorDataMap.get("MISFIRE"));
+        ordered.add(monitorDataMap.get("FUEL"));
+        ordered.add(monitorDataMap.get("CCM"));
+        ordered.add(monitorDataMap.get("CATALYST"));
+        ordered.add(monitorDataMap.get("EVAP"));
+        ordered.add(monitorDataMap.get("O2SENSOR"));
+        ordered.add(monitorDataMap.get("O2HEATER"));
+        ordered.add(monitorDataMap.get("EGR"));
+        ordered.add(monitorDataMap.get("AIR"));
+        return ordered;
+    }
+
+    private void exportEmissionsReport() {
+        if (!hasExportableData()) {
+            showSnackbar("No emissions data available to export yet");
+            return;
+        }
+
+        // Ensure latest values are displayed/exported
+        updateDisplay();
+
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        String displayTimestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
+        String fileName = "emissions_report_" + timestamp + ".csv";
+
+        OutputStreamWriter writer = null;
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+
+                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
+                if (uri == null) {
+                    throw new IOException("Failed to create MediaStore entry");
+                }
+
+                OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                if (outputStream == null) {
+                    throw new IOException("Failed to open MediaStore output stream");
+                }
+                writer = new OutputStreamWriter(outputStream);
+            } else {
+                File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+                File obdroidDir = new File(documentsDir, "OBDroid");
+                if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
+                    throw new IOException("Unable to create export directory: " + obdroidDir.getAbsolutePath());
+                }
+                File csvFile = new File(obdroidDir, fileName);
+                writer = new OutputStreamWriter(new FileOutputStream(csvFile));
+            }
+
+            if (writer == null) {
+                throw new IOException("Output stream writer was null");
+            }
+
+            // Compute summary stats
+            int availableCount = 0;
+            int readyCount = 0;
+            for (MonitorData monitor : monitorDataMap.values()) {
+                if (monitor.isAvailable) {
+                    availableCount++;
+                    if (monitor.isReady) {
+                        readyCount++;
+                    }
+                }
+            }
+            int notReadyCount = availableCount - readyCount;
+
+            writer.write(String.format(Locale.US,
+                    "OBD-Droid Emissions Report,%s\n", displayTimestamp));
+            writer.write(String.format(Locale.US,
+                    "Available Monitors,%d\nReady Monitors,%d\nMonitors Needing Drive Cycle,%d\n\n",
+                    availableCount, readyCount, notReadyCount));
+            writer.write("Monitor,Available,Ready,Completions,Conditions,Completion %,IUMPR Quality\n");
+
+            for (MonitorData monitor : getOrderedMonitorList()) {
+                if (monitor == null) {
+                    continue;
+                }
+                String completionPercent = monitor.getPercentageDisplay();
+                String quality = monitor.getIUMPRQuality();
+                // Avoid commas disrupting CSV by replacing with semicolons
+                if (quality != null) {
+                    quality = quality.replace(",", ";");
+                } else {
+                    quality = "";
+                }
+
+                writer.write(String.format(Locale.US,
+                        "\"%s\",%s,%s,%d,%d,%s,%s\n",
+                        monitor.name,
+                        monitor.isAvailable ? "Yes" : "No",
+                        monitor.isReady ? "Yes" : "No",
+                        monitor.completions,
+                        monitor.conditions,
+                        completionPercent,
+                        quality));
+            }
+
+            writer.flush();
+            showSnackbar("Emissions report saved: " + fileName);
+            log.info("Emissions report exported successfully: " + fileName);
+        } catch (IOException e) {
+            log.warning("Failed to export emissions report: " + e.getMessage());
+            showSnackbar("Failed to export emissions report");
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException ignored) {
+                }
+            }
+        }
     }
 
     private void updateDisplay() {

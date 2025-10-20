@@ -11,14 +11,59 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <!-- RecyclerView for ECU List -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/ecu_recycler_view"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingTop="8dp"
-            android:paddingBottom="80dp" />
+            android:orientation="vertical">
+
+            <!-- Info Card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="12dp"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#E3F2FD">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ℹ️"
+                        android:textSize="20sp"
+                        android:layout_marginEnd="12dp"/>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Discover and view all Electronic Control Units (ECUs) in your vehicle. Compare scans to detect calibration changes and potential tampering."
+                        android:textSize="13sp"
+                        android:textColor="#1565C0"
+                        android:lineSpacingExtra="2dp"/>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- RecyclerView for ECU List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/ecu_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clipToPadding="false"
+                android:paddingTop="0dp"
+                android:paddingBottom="80dp" />
+
+        </LinearLayout>
 
         <!-- Empty View -->
         <LinearLayout
