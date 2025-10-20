@@ -3,6 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_import_report"
+        android:title="Import Report"
+        android:icon="@android:drawable/ic_menu_upload"
+        app:showAsAction="never"/>
+
+    <item
         android:id="@+id/action_save_report"
         android:title="Save Report"
         android:icon="@android:drawable/ic_menu_save"

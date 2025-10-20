@@ -3,6 +3,6 @@
 - [x] Introduce typed wrappers for `ProcessVar`/`PvList`
 - [x] Migrate ObdDataService and ObdProt to typed APIs
 - [x] Update adapters/activities to consume typed PVs
-- [ ] Add threading/locking improvements
+- [x] Add threading/locking improvements
 - [ ] Replace event bitmask with richer model
 - [ ] Remove legacy raw-map classes once migration completes
