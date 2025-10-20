@@ -5,13 +5,13 @@
     <item
         android:id="@+id/action_import_report"
         android:title="Import Report"
-        android:icon="@android:drawable/ic_menu_upload"
+        android:icon="@drawable/ic_file_download_24"
         app:showAsAction="never"/>
 
     <item
         android:id="@+id/action_save_report"
         android:title="Save Report"
-        android:icon="@android:drawable/ic_menu_save"
+        android:icon="@drawable/ic_save_24"
         app:showAsAction="never"/>
 
 </menu>

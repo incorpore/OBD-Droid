@@ -3,10 +3,10 @@
 **Assigned Agent:** Agent A
 
 ## TODO
-- [ ] Draft `RawToPhysicalConverter` + adapter implementation; submit for review to validate interface naming.
-- [ ] Sketch data classes for `PidDefinition`/`PidRuntime` and outline migration facade for `EcuDataItem`.
-- [ ] Prototype `DtcCatalog` interface and wire both resource + database implementations behind feature flags.
-- [ ] Define CI test matrix and create placeholder Gradle tasks so future test suites slot in without friction.
+- [x] Draft `RawToPhysicalConverter` + adapter implementation; submit for review to validate interface naming.
+- [x] Sketch data classes for `PidDefinition`/`PidRuntime` and outline migration facade for `EcuDataItem`.
+- [x] Prototype `DtcCatalog` interface and wire both resource + database implementations behind feature flags.
+- [x] Define CI test matrix and create placeholder Gradle tasks so future test suites slot in without friction.
 
 ## Class Renaming Matrix
 
@@ -133,12 +133,26 @@
 - Update ProGuard/R8 keep rules to preserve compatibility facades during transition.
 - Add logging guidelines to ensure unified tag/structured payload usage across modules.
 
+### Recent Implementations
+
+- Introduced `RawToPhysicalConverter` / `PhysicalValueFormatter` contracts alongside `LegacyConversionAdapter` wrappers.
+- Added immutable `PidDefinition`, mutable `PidRuntime`, and `LegacyEcuDataItemBridge` to stage the migration away from `EcuDataItem`.
+- Created `DtcCatalog` interface with a `DtcCatalogProvider` that switches between resource and database catalogues via a supplied feature toggle.
+- Registered Gradle placeholder tasks (`testEcuConversions`, `testPidDefinitions`) ready for CI wiring.
+
+## CI Test Matrix
+
+- `conversion-regression`: Validate each conversion implementation (linear, hash, bitmap, readiness) over representative raw payloads.
+- `pid-definition-parsing`: Exercise CSV/resource ingestion into `PidDefinition` objects, including bitmask edge cases.
+- `catalog-lookup`: Compare results between resource-backed and database-backed catalogues under identical inputs and locale settings.
+- `runtime-pipeline-smoke`: Ensure `LegacyEcuDataItemBridge` integrates with existing polling/update flows without altering payload semantics.
+
 ## Immediate Action Items
 
-- Draft `RawToPhysicalConverter` + adapter implementation; submit for review to validate interface naming.
-- Sketch data classes for `PidDefinition`/`PidRuntime` and outline migration facade for `EcuDataItem`.
-- Prototype `DtcCatalog` interface and wire both resource + database implementations behind feature flags.
-- Define CI test matrix and create placeholder Gradle tasks so future test suites slot in without friction.
+- Author unit tests targeting `LegacyConversionAdapter` and the new bridge classes.
+- Begin migrating high-traffic call sites (`EcuDataItem`, `EcuDataItems`) to consume `PidDefinition`/`PidRuntime`.
+- Wire the `DtcCatalogProvider` into the application dependency graph and connect feature toggle plumbing.
+- Populate the new Gradle tasks with actual test suite invocations once coverage is in place.
 
 ## Open Questions / Pending Investigations
 

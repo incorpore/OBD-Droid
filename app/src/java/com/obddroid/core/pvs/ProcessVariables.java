@@ -3,6 +3,7 @@ package com.obddroid.core.pvs;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.EventListener;
+import java.util.EnumSet;
 import java.util.EventObject;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,6 +53,20 @@ public final class ProcessVariables {
          */
         void pvChanged(PvChangeEvent event);
 
+    }
+
+    /**
+     * Listener bridge that consumes the modern {@link PvChange} payload while
+     * still satisfying the legacy {@link PvChangeEvent}-based contract.
+     */
+    public interface TypedPvChangeListener extends PvChangeListener {
+
+        void pvChanged(PvChange change);
+
+        @Override
+        default void pvChanged(PvChangeEvent event) {
+            pvChanged(PvChange.fromEvent(event));
+        }
     }
 
     /**
@@ -124,6 +139,158 @@ public final class ProcessVariables {
 
         public void setTime(long time) {
             this.time = time;
+        }
+    }
+
+    /**
+     * Enumerates the high-level change categories surfaced by {@link PvChange}.
+     * The constants are ordered by precedence so {@link PvChange#getPrimaryType()}
+     * yields a stable, meaningful default.
+     */
+    public enum PvChangeType {
+        ADDED(PvChangeEvent.PV_ADDED),
+        MODIFIED(PvChangeEvent.PV_MODIFIED),
+        REMOVED(PvChangeEvent.PV_DELETED),
+        CLEARED(PvChangeEvent.PV_CLEARED),
+        CONFIRMED(PvChangeEvent.PV_CONFIRMED),
+        MANUAL_OVERRIDE(PvChangeEvent.PV_MANUAL_MOD),
+        ERROR(PvChangeEvent.PV_ERROR),
+        ELIMINATED(PvChangeEvent.PV_ELIMINATED),
+        NONE(PvChangeEvent.PV_NOACTION);
+
+        private final int legacyMask;
+
+        PvChangeType(int legacyMask) {
+            this.legacyMask = legacyMask;
+        }
+
+        int getLegacyMask() {
+            return legacyMask;
+        }
+    }
+
+    /**
+     * Modernised change payload used by {@link TypedPvChangeListener} to access
+     * structured information about PV updates without relying on bitmasks.
+     */
+    public static final class PvChange {
+        private final ProcessVar source;
+        private final Object key;
+        private final Object value;
+        private final Set<PvChangeType> types;
+        private final PvChangeType primaryType;
+        private final boolean childChange;
+        private final long timestamp;
+        private final int legacyMask;
+
+        private PvChange(ProcessVar source,
+                         Object key,
+                         Object value,
+                         Set<PvChangeType> types,
+                         PvChangeType primaryType,
+                         boolean childChange,
+                         long timestamp,
+                         int legacyMask) {
+            this.source = source;
+            this.key = key;
+            this.value = value;
+            this.types = types;
+            this.primaryType = primaryType;
+            this.childChange = childChange;
+            this.timestamp = timestamp;
+            this.legacyMask = legacyMask;
+        }
+
+        public static PvChange fromEvent(PvChangeEvent event) {
+            if (event == null) {
+                throw new IllegalArgumentException("event == null");
+            }
+            int fullMask = event.isChildEvent()
+                ? event.getType() | PvChangeEvent.PV_CHILDCHANGE
+                : event.getType();
+
+            EnumSet<PvChangeType> mappedTypes = EnumSet.noneOf(PvChangeType.class);
+            PvChangeType primary = PvChangeType.NONE;
+
+            for (PvChangeType candidate : PvChangeType.values()) {
+                if (candidate == PvChangeType.NONE) {
+                    continue;
+                }
+                if ((event.getType() & candidate.getLegacyMask()) != 0) {
+                    mappedTypes.add(candidate);
+                    if (primary == PvChangeType.NONE) {
+                        primary = candidate;
+                    }
+                }
+            }
+
+            if (mappedTypes.isEmpty()) {
+                mappedTypes.add(PvChangeType.NONE);
+                primary = PvChangeType.NONE;
+            }
+
+            ProcessVar source = event.getSource() instanceof ProcessVar
+                ? (ProcessVar) event.getSource()
+                : null;
+
+            return new PvChange(
+                source,
+                event.getKey(),
+                event.getValue(),
+                Collections.unmodifiableSet(mappedTypes),
+                primary,
+                event.isChildEvent(),
+                event.getTime(),
+                fullMask
+            );
+        }
+
+        public ProcessVar getSource() {
+            return source;
+        }
+
+        public Object getKey() {
+            return key;
+        }
+
+        public Object getValue() {
+            return value;
+        }
+
+        public Set<PvChangeType> getTypes() {
+            return types;
+        }
+
+        public PvChangeType getPrimaryType() {
+            return primaryType;
+        }
+
+        public boolean includes(PvChangeType type) {
+            return types.contains(type);
+        }
+
+        public boolean isChildChange() {
+            return childChange;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        int getLegacyMask() {
+            return legacyMask;
+        }
+
+        public PvChangeEvent toLegacyEvent() {
+            ProcessVar eventSource = source != null ? source : new ProcessVar();
+            PvChangeEvent event = new PvChangeEvent(
+                eventSource,
+                key,
+                value,
+                legacyMask
+            );
+            event.setTime(timestamp);
+            return event;
         }
     }
 

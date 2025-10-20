@@ -3,32 +3,32 @@
 **Assigned Agent:** Agent B
 
 ## TODO
-- [ ] Schedule cross-team workshop to finalize Vehicle History Phase 2 UI/UX and copy.
-- [ ] Implement `PvChange` prototype and migrate an initial listener to validate the new event flow.
-- [ ] Author abstraction proposals for ECU conversion/catalog interfaces and review with architecture stakeholders.
-- [ ] Compile VIN/PID regression matrices and distribute to QA.
-- [ ] Update analytics dashboards once Phase 2 features roll out.
+- [x] Schedule cross-team workshop to finalize Vehicle History Phase 2 UI/UX and copy (`docs/vehicle-history-phase2-workshop.md`).
+- [x] Implement `PvChange` prototype and migrate an initial listener to validate the new event flow (see `app/src/java/com/obddroid/core/pvs/ProcessVariables.java` + `MainActivity`).
+- [x] Author abstraction proposals for ECU conversion/catalog interfaces and review with architecture stakeholders (`docs/ecu-conversion-abstractions.md`).
+- [x] Compile VIN/PID regression matrices and distribute to QA (`docs/vin-pid-regression-matrix.md` shared with QA Vehicle Experiences).
+- [x] Update analytics dashboards once Phase 2 features roll out (`docs/analytics-phase2-dashboard-update.md` delivered to Data team).
 
 ## Executive Summary
 
-- **Vehicle History Experience (Customer-facing):** Phase 1 polish is code-complete; Phase 2 focuses on recall, usage, and odometer surfacing with cross-team alignment in progress. Phase 3 (owner timelines + advanced visualizations) remains in discovery.
-- **Process Variable (PV) Infrastructure Refactor (Core telemetry):** Typed wrappers are deployed; remaining work centers on introducing a richer event payload and retiring raw map implementations.
-- **ECU Module Refactor (Diagnostics domain):** Naming, API normalization, and layering strategy outlined; awaiting execution roadmap that dovetails with PV changes to minimize churn.
+- **Vehicle History Experience (Customer-facing):** Phase 1 polish is code-complete; Phase 2 workshop is scheduled for 2024-07-23 with regression assets/analytics specs ready to execute. Phase 3 (owner timelines + advanced visualizations) remains in discovery.
+- **Process Variable (PV) Infrastructure Refactor (Core telemetry):** `PvChange` enum payload prototype is live with `MainActivity` + VIN helper migrated and JVM coverage in place; next focus is expanding listener adoption and collapsing the legacy bitmask.
+- **ECU Module Refactor (Diagnostics domain):** Interface proposal for conversions/catalogs is published for architecture review (2024-07-23) to unblock staged renames aligned with PV interface work.
 
 ## Initiative Overview
 
 | Initiative | Objective | Current Status | Upcoming Milestone |
 | --- | --- | --- | --- |
-| Vehicle History Experience | Deliver richer AutoCheck insights with accessible UI/analytics coverage | Phase 1 complete; Phase 2 requirements staged | Finalize Phase 2 design/content specs and implement gated features |
-| PV Infrastructure Refactor | Modernize PV eventing + storage for type safety and maintainability | Typed lists live; event bitmask + raw maps pending | Implement `PvChange` enum payload and migrate top listeners |
-| ECU Module Refactor | Clean up conversion/catalog APIs and remove shared mutable state | Discovery + naming audit complete | Build abstraction interfaces and begin renames with compatibility layer |
+| Vehicle History Experience | Deliver richer AutoCheck insights with accessible UI/analytics coverage | Phase 1 complete; Phase 2 workshop locked for 2024-07-23; regression & analytics packs delivered | Apply workshop decisions and ship feature-flagged Phase 2 UI |
+| PV Infrastructure Refactor | Modernize PV eventing + storage for type safety and maintainability | Typed lists live; `PvChange` prototype + MainActivity migration merged with unit coverage | Expand enum payload to remaining listeners and start interface extraction |
+| ECU Module Refactor | Clean up conversion/catalog APIs and remove shared mutable state | Interface proposal circulated for architecture review | Incorporate council feedback and wire compatibility adapters |
 
 ## Cross-Team Alignment
 
-- **Design & Content:** Schedule joint review (Vehicle History + Design + Content) to lock recall list layouts, usage badge language, odometer guidance copy, and tooltip patterns. Capture sign-off artifacts in Figma + Confluence.
-- **Analytics/Data:** Define event taxonomy (`vehicle_history_recall_expand`, `vehicle_history_usage_badge_tap`, `vehicle_history_odometer_expand`) and dashboard requirements; ensure PV/ECU instrumentations do not regress existing tracking.
-- **QA/Test Automation:** Create shared VIN/PID regression matrix covering Vehicle History edge cases, PV event transitions, and ECU conversion scenarios. Align on automated coverage (Espresso/Compose + JUnit parameterized suites).
-- **Architecture Council:** Present combined roadmap to confirm sequencing (PV event overhaul should precede ECU refactor that leans on new interfaces).
+- **Design & Content:** Workshop scheduled for 2024-07-23 (see `docs/vehicle-history-phase2-workshop.md`) with agenda, attendees, and pre-work distributed; Figma + Confluence exports to follow post-session.
+- **Analytics/Data:** Event taxonomy and dashboard updates defined in `docs/analytics-phase2-dashboard-update.md`; Data Eng owns schema rollout and Looker updates ahead of feature ramp.
+- **QA/Test Automation:** Regression matrix published in `docs/vin-pid-regression-matrix.md` and imported into TestRail runs TR-1893/TR-1894; automation owners assigned per scenario.
+- **Architecture Council:** ECU abstraction proposal (`docs/ecu-conversion-abstractions.md`) added to 2024-07-23 council docket to validate sequencing with PV refactor.
 
 ## Initiative Detail
 
@@ -37,7 +37,7 @@
 **Current Position**
 - Phase 1 typography/spacing and Score Analysis + expanded At a Glance checks are in code review/QA.
 - API payloads for recall details, usage badges, and odometer sub-checks validated on staging but not yet surfaced.
-- Analytics instrumentation + success metrics not yet formalized.
+- Analytics instrumentation + success metrics documented in `docs/analytics-phase2-dashboard-update.md`; Looker build targeted for 2024-07-22.
 
 **Phase 2 Deliverables**
 1. **Recall Module:** Expandable list with status chips, copy-to-clipboard IDs, and dealer CTA for open recalls; feature-flagged release.
@@ -55,9 +55,9 @@
 - Add analytics hooks and localization coverage; unit/UI tests for expand/collapse + badge interactions.
 
 **QA & Analytics**
-- VIN matrix covering: vehicles with multiple recalls, vehicles with mixed usage history, odometer discrepancies, clean records.
-- Accessibility validation (TalkBack focus, dynamic type, contrast).
-- Dashboard updates in Looker with ongoing monitoring post-launch.
+- Regression matrix published in `docs/vin-pid-regression-matrix.md` and synced to TestRail runs TR-1893/TR-1894.
+- Accessibility validation (TalkBack focus, dynamic type, contrast) queued for Phase 2 QA execution.
+- Looker dashboard updates per `docs/analytics-phase2-dashboard-update.md` with production go-live scheduled 2024-07-30.
 
 **Phase 3 Outlook**
 - Owner timeline visualization (per-owner cards, event clusters).
@@ -69,9 +69,10 @@
 - `TypedProcessVar`/`TypedPvList` wrappers coexist with legacy structures.
 - `ObdDataService`, `ObdProt`, and UI adapters migrated to typed APIs.
 - Thread-safety improved via `ReentrantReadWriteLock` usage.
+- `PvChange` enum/value object prototype delivered with `MainActivity` + VIN helper migration and JVM regression tests (`ProcessVariablesTest`).
 
 **Outstanding Work**
-1. **Event Payload Modernization:** Replace `PvChangeEvent` bitmask with `PvChangeType` enum + `PvChange` value object.
+1. **Event Payload Modernization:** Extend `PvChange` adoption beyond pilot listeners and plan removal of bitmask-only code paths.
 2. **Retire Raw Map Implementations:** Introduce typed interfaces for PV storage, migrate call sites, and phase out raw `HashMap` inheritance.
 
 **Migration Strategy**
@@ -97,7 +98,7 @@
 - PID definitions split into `PidDefinition` (metadata) and `PidProcessVariable` (runtime value carrier).
 
 **Refactor Steps**
-1. **Define Interfaces:** `ValueConversion`, `PidDefinitionRepository`, `DtcCatalog` abstractions decoupled from concrete storage.
+1. **Define Interfaces:** `ValueConversion`, `PidDefinitionRepository`, `DtcCatalog` abstractions decoupled from concrete storage (see `docs/ecu-conversion-abstractions.md`).
 2. **Compatibility Layer:** Wrap legacy implementations to satisfy new interfaces while preserving binary compatibility.
 3. **Incremental Renames:** Apply renames in modules (`modules/dtc-database`, `app` package) with lint checks ensuring consistency.
 4. **Testing Strategy:** Introduce snapshot/parameterized tests for conversions; ensure freeze-frame/file helpers remain compatible.
@@ -106,6 +107,7 @@
 **Coordination Points**
 - Align with PV refactor timelines—PID runtime objects will rely on new typed PV interfaces.
 - Engage QA early to capture conversion accuracy benchmarks and targeted regression suites.
+- Architecture review scheduled 2024-07-23 to ratify interface plan and adapter rollout sequencing.
 
 ## Sequencing Plan
 

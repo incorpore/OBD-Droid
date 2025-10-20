@@ -90,11 +90,11 @@ public class DTCDatabaseCodeList extends ObdCodeList {
      * @return Set of code descriptions
      */
     @Override
-    public Set<String> values() {
-        // For backwards compatibility, return empty set
-        // The full database is too large to enumerate casually
-        return new HashSet<String>();
-    }
+	public Set<String> values() {
+		// For backwards compatibility, return empty set
+		// The full database is too large to enumerate casually
+		return new HashSet<String>();
+	}
 
     /**
      * Set the current locale for code lookups
@@ -121,7 +121,22 @@ public class DTCDatabaseCodeList extends ObdCodeList {
      *
      * @return DTCDatabase instance
      */
-    public DTCDatabase getDatabase() {
-        return database;
-    }
+	public DTCDatabase getDatabase() {
+		return database;
+	}
+
+	@Override
+	public void setLocaleTag(String localeTag) {
+		setLocale(localeTag);
+	}
+
+	@Override
+	public String getLocaleTag() {
+		return getLocale();
+	}
+
+	@Override
+	public Object getBackingStore() {
+		return database;
+	}
 }

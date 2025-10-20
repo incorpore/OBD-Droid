@@ -130,6 +130,16 @@
             android:configChanges="touchscreen|orientation|screenSize"
             android:exported="false" />
         <activity
+            android:name="com.obddroid.ui.activities.FaultCodeDetailsActivity"
+            android:label="Fault Code Details"
+            android:configChanges="touchscreen|orientation|screenSize"
+            android:parentActivityName="com.obddroid.ui.activities.FaultCodesActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.obddroid.ui.activities.FaultCodesActivity" />
+        </activity>
+        <activity
             android:name="com.obddroid.ui.activities.EcuComparisonActivity"
             android:label="ECU Comparison"
             android:configChanges="touchscreen|orientation|screenSize"

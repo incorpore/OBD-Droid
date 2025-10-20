@@ -195,6 +195,71 @@ public class EcuDataItem
 		return cnv[cnvSystem].physToMem(physVal).longValue();
 	}
 
+	public Conversion[] getConversions()
+	{
+		return cnv;
+	}
+
+	public int getPid()
+	{
+		return pid;
+	}
+
+	public int getOffset()
+	{
+		return ofs;
+	}
+
+	public int getLengthBytes()
+	{
+		return bytes;
+	}
+
+	public int getBitOffset()
+	{
+		return bitOffset;
+	}
+
+	public int getNumBits()
+	{
+		return numBits;
+	}
+
+	public long getBitMask()
+	{
+		return bitMask;
+	}
+
+	public String getFormat()
+	{
+		return fmt;
+	}
+
+	public String getLabel()
+	{
+		return label;
+	}
+
+	public String getMnemonic()
+	{
+		return mnemonic;
+	}
+
+	public EcuDataPv getProcessVariable()
+	{
+		return pv;
+	}
+
+	public int getCurrentErrorCount()
+	{
+		return currErrorCount;
+	}
+
+	public java.util.List<LegacyConversionAdapter> getConversionAdapters()
+	{
+		return LegacyConversionAdapter.wrapAll(cnv);
+	}
+
 	/**
 	 * Return physically minimum value
 	 * - Value is calculated from bit width and data conversion

@@ -5,13 +5,13 @@
     <item
         android:id="@+id/action_rescan"
         android:title="Rescan Emissions Data"
-        android:icon="@android:drawable/ic_menu_rotate"
+        android:icon="@drawable/ic_refresh_24"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_export"
         android:title="Save Report"
-        android:icon="@android:drawable/ic_menu_save"
+        android:icon="@drawable/ic_save_24"
         app:showAsAction="never" />
 
 </menu>

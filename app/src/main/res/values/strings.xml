@@ -95,6 +95,21 @@ period of time while the ECU recalibrates itself.
         <item quantity="one">%d fault code found</item>
         <item quantity="other">%d fault codes found</item>
     </plurals>
+    <!-- Fault Code Details Activity -->
+    <string name="fault_codes_details_title">Fault Code Details</string>
+    <string name="fault_codes_type_pending">Pending Code</string>
+    <string name="fault_codes_type_confirmed">Confirmed Code</string>
+    <string name="fault_codes_freeze_connect_first">Connect to vehicle first</string>
+    <string name="fault_codes_freeze_not_available">No freeze frame available</string>
+    <string name="fault_codes_nonda_watch_guide">Watch nonda\'s step-by-step guide</string>
+    <string name="fault_codes_nonda_search_channel">Search nonda\'s channel for this code</string>
+    <string name="fault_codes_ai_configure_key">Configure API key in settings first</string>
+    <string name="fault_codes_web_search_failed">Unable to search web</string>
+    <string name="fault_codes_nonda_not_found">Could not open YouTube for this code</string>
+    <string name="fault_codes_nonda_searching">Opening nonda search results for %1$s</string>
+    <string name="fault_codes_nonda_failed">Unable to open YouTube. Please try again later.</string>
+    <string name="fault_codes_copied">Copied: %1$s</string>
+    <string name="fault_codes_copy_failed">Unable to copy to clipboard</string>
     <string name="obd_test_progress">OBD test control in progress.\n
         Please check vehicle reaction.</string>
     <string name="obd_test_confirm">OBD test control requested.\n\n

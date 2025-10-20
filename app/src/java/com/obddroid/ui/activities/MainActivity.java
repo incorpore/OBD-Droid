@@ -53,9 +53,11 @@ import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.core.pvs.ProcessVariables.ProcessVar;
+import com.obddroid.core.pvs.ProcessVariables.PvChange;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
-import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
+import com.obddroid.core.pvs.ProcessVariables.PvChangeType;
 import com.obddroid.core.pvs.ProcessVariables.PvList;
+import com.obddroid.core.pvs.ProcessVariables.TypedPvChangeListener;
 
 import com.obddroid.ui.adapters.FaultCodeAdapter;
 import com.obddroid.ui.adapters.ObdItemAdapter;
@@ -95,7 +97,7 @@ import java.util.logging.SimpleFormatter;
  * Main Activity for AndrOBD app
  */
 public class MainActivity extends AppCompatActivity
-        implements PvChangeListener,
+        implements TypedPvChangeListener,
         AdapterView.OnItemLongClickListener,
         AdapterView.OnItemClickListener,
         PropertyChangeListener,
@@ -414,34 +416,36 @@ public class MainActivity extends AppCompatActivity
                         break;
 
                     case MESSAGE_DATA_ITEMS_CHANGED:
-                        PvChangeEvent event = (PvChangeEvent) msg.obj;
-                        switch (event.getType())
+                        PvChange change = (PvChange) msg.obj;
+                        ProcessVar sourcePv = change.getSource();
+                        Object source = sourcePv != null ? sourcePv : null;
+                        switch (change.getPrimaryType())
                         {
-                            case PvChangeEvent.PV_ADDED:
+                            case PvChangeType.ADDED:
                                 if (currDataAdapter != null) {
                                     currDataAdapter.setPvList(currDataAdapter.pvs);
                                 }
                                 try
                                 {
                                     // Debug: Log event source
-                                    log.info("PV_ADDED event - source: " + event.getSource().getClass().getName() +
+                                    log.info("PV_ADDED event - source: " + (source != null ? source.getClass().getName() : "null") +
                                             ", VidPvs: " + ObdProt.VidPvs.getClass().getName() +
-                                            ", match: " + (event.getSource() == ObdProt.VidPvs));
+                                            ", match: " + (source == ObdProt.VidPvs));
 
-                                    if (event.getSource() == ObdProt.PidPvs)
+                                    if (source == ObdProt.PidPvs)
                                     {
                                         // Check if last data selection shall be restored
                                         checkToRestoreLastDataSelection();
                                         // Don't restore view mode after connection - stay on main page
                                         // checkToRestoreLastViewMode();
                                     }
-                                    else if (event.getSource() == ObdProt.VidPvs)
+                                    else if (source == ObdProt.VidPvs)
                                     {
                                         log.info("VidPvs match - calling checkForVinAndNotify");
                                         // Check if this is a VIN and notify VehicleManager
-                                        VinDataHelper.checkForVinAndNotify(event);
+                                        VinDataHelper.checkForVinAndNotify(change);
                                     }
-                                    else if (event.getSource() == ObdProt.TidPvs)
+                                    else if (source == ObdProt.TidPvs)
                                     {
                                         log.info("TidPvs match - Test Control data received");
                                         // Test Control data received - adapter will update automatically
@@ -452,29 +456,31 @@ public class MainActivity extends AppCompatActivity
                                 }
                                 break;
 
-                            case PvChangeEvent.PV_MODIFIED:
+                            case PvChangeType.MODIFIED:
                                 // Debug: Log event source
-                                log.info("PV_MODIFIED event - source: " + event.getSource().getClass().getName() +
+                                log.info("PV_MODIFIED event - source: " + (source != null ? source.getClass().getName() : "null") +
                                         ", VidPvs: " + ObdProt.VidPvs.getClass().getName() +
-                                        ", match: " + (event.getSource() == ObdProt.VidPvs));
+                                        ", match: " + (source == ObdProt.VidPvs));
 
                                 // Also check for VIN updates (when existing VIN PV gets updated with actual value)
-                                if (event.getSource() == ObdProt.VidPvs)
+                                if (source == ObdProt.VidPvs)
                                 {
                                     log.info("VidPvs match - calling checkForVinAndNotify");
-                                    VinDataHelper.checkForVinAndNotify(event);
+                                    VinDataHelper.checkForVinAndNotify(change);
                                 }
-                                else if (event.getSource() == ObdProt.TidPvs)
+                                else if (source == ObdProt.TidPvs)
                                 {
                                     log.info("TidPvs modified - Test Control data updated");
                                     // Test Control data updated - adapter will update automatically
                                 }
                                 break;
 
-                            case PvChangeEvent.PV_CLEARED:
+                            case PvChangeType.CLEARED:
                                 if (currDataAdapter != null) {
                                     currDataAdapter.clear();
                                 }
+                                break;
+                            default:
                                 break;
                         }
                         break;
@@ -1712,16 +1718,16 @@ public class MainActivity extends AppCompatActivity
      * events to the android handler, since all adapter / GUI actions have to be
      * performed from the main handler
      *
-     * @param event PvChangeEvent which is reported
+     * @param change PvChange which is reported
      */
     @Override
-    public synchronized void pvChanged(PvChangeEvent event)
+    public synchronized void pvChanged(PvChange change)
     {
         // forward PV change to the UI Activity
         Message msg = mHandler.obtainMessage(MainActivity.MESSAGE_DATA_ITEMS_CHANGED);
-        if (!event.isChildEvent())
+        if (!change.isChildChange())
         {
-            msg.obj = event;
+            msg.obj = change;
             mHandler.sendMessage(msg);
         }
     }

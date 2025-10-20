@@ -28,4 +28,7 @@
     <color name="text_secondary_dark">#B0BEC5</color>
     <color name="text_tertiary_dark">#CCCCCC</color>
     <color name="text_hint_dark">#E8F5E9</color>
+
+    <!-- UI chrome -->
+    <color name="menu_icon_tint">@color/colorAccent</color>
 </resources>

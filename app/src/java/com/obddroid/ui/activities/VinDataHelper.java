@@ -5,7 +5,7 @@ import android.os.Looper;
 
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
+import com.obddroid.core.pvs.ProcessVariables.PvChange;
 import com.obddroid.services.CommService;
 import com.obddroid.vehicle.VehicleManager;
 
@@ -45,16 +45,16 @@ final class VinDataHelper
     }
 
     /**
-     * Check if a PvChangeEvent contains VIN data and notify VehicleManager.
+     * Check if a PvChange contains VIN data and notify VehicleManager.
      * This allows VIN detection without switching to the Vehicle Info page.
      */
-    static void checkForVinAndNotify(PvChangeEvent event)
+    static void checkForVinAndNotify(PvChange change)
     {
         try
         {
-            Object eventValue = event.getValue();
-            Object eventSource = event.getSource();
-            Object eventKey = event.getKey();
+            Object eventValue = change.getValue();
+            Object eventSource = change.getSource();
+            Object eventKey = change.getKey();
 
             log.info("checkForVinAndNotify called - eventValue type: " +
                     (eventValue != null ? eventValue.getClass().getName() : "null") +
@@ -155,7 +155,7 @@ final class VinDataHelper
         }
         catch (Exception e)
         {
-            log.log(Level.WARNING, "Error checking for VIN in PvChangeEvent", e);
+            log.log(Level.WARNING, "Error checking for VIN in PvChange", e);
         }
     }
 

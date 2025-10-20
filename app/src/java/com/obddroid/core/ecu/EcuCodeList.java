@@ -14,7 +14,7 @@ import java.util.Set;
 
  */
 public class EcuCodeList
-	implements Conversion
+	implements Conversion, DtcCatalog
 {
 	private static final long serialVersionUID = 219865459629423028L;
 	private final transient ResourceBundle codes;
@@ -128,5 +128,23 @@ public class EcuCodeList
 	public String physToPhysFmtString(Number value, String format)
 	{
 		return (get(value).toString());
+	}
+
+	@Override
+	public EcuCodeItem lookup(Number value)
+	{
+		return get(value);
+	}
+
+	@Override
+	public Set<String> listCodes()
+	{
+		return values();
+	}
+
+	@Override
+	public Object getBackingStore()
+	{
+		return codes;
 	}
 }

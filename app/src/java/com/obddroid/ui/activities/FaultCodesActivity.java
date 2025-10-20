@@ -100,11 +100,21 @@ public class FaultCodesActivity extends AppCompatActivity {
 
         adapter = new FaultCodeListAdapter();
         faultCodesList.setAdapter(adapter);
-        adapter.setOnCodeClickListener(code -> FaultCodeUiHelper.showFaultCodeOptionsModal(this, code));
+        adapter.setOnCodeClickListener(code -> openFaultCodeDetails(code));
     }
 
     private void setupClickListeners() {
         scanButton.setOnClickListener(v -> startScan());
+    }
+
+    private void openFaultCodeDetails(FaultCodeService.FaultCodeInfo code) {
+        Intent intent = new Intent(this, FaultCodeDetailsActivity.class);
+        intent.putExtra(FaultCodeDetailsActivity.EXTRA_FAULT_CODE, code.code);
+        intent.putExtra(FaultCodeDetailsActivity.EXTRA_FAULT_DESCRIPTION, code.description);
+        intent.putExtra(FaultCodeDetailsActivity.EXTRA_IS_PENDING, code.isPending);
+        intent.putExtra(FaultCodeDetailsActivity.EXTRA_HAS_FREEZE, code.hasFreeze);
+        intent.putExtra(FaultCodeDetailsActivity.EXTRA_DTC_VALUE, code.dtcValue);
+        startActivity(intent);
     }
 
     private void startScan() {

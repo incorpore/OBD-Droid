@@ -5,25 +5,25 @@
     <item
         android:id="@+id/action_rescan_ecus"
         android:title="Rescan ECUs"
-        android:icon="@android:drawable/ic_menu_rotate"
+        android:icon="@drawable/ic_refresh_24"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_compare_scans"
         android:title="Compare Scans"
-        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:icon="@drawable/ic_compare_24"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_export_csv"
         android:title="Export CSV"
-        android:icon="@android:drawable/ic_menu_save"
+        android:icon="@drawable/ic_file_upload_24"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_import_csv"
         android:title="Import CSV"
-        android:icon="@android:drawable/ic_menu_upload"
+        android:icon="@drawable/ic_file_download_24"
         app:showAsAction="never" />
 
 </menu>

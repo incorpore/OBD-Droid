@@ -5,13 +5,13 @@
     <item
         android:id="@+id/action_calibrate"
         android:title="Calibrate"
-        android:icon="@android:drawable/ic_menu_manage"
+        android:icon="@drawable/ic_tune_24"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_info"
         android:title="About"
-        android:icon="@android:drawable/ic_menu_info_details"
+        android:icon="@drawable/ic_info_24"
         app:showAsAction="never" />
 
 </menu>
