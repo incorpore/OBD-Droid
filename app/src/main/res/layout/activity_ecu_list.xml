@@ -130,7 +130,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:indeterminateTint="#4CAF50" />
 
         <!-- Overlay that appears when footer is expanded -->
         <View
