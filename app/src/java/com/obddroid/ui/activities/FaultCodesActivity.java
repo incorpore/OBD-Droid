@@ -18,7 +18,6 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.obddroid.R;
 import com.obddroid.services.FaultCodeService;
@@ -48,7 +47,7 @@ public class FaultCodesActivity extends AppCompatActivity {
     private LinearLayout clearCodesButton;
     private RecyclerView faultCodesList;
     private ProgressBar progressBar;
-    private MaterialButton scanButton;
+    private Button scanButton;
     private LinearLayout emptyView;
     private VehicleInfoFooter vehicleInfoFooter;
 

@@ -24,19 +24,16 @@
                 android:padding="@dimen/spacing_large">
 
                 <!-- Scan button -->
-                <com.google.android.material.button.MaterialButton
+                <Button
                     android:id="@+id/scan_button"
-                    style="@style/Widget.MaterialComponents.Button"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
                     android:text="@string/fault_codes_button_scan"
                     android:textAllCaps="false"
                     android:textColor="@color/text_primary_dark"
-                    app:backgroundTint="@color/fault_success"
-                    app:cornerRadius="@dimen/card_corner_radius"
-                    app:iconTint="@color/text_primary_dark"
+                    android:textStyle="bold"
+                    android:background="@color/fault_success"
+                    android:padding="@dimen/spacing_medium"
                     android:layout_marginBottom="@dimen/spacing_large"/>
 
                 <!-- MIL Status Card -->
