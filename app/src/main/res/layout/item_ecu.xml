@@ -3,12 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="6dp"
-    android:layout_marginEnd="6dp"
-    android:layout_marginTop="4dp"
-    android:layout_marginBottom="4dp"
-    app:cardCornerRadius="6dp"
-    app:cardElevation="2dp">
+    android:layout_marginStart="0dp"
+    android:layout_marginEnd="0dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginBottom="6dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="#2C2C2C">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,9 +21,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="10dp"
-            android:gravity="center_vertical"
-            android:background="@android:color/white">
+            android:padding="12dp"
+            android:gravity="center_vertical">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -35,18 +35,18 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Engine Control Module"
-                    android:textSize="14sp"
+                    android:textSize="15sp"
                     android:textStyle="bold"
-                    android:textColor="@android:color/black"/>
+                    android:textColor="#FFFFFF"/>
 
                 <TextView
                     android:id="@+id/ecu_type"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Engine"
-                    android:textSize="11sp"
-                    android:textColor="@android:color/darker_gray"
-                    android:layout_marginTop="1dp"/>
+                    android:textSize="12sp"
+                    android:textColor="#B0BEC5"
+                    android:layout_marginTop="2dp"/>
             </LinearLayout>
 
             <TextView
@@ -56,10 +56,10 @@
                 android:text="0x7E8"
                 android:textSize="11sp"
                 android:textStyle="bold"
-                android:textColor="@android:color/holo_blue_dark"
+                android:textColor="#FFFFFF"
                 android:fontFamily="monospace"
-                android:padding="4dp"
-                android:background="@drawable/rounded_background"/>
+                android:padding="6dp"
+                android:background="#2196F3"/>
         </LinearLayout>
 
         <!-- Cal ID and CVN Display -->
@@ -85,8 +85,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Cal ID:"
-                    android:textSize="10sp"
-                    android:textColor="@android:color/darker_gray"
+                    android:textSize="11sp"
+                    android:textColor="#90CAF9"
                     android:textStyle="bold"
                     android:layout_marginEnd="6dp"
                     android:minWidth="50dp"/>
@@ -96,8 +96,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="CAL12345"
-                    android:textSize="11sp"
-                    android:textColor="@android:color/black"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
                     android:fontFamily="monospace" />
             </LinearLayout>
 
@@ -114,8 +114,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Cal ID 2:"
-                    android:textSize="10sp"
-                    android:textColor="@android:color/darker_gray"
+                    android:textSize="11sp"
+                    android:textColor="#90CAF9"
                     android:textStyle="bold"
                     android:layout_marginEnd="6dp"
                     android:minWidth="50dp"/>
@@ -125,8 +125,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="CAL67890"
-                    android:textSize="11sp"
-                    android:textColor="@android:color/black"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
                     android:fontFamily="monospace" />
             </LinearLayout>
 
@@ -143,8 +143,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="CVN:"
-                    android:textSize="10sp"
-                    android:textColor="@android:color/darker_gray"
+                    android:textSize="11sp"
+                    android:textColor="#90CAF9"
                     android:textStyle="bold"
                     android:layout_marginEnd="6dp"
                     android:minWidth="50dp"/>
@@ -154,8 +154,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="0x12345678"
-                    android:textSize="11sp"
-                    android:textColor="@android:color/black"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
                     android:fontFamily="monospace" />
             </LinearLayout>
 

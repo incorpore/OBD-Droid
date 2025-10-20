@@ -24,7 +24,6 @@ import com.obddroid.core.pvs.PvChangeEvent;
 import com.obddroid.core.pvs.PvChangeListener;
 import com.obddroid.services.CommService;
 import com.obddroid.ui.components.VehicleInfoFooter;
-import com.obddroid.utils.SnackbarHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
