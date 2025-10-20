@@ -178,7 +178,7 @@ public class AutoCheckActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_save_report) {
-            openPdf();
+            showSaveReportDialog();
             return true;
         } else if (item.getItemId() == android.R.id.home) {
             onBackPressed();
@@ -206,6 +206,17 @@ public class AutoCheckActivity extends AppCompatActivity {
         scoreRange = findViewById(R.id.score_range);
         scoreInterpretation = findViewById(R.id.score_interpretation);
         quickStatusContainer = findViewById(R.id.quick_status_container);
+
+        // Score Analysis Section
+        scoreAnalysisCard = findViewById(R.id.score_analysis_card);
+        comparisonContainer = findViewById(R.id.comparison_container);
+        vehicleComparison = findViewById(R.id.vehicle_comparison);
+        outlookContainer = findViewById(R.id.outlook_container);
+        vehicleOutlook = findViewById(R.id.vehicle_outlook);
+        increasingFactorsContainer = findViewById(R.id.increasing_factors_container);
+        increasingFactorsList = findViewById(R.id.increasing_factors_list);
+        decreasingFactorsContainer = findViewById(R.id.decreasing_factors_container);
+        decreasingFactorsList = findViewById(R.id.decreasing_factors_list);
 
         // Stats Grid
         statsCard = findViewById(R.id.stats_card);
@@ -359,6 +370,11 @@ public class AutoCheckActivity extends AppCompatActivity {
         displayHeroSection(report);
 
         // ═══════════════════════════════════════
+        // SCORE ANALYSIS
+        // ═══════════════════════════════════════
+        displayScoreAnalysis(report);
+
+        // ═══════════════════════════════════════
         // QUICK STATS GRID
         // ═══════════════════════════════════════
         displayStatsGrid(report);
@@ -457,6 +473,89 @@ public class AutoCheckActivity extends AppCompatActivity {
         badge.setLayoutParams(params);
 
         quickStatusContainer.addView(badge);
+    }
+
+    private void displayScoreAnalysis(AutoCheckReport report) {
+        // Check if we have any score analysis data
+        boolean hasComparison = report.getVehicleComparison() != null && !report.getVehicleComparison().isEmpty();
+        boolean hasOutlook = report.getVehicleOutlook() != null && !report.getVehicleOutlook().isEmpty();
+        boolean hasIncreasing = report.getIncreasingFactors() != null && !report.getIncreasingFactors().isEmpty();
+        boolean hasDecreasing = report.getDecreasingFactors() != null && !report.getDecreasingFactors().isEmpty();
+
+        boolean hasAnyData = hasComparison || hasOutlook || hasIncreasing || hasDecreasing;
+
+        if (!hasAnyData) {
+            scoreAnalysisCard.setVisibility(View.GONE);
+            return;
+        }
+
+        // Show the score analysis card
+        scoreAnalysisCard.setVisibility(View.VISIBLE);
+
+        // Vehicle Comparison
+        if (hasComparison) {
+            comparisonContainer.setVisibility(View.VISIBLE);
+            vehicleComparison.setText(report.getVehicleComparison());
+        } else {
+            comparisonContainer.setVisibility(View.GONE);
+        }
+
+        // Vehicle Outlook
+        if (hasOutlook) {
+            outlookContainer.setVisibility(View.VISIBLE);
+            vehicleOutlook.setText(report.getVehicleOutlook());
+        } else {
+            outlookContainer.setVisibility(View.GONE);
+        }
+
+        // Increasing Factors (Positive)
+        if (hasIncreasing) {
+            increasingFactorsContainer.setVisibility(View.VISIBLE);
+            increasingFactorsList.removeAllViews();
+
+            for (String factor : report.getIncreasingFactors()) {
+                TextView factorView = new TextView(this);
+                factorView.setText("• " + factor);
+                factorView.setTextSize(14);
+                factorView.setTextColor(Color.parseColor("#FFFFFF"));
+                factorView.setPadding(0, 0, 0, dpToPx(8));
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+                factorView.setLayoutParams(params);
+                increasingFactorsList.addView(factorView);
+            }
+        } else {
+            increasingFactorsContainer.setVisibility(View.GONE);
+        }
+
+        // Decreasing Factors (Watch Points)
+        if (hasDecreasing) {
+            decreasingFactorsContainer.setVisibility(View.VISIBLE);
+            decreasingFactorsList.removeAllViews();
+
+            for (String factor : report.getDecreasingFactors()) {
+                TextView factorView = new TextView(this);
+                factorView.setText("• " + factor);
+                factorView.setTextSize(14);
+                factorView.setTextColor(Color.parseColor("#FFFFFF"));
+                factorView.setPadding(0, 0, 0, dpToPx(8));
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+                factorView.setLayoutParams(params);
+                decreasingFactorsList.addView(factorView);
+            }
+        } else {
+            decreasingFactorsContainer.setVisibility(View.GONE);
+        }
+    }
+
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 
     private void displayStatsGrid(AutoCheckReport report) {
