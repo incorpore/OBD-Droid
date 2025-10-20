@@ -1,14 +1,10 @@
 package com.obddroid.ui.activities;
 
-import android.content.ContentValues;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.MediaStore;
 import android.view.View;
 import android.widget.TextView;
 
@@ -23,14 +19,7 @@ import com.obddroid.ui.components.FuelEconomyChart;
 import com.obddroid.ui.components.FuelFlowGauge;
 import com.obddroid.ui.components.VehicleInfoFooter;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Queue;
@@ -70,12 +59,6 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private Handler updateHandler;
     private static final long UPDATE_INTERVAL = 1000; // Update every second
 
-    // Trip data logging
-    private OutputStreamWriter tripDataLogger;
-    private String tripLogFilename;
-    private long tripStartTime;
-    private boolean isRecording = false;
-
     // Tank capacity management
     private com.obddroid.vehicle.VehiclePreferences vehiclePreferences;
     private com.obddroid.vehicle.VehicleManager vehicleManager;
@@ -114,37 +97,6 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             };
     private Float cachedTankCapacity = null; // Cache to avoid repeated lookups
 
-    /**
-     * Fuel calculation diagnostics data
-     * Captures detailed information about the fuel consumption calculation for trip logging
-     */
-    private static class FuelCalcDiagnostics {
-        float mapKpa = 0f;           // Manifold Absolute Pressure (kPa)
-        float iatCelsius = 0f;       // Intake Air Temperature (°C)
-        float volumetricEfficiency = 0f; // Volumetric Efficiency (%)
-        float imap = 0f;             // Intermediate calculation value
-        float syntheticMAF = 0f;     // Calculated Mass Air Flow (g/s)
-        String calcMethod = "N/A";   // "MAP" or "Estimation"
-        String calibrated = "No";    // "Yes" or "No"
-    }
-
-    private void showRecordingStartError() {
-        showSnackbar("⚠️ Recording failed to start",
-                com.google.android.material.snackbar.Snackbar.LENGTH_SHORT);
-    }
-
-    // Store the latest fuel calculation diagnostics for trip logging
-    private FuelCalcDiagnostics lastFuelCalcDiagnostics = new FuelCalcDiagnostics();
-
-    private void markEstimationDiagnostics(String methodLabel, String calibratedState) {
-        lastFuelCalcDiagnostics.calcMethod = methodLabel;
-        lastFuelCalcDiagnostics.calibrated = calibratedState;
-        lastFuelCalcDiagnostics.mapKpa = 0f;
-        lastFuelCalcDiagnostics.iatCelsius = 0f;
-        lastFuelCalcDiagnostics.volumetricEfficiency = 0f;
-        lastFuelCalcDiagnostics.imap = 0f;
-        lastFuelCalcDiagnostics.syntheticMAF = 0f;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -229,125 +181,6 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         snackbar.show();
     }
 
-    /**
-     * Initialize trip data logging to CSV file
-     *
-     * @return true if logging was initialized successfully, false otherwise
-     */
-    private boolean initializeTripDataLogging() {
-        try {
-            tripStartTime = System.currentTimeMillis();
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
-            String timestamp = sdf.format(new Date(tripStartTime));
-            tripLogFilename = "fuel_economy_trip_" + timestamp + ".csv";
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // Android 10+ - Use MediaStore API
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.MediaColumns.DISPLAY_NAME, tripLogFilename);
-                values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
-
-                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
-                if (uri == null) {
-                    log.severe("Failed to insert trip log into MediaStore (URI null)");
-                    showRecordingStartError();
-                    return false;
-                }
-
-                OutputStream outputStream = getContentResolver().openOutputStream(uri);
-                if (outputStream == null) {
-                    log.severe("Failed to open output stream for trip logging");
-                    showRecordingStartError();
-                    return false;
-                }
-
-                tripDataLogger = new OutputStreamWriter(outputStream);
-
-                // Write CSV header with enhanced fuel calculation diagnostics
-                tripDataLogger.write("Timestamp,ElapsedSec,Speed_MPH,RPM,EngineLoad_%,ThrottlePos_%," +
-                        "FuelLevel_%,FuelFlow_GalH,InstantMPG,AvgMPG,Range_Mi,TimeToEmpty," +
-                        "MAP_kPa,IAT_C,VE_%,IMAP,SyntheticMAF_g/s,CalcMethod,Calibrated,PID,PIDValue\n");
-                tripDataLogger.flush();
-
-                log.info("Trip data logging initialized: Documents/OBDroid/" + tripLogFilename);
-                showSnackbar("📊 Recording started: " + tripLogFilename,
-                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG);
-                return true;
-            } else {
-                // Android 9 and below - Use legacy file system
-                File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File obdroidDir = new File(documentsDir, "OBDroid");
-                if (!obdroidDir.exists() && !obdroidDir.mkdirs()) {
-                    log.severe("Failed to create trip logging directory: " + obdroidDir.getAbsolutePath());
-                    showRecordingStartError();
-                    return false;
-                }
-
-                File csvFile = new File(obdroidDir, tripLogFilename);
-                tripDataLogger = new OutputStreamWriter(new java.io.FileOutputStream(csvFile));
-
-                // Write CSV header with enhanced fuel calculation diagnostics
-                tripDataLogger.write("Timestamp,ElapsedSec,Speed_MPH,RPM,EngineLoad_%,ThrottlePos_%," +
-                        "FuelLevel_%,FuelFlow_GalH,InstantMPG,AvgMPG,Range_Mi,TimeToEmpty," +
-                        "MAP_kPa,IAT_C,VE_%,IMAP,SyntheticMAF_g/s,CalcMethod,Calibrated,PID,PIDValue\n");
-                tripDataLogger.flush();
-
-                log.info("Trip data logging initialized: " + csvFile.getAbsolutePath());
-                showSnackbar("📊 Recording started: " + tripLogFilename,
-                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG);
-                return true;
-            }
-        } catch (IOException e) {
-            log.severe("Failed to initialize trip data logging: " + e.getMessage());
-            showRecordingStartError();
-        }
-        return false;
-    }
-
-    /**
-     * Log trip data row to CSV
-     */
-    private void logTripData(String pid, String pidValue) {
-        if (!isRecording || tripDataLogger == null) return;
-
-        try {
-            long elapsedMs = System.currentTimeMillis() - tripStartTime;
-            float elapsedSec = elapsedMs / 1000f;
-
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US);
-            String timestamp = sdf.format(new Date());
-
-            // Get current values
-            float speed = getCurrentSpeed();
-            float rpm = getCurrentRPM();
-            float engineLoad = getCurrentEngineLoad();
-            float throttle = getThrottlePosition();
-            String fuelLevel = fuelLevelValue.getText().toString();
-            String fuelFlow = fuelFlowValue.getText().toString();
-            String instantMpg = instantMpgValue.getText().toString();
-            String avgMpg = averageMpgValue.getText().toString();
-            String range = rangeValue.getText().toString();
-            String timeToEmpty = timeToEmptyValue.getText().toString();
-
-            // Write CSV row with enhanced diagnostics
-            tripDataLogger.write(String.format(Locale.US,
-                    "%s,%.1f,%.1f,%.0f,%.1f,%.0f,%s,%s,%s,%s,%s,%s,%.2f,%.1f,%.1f,%.2f,%.2f,%s,%s,%s,%s\n",
-                    timestamp, elapsedSec, speed, rpm, engineLoad, throttle,
-                    fuelLevel, fuelFlow, instantMpg, avgMpg, range, timeToEmpty,
-                    lastFuelCalcDiagnostics.mapKpa,
-                    lastFuelCalcDiagnostics.iatCelsius,
-                    lastFuelCalcDiagnostics.volumetricEfficiency,
-                    lastFuelCalcDiagnostics.imap,
-                    lastFuelCalcDiagnostics.syntheticMAF,
-                    lastFuelCalcDiagnostics.calcMethod,
-                    lastFuelCalcDiagnostics.calibrated,
-                    pid, pidValue));
-            tripDataLogger.flush();
-        } catch (IOException e) {
-            log.warning("Failed to log trip data: " + e.getMessage());
-        }
-    }
 
     @Override
     protected void onResume() {
@@ -381,11 +214,6 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         if (vehicleManager != null) {
             vehicleManager.removeListener(vehicleChangeListener);
         }
-
-        // Auto-save if still recording
-        if (isRecording) {
-            stopRecording();
-        }
     }
 
     @Override
@@ -396,49 +224,23 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
     @Override
     public boolean onCreateOptionsMenu(android.view.Menu menu) {
-        // Add record button to action bar (left side)
-        menu.add(0, 1, 0, "Record")
-            .setIcon(android.R.drawable.ic_menu_save)
-            .setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
-
         // Add calibration icon to action bar
-        menu.add(0, 3, 1, "Calibrate")
+        menu.add(0, 3, 0, "Calibrate")
             .setIcon(android.R.drawable.ic_menu_manage)
             .setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
         // Add info icon to action bar (right side)
-        menu.add(0, 2, 2, "Info")
+        menu.add(0, 2, 1, "Info")
             .setIcon(android.R.drawable.ic_menu_info_details)
             .setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
         return true;
     }
 
     @Override
-    public boolean onPrepareOptionsMenu(android.view.Menu menu) {
-        // Update record button icon based on recording state
-        android.view.MenuItem recordItem = menu.findItem(1);
-        if (recordItem != null) {
-            if (isRecording) {
-                recordItem.setIcon(android.R.drawable.ic_media_pause);
-                recordItem.setTitle("Stop Recording");
-            } else {
-                recordItem.setIcon(android.R.drawable.ic_menu_save);
-                recordItem.setTitle("Start Recording");
-            }
-        }
-        return super.onPrepareOptionsMenu(menu);
-    }
-
-    @Override
     public boolean onOptionsItemSelected(android.view.MenuItem item) {
         int itemId = item.getItemId();
 
-        if (itemId == 1) {
-            // Toggle recording
-            toggleRecording();
-            invalidateOptionsMenu(); // Refresh menu to update icon
-            return true;
-        } else if (itemId == 2) {
+        if (itemId == 2) {
             showInfoDialog();
             return true;
         } else if (itemId == 3) {
@@ -446,42 +248,6 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    private void toggleRecording() {
-        if (isRecording) {
-            stopRecording();
-        } else {
-            startRecording();
-        }
-    }
-
-    private void startRecording() {
-        boolean started = initializeTripDataLogging();
-        isRecording = started;
-        if (!started) {
-            tripDataLogger = null;
-            log.warning("Trip data logging could not be started");
-        }
-    }
-
-    private void stopRecording() {
-        if (tripDataLogger != null) {
-            try {
-                tripDataLogger.flush();
-                tripDataLogger.close();
-                tripDataLogger = null;
-                log.info("Trip data logging stopped: " + tripLogFilename);
-
-                showSnackbar("✅ Trip data saved: " + tripLogFilename,
-                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG);
-            } catch (IOException e) {
-                log.warning("Error stopping trip data logger: " + e.getMessage());
-                showSnackbar("⚠️ Error saving trip data",
-                    com.google.android.material.snackbar.Snackbar.LENGTH_SHORT);
-            }
-        }
-        isRecording = false;
     }
 
     private void showInfoDialog() {
@@ -530,8 +296,6 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                 :
                 "Your vehicle doesn't have MAP/IAT sensors, so we use RPM and Load estimation. This is less accurate but still provides useful data.\n\n"
                 ) +
-                "TRIP LOGGING:\n" +
-                "Record detailed trip data including all sensor readings, fuel calculations, and diagnostics. Files are saved to Documents/OBDroid/ folder.\n\n" +
                 "NOTE: Ensure your vehicle is connected and Live Data is active for accurate readings.";
 
         new android.app.AlertDialog.Builder(this)
@@ -764,9 +528,6 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
         String valueStr = valueObj.toString();
 
-        // Log all incoming PID data
-        logTripData(String.format("0x%02X", pid), valueStr);
-
         try {
             switch (pid) {
                 case 0x2F: // Fuel tank level (%)
@@ -882,12 +643,9 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                 return mapFuelRate;
             } else {
                 log.warning("MAP calculation returned invalid result, falling back to estimation");
-                String calibratedState = (getCalibratedVE() != null) ? "Yes" : "No";
-                markEstimationDiagnostics("Estimation-InvalidMAP", calibratedState);
             }
         } else {
             log.info("MAP sensors not available, using RPM/Load estimation");
-            markEstimationDiagnostics("Estimation-NoMAP", "N/A");
         }
 
         return calculateEstimatedFuelRate(rpm, loadPercent, speedMph);
@@ -1228,62 +986,8 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             } else {
                 log.warning("Fuel level PV (2F.0.0) not found or wrong type");
             }
-
-            // Log trip data if recording is active
-            // This ensures we capture data even when PV change events don't fire
-            if (isRecording) {
-                logTripDataSnapshot();
-            }
         } catch (Exception e) {
             log.warning("updateDisplayedValues error: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Log a complete snapshot of current trip data
-     * Called periodically when recording is active
-     */
-    private void logTripDataSnapshot() {
-        if (!isRecording || tripDataLogger == null) return;
-
-        try {
-            long elapsedMs = System.currentTimeMillis() - tripStartTime;
-            float elapsedSec = elapsedMs / 1000f;
-
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US);
-            String timestamp = sdf.format(new Date());
-
-            // Get current values from UI
-            float speed = getCurrentSpeed();
-            float rpm = getCurrentRPM();
-            float engineLoad = getCurrentEngineLoad();
-            float throttle = getThrottlePosition();
-            String fuelLevel = fuelLevelValue.getText().toString();
-            String fuelFlow = fuelFlowValue.getText().toString();
-            String instantMpg = instantMpgValue.getText().toString();
-            String avgMpg = averageMpgValue.getText().toString();
-            String range = rangeValue.getText().toString();
-            String timeToEmpty = timeToEmptyValue.getText().toString();
-
-            // Write CSV row (periodic snapshot - no specific PID) with enhanced diagnostics
-            tripDataLogger.write(String.format(Locale.US,
-                    "%s,%.1f,%.1f,%.0f,%.1f,%.0f,%s,%s,%s,%s,%s,%s,%.2f,%.1f,%.1f,%.2f,%.2f,%s,%s,SNAPSHOT,periodic\n",
-                    timestamp, elapsedSec, speed, rpm, engineLoad, throttle,
-                    fuelLevel, fuelFlow, instantMpg, avgMpg, range, timeToEmpty,
-                    lastFuelCalcDiagnostics.mapKpa,
-                    lastFuelCalcDiagnostics.iatCelsius,
-                    lastFuelCalcDiagnostics.volumetricEfficiency,
-                    lastFuelCalcDiagnostics.imap,
-                    lastFuelCalcDiagnostics.syntheticMAF,
-                    lastFuelCalcDiagnostics.calcMethod,
-                    lastFuelCalcDiagnostics.calibrated));
-            tripDataLogger.flush();
-
-            log.fine("Logged trip data snapshot at " + elapsedSec + "s");
-        } catch (IOException e) {
-            log.warning("Failed to log trip data snapshot: " + e.getMessage());
-        } catch (Exception e) {
-            log.warning("Error in logTripDataSnapshot: " + e.getMessage());
         }
     }
 
@@ -1714,15 +1418,6 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                     rpm, mapKpa, iatCelsius, iatKelvin, loadPercent,
                     displacement, imap, volumetricEfficiency,
                     syntheticMAF, fuelGallonsPerHour));
-
-            // Capture diagnostics for trip logging
-            lastFuelCalcDiagnostics.mapKpa = mapKpa;
-            lastFuelCalcDiagnostics.iatCelsius = iatCelsius;
-            lastFuelCalcDiagnostics.volumetricEfficiency = volumetricEfficiency;
-            lastFuelCalcDiagnostics.imap = imap;
-            lastFuelCalcDiagnostics.syntheticMAF = syntheticMAF;
-            lastFuelCalcDiagnostics.calcMethod = "MAP";
-            lastFuelCalcDiagnostics.calibrated = (getCalibratedVE() != null) ? "Yes" : "No";
 
             return fuelGallonsPerHour;
 
