@@ -116,8 +116,8 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         // No background - transparent for PNG logos
         iconContainer.setBackground(null);
         LinearLayout.LayoutParams iconContainerParams = new LinearLayout.LayoutParams(
-            dpToPx(79),
-            dpToPx(79)
+            dpToPx(60),
+            dpToPx(60)
         );
         iconContainerParams.rightMargin = dpToPx(12);
 
