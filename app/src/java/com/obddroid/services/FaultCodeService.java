@@ -2,6 +2,8 @@ package com.obddroid.services;
 
 import android.os.SystemClock;
 
+import com.obddroid.core.ecu.EcuCodeItem;
+import com.obddroid.core.ecu.ObdCodeList;
 import com.obddroid.core.obd.RawTelegramListener;
 
 import java.util.ArrayList;
@@ -309,7 +311,7 @@ public class FaultCodeService implements RawTelegramListener {
                         continue;
                     }
                     String dtcCode = convertToDtcCode(dtcValue);
-                    String description = getDtcDescription(dtcCode);
+                    String description = getDtcDescription(dtcValue);
                     boolean hasFreeze = !isPending;
                     codes.add(new FaultCodeInfo(dtcCode, description, isPending, hasFreeze, dtcValue));
                 } catch (NumberFormatException ex) {
@@ -342,21 +344,24 @@ public class FaultCodeService implements RawTelegramListener {
     }
 
     /**
-     * Get human-readable description for DTC code.
-     * TODO: Replace with lookup from bundled DTC database.
+     * Get human-readable description for DTC code from the database.
      */
-    private String getDtcDescription(String code) {
-        switch (code) {
-            case "P0133": return "O2 Sensor Circuit Slow Response (Bank 1, Sensor 1)";
-            case "P0301": return "Cylinder 1 Misfire Detected";
-            case "P0302": return "Cylinder 2 Misfire Detected";
-            case "P0303": return "Cylinder 3 Misfire Detected";
-            case "P0304": return "Cylinder 4 Misfire Detected";
-            case "P0420": return "Catalyst System Efficiency Below Threshold (Bank 1)";
-            case "P0171": return "System Too Lean (Bank 1)";
-            case "P0172": return "System Too Rich (Bank 1)";
-            default: return "Unknown fault code";
+    private String getDtcDescription(int dtcValue) {
+        try {
+            ObdCodeList codeList = ObdCodeList.getInstance();
+            if (codeList != null) {
+                EcuCodeItem item = codeList.get(dtcValue);
+                if (item != null) {
+                    Object description = item.get(EcuCodeItem.FID_DESCRIPT);
+                    if (description != null && !description.toString().isEmpty()) {
+                        return description.toString();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.log(Level.WARNING, "Failed to lookup DTC description for: " + dtcValue, e);
         }
+        return "Unknown fault code";
     }
 
     /**
