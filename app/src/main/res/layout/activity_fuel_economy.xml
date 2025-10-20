@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#1E1E1E">
+    android:background="@color/background_primary">
 
-    <!-- Content area with overlay support -->
+    <!-- Main Content -->
     <FrameLayout
         android:id="@+id/content_frame"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="match_parent">
 
-        <ScrollView
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true">
@@ -22,30 +21,29 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="@dimen/spacing_small">
 
                 <!-- Fuel Economy Chart Card -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#2C2C2C"
-                    app:cardUseCompatPadding="false">
+                    android:layout_marginBottom="@dimen/spacing_small"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardElevation="@dimen/elevation_content_card"
+                    app:cardBackgroundColor="@color/background_secondary">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="12dp">
+                        android:padding="@dimen/spacing_small">
 
                         <!-- Current Values Header -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:layout_marginBottom="12dp">
+                            android:layout_marginBottom="@dimen/spacing_small">
 
                             <!-- Instant MPG -->
                             <LinearLayout
@@ -58,47 +56,47 @@
                                 <View
                                     android:layout_width="8dp"
                                     android:layout_height="8dp"
-                                    android:layout_marginEnd="8dp"
+                                    android:layout_marginEnd="@dimen/spacing_small"
                                     android:background="@drawable/circle_indicator"
-                                    android:backgroundTint="#4CAF50" />
+                                    android:backgroundTint="@color/fault_success" />
 
                                 <TextView
                                     android:id="@+id/instant_mpg_value"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="@string/value_placeholder"
-                                    android:textSize="24sp"
+                                    android:textSize="@dimen/text_medium_value"
                                     android:textStyle="bold"
-                                    android:textColor="#FFFFFF" />
+                                    android:textColor="@color/text_primary_dark" />
 
                                 <LinearLayout
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:orientation="vertical"
-                                    android:layout_marginStart="4dp">
+                                    android:layout_marginStart="@dimen/spacing_xs">
 
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="Inst"
-                                        android:textSize="12sp"
+                                        android:textSize="@dimen/text_label"
                                         android:textStyle="italic"
-                                        android:textColor="#B0BEC5" />
+                                        android:textColor="@color/text_secondary_dark" />
 
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="mpg"
-                                        android:textSize="12sp"
+                                        android:textSize="@dimen/text_label"
                                         android:textStyle="italic"
-                                        android:textColor="#B0BEC5" />
+                                        android:textColor="@color/text_secondary_dark" />
                                 </LinearLayout>
                             </LinearLayout>
 
                             <View
                                 android:layout_width="1dp"
                                 android:layout_height="match_parent"
-                                android:background="#B0BEC5"
+                                android:background="@color/text_secondary_dark"
                                 android:alpha="0.3" />
 
                             <!-- Average MPG -->
@@ -112,88 +110,87 @@
                                 <View
                                     android:layout_width="8dp"
                                     android:layout_height="8dp"
-                                    android:layout_marginEnd="8dp"
+                                    android:layout_marginEnd="@dimen/spacing_small"
                                     android:background="@drawable/circle_indicator"
-                                    android:backgroundTint="#4CAF50" />
+                                    android:backgroundTint="@color/fault_success" />
 
                                 <TextView
                                     android:id="@+id/average_mpg_value"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="@string/value_placeholder"
-                                    android:textSize="24sp"
+                                    android:textSize="@dimen/text_medium_value"
                                     android:textStyle="bold"
-                                    android:textColor="#FFFFFF" />
+                                    android:textColor="@color/text_primary_dark" />
 
                                 <LinearLayout
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:orientation="vertical"
-                                    android:layout_marginStart="4dp">
+                                    android:layout_marginStart="@dimen/spacing_xs">
 
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="Avg"
-                                        android:textSize="12sp"
+                                        android:textSize="@dimen/text_label"
                                         android:textStyle="italic"
-                                        android:textColor="#B0BEC5" />
+                                        android:textColor="@color/text_secondary_dark" />
 
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="mpg"
-                                        android:textSize="12sp"
+                                        android:textSize="@dimen/text_label"
                                         android:textStyle="italic"
-                                        android:textColor="#B0BEC5" />
+                                        android:textColor="@color/text_secondary_dark" />
                                 </LinearLayout>
                             </LinearLayout>
                         </LinearLayout>
 
-                        <!-- Bar Chart Placeholder -->
+                        <!-- Bar Chart -->
                         <com.obddroid.ui.components.FuelEconomyChart
                             android:id="@+id/fuel_economy_chart"
                             android:layout_width="match_parent"
                             android:layout_height="140dp"
-                            android:layout_marginTop="4dp"
-                            android:layout_marginBottom="12dp" />
+                            android:layout_marginTop="@dimen/spacing_xs"
+                            android:layout_marginBottom="@dimen/spacing_small" />
 
                         <!-- Chart Title -->
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="AVERAGE FUEL ECONOMY"
-                            android:textSize="14sp"
+                            android:textSize="@dimen/text_caption"
                             android:textStyle="bold"
-                            android:textColor="#FFFFFF"
+                            android:textColor="@color/text_primary_dark"
                             android:gravity="center"
                             android:letterSpacing="0.05" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- Fuel Level and Range Cards Row -->
+                <!-- Fuel Level and Range Row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
+                    android:layout_marginBottom="@dimen/spacing_small">
 
                     <!-- Fuel Level Card -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginEnd="4dp"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="4dp"
-                        app:cardBackgroundColor="#2C2C2C"
-                        app:cardUseCompatPadding="false">
+                        android:layout_marginEnd="@dimen/spacing_xs"
+                        app:cardCornerRadius="@dimen/card_corner_radius"
+                        app:cardElevation="@dimen/elevation_content_card"
+                        app:cardBackgroundColor="@color/background_secondary">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="12dp"
+                            android:padding="@dimen/spacing_small"
                             android:gravity="center">
 
                             <LinearLayout
@@ -205,37 +202,37 @@
                                 <View
                                     android:layout_width="8dp"
                                     android:layout_height="8dp"
-                                    android:layout_marginEnd="8dp"
+                                    android:layout_marginEnd="@dimen/spacing_small"
                                     android:background="@drawable/circle_indicator"
-                                    android:backgroundTint="#4CAF50" />
+                                    android:backgroundTint="@color/fault_success" />
 
                                 <TextView
                                     android:id="@+id/fuel_level_value"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="@string/value_placeholder"
-                                    android:textSize="28sp"
+                                    android:textSize="@dimen/text_large_value"
                                     android:textStyle="bold"
-                                    android:textColor="#FFFFFF" />
+                                    android:textColor="@color/text_primary_dark" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="%"
-                                    android:textSize="16sp"
-                                    android:textColor="#B0BEC5"
-                                    android:layout_marginStart="4dp" />
+                                    android:textSize="@dimen/text_small_value"
+                                    android:textColor="@color/text_secondary_dark"
+                                    android:layout_marginStart="@dimen/spacing_xs" />
                             </LinearLayout>
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="FUEL LEVEL"
-                                android:textSize="12sp"
+                                android:textSize="@dimen/text_label"
                                 android:textStyle="bold"
-                                android:textColor="#B0BEC5"
+                                android:textColor="@color/text_secondary_dark"
                                 android:letterSpacing="0.05"
-                                android:layout_marginTop="4dp" />
+                                android:layout_marginTop="@dimen/spacing_xs" />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
@@ -244,17 +241,16 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="4dp"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="4dp"
-                        app:cardBackgroundColor="#2C2C2C"
-                        app:cardUseCompatPadding="false">
+                        android:layout_marginStart="@dimen/spacing_xs"
+                        app:cardCornerRadius="@dimen/card_corner_radius"
+                        app:cardElevation="@dimen/elevation_content_card"
+                        app:cardBackgroundColor="@color/background_secondary">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="12dp"
+                            android:padding="@dimen/spacing_small"
                             android:gravity="center">
 
                             <LinearLayout
@@ -266,37 +262,37 @@
                                 <View
                                     android:layout_width="8dp"
                                     android:layout_height="8dp"
-                                    android:layout_marginEnd="8dp"
+                                    android:layout_marginEnd="@dimen/spacing_small"
                                     android:background="@drawable/circle_indicator"
-                                    android:backgroundTint="#4CAF50" />
+                                    android:backgroundTint="@color/fault_success" />
 
                                 <TextView
                                     android:id="@+id/range_value"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="@string/value_placeholder"
-                                    android:textSize="28sp"
+                                    android:textSize="@dimen/text_large_value"
                                     android:textStyle="bold"
-                                    android:textColor="#FFFFFF" />
+                                    android:textColor="@color/text_primary_dark" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="miles"
-                                    android:textSize="14sp"
-                                    android:textColor="#B0BEC5"
-                                    android:layout_marginStart="4dp" />
+                                    android:textSize="@dimen/text_caption"
+                                    android:textColor="@color/text_secondary_dark"
+                                    android:layout_marginStart="@dimen/spacing_xs" />
                             </LinearLayout>
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="RANGE"
-                                android:textSize="12sp"
+                                android:textSize="@dimen/text_label"
                                 android:textStyle="bold"
-                                android:textColor="#B0BEC5"
+                                android:textColor="@color/text_secondary_dark"
                                 android:letterSpacing="0.05"
-                                android:layout_marginTop="4dp" />
+                                android:layout_marginTop="@dimen/spacing_xs" />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
                 </LinearLayout>
@@ -305,17 +301,16 @@
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#2C2C2C"
-                    app:cardUseCompatPadding="false">
+                    android:layout_marginBottom="@dimen/spacing_small"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardElevation="@dimen/elevation_content_card"
+                    app:cardBackgroundColor="@color/background_secondary">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="12dp">
+                        android:padding="@dimen/spacing_small">
 
                         <!-- Fuel Flow Value -->
                         <LinearLayout
@@ -328,26 +323,26 @@
                             <View
                                 android:layout_width="8dp"
                                 android:layout_height="8dp"
-                                android:layout_marginEnd="8dp"
+                                android:layout_marginEnd="@dimen/spacing_small"
                                 android:background="@drawable/circle_indicator"
-                                android:backgroundTint="#4CAF50" />
+                                android:backgroundTint="@color/fault_success" />
 
                             <TextView
                                 android:id="@+id/fuel_flow_value"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/value_placeholder"
-                                android:textSize="28sp"
+                                android:textSize="@dimen/text_large_value"
                                 android:textStyle="bold"
-                                android:textColor="#FFFFFF" />
+                                android:textColor="@color/text_primary_dark" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="gal/h"
-                                android:textSize="14sp"
-                                android:textColor="#B0BEC5"
-                                android:layout_marginStart="4dp" />
+                                android:textSize="@dimen/text_caption"
+                                android:textColor="@color/text_secondary_dark"
+                                android:layout_marginStart="@dimen/spacing_xs" />
                         </LinearLayout>
 
                         <!-- Fuel Flow Gauge -->
@@ -355,45 +350,44 @@
                             android:id="@+id/fuel_flow_gauge"
                             android:layout_width="match_parent"
                             android:layout_height="30dp"
-                            android:layout_marginTop="8dp"
-                            android:layout_marginBottom="12dp" />
+                            android:layout_marginTop="@dimen/spacing_xs"
+                            android:layout_marginBottom="@dimen/spacing_small" />
 
                         <!-- Gauge Title -->
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="FUEL FLOW"
-                            android:textSize="12sp"
+                            android:textSize="@dimen/text_label"
                             android:textStyle="bold"
-                            android:textColor="#B0BEC5"
+                            android:textColor="@color/text_secondary_dark"
                             android:gravity="center"
                             android:letterSpacing="0.05" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- Throttle Position and Time to Empty Row -->
+                <!-- Throttle and Time to Empty Row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
+                    android:layout_marginBottom="@dimen/spacing_small">
 
                     <!-- Throttle Position Card -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginEnd="4dp"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="4dp"
-                        app:cardBackgroundColor="#2C2C2C"
-                        app:cardUseCompatPadding="false">
+                        android:layout_marginEnd="@dimen/spacing_xs"
+                        app:cardCornerRadius="@dimen/card_corner_radius"
+                        app:cardElevation="@dimen/elevation_content_card"
+                        app:cardBackgroundColor="@color/background_secondary">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="12dp"
+                            android:padding="@dimen/spacing_small"
                             android:gravity="center">
 
                             <LinearLayout
@@ -405,37 +399,37 @@
                                 <View
                                     android:layout_width="8dp"
                                     android:layout_height="8dp"
-                                    android:layout_marginEnd="8dp"
+                                    android:layout_marginEnd="@dimen/spacing_small"
                                     android:background="@drawable/circle_indicator"
-                                    android:backgroundTint="#4CAF50" />
+                                    android:backgroundTint="@color/fault_success" />
 
                                 <TextView
                                     android:id="@+id/throttle_position_value"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="@string/value_placeholder"
-                                    android:textSize="28sp"
+                                    android:textSize="@dimen/text_large_value"
                                     android:textStyle="bold"
-                                    android:textColor="#FFFFFF" />
+                                    android:textColor="@color/text_primary_dark" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="%"
-                                    android:textSize="16sp"
-                                    android:textColor="#B0BEC5"
-                                    android:layout_marginStart="4dp" />
+                                    android:textSize="@dimen/text_small_value"
+                                    android:textColor="@color/text_secondary_dark"
+                                    android:layout_marginStart="@dimen/spacing_xs" />
                             </LinearLayout>
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="THROTTLE"
-                                android:textSize="12sp"
+                                android:textSize="@dimen/text_label"
                                 android:textStyle="bold"
-                                android:textColor="#B0BEC5"
+                                android:textColor="@color/text_secondary_dark"
                                 android:letterSpacing="0.05"
-                                android:layout_marginTop="4dp" />
+                                android:layout_marginTop="@dimen/spacing_xs" />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
@@ -444,17 +438,16 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="4dp"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="4dp"
-                        app:cardBackgroundColor="#2C2C2C"
-                        app:cardUseCompatPadding="false">
+                        android:layout_marginStart="@dimen/spacing_xs"
+                        app:cardCornerRadius="@dimen/card_corner_radius"
+                        app:cardElevation="@dimen/elevation_content_card"
+                        app:cardBackgroundColor="@color/background_secondary">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="12dp"
+                            android:padding="@dimen/spacing_small"
                             android:gravity="center">
 
                             <LinearLayout
@@ -466,59 +459,68 @@
                                 <View
                                     android:layout_width="8dp"
                                     android:layout_height="8dp"
-                                    android:layout_marginEnd="8dp"
+                                    android:layout_marginEnd="@dimen/spacing_small"
                                     android:background="@drawable/circle_indicator"
-                                    android:backgroundTint="#4CAF50" />
+                                    android:backgroundTint="@color/fault_success" />
 
                                 <TextView
                                     android:id="@+id/time_to_empty_value"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="@string/value_placeholder"
-                                    android:textSize="28sp"
+                                    android:textSize="@dimen/text_large_value"
                                     android:textStyle="bold"
-                                    android:textColor="#FFFFFF" />
+                                    android:textColor="@color/text_primary_dark" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="hrs"
-                                    android:textSize="14sp"
-                                    android:textColor="#B0BEC5"
-                                    android:layout_marginStart="4dp" />
+                                    android:textSize="@dimen/text_caption"
+                                    android:textColor="@color/text_secondary_dark"
+                                    android:layout_marginStart="@dimen/spacing_xs" />
                             </LinearLayout>
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="TIME TO EMPTY"
-                                android:textSize="12sp"
+                                android:textSize="@dimen/text_label"
                                 android:textStyle="bold"
-                                android:textColor="#B0BEC5"
+                                android:textColor="@color/text_secondary_dark"
                                 android:letterSpacing="0.05"
-                                android:layout_marginTop="4dp" />
+                                android:layout_marginTop="@dimen/spacing_xs" />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
                 </LinearLayout>
 
-            </LinearLayout>
-        </ScrollView>
+                <!-- Footer Spacer -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/footer_spacer_height" />
 
-        <!-- Overlay that appears when footer is expanded -->
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+        <!-- Overlay -->
         <View
             android:id="@+id/footer_overlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#80000000"
+            android:background="@color/background_overlay"
             android:clickable="true"
             android:focusable="true"
             android:visibility="gone"/>
 
     </FrameLayout>
 
+    <!-- Footer -->
     <com.obddroid.ui.components.VehicleInfoFooter
         android:id="@+id/vehicle_footer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/background_secondary"
+        android:elevation="@dimen/elevation_footer"/>
 
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
