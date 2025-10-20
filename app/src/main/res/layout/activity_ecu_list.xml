@@ -28,33 +28,32 @@
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
+                    android:layout_marginBottom="24dp"
                     app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#2196F3">
+                    app:cardElevation="8dp"
+                    app:cardBackgroundColor="#4CAF50">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="16dp"
-                        android:gravity="center_vertical">
+                        android:orientation="vertical"
+                        android:padding="20dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="ℹ️"
-                            android:textSize="24sp"
-                            android:layout_marginEnd="12dp"/>
+                            android:text="🔧 ECU MODULES"
+                            android:textColor="#FFFFFF"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
+                            android:layout_marginTop="8dp"
                             android:text="Discover and view all Electronic Control Units (ECUs) in your vehicle. Compare scans to detect calibration changes and potential tampering."
-                            android:textSize="14sp"
-                            android:textColor="#FFFFFF"
-                            android:lineSpacingExtra="2dp"/>
+                            android:textColor="#E8F5E9"
+                            android:textSize="14sp" />
 
                     </LinearLayout>
 
@@ -121,7 +120,7 @@
                 android:layout_height="wrap_content"
                 android:text="Scan ECUs"
                 android:textSize="14sp"
-                android:backgroundTint="#2196F3"
+                android:backgroundTint="#4CAF50"
                 android:textColor="#FFFFFF" />
         </LinearLayout>
 
