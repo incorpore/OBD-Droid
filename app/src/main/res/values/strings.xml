@@ -28,6 +28,8 @@
     <string name="logo">Logo</string>
     <string name="back_again_to_exit">Press back again to close this app</string>
     <string name="safety_recalls">Safety Recalls</string>
+    <string name="vin_hint">Enter 17-character VIN</string>
+    <string name="search_recalls">Search Recalls</string>
     <string name="recalls_vin_hint">Enter VIN</string>
     <string name="recalls_search_button">Visit NHTSA Website</string>
     <string name="recalls_intro">Enter a 17-character VIN to search the NHTSA recall database.</string>

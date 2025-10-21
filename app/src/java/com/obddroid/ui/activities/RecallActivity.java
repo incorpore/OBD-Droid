@@ -45,6 +45,7 @@ public class RecallActivity extends AppCompatActivity {
     private TextView statusText;
     private ProgressBar loadingIndicator;
     private LinearLayout resultsContainer;
+    private View emptyState;
     private VehicleInfoFooter vehicleInfoFooter;
     private View footerOverlay;
 
@@ -78,9 +79,8 @@ public class RecallActivity extends AppCompatActivity {
         setupFooterOverlay();
         prefillVin();
 
-        // Update status text to show API is now available
-        statusText.setText("Enter a VIN to check for safety recalls");
-        statusText.setVisibility(View.VISIBLE);
+        // Hide status text initially - will show during search
+        statusText.setVisibility(View.GONE);
 
         searchButton.setOnClickListener(v -> performRecallSearch());
     }
@@ -92,6 +92,7 @@ public class RecallActivity extends AppCompatActivity {
         statusText = findViewById(R.id.recalls_status_text);
         loadingIndicator = findViewById(R.id.recalls_loading_indicator);
         resultsContainer = findViewById(R.id.recalls_results_container);
+        emptyState = findViewById(R.id.recalls_empty_state);
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);
         footerOverlay = findViewById(R.id.footer_overlay);
     }
@@ -136,8 +137,12 @@ public class RecallActivity extends AppCompatActivity {
         searchButton.setEnabled(false);
         loadingIndicator.setVisibility(View.VISIBLE);
         statusText.setText("Searching for recalls...");
+        statusText.setVisibility(View.VISIBLE);
         resultsContainer.removeAllViews();
         resultsContainer.setVisibility(View.GONE);
+        if (emptyState != null) {
+            emptyState.setVisibility(View.GONE);
+        }
 
         // Decode VIN with recalls
         Log.d("RecallActivity", "Calling vinDecoder.decodeWithRecalls()");
@@ -158,13 +163,21 @@ public class RecallActivity extends AppCompatActivity {
                             if (!vehicleData.getRecalls().isEmpty()) {
                                 displayRecalls(vehicleData.getRecalls(), vehicleData);
                             } else {
-                                statusText.setText("No recalls found for this vehicle");
+                                // Show empty state with success message
+                                statusText.setVisibility(View.GONE);
                                 resultsContainer.setVisibility(View.GONE);
+                                if (emptyState != null) {
+                                    emptyState.setVisibility(View.VISIBLE);
+                                }
                             }
                         } else {
                             Log.d("RecallActivity", "No recalls in response");
-                            statusText.setText("No recalls found for this vehicle");
+                            // Show empty state with success message
+                            statusText.setVisibility(View.GONE);
                             resultsContainer.setVisibility(View.GONE);
+                            if (emptyState != null) {
+                                emptyState.setVisibility(View.VISIBLE);
+                            }
                         }
                     });
                 }
@@ -198,6 +211,12 @@ public class RecallActivity extends AppCompatActivity {
             vehicleData.getModelYear() != null ? vehicleData.getModelYear() : "",
             vehicleData.getMake() != null ? vehicleData.getMake() : "",
             vehicleData.getModel() != null ? vehicleData.getModel() : ""));
+        statusText.setVisibility(View.VISIBLE);
+
+        // Hide empty state when showing results
+        if (emptyState != null) {
+            emptyState.setVisibility(View.GONE);
+        }
 
         resultsContainer.removeAllViews();
 

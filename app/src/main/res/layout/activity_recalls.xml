@@ -1,63 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:background="@color/background_primary">
 
+    <!-- Main Content -->
     <FrameLayout
+        android:id="@+id/content_frame"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="match_parent">
 
-        <ScrollView
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fillViewport="true"
-            android:background="@color/background_dark_semi">
+            android:fillViewport="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="@dimen/spacing_large">
 
+                <!-- Hero Info Card -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="6dp">
+                    android:layout_marginBottom="@dimen/spacing_xxl"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardElevation="@dimen/elevation_hero_card"
+                    app:cardBackgroundColor="@color/fault_success">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="16dp">
+                        android:padding="@dimen/card_padding_standard">
 
                         <TextView
-                            android:id="@+id/recalls_header"
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/recalls_intro"
-                            android:textColor="#1A1A1A"
-                            android:textSize="14sp" />
+                            android:text="Check for official NHTSA safety recalls on your vehicle. Enter a 17-digit VIN to retrieve active recall campaigns and safety information."
+                            android:textColor="@color/text_hint_dark"
+                            android:textSize="@dimen/text_caption" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <!-- VIN Input Card -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/spacing_large"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardElevation="@dimen/elevation_content_card"
+                    app:cardBackgroundColor="@color/background_secondary">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/card_padding_standard">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="VEHICLE IDENTIFICATION"
+                            android:textSize="@dimen/text_label"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_secondary_dark"
+                            android:letterSpacing="0.05"
+                            android:layout_marginBottom="@dimen/spacing_large" />
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/recalls_vin_input_layout"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            app:boxStrokeColor="@color/colorPrimary"
-                            app:boxStrokeWidthFocused="2dp"
+                            android:hint="@string/vin_hint"
+                            app:counterEnabled="true"
+                            app:counterMaxLength="17"
                             app:endIconMode="clear_text">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/recalls_vin_input"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:hint="@string/recalls_vin_hint"
-                                android:imeOptions="actionDone"
                                 android:inputType="textCapCharacters"
                                 android:maxLength="17"
                                 android:textAllCaps="true" />
@@ -67,28 +96,39 @@
                             android:id="@+id/recalls_search_button"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:text="@string/recalls_search_button" />
+                            android:layout_marginTop="@dimen/spacing_large"
+                            android:text="@string/search_recalls"
+                            android:textSize="@dimen/text_body"
+                            android:textStyle="bold"
+                            android:backgroundTint="@color/fault_success"
+                            android:textColor="@color/text_primary_dark" />
 
-                        <ProgressBar
-                            android:id="@+id/recalls_loading_indicator"
-                            style="?android:attr/progressBarStyleSmall"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_horizontal"
-                            android:layout_marginTop="12dp"
-                            android:visibility="gone" />
-
-                        <TextView
-                            android:id="@+id/recalls_status_text"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:textColor="#555555"
-                            android:textSize="13sp" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
+                <!-- Status Text -->
+                <TextView
+                    android:id="@+id/recalls_status_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/spacing_large"
+                    android:text=""
+                    android:textSize="@dimen/text_body"
+                    android:textColor="@color/text_secondary_dark"
+                    android:textAlignment="center"
+                    android:visibility="gone" />
+
+                <!-- Loading Indicator -->
+                <ProgressBar
+                    android:id="@+id/recalls_loading_indicator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="@dimen/spacing_large"
+                    android:visibility="gone"
+                    android:indeterminateTint="@color/fault_success" />
+
+                <!-- Results Container -->
                 <LinearLayout
                     android:id="@+id/recalls_results_container"
                     android:layout_width="match_parent"
@@ -96,22 +136,71 @@
                     android:orientation="vertical"
                     android:visibility="gone" />
 
-            </LinearLayout>
-        </ScrollView>
+                <!-- Empty State (No Recalls Found) -->
+                <LinearLayout
+                    android:id="@+id/recalls_empty_state"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="@dimen/spacing_xxl"
+                    android:visibility="gone">
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✓"
+                        android:textSize="64sp"
+                        android:textColor="@color/fault_success"
+                        android:layout_marginBottom="@dimen/spacing_large" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="No Recalls Found"
+                        android:textSize="@dimen/text_section_header"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary_dark"
+                        android:layout_marginBottom="@dimen/spacing_small" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Great news! There are no active safety recalls for this vehicle."
+                        android:textSize="@dimen/text_caption"
+                        android:textColor="@color/text_tertiary_dark"
+                        android:textAlignment="center"
+                        android:gravity="center" />
+
+                </LinearLayout>
+
+                <!-- Footer Spacer -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/footer_spacer_height" />
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+        <!-- Overlay -->
         <View
             android:id="@+id/footer_overlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#80000000"
+            android:background="@color/background_overlay"
             android:clickable="true"
             android:focusable="true"
-            android:visibility="gone" />
+            android:visibility="gone"/>
+
     </FrameLayout>
 
+    <!-- Footer -->
     <com.obddroid.ui.components.VehicleInfoFooter
         android:id="@+id/vehicle_footer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/background_secondary"
+        android:elevation="@dimen/elevation_footer"/>
 
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
