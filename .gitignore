@@ -124,3 +124,7 @@ CLAUDE.md
 # DTC Database (copied from submodule during build)
 app/src/main/assets/dtc_codes.db
 /.jdk
+/.idea
+/.idea
+/.idea
+/.idea

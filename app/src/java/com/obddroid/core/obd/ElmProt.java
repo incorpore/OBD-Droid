@@ -1439,6 +1439,14 @@ public class ElmProt
 	private STAT lastGoodState = STAT.UNDEFINED;
 
 	/**
+	 * Cycling detection: Track recent state transitions to detect stuck loops
+	 */
+	private int rapidCycleCount = 0;
+	private long cycleDetectionWindowStart = 0;
+	private static final int MAX_RAPID_CYCLES = 10; // Max cycles in detection window
+	private static final long CYCLE_DETECTION_WINDOW_MS = 30000; // 30 seconds
+
+	/**
 	 * Getter for property status.
 	 *
 	 * @return Value of property status.
@@ -1578,6 +1586,58 @@ public class ElmProt
 				consecutiveNodataCount = 0;
 			}
 			lastGoodState = oldStatus;
+		}
+
+		// === Rapid Cycling Detection ===
+		// Detect if we're stuck in any cycling loop (CONNECTED<->NODATA or NODATA<->CONNECTING)
+		if ((oldStatus == STAT.CONNECTED && status == STAT.NODATA) ||
+		    (oldStatus == STAT.NODATA && status == STAT.CONNECTED) ||
+		    (oldStatus == STAT.NODATA && status == STAT.CONNECTING) ||
+		    (oldStatus == STAT.CONNECTING && status == STAT.NODATA))
+		{
+			long now = System.currentTimeMillis();
+
+			// Start new detection window if needed
+			if (cycleDetectionWindowStart == 0 || (now - cycleDetectionWindowStart) > CYCLE_DETECTION_WINDOW_MS)
+			{
+				cycleDetectionWindowStart = now;
+				rapidCycleCount = 1;
+			}
+			else
+			{
+				rapidCycleCount++;
+
+				// Check if we've exceeded the cycle threshold
+				if (rapidCycleCount >= MAX_RAPID_CYCLES)
+				{
+					long windowDuration = now - cycleDetectionWindowStart;
+					log.severe(String.format(
+						"EXCESSIVE CYCLING DETECTED: %d transitions in %dms - adapter stuck in loop! Forcing disconnect...",
+						rapidCycleCount, windowDuration));
+
+					// Reset counters
+					rapidCycleCount = 0;
+					cycleDetectionWindowStart = 0;
+					consecutiveNodataCount = 0;
+
+					// Force disconnect by setting ERROR status
+					// This will trigger the service layer to disconnect and allow manual reconnection
+					this.status = STAT.ERROR;
+					firePropertyChange(new PropertyChangeEvent(this, PROP_STATUS, oldStatus, this.status));
+					return; // Exit early - don't process normal status update
+				}
+			}
+		}
+		// Reset cycle counter if we achieve stable connection for a while
+		else if (status == STAT.CONNECTED && oldStatus == STAT.CONNECTED)
+		{
+			long now = System.currentTimeMillis();
+			if (cycleDetectionWindowStart > 0 && (now - cycleDetectionWindowStart) > CYCLE_DETECTION_WINDOW_MS)
+			{
+				// Been stable for a while, reset cycle detection
+				rapidCycleCount = 0;
+				cycleDetectionWindowStart = 0;
+			}
 		}
 
 		this.status = status;
