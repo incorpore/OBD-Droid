@@ -4,8 +4,14 @@
 
     <item
         android:id="@+id/action_export_csv"
+        android:title="Save Report"
         android:icon="@drawable/ic_file_upload_24"
-        android:title="Export CSV"
-        app:showAsAction="always" />
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_about"
+        android:title="About ECU Comparison"
+        android:icon="@drawable/ic_info_24"
+        app:showAsAction="never" />
 
 </menu>

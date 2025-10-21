@@ -269,12 +269,8 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         // Stop updates
         updateHandler.removeCallbacksAndMessages(null);
 
-        // Restore original OBD service if we changed it
-        if (dataQueryInProgress && CommService.elm != null && previousService != ObdProt.OBD_SVC_NONE) {
-            log.info("Activity pausing - restoring service: " + previousService);
-            CommService.elm.setService(previousService, true);
-            dataQueryInProgress = false;
-        }
+        // No service restoration needed - we never switch services
+        dataQueryInProgress = false;
     }
 
     @Override
@@ -365,35 +361,14 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
             return;
         }
 
-        // Save the current service so we can restore it later
-        previousService = CommService.elm.getService();
-        log.info("Starting emissions data request (previous service: " + previousService + ")");
+        // DO NOT switch OBD services - causes instability with some adapters
+        // Just display whatever emissions data is already available
+        log.info("Displaying emissions data from current service (service switching disabled)");
         dataQueryInProgress = true;
 
-        // Start with Mode 1 to get monitor readiness status
-        // The service will automatically request all supported PIDs from Mode 1
-        // Don't clear existing data (clearLists=false) to preserve good data
-        log.info("Switching to Mode 1 (OBD_SVC_DATA) to request monitor readiness");
-        CommService.elm.setService(ObdProt.OBD_SVC_DATA, false);
-
-        // After 3 seconds, switch to Mode 9 to get IUMPR data
-        // This gives Mode 1 time to retrieve monitor status data
-        updateHandler.postDelayed(() -> {
-            if (CommService.elm != null && dataQueryInProgress) {
-                log.info("Switching to Mode 9 (OBD_SVC_VEH_INFO) to request IUMPR data");
-                CommService.elm.setService(ObdProt.OBD_SVC_VEH_INFO, false);
-
-                // After another 3 seconds, update the display
-                updateHandler.postDelayed(() -> {
-                    log.info("Emissions data request complete - updating display");
-                    updateDisplay();
-
-                    // Mark query as complete but keep the service active for continuous updates
-                    // Don't restore the previous service - let the user navigate away naturally
-                    dataQueryInProgress = false;
-                }, 3000);
-            }
-        }, 3000);
+        // Update display immediately with available data
+        updateDisplay();
+        dataQueryInProgress = false;
     }
 
     private void startPeriodicUpdates() {

@@ -863,6 +863,14 @@ public class MainActivity extends AppCompatActivity
         // Auto-reconnect on startup if enabled (only on first resume)
         attemptAutoReconnectIfEnabled();
 
+        // DO NOT switch OBD service on resume - causes unstable adapters to cycle
+        // Just use whatever service is currently running
+        if (CommService.elm != null && mCommService != null)
+        {
+            int currentService = CommService.elm.getService();
+            log.info("MainActivity resuming - keeping current service: " + currentService + " (no switch)");
+        }
+
         // set up data display update timer
         updateTimer = new Timer();
         final TimerTask updateTask = new TimerTask()

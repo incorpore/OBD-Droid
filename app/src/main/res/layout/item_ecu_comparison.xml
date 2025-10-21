@@ -3,12 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="6dp"
-    android:layout_marginEnd="6dp"
-    android:layout_marginTop="4dp"
-    android:layout_marginBottom="4dp"
-    app:cardCornerRadius="6dp"
-    app:cardElevation="2dp">
+    android:layout_marginStart="0dp"
+    android:layout_marginEnd="0dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginBottom="6dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="#2C2C2C">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,15 +25,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="10dp"
-            android:gravity="center_vertical"
-            android:background="@android:color/white">
+            android:padding="12dp"
+            android:gravity="center_vertical">
 
             <!-- Status Icon -->
             <ImageView
                 android:id="@+id/status_icon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:src="@android:drawable/ic_menu_info_details"
                 android:tint="#4CAF50"
                 android:layout_marginEnd="12dp"/>
@@ -45,18 +48,18 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="ECM-EngineControl"
-                    android:textSize="14sp"
+                    android:textSize="15sp"
                     android:textStyle="bold"
-                    android:textColor="@android:color/black"/>
+                    android:textColor="#FFFFFF"/>
 
                 <TextView
                     android:id="@+id/status_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="No changes"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textColor="#4CAF50"
-                    android:layout_marginTop="1dp"/>
+                    android:layout_marginTop="2dp"/>
             </LinearLayout>
 
             <TextView
@@ -66,10 +69,10 @@
                 android:text="0x7E8"
                 android:textSize="11sp"
                 android:textStyle="bold"
-                android:textColor="@android:color/holo_blue_dark"
+                android:textColor="#FFFFFF"
                 android:fontFamily="monospace"
-                android:padding="4dp"
-                android:background="@drawable/rounded_background"/>
+                android:padding="6dp"
+                android:background="#4CAF50"/>
         </LinearLayout>
 
         <!-- Cal ID and CVN Display (always visible) -->
@@ -95,8 +98,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Cal ID:"
-                    android:textSize="10sp"
-                    android:textColor="@android:color/darker_gray"
+                    android:textSize="11sp"
+                    android:textColor="#A5D6A7"
                     android:textStyle="bold"
                     android:layout_marginEnd="6dp"
                     android:minWidth="50dp"/>
@@ -106,8 +109,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="CAL12345"
-                    android:textSize="11sp"
-                    android:textColor="@android:color/black"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
                     android:fontFamily="monospace" />
             </LinearLayout>
 
@@ -124,8 +127,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="CVN:"
-                    android:textSize="10sp"
-                    android:textColor="@android:color/darker_gray"
+                    android:textSize="11sp"
+                    android:textColor="#A5D6A7"
                     android:textStyle="bold"
                     android:layout_marginEnd="6dp"
                     android:minWidth="50dp"/>
@@ -135,8 +138,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="0x12345678"
-                    android:textSize="11sp"
-                    android:textColor="@android:color/black"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
                     android:fontFamily="monospace" />
             </LinearLayout>
 
@@ -165,8 +168,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Calibration ID"
-                    android:textSize="10sp"
-                    android:textColor="@android:color/darker_gray"
+                    android:textSize="11sp"
+                    android:textColor="#A5D6A7"
                     android:textStyle="bold"/>
 
                 <LinearLayout
@@ -180,7 +183,7 @@
                         android:layout_height="wrap_content"
                         android:text="Was:"
                         android:textSize="11sp"
-                        android:textColor="#757575"
+                        android:textColor="#90A4AE"
                         android:layout_marginEnd="8dp"
                         android:minWidth="50dp"/>
 
@@ -190,7 +193,7 @@
                         android:layout_height="wrap_content"
                         android:text="2769011200190170"
                         android:textSize="11sp"
-                        android:textColor="#757575"
+                        android:textColor="#B0BEC5"
                         android:fontFamily="monospace"/>
                 </LinearLayout>
 
@@ -205,7 +208,7 @@
                         android:layout_height="wrap_content"
                         android:text="Now:"
                         android:textSize="11sp"
-                        android:textColor="#F57C00"
+                        android:textColor="#FF9800"
                         android:textStyle="bold"
                         android:layout_marginEnd="8dp"
                         android:minWidth="50dp"/>
@@ -216,7 +219,7 @@
                         android:layout_height="wrap_content"
                         android:text="2769011200190999"
                         android:textSize="11sp"
-                        android:textColor="#F57C00"
+                        android:textColor="#FFB74D"
                         android:fontFamily="monospace"
                         android:textStyle="bold"/>
                 </LinearLayout>
@@ -235,8 +238,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Calibration Verification Number"
-                    android:textSize="10sp"
-                    android:textColor="@android:color/darker_gray"
+                    android:textSize="11sp"
+                    android:textColor="#A5D6A7"
                     android:textStyle="bold"/>
 
                 <LinearLayout
@@ -250,7 +253,7 @@
                         android:layout_height="wrap_content"
                         android:text="Was:"
                         android:textSize="11sp"
-                        android:textColor="#757575"
+                        android:textColor="#90A4AE"
                         android:layout_marginEnd="8dp"
                         android:minWidth="50dp"/>
 
@@ -260,7 +263,7 @@
                         android:layout_height="wrap_content"
                         android:text="EB854939"
                         android:textSize="11sp"
-                        android:textColor="#757575"
+                        android:textColor="#B0BEC5"
                         android:fontFamily="monospace"/>
                 </LinearLayout>
 
@@ -275,7 +278,7 @@
                         android:layout_height="wrap_content"
                         android:text="Now:"
                         android:textSize="11sp"
-                        android:textColor="#F57C00"
+                        android:textColor="#FF9800"
                         android:textStyle="bold"
                         android:layout_marginEnd="8dp"
                         android:minWidth="50dp"/>
@@ -286,7 +289,7 @@
                         android:layout_height="wrap_content"
                         android:text="FF123ABC"
                         android:textSize="11sp"
-                        android:textColor="#F57C00"
+                        android:textColor="#FFB74D"
                         android:fontFamily="monospace"
                         android:textStyle="bold"/>
                 </LinearLayout>

@@ -16,7 +16,7 @@
 
     <item
         android:id="@+id/action_export_csv"
-        android:title="Export CSV"
+        android:title="Save Report"
         android:icon="@drawable/ic_file_upload_24"
         app:showAsAction="never" />
 
@@ -24,6 +24,12 @@
         android:id="@+id/action_import_csv"
         android:title="Import CSV"
         android:icon="@drawable/ic_file_download_24"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_about"
+        android:title="About ECU Modules"
+        android:icon="@drawable/ic_info_24"
         app:showAsAction="never" />
 
 </menu>

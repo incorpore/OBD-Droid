@@ -1,11 +1,13 @@
 package com.obddroid.ui.activities;
 
+import android.app.Dialog;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -176,14 +178,75 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
             openCompareScans();
             return true;
         } else if (id == R.id.action_export_csv) {
-            exportToCSV();
+            showExportDialog();
             return true;
         } else if (id == R.id.action_import_csv) {
             importFromCSV();
             return true;
+        } else if (id == R.id.action_about) {
+            showAboutDialog();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Show About ECU Modules dialog
+     */
+    private void showAboutDialog() {
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_about_ecu);
+        dialog.setCancelable(true);
+
+        // Close button
+        View closeBtn = dialog.findViewById(R.id.btn_close);
+        closeBtn.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+    /**
+     * Show export dialog to choose format
+     */
+    private void showExportDialog() {
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_export_ecu);
+        dialog.setCancelable(true);
+
+        // Set dialog title
+        TextView dialogTitle = dialog.findViewById(R.id.dialog_title);
+        dialogTitle.setText("Save Report");
+
+        // CSV option
+        View csvOption = dialog.findViewById(R.id.option_export_csv);
+        csvOption.setOnClickListener(v -> {
+            dialog.dismiss();
+            exportToCSV();
+        });
+
+        // JSON option
+        View jsonOption = dialog.findViewById(R.id.option_export_json);
+        jsonOption.setOnClickListener(v -> {
+            dialog.dismiss();
+            exportToJSON();
+        });
+
+        // Cancel button
+        View cancelBtn = dialog.findViewById(R.id.btn_cancel);
+        cancelBtn.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+    /**
+     * Export ECU data to JSON format
+     */
+    private void exportToJSON() {
+        showSnackbar("JSON export coming soon", Snackbar.LENGTH_SHORT);
+        // TODO: Implement JSON export
     }
 
     /**

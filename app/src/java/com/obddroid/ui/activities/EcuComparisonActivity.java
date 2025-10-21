@@ -1,5 +1,6 @@
 package com.obddroid.ui.activities;
 
+import android.app.Dialog;
 import android.content.ContentValues;
 import android.net.Uri;
 import android.os.Build;
@@ -9,6 +10,7 @@ import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -130,10 +132,71 @@ public class EcuComparisonActivity extends AppCompatActivity {
             finish();
             return true;
         } else if (item.getItemId() == R.id.action_export_csv) {
-            exportComparisonToCSV();
+            showExportDialog();
+            return true;
+        } else if (item.getItemId() == R.id.action_about) {
+            showAboutDialog();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Show About ECU Comparison dialog
+     */
+    private void showAboutDialog() {
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_about_ecu_comparison);
+        dialog.setCancelable(true);
+
+        // Close button
+        View closeBtn = dialog.findViewById(R.id.btn_close);
+        closeBtn.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+    /**
+     * Show export dialog to choose format
+     */
+    private void showExportDialog() {
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_export_ecu);
+        dialog.setCancelable(true);
+
+        // Set dialog title
+        TextView dialogTitle = dialog.findViewById(R.id.dialog_title);
+        dialogTitle.setText("Save Report");
+
+        // CSV option
+        View csvOption = dialog.findViewById(R.id.option_export_csv);
+        csvOption.setOnClickListener(v -> {
+            dialog.dismiss();
+            exportComparisonToCSV();
+        });
+
+        // JSON option
+        View jsonOption = dialog.findViewById(R.id.option_export_json);
+        jsonOption.setOnClickListener(v -> {
+            dialog.dismiss();
+            exportComparisonToJSON();
+        });
+
+        // Cancel button
+        View cancelBtn = dialog.findViewById(R.id.btn_cancel);
+        cancelBtn.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+    /**
+     * Export comparison data to JSON format
+     */
+    private void exportComparisonToJSON() {
+        showSnackbar("JSON export coming soon");
+        // TODO: Implement JSON export
     }
 
     private void exportComparisonToCSV() {
@@ -414,10 +477,22 @@ public class EcuComparisonActivity extends AppCompatActivity {
             }
         }
 
-        // Add long-press listener to show detailed comparison modal
-        itemView.setOnLongClickListener(v -> {
-            showEcuDetailsModal(baselineEcu, currentEcu, statusText);
-            return true;
+        // Add tap listener to show detailed comparison modal with animation
+        itemView.setOnClickListener(v -> {
+            // Animate the tap
+            v.animate()
+                .scaleX(0.95f)
+                .scaleY(0.95f)
+                .setDuration(100)
+                .withEndAction(() -> {
+                    v.animate()
+                        .scaleX(1.0f)
+                        .scaleY(1.0f)
+                        .setDuration(100)
+                        .start();
+                    showEcuDetailsModal(baselineEcu, currentEcu, statusText);
+                })
+                .start();
         });
 
         comparisonList.addView(itemView);

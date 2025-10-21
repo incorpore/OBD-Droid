@@ -41,15 +41,6 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🔧 ECU MODULES"
-                            android:textColor="@color/text_primary_dark"
-                            android:textSize="@dimen/text_section_header"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_small"
                             android:text="Discover and view all Electronic Control Units (ECUs) in your vehicle. Compare scans to detect calibration changes and potential tampering."
                             android:textColor="@color/text_hint_dark"
                             android:textSize="@dimen/text_caption" />

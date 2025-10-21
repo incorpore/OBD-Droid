@@ -1,12 +1,14 @@
 package com.obddroid.ui.activities;
 
 import android.content.Intent;
+import android.app.Dialog;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -102,9 +104,28 @@ public class BaselineScanSelectionActivity extends AppCompatActivity {
         } else if (id == R.id.action_clear_all) {
             clearAllScans();
             return true;
+        } else if (id == R.id.action_about) {
+            showAboutDialog();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Show About Baseline Scans dialog
+     */
+    private void showAboutDialog() {
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_about_baseline_scan);
+        dialog.setCancelable(true);
+
+        // Close button
+        View closeBtn = dialog.findViewById(R.id.btn_close);
+        closeBtn.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 
     /**

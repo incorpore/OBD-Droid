@@ -180,10 +180,16 @@ public class FaultCodesActivity extends AppCompatActivity {
             .thenAccept(success -> runOnUiThread(() -> {
                 isScanning = false;
                 if (success) {
+                    log.info("Fault codes cleared successfully - rescanning in 2 seconds");
                     SnackbarHelper.showSuccess(this,
                         getString(R.string.fault_codes_clear_success),
                         SnackbarHelper.Duration.SHORT);
-                    startScan();
+
+                    // Wait 2 seconds before rescanning to give ECU time to reset
+                    scanButton.postDelayed(() -> {
+                        log.info("Starting automatic rescan after clearing codes");
+                        startScan();
+                    }, 2000);
                 } else {
                     hideProgress();
                     SnackbarHelper.showError(this,

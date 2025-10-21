@@ -43,15 +43,6 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="📊 SELECT BASELINE SCAN"
-                            android:textColor="#FFFFFF"
-                            android:textSize="20sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
                             android:text="Select a previous scan to compare against your current ECU data. This helps identify changes in calibration IDs and CVNs over time."
                             android:textColor="#E8F5E9"
                             android:textSize="14sp" />
