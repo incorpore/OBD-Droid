@@ -48,12 +48,18 @@ import java.util.List;
 import java.util.Locale;
 
 import io.github.vindecoder.android.VINDecoderAndroid;
-import io.github.vindecoder.nhtsa.RecallRecord;
 import io.github.vindecoder.nhtsa.VehicleData;
+import io.github.recalllookup.android.RecallLookupAndroid;
+import io.github.recalllookup.core.RecallRecord;
 
 /**
  * Screen for searching and displaying NHTSA safety recalls.
- * Now integrated with the nhtsa-vin-decoder library for real-time recall lookups.
+ *
+ * Uses two-step process:
+ * 1. nhtsa-vin-decoder: Decode VIN to get vehicle make/model/year
+ * 2. nhtsa-recall-lookup: Lookup recalls using vehicle information
+ *
+ * Automatically searches for recalls when connected to a vehicle.
  */
 public class RecallActivity extends AppCompatActivity {
 
@@ -80,6 +86,7 @@ public class RecallActivity extends AppCompatActivity {
     private TextView heroVehicleText;
 
     private VINDecoderAndroid vinDecoder;
+    private RecallLookupAndroid recallLookup;
     private final List<RecallRecord> currentRecalls = new ArrayList<>();
     private VehicleData currentVehicleData;
 
@@ -107,13 +114,14 @@ public class RecallActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        // Initialize VIN decoder
-        Log.d("RecallActivity", "Initializing VINDecoderAndroid");
+        // Initialize VIN decoder and recall lookup
+        Log.d("RecallActivity", "Initializing VINDecoderAndroid and RecallLookupAndroid");
         try {
             vinDecoder = new VINDecoderAndroid(this);
-            Log.d("RecallActivity", "VINDecoderAndroid initialized successfully");
+            recallLookup = new RecallLookupAndroid(this);
+            Log.d("RecallActivity", "VINDecoderAndroid and RecallLookupAndroid initialized successfully");
         } catch (Exception e) {
-            Log.e("RecallActivity", "Failed to initialize VINDecoderAndroid", e);
+            Log.e("RecallActivity", "Failed to initialize decoders", e);
         }
 
         bindViews();
@@ -252,58 +260,88 @@ public class RecallActivity extends AppCompatActivity {
         if (emptyState != null) emptyState.setVisibility(View.GONE);
         if (errorCard != null) errorCard.setVisibility(View.GONE);
 
-        // Decode VIN with recalls
-        Log.d("RecallActivity", "Calling vinDecoder.decodeWithRecalls()");
+        // Step 1: Decode VIN to get vehicle data
+        Log.d("RecallActivity", "Step 1: Decoding VIN to get vehicle data");
         try {
-            vinDecoder.decodeWithRecalls(vin, new VINDecoderAndroid.DecodeCallback() {
+            vinDecoder.decodeAsync(vin, new VINDecoderAndroid.DecodeCallback() {
                 @Override
                 public void onSuccess(VehicleData vehicleData) {
-                    Log.d("RecallActivity", "decodeWithRecalls onSuccess called");
+                    Log.d("RecallActivity", "VIN decode onSuccess");
                     Log.d("RecallActivity", "VehicleData: " + (vehicleData != null ?
-                        "Make=" + vehicleData.getMake() + ", Model=" + vehicleData.getModel() : "null"));
+                        "Make=" + vehicleData.getMake() + ", Model=" + vehicleData.getModel() + ", Year=" + vehicleData.getModelYear() : "null"));
 
-                    runOnUiThread(() -> {
-                        if (loadingCard != null) loadingCard.setVisibility(View.GONE);
-                        currentVehicleData = vehicleData;
-                        currentRecalls.clear();
-
-                        if (vehicleData != null && vehicleData.getRecalls() != null) {
-                            Log.d("RecallActivity", "Recalls found: " + vehicleData.getRecalls().size());
-                            if (!vehicleData.getRecalls().isEmpty()) {
-                                currentRecalls.addAll(vehicleData.getRecalls());
-                                displayRecalls(vehicleData.getRecalls(), vehicleData);
-                                // Save to cache
-                                saveCachedData(vin, vehicleData.getRecalls(), vehicleData);
-                                showSnackbar(vehicleData.getRecalls().size() + " recall" +
-                                    (vehicleData.getRecalls().size() == 1 ? "" : "s") + " found",
-                                    SnackbarHelper.MessageType.WARNING);
-                            } else {
-                                // Show empty state with success message
-                                updateHeroCard(null, null, false);
-                                resultsContainer.setVisibility(View.GONE);
-                                if (emptyState != null) emptyState.setVisibility(View.VISIBLE);
-                                if (errorCard != null) errorCard.setVisibility(View.GONE);
-                                // Save empty results to cache
-                                saveCachedData(vin, new ArrayList<>(), vehicleData);
-                                showSnackbar("No recalls found - vehicle is safe!",
-                                    SnackbarHelper.MessageType.SUCCESS);
+                    if (vehicleData == null || vehicleData.getMake() == null || vehicleData.getModel() == null) {
+                        runOnUiThread(() -> {
+                            if (loadingCard != null) loadingCard.setVisibility(View.GONE);
+                            if (errorCard != null) {
+                                errorCard.setVisibility(View.VISIBLE);
+                                if (errorMessage != null) {
+                                    errorMessage.setText("Unable to decode vehicle information from VIN");
+                                }
                             }
-                        } else {
-                            Log.d("RecallActivity", "No recalls in response");
-                            // Show empty state with success message
-                            updateHeroCard(null, null, false);
-                            resultsContainer.setVisibility(View.GONE);
-                            if (emptyState != null) emptyState.setVisibility(View.VISIBLE);
-                            if (errorCard != null) errorCard.setVisibility(View.GONE);
-                            showSnackbar("No recalls found - vehicle is safe!",
-                                SnackbarHelper.MessageType.SUCCESS);
-                        }
-                    });
+                        });
+                        return;
+                    }
+
+                    currentVehicleData = vehicleData;
+
+                    // Step 2: Lookup recalls using make/model/year
+                    Log.d("RecallActivity", "Step 2: Looking up recalls for " + vehicleData.getMake() + " " + vehicleData.getModel() + " " + vehicleData.getModelYear());
+                    recallLookup.getRecalls(vehicleData.getMake(), vehicleData.getModel(), vehicleData.getModelYear(),
+                        new RecallLookupAndroid.RecallCallback() {
+                            @Override
+                            public void onSuccess(List<RecallRecord> recalls) {
+                                Log.d("RecallActivity", "Recall lookup onSuccess - found " + (recalls != null ? recalls.size() : 0) + " recalls");
+
+                                runOnUiThread(() -> {
+                                    if (loadingCard != null) loadingCard.setVisibility(View.GONE);
+                                    currentRecalls.clear();
+
+                                    if (recalls != null && !recalls.isEmpty()) {
+                                        currentRecalls.addAll(recalls);
+                                        displayRecalls(recalls, vehicleData);
+                                        // Save to cache
+                                        saveCachedData(vin, recalls, vehicleData);
+                                        showSnackbar(recalls.size() + " recall" +
+                                            (recalls.size() == 1 ? "" : "s") + " found",
+                                            SnackbarHelper.MessageType.WARNING);
+                                    } else {
+                                        // Show empty state with success message
+                                        updateHeroCard(null, null, false);
+                                        resultsContainer.setVisibility(View.GONE);
+                                        if (emptyState != null) emptyState.setVisibility(View.VISIBLE);
+                                        if (errorCard != null) errorCard.setVisibility(View.GONE);
+                                        // Save empty results to cache
+                                        saveCachedData(vin, new ArrayList<>(), vehicleData);
+                                        showSnackbar("No recalls found - vehicle is safe!",
+                                            SnackbarHelper.MessageType.SUCCESS);
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void onError(String error) {
+                                Log.e("RecallActivity", "Recall lookup onError: " + error);
+                                runOnUiThread(() -> {
+                                    if (loadingCard != null) loadingCard.setVisibility(View.GONE);
+                                    currentRecalls.clear();
+                                    updateHeroCard(null, null, false);
+                                    if (errorCard != null) {
+                                        errorCard.setVisibility(View.VISIBLE);
+                                        if (errorMessage != null) {
+                                            errorMessage.setText(error != null ? error : "Failed to search recalls. Please try again.");
+                                        }
+                                    }
+                                    resultsContainer.setVisibility(View.GONE);
+                                    if (emptyState != null) emptyState.setVisibility(View.GONE);
+                                });
+                            }
+                        });
                 }
 
                 @Override
                 public void onError(String error) {
-                    Log.e("RecallActivity", "decodeWithRecalls onError: " + error);
+                    Log.e("RecallActivity", "VIN decode onError: " + error);
                     runOnUiThread(() -> {
                         if (loadingCard != null) loadingCard.setVisibility(View.GONE);
                         currentRecalls.clear();
@@ -312,7 +350,7 @@ public class RecallActivity extends AppCompatActivity {
                         if (errorCard != null) {
                             errorCard.setVisibility(View.VISIBLE);
                             if (errorMessage != null) {
-                                errorMessage.setText(error != null ? error : "Failed to search recalls. Please check vehicle connection.");
+                                errorMessage.setText(error != null ? error : "Failed to decode VIN. Please check vehicle connection.");
                             }
                         }
                         resultsContainer.setVisibility(View.GONE);
@@ -321,7 +359,7 @@ public class RecallActivity extends AppCompatActivity {
                 }
             });
         } catch (Exception e) {
-            Log.e("RecallActivity", "Exception calling decodeWithRecalls", e);
+            Log.e("RecallActivity", "Exception during recall search", e);
             if (loadingCard != null) loadingCard.setVisibility(View.GONE);
             currentRecalls.clear();
             currentVehicleData = null;
