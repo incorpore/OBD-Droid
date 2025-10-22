@@ -1,13 +1,13 @@
 # Telemetry & Vehicle History Workstreams
 
 **Assigned Agent:** Agent C  
-**Last Updated:** 2024-07-24
+**Last Updated:** 2025-01-06
 
 ## Workstream Snapshot
 | Initiative | Objective | Current Status | Upcoming Milestone |
 | --- | --- | --- | --- |
 | Process Variable (PV) Infrastructure Refactor | Replace legacy event bitmasks and raw maps with typed, thread-safe telemetry primitives | Typed wrappers live; pilot `PvChange` enum ready for wider rollout | Migrate top listeners to enum payloads and deprecate bitmask accessors |
-| Vehicle History Experience Refresh | Ship Phase 2 UI (recall module, usage badges, odometer sub-checks) and shape Phase 3 timelines | Phase 1 polish completed; Phase 2 UI awaits implementation behind feature flags | Deliver gated Phase 2 components with analytics + regression coverage |
+| Vehicle History Experience Refresh | Ship Phase 2 UI (recall module, usage badges, odometer sub-checks) and shape Phase 3 timelines | Phase 1 polish completed; Phase 2 UI still pending implementation in the Android client | Deliver gated Phase 2 components with analytics + regression coverage |
 | Analytics & QA Alignment | Keep telemetry/data consumers ready for PV + Vehicle History changes | VIN/PID regression matrix distributed, analytics spec drafted | Validate instrumentation in staging and sync sign-off before flag ramp |
 
 ## TODO
@@ -18,13 +18,13 @@
 - [ ] Retire raw-map PV classes after enum rollout verifies parity.
 - [ ] Implement Vehicle History Phase 2 UI modules (recalls, usage badges, odometer sub-checks) behind remote config flags.
 - [ ] Finalize localized copy + accessibility guidance for new Vehicle History components.
-- [ ] Complete analytics instrumentation and dashboard updates for Phase 2 engagement metrics.
+- [ ] Complete analytics instrumentation and dashboard updates for Phase 2 engagement metrics once client events exist.
 
 ## Process Variable Infrastructure Refactor
 
 ### Current State
 - `TypedProcessVar` and `TypedPvList` wrappers are merged and exercised by core services (`ObdDataService`, `ObdProt`) and primary UI adapters.
-- `PvChange` enum prototype is available and validated in `MainActivity`; compatibility shims still expose legacy bitmask values.
+- `PvChange` enum prototype is available and validated in `MainActivity`; compatibility shims still expose legacy bitmask values. VehicleInfoFooter, adapters, and services have not migrated yet.
 - Thread-safety tightened via read/write locks around listener dispatch, reducing race conditions during bulk updates.
 
 ### Near-Term Deliverables
@@ -62,7 +62,7 @@
 - Provide TalkBack focus order, dynamic type scaling, and contrast validation as part of QA exit criteria.
 
 ## Analytics & QA Alignment
-- Event taxonomy (`vehicle_history_recall_expand`, `vehicle_history_usage_badge_tap`, `vehicle_history_odometer_expand`, `vehicle_history_vin_autodetect`) defined in `docs/analytics-phase2-dashboard-update.md`; Airflow + Looker updates scheduled around the feature ramp.
+- Event taxonomy (`vehicle_history_recall_expand`, `vehicle_history_usage_badge_tap`, `vehicle_history_odometer_expand`, `vehicle_history_vin_autodetect`) defined in `docs/analytics-phase2-dashboard-update.md`; Airflow + Looker updates are on hold until the Android client emits the events.
 - Regression assets curated in `docs/vin-pid-regression-matrix.md`, covering VIN fixtures, PID datasets, and owners for staged testing (TestRail runs TR-1893/TR-1894).
 - Staging validation to include logcat checks, Snowplow stream verification, and dashboard smoke tests prior to production rollout.
 

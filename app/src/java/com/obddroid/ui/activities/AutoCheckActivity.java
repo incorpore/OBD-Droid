@@ -19,7 +19,6 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -29,10 +28,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import com.google.gson.Gson;
 import com.obddroid.R;
-import com.obddroid.services.AutoCheckService;
+import com.obddroid.vehiclehistory.AutoCheckService;
 import com.obddroid.vehicle.AutoCheckReport;
 import com.obddroid.vehicle.VehicleManager;
 import com.obddroid.ui.components.VehicleInfoFooter;
+import com.obddroid.utils.SnackbarHelper;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -177,7 +177,12 @@ public class AutoCheckActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_save_report) {
+        if (item.getItemId() == R.id.action_refresh) {
+            // Refresh the report - fetch a new one from the API
+            SnackbarHelper.showSnackbar(this, "Refreshing vehicle history...", SnackbarHelper.MessageType.INFO);
+            fetchVehicleHistory();
+            return true;
+        } else if (item.getItemId() == R.id.action_save_report) {
             showSaveReportDialog();
             return true;
         } else if (item.getItemId() == android.R.id.home) {
@@ -287,12 +292,12 @@ public class AutoCheckActivity extends AppCompatActivity {
     private void fetchVehicleHistory() {
         // Use VIN from VehicleManager
         if (currentVin == null || currentVin.isEmpty()) {
-            Toast.makeText(this, "No VIN available", Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSnackbar(this, "No VIN available", SnackbarHelper.MessageType.ERROR);
             return;
         }
 
         if (currentVin.length() != 17) {
-            Toast.makeText(this, "Invalid VIN length", Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSnackbar(this, "Invalid VIN length", SnackbarHelper.MessageType.ERROR);
             return;
         }
 
@@ -329,13 +334,13 @@ public class AutoCheckActivity extends AppCompatActivity {
                 if (pdfFilePath != null && !pdfFilePath.isEmpty()) {
                     isPdfAvailable = true;
                     invalidateOptionsMenu();
-                    Toast.makeText(AutoCheckActivity.this,
+                    SnackbarHelper.showSnackbar(AutoCheckActivity.this,
                         "Report loaded! PDF available",
-                        Toast.LENGTH_LONG).show();
+                        SnackbarHelper.MessageType.SUCCESS);
                 } else {
-                    Toast.makeText(AutoCheckActivity.this,
+                    SnackbarHelper.showSnackbar(AutoCheckActivity.this,
                         "Report loaded successfully!",
-                        Toast.LENGTH_SHORT).show();
+                        SnackbarHelper.MessageType.SUCCESS);
                 }
             }
 
@@ -818,14 +823,14 @@ public class AutoCheckActivity extends AppCompatActivity {
 
     private void openPdf() {
         if (currentPdfFilePath == null || currentPdfFilePath.isEmpty()) {
-            Toast.makeText(this, "PDF not available", Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSnackbar(this, "PDF not available", SnackbarHelper.MessageType.WARNING);
             return;
         }
 
         try {
             File pdfFile = new File(currentPdfFilePath);
             if (!pdfFile.exists()) {
-                Toast.makeText(this, "PDF file not found", Toast.LENGTH_SHORT).show();
+                SnackbarHelper.showSnackbar(this, "PDF file not found", SnackbarHelper.MessageType.ERROR);
                 return;
             }
 
@@ -850,7 +855,7 @@ public class AutoCheckActivity extends AppCompatActivity {
                 startActivity(Intent.createChooser(shareIntent, "Open PDF with..."));
             }
         } catch (Exception e) {
-            Toast.makeText(this, "Error opening PDF: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSnackbar(this, "Error opening PDF: " + e.getMessage(), SnackbarHelper.MessageType.ERROR);
         }
     }
 
@@ -859,7 +864,7 @@ public class AutoCheckActivity extends AppCompatActivity {
      */
     private void showSaveReportDialog() {
         if (currentReport == null) {
-            Toast.makeText(this, "No report available to export", Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSnackbar(this, "No report available to export", SnackbarHelper.MessageType.WARNING);
             return;
         }
 
@@ -901,7 +906,7 @@ public class AutoCheckActivity extends AppCompatActivity {
      */
     private void savePDFCopy() {
         if (currentPdfFilePath == null || currentPdfFilePath.isEmpty()) {
-            Toast.makeText(this, "PDF not available", Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSnackbar(this, "PDF not available", SnackbarHelper.MessageType.WARNING);
             return;
         }
 
@@ -911,7 +916,7 @@ public class AutoCheckActivity extends AppCompatActivity {
         try {
             File sourcePdf = new File(currentPdfFilePath);
             if (!sourcePdf.exists()) {
-                Toast.makeText(this, "PDF file not found", Toast.LENGTH_SHORT).show();
+                SnackbarHelper.showSnackbar(this, "PDF file not found", SnackbarHelper.MessageType.ERROR);
                 return;
             }
 
@@ -959,7 +964,7 @@ public class AutoCheckActivity extends AppCompatActivity {
                 destination.close();
             }
 
-            Toast.makeText(this, "PDF saved: " + fileName, Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSnackbar(this, "PDF saved: " + fileName, SnackbarHelper.MessageType.SUCCESS);
 
             // Open the saved PDF
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && savedUri != null) {
@@ -969,7 +974,7 @@ public class AutoCheckActivity extends AppCompatActivity {
                 openFile(fileUri, "application/pdf", fileName);
             }
         } catch (Exception e) {
-            Toast.makeText(this, "Failed to save PDF: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSnackbar(this, "Failed to save PDF: " + e.getMessage(), SnackbarHelper.MessageType.ERROR);
         }
     }
 
@@ -1066,7 +1071,7 @@ public class AutoCheckActivity extends AppCompatActivity {
             writer.flush();
             writer.close();
 
-            Toast.makeText(this, "CSV saved: " + fileName, Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSnackbar(this, "CSV saved: " + fileName, SnackbarHelper.MessageType.SUCCESS);
 
             // Open the saved CSV
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && savedUri != null) {
@@ -1077,7 +1082,7 @@ public class AutoCheckActivity extends AppCompatActivity {
             }
 
         } catch (Exception e) {
-            Toast.makeText(this, "Failed to export CSV: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSnackbar(this, "Failed to export CSV: " + e.getMessage(), SnackbarHelper.MessageType.ERROR);
         } finally {
             if (writer != null) {
                 try {
@@ -1193,7 +1198,7 @@ public class AutoCheckActivity extends AppCompatActivity {
             writer.flush();
             writer.close();
 
-            Toast.makeText(this, "JSON saved: " + fileName, Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSnackbar(this, "JSON saved: " + fileName, SnackbarHelper.MessageType.SUCCESS);
 
             // Open the saved JSON
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && savedUri != null) {
@@ -1204,7 +1209,7 @@ public class AutoCheckActivity extends AppCompatActivity {
             }
 
         } catch (Exception e) {
-            Toast.makeText(this, "Failed to export JSON: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSnackbar(this, "Failed to export JSON: " + e.getMessage(), SnackbarHelper.MessageType.ERROR);
         } finally {
             if (writer != null) {
                 try {
@@ -1235,7 +1240,7 @@ public class AutoCheckActivity extends AppCompatActivity {
                 startActivity(Intent.createChooser(shareIntent, "Open " + fileName + " with..."));
             }
         } catch (Exception e) {
-            Toast.makeText(this, "Saved to Documents/OBDroid", Toast.LENGTH_SHORT).show();
+            SnackbarHelper.showSnackbar(this, "Saved to Documents/OBDroid", SnackbarHelper.MessageType.SUCCESS);
         }
     }
 
@@ -1354,7 +1359,7 @@ public class AutoCheckActivity extends AppCompatActivity {
                         toastMessage += " - PDF available";
                     }
 
-                    Toast.makeText(this, toastMessage, Toast.LENGTH_SHORT).show();
+                    SnackbarHelper.showSnackbar(this, toastMessage, SnackbarHelper.MessageType.INFO);
                 }
             }
         } catch (Exception e) {

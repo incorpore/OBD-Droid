@@ -7,10 +7,10 @@ OBD‑Droid is a full-stack vehicle intelligence platform that combines Android-
 ## TL;DR – Where We Stand
 
 - **Android app:** Production-build ready with Bluetooth OBD-II stack, VIN-aware dashboards, rich fuel economy tooling, and an emissions readiness screen validated on a 2018 Mercedes GLE.
-- **Fuel economy:** New speed-density engine with calibration dialog, per-VIN preferences, and CSV trip logging (gal/h, MAP, IAT, VE, IMAP, synthetic MAF, calc method, calibration flag).
-- **Emissions diagnostics:** All EPA monitors parsed from Mode 9 IUMPR data; one outstanding counting bug because “No Data” monitors are still marked available.
-- **OBD service stability:** Deep comparison of Mode 9 vs. Fault Codes services uncovered five root causes for state flicker; phase-by-phase remediation plan defined.
-- **Vehicle history:** AutoCheck integration in place; relies on companion TypeScript scraper/API with Playwright or official Experian endpoints.
+- **Fuel economy:** Speed-density engine with calibration dialog, per-VIN preferences, and live charting (instant/average MPG, fuel flow, range) — CSV export removed.
+- **Emissions diagnostics:** Mode 1 + Mode 9 readiness merged into a single dashboard; pending follow-up to auto-refresh readiness frames on activity launch.
+- **OBD service stability:** Mode 9 vs. fault-code audit closed the service-context bug; remaining fixes target PV notifications, termination flags, and retry back-off.
+- **Vehicle history:** AutoCheck integration in place using the local companion API (Playwright or Experian). Switching to the production host is a quick config update when ready.
 
 Use this document as the single source for architecture, current feature status, key code locations, setup guides, validation procedures, and follow-up work.
 
@@ -40,22 +40,21 @@ OBD-Droid/
 - **Known debt:** Fault code reader triggers CONNECTING ↔ NODATA flicker because of service context mismatch, missing termination, and aggressive retries (see “OBD Service Reliability”).
 
 ### Fuel Economy Suite (2025 refresh)
-- **Vehicle preferences:** `vehicle/VehiclePreferences.java` stores tank size, VE calibration, per-VIN prompts.
-- **Estimation stack:** `vehicle/VehicleManager.java` provides tank capacity heuristics based on body class, luxury brand, displacement, drivetrain, and electrification level.
+- **Vehicle preferences:** `vehicle/VehiclePreferences.java` stores tank size, VE calibration, and whether per-VIN prompts have been shown.
+- **Estimation stack:** `vehicle/VehicleManager.java` provides tank capacity heuristics using decoded VIN metadata (body class, displacement, drivetrain, electrification).
 - **FuelEconomyActivity highlights:**
-  - Speed-density MAP-based calculation with ideal gas law (MAP, IAT, RPM, VE, displacement, stoich).
-  - Fallback RPM/load estimation when sensors unavailable.
-  - Calibration dialog: user enters miles and gallons to persist VE (50–130% range validation).
-  - Preferences-driven tank capacity prompt with VIN mask logging.
-  - Trip CSV logging (per second) capturing MAP_kPa, IAT_C, VE_%, IMAP, SyntheticMAF_g/s, CalcMethod (“MAP”, “Estimation-NoMAP”, “Estimation-InvalidMAP”), calibration state, plus throttle, range, time-to-empty.
-- **Outstanding work:** None for calculation accuracy; consider hooking tank prompt into VehicleManager change listener (already done) and optionally surface calc method badge in UI.
+  - Speed-density MAP-based calculation with ideal gas law (MAP, IAT, RPM, VE, displacement, stoich) and RPM/load fallback when sensors are missing.
+  - Calibration dialog that persists VE (50–130% validation) so subsequent calculations match real-world fill-up data.
+  - Preferences-driven tank capacity prompt with VIN masking that keeps user-entered values per vehicle.
+  - Real-time dashboard (instant/average MPG, fuel flow, range, throttle, time-to-empty) with in-app charting—no CSV export currently ships.
+- **Outstanding work:** Surface the active calculation method in the UI and wire VE prompts into future trip-history tooling once requirements are defined.
 
 ### Emissions Readiness
-- **Implementation:** `ui/activities/EmissionsActivity.java` parses Mode 9 PID 0x08 (IUMPR) and distinguishes continuous vs. non-continuous monitors.
-- **Validated monitors:** Misfire, Fuel, CCM, Catalyst, O2 Sensor, EGR, EVAP, Secondary Air, O2 Heater (with “No Data” fallback). Mercedes GLE test data confirmed large completions (e.g., O2 sensors 522,580/673,600; catalyst 1,103,820/783,680).
+- **Implementation:** `ui/activities/EmissionsActivity.java` parses Mode 9 PID 0x08 (IUMPR) and Mode 1 PID 0x01 readiness bits, combining them into a single dashboard.
+- **Validated monitors:** Misfire, Fuel, CCM, Catalyst, O2 Sensor, EGR, EVAP, Secondary Air, O2 Heater (with “Not Equipped” fallback). Mercedes GLE test data confirmed large completions (e.g., O2 sensors 522,580/673,600; catalyst 1,103,820/783,680).
 - **UI:** Card-based layout with progress bars, status icons, ready/not-ready summary banner.
-- **Known bug:** Monitors showing “No Data” are still counted as available, so the summary banner reports “3 monitors need drive cycle” instead of “1” (EVAP). Fix by tightening `isAvailable` logic when completions/conditions = 0.
-- **Future enhancement:** Actively trigger Mode 1 PID 0x01 on page load rather than relying on cached data from other screens.
+- **Current limitation:** Mode 1 readiness is only refreshed when the PID frame is seen elsewhere; auto-triggering a readiness refresh on activity start is still on the backlog.
+- **Future enhancement:** Expand the “Not Equipped” educational copy and add logging presets for common readiness troubleshooting workflows.
 
 ### Vehicle History (AutoCheck)
 - **Client components:**
@@ -74,26 +73,20 @@ OBD-Droid/
 
 ## OBD Service Reliability – Executive Summary
 
-A deep comparison between Mode 9 (OBD_SVC_VEH_INFO) and Fault Code services revealed five issues explaining why fault-code loads flicker the UI:
+Latest audit of the Mode 9 (OBD_SVC_VEH_INFO) and fault-code services closed the most disruptive regressions and catalogued what is left to tighten up.
 
-| # | Issue | File / Line | Severity | Impact |
-|---|-------|-------------|----------|--------|
-| 1 | `writeTelegram` uses `OBD_SVC_DATA` instead of requested service | `ObdProt.java:1483` | CRITICAL | Command queue confusion |
-| 2 | No termination flag equivalent to `pidsWrapped` | `ElmProt.java:~825` | CRITICAL | Infinite polling loop |
-| 3 | Fault-code PV updates lack `PvChangeEvent.PV_MODIFIED` | `ObdProt.java:1218` | HIGH | UI receives no update |
-| 4 | Aggressive NODATA recovery with immediate retries | `ElmProt.java:1515-1569` | HIGH | CONNECTED ↔ NODATA flicker |
-| 5 | Cache restore order unclear | `ObdProt.java:1635` | MEDIUM | Intermittent data loss |
+| Issue | Status | Notes & References |
+|-------|--------|--------------------|
+| Fault-code requests used the wrong service context | ✅ Fixed | `ObdProt.setService` now writes using the requested service (`app/src/java/com/obddroid/core/obd/ObdProt.java:1474-1487`). |
+| Fault-code PV updates never emitted `PV_MODIFIED` | ⚠ Still outstanding | `tCodes` updates only call `put`, so listeners relying on `PV_MODIFIED` still miss refreshes. |
+| No termination flag for fault-code sweeps | ⚠ Still outstanding | `ElmProt` lacks the equivalent of `pidsWrapped` for code services, so polling can continue unnecessarily. |
+| Aggressive NODATA recovery spins the adapter | ⚠ Still outstanding | Recovery loop (`ElmProt` NODATA branch) still retries immediately; needs back-off and shared state with InitializationManager. |
+| Cache restore order unclear | ⚠ Needs review | Cached fault codes are repopulated (`ObdProt.java:1638-1642`), but telemetry to confirm UI parity has not been instrumented. |
 
-**Remediation Plan**
-1. **Phase 1 (1–2h, unblock UI):** Fix service context, add `faultCodesRequestComplete` counter, break loop when all three code services queried.
-2. **Phase 2 (1–2h):** Emit `PV_MODIFIED`, verify cache restoration, add instrumentation to count status transitions.
-3. **Phase 3 (3–5h):** Back-off retries, align InitializationManager polling, consider batching responses similar to Mode 9.
-
-**Validation Metrics (post-fix targets):**
-- Status transitions per load cycle: `< 5` (currently 15–20)
-- Time in NODATA: `< 5%` (currently 30–50%)
-- Visible flicker: none
-- Data persistence: consistent across service switches
+**Next Steps**
+1. Emit `PV_MODIFIED` when `tCodes` mutate so UI components and analytics observers receive updates.
+2. Add a termination condition for fault-code polling (counter or feature flag) and align retry timing with InitializationManager.
+3. Instrument status transitions and cache restores to measure flicker frequency before and after back-off tuning.
 
 ---
 
@@ -104,8 +97,8 @@ A deep comparison between Mode 9 (OBD_SVC_VEH_INFO) and Fault Code services reve
 | OBD protocol state machine | `app/src/java/com/obddroid/core/obd/ObdProt.java` | `setService()`, `handleTelegram()`, caching |
 | ELM adapter state management | `app/src/java/com/obddroid/core/obd/ElmProt.java` | `setStatus()`, NODATA recovery |
 | Initialization orchestration | `app/src/java/com/obddroid/core/obd/InitializationManager.java` | Mode 9 + fault-code service sequencing |
-| Fuel economy activity | `app/src/java/com/obddroid/ui/activities/FuelEconomyActivity.java` | Speed-density calc, VE calibration, trip logging |
-| Emissions screen | `app/src/java/com/obddroid/ui/activities/EmissionsActivity.java` | IUMPR parsing, monitor availability |
+| Fuel economy activity | `app/src/java/com/obddroid/ui/activities/FuelEconomyActivity.java` | Speed-density calc, VE calibration, tank prompts, live charting |
+| Emissions screen | `app/src/java/com/obddroid/ui/activities/EmissionsActivity.java` | IUMPR parsing, readiness aggregation, PDF/CSV export dialogs |
 | Vehicle preferences | `app/src/java/com/obddroid/vehicle/VehiclePreferences.java` | Tank size, VE calibration, per-VIN prompts |
 | Vehicle manager | `app/src/java/com/obddroid/vehicle/VehicleManager.java` | VIN listeners, tank capacity heuristics |
 | AutoCheck integration | `app/src/java/com/obddroid/services/AutoCheckService.java` | Companion API calls |
@@ -128,7 +121,7 @@ npm run dev
 ```
 - Confirm readiness: `curl http://localhost:3248/health`
 - From device, ensure `http://<laptop-ip>:3248/health` is reachable.
-- Update base URL inside `AutoCheckService` when testing on device.
+- Update the base URL inside `AutoCheckService` for on-device testing (`localhost` via adb reverse or your LAN IP). When the backend moves to production, swap the same constant to the hosted URL and update this section.
 
 ### Android Build & Install
 ```bash
@@ -144,8 +137,8 @@ npm run dev
 1. Connect to vehicle, open Fuel Economy screen.
 2. On first VIN use, verify tank capacity dialog with estimated gallons (can adjust).
 3. Confirm instant MPG stays within realistic bounds (20–40 MPG under cruise).
-4. Record a trip, then stop – check `Documents/OBDroid/fuel_economy_trip_*.csv` for full diagnostic columns.
-5. Use calibration dialog post fill-up to apply new VE; ensure snackbar confirmation.
+4. Let the session run for 5+ minutes and confirm recent/medium/long-term chart bins update smoothly.
+5. Use the calibration dialog after a fill-up and verify the confirmation snackbar plus updated VE in preferences.
 
 ### Emissions Readiness
 1. Ensure Mode 9 data primed (visit Live Data or hook Mode 1 request).
@@ -199,9 +192,9 @@ Fuel economy calibration result example (post fill-up):
 
 ## Contributing & Housekeeping
 
-- Trip CSV exports are ignored via `.gitignore` (`fuel_economy_trip_*.csv`).
-- Always instantiate `VehicleManager` once per activity and remove listeners in `onDestroy`.
-- When modifying `FuelEconomyActivity`, ensure `lastFuelCalcDiagnostics` is updated so CSVs remain accurate.
+- `fuel_economy_trip_*.csv` ignores can be cleaned up; the historical CSV exporter has been removed from the app.
+- Use `VehicleManager.getInstance(context)` sparingly (typically once per activity/screen) and remove listeners in `onDestroy()` to avoid leaks.
+- When extending `FuelEconomyActivity`, keep `updateDisplayedValues()` and the chart datasets in sync with any new metrics you surface.
 - For emissions parsing, add verbose logs for new PID descriptions to aid future debugging.
 - **Do not** reintroduce per-screen markdown artifacts; update this README instead.
 

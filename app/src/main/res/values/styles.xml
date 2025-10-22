@@ -85,4 +85,16 @@
         <item name="android:textColor">@color/text_primary_dark</item>
         <item name="android:letterSpacing">0.02</item>
     </style>
+
+    <!-- Material Components theme for activities using Material Design components -->
+    <style name="AppTheme.MaterialComponents" parent="Theme.MaterialComponents.Light.DarkActionBar">
+        <item name="android:activatedBackgroundIndicator">@drawable/activated_background</item>
+        <item name="actionMenuTextAppearance">@style/MenuTextAppearance</item>
+        <item name="android:dropDownListViewStyle">@style/PopupMenuListView</item>
+        <item name="windowActionBarOverlay">false</item>
+        <item name="android:textColorSecondary">#424242</item>
+        <item name="colorAccent">#000000</item>
+        <item name="colorPrimary">#212121</item>
+        <item name="colorPrimaryDark">#212121</item>
+    </style>
 </resources>

@@ -119,6 +119,10 @@ public class FaultCodesActivity extends AppCompatActivity {
     }
 
     private void startScan() {
+        startScan(false);
+    }
+
+    private void startScan(boolean isVerificationScan) {
         if (isScanning) {
             log.fine("Scan request ignored – already scanning");
             return;
@@ -127,8 +131,21 @@ public class FaultCodesActivity extends AppCompatActivity {
         isScanning = true;
         showProgress();
 
+        // Show appropriate message during verification
+        if (isVerificationScan) {
+            scanButton.setText("Verifying...");
+            SnackbarHelper.showInfo(this, "Checking if codes are cleared...",
+                SnackbarHelper.Duration.SHORT);
+        }
+
         faultCodeService.scanAllCodes()
-            .thenAccept(codes -> runOnUiThread(() -> handleScanComplete(codes)))
+            .thenAccept(codes -> runOnUiThread(() -> {
+                if (isVerificationScan) {
+                    handleVerificationComplete(codes);
+                } else {
+                    handleScanComplete(codes);
+                }
+            }))
             .exceptionally(error -> {
                 runOnUiThread(() -> handleScanError(error));
                 return null;
@@ -146,6 +163,46 @@ public class FaultCodesActivity extends AppCompatActivity {
         } else {
             showFaultCodes(currentCodes);
         }
+    }
+
+    private void handleVerificationComplete(List<FaultCodeService.FaultCodeInfo> codes) {
+        isScanning = false;
+        currentCodes = codes != null ? new ArrayList<>(codes) : Collections.emptyList();
+        hideProgress();
+
+        // Reset scan button text
+        scanButton.setText(R.string.fault_codes_button_scan);
+
+        if (currentCodes.isEmpty()) {
+            // All codes successfully cleared!
+            SnackbarHelper.showSuccess(this,
+                "✓ All fault codes cleared successfully!",
+                SnackbarHelper.Duration.LONG);
+            showNoCodesState();
+        } else {
+            // Some codes remain (likely permanent codes)
+            int permanentCount = 0;
+            for (FaultCodeService.FaultCodeInfo code : currentCodes) {
+                if (code.type == FaultCodeService.CodeType.PERMANENT) {
+                    permanentCount++;
+                }
+            }
+
+            if (permanentCount > 0 && permanentCount == currentCodes.size()) {
+                SnackbarHelper.showWarning(this,
+                    permanentCount + " permanent code" + (permanentCount > 1 ? "s" : "") +
+                    " remain (can't be cleared with scan tool)",
+                    SnackbarHelper.Duration.LONG);
+            } else {
+                SnackbarHelper.showWarning(this,
+                    currentCodes.size() + " code" + (currentCodes.size() > 1 ? "s" : "") +
+                    " still present after clearing",
+                    SnackbarHelper.Duration.LONG);
+            }
+            showFaultCodes(currentCodes);
+        }
+
+        log.info(() -> "Verification complete. " + currentCodes.size() + " codes remain");
     }
 
     private void handleScanError(Throwable error) {
@@ -178,18 +235,35 @@ public class FaultCodesActivity extends AppCompatActivity {
 
         faultCodeService.clearFaultCodes()
             .thenAccept(success -> runOnUiThread(() -> {
-                isScanning = false;
                 if (success) {
-                    log.info("Fault codes cleared successfully - rescanning in 2 seconds");
+                    log.info("Fault codes cleared successfully - rescanning in 3 seconds");
+
+                    // Show success message
                     SnackbarHelper.showSuccess(this,
                         getString(R.string.fault_codes_clear_success),
                         SnackbarHelper.Duration.SHORT);
 
-                    // Wait 2 seconds before rescanning to give ECU time to reset
+                    // Update progress text to show we're waiting
+                    hideProgress();
+
+                    // Clear the current display immediately
+                    currentCodes.clear();
+                    adapter.setFaultCodes(currentCodes);
+                    showNoCodesState();  // Show cleared state
+
+                    // Show "waiting to rescan" message
                     scanButton.postDelayed(() -> {
-                        log.info("Starting automatic rescan after clearing codes");
-                        startScan();
-                    }, 2000);
+                        SnackbarHelper.showInfo(this,
+                            "Verifying codes are cleared...",
+                            SnackbarHelper.Duration.SHORT);
+                    }, 1000);
+
+                    // Wait 3 seconds before rescanning to give ECU time to reset
+                    scanButton.postDelayed(() -> {
+                        log.info("Starting automatic verification scan after clearing codes");
+                        isScanning = false;  // Reset flag before rescan
+                        startScan(true);  // Pass true for verification scan
+                    }, 3000);
                 } else {
                     hideProgress();
                     SnackbarHelper.showError(this,

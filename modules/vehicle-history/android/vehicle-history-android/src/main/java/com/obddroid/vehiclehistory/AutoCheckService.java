@@ -1,4 +1,4 @@
-package com.obddroid.services;
+package com.obddroid.vehiclehistory;
 
 import android.content.Context;
 import android.os.Handler;
@@ -25,8 +25,8 @@ import java.util.concurrent.Executors;
 public class AutoCheckService {
     private static final String TAG = "AutoCheckService";
 
-    // API Configuration - update this to your laptop's IP when testing from phone
-    private static final String API_BASE_URL = "http://192.168.1.121:3248";
+    // API Configuration - uses localhost with adb reverse tunnel
+    private static final String API_BASE_URL = "http://localhost:3248";
     private static final int TIMEOUT_MS = 60000; // 60 seconds for browser automation
 
     private final Context context;

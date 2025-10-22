@@ -111,11 +111,13 @@
         android:id="@android:id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/background_secondary"
+        android:background="@color/background_primary"
         android:choiceMode="multipleChoice"
-        android:dividerHeight="1dp"
-        android:divider="@color/background_primary"
-        android:padding="0dp"
-        android:clipToPadding="false"/>
+        android:dividerHeight="0dp"
+        android:divider="@null"
+        android:paddingTop="8dp"
+        android:paddingBottom="80dp"
+        android:clipToPadding="false"
+        android:scrollbars="none"/>
 
 </LinearLayout>

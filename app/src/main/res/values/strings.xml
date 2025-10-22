@@ -44,6 +44,8 @@
     <string name="recalls_summary_heading">Summary</string>
     <string name="recalls_remedy_heading">Remedy</string>
     <string name="recalls_not_available">Not available</string>
+    <string name="menu_more">More</string>
+    <string name="menu_more_description">More options</string>
     <string name="value_placeholder">--</string>
     <!-- menu  -->
     <string name="action_connect">Connect</string>
@@ -87,12 +89,13 @@ period of time while the ECU recalibrates itself.
     <string name="fault_codes_no_codes">No fault codes</string>
     <string name="fault_codes_engine_ok">Engine running normally</string>
     <string name="fault_codes_clear_button">Clear fault codes</string>
-    <string name="fault_codes_status_confirmed">CONFIRMED</string>
+    <string name="fault_codes_status_confirmed">STORED</string>
     <string name="fault_codes_status_pending">PENDING</string>
+    <string name="fault_codes_status_permanent">PERMANENT</string>
     <string name="fault_codes_item_clicked">Selected %1$s</string>
     <string name="fault_codes_info_title">About Fault Codes</string>
     <string name="fault_codes_info_ack">Got it</string>
-    <string name="fault_codes_info_message">Diagnostic Trouble Codes (DTCs)\n\nCONFIRMED CODES (Red)\nActive faults detected by the vehicle. These codes indicate current issues that need attention.\n\nPENDING CODES (Blue)\nIntermittent issues detected but not yet confirmed. The ECU is monitoring these conditions.\n\nCODE PREFIXES:\nP - Powertrain (Engine, Transmission)\nC - Chassis (ABS, Suspension)\nB - Body (Airbags, Climate Control)\nU - Network or Communication\n\nHow It Works:\nThis page scans your vehicle using OBD-II Mode 03 (confirmed codes) and Mode 07 (pending codes). Tap any code to inspect details, clear the MIL, or research fixes.</string>
+    <string name="fault_codes_info_message">Diagnostic Trouble Codes (DTCs)\n\nPERMANENT CODES (Red)\nEmissions-related codes that cannot be cleared with a scan tool. These clear automatically when the vehicle detects the issue is resolved.\n\nSTORED CODES (Orange)\nActive faults that triggered the Check Engine Light. These indicate current issues that need attention.\n\nPENDING CODES (Yellow)\nIntermittent issues detected but not yet confirmed. The ECU is monitoring these conditions.\n\nCODE PREFIXES:\nP - Powertrain (Engine, Transmission)\nC - Chassis (ABS, Suspension)\nB - Body (Airbags, Climate Control)\nU - Network or Communication\n\nHow It Works:\nThis page scans your vehicle using OBD-II Mode 03 (stored codes), Mode 07 (pending codes), and Mode 0A (permanent codes). Tap any code to inspect details, clear codes, or research fixes.</string>
     <plurals name="fault_codes_count">
         <item quantity="one">%d fault code found</item>
         <item quantity="other">%d fault codes found</item>

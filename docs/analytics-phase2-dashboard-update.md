@@ -1,8 +1,9 @@
 # Analytics Plan – Vehicle History Phase 2
 
 **Owner:** Data & Analytics – Samira H.  
-**Prepared by:** Agent B (2024-07-16)  
-**Dashboard Target:** Looker – `Vehicle History Experience` folder (`vh_phase2_usage`)
+**Prepared by:** Agent B (2024-07-16) • _Status refreshed 2025-01-06_  
+**Dashboard Target:** Looker – `Vehicle History Experience` folder (`vh_phase2_usage`)  
+**Implementation Note:** The Android client does **not** yet emit the events or feature flags referenced below; this plan remains pending until Vehicle History Phase 2 UI work lands.
 
 ## Objectives
 - Track engagement with the new recall module, usage badges, and odometer breakdown.  

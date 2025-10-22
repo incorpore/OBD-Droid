@@ -778,7 +778,24 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         // Add VIN section with styled headers and rows
         addStyledSectionHeader("Vehicle Identification");
         addStyledDetailRow("VIN", currentVehicleData.vin);
-        addStyledDetailRow("Manufacturer", currentVehicleData.manufacturer);
+
+        // Format manufacturer name - remove redundant suffixes
+        String manufacturerName = currentVehicleData.manufacturer;
+        if (manufacturerName != null) {
+            // Remove common corporate suffixes for cleaner display
+            manufacturerName = manufacturerName
+                .replace(" OF NORTH AMERICA", "")
+                .replace(", INC.", "")
+                .replace(" INC.", "")
+                .replace(", LLC", "")
+                .replace(" LLC", "")
+                .replace(", LTD", "")
+                .replace(" LTD", "")
+                .replace(" CORPORATION", "")
+                .replace(" CORP.", "")
+                .trim();
+        }
+        addStyledDetailRow("Manufacturer", manufacturerName);
         if (currentVehicleData.series != null && !currentVehicleData.series.equals("Not Applicable")) {
             addStyledDetailRow("Series", currentVehicleData.series);
         }
@@ -788,8 +805,22 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
         // Add Body/Structure section
         addStyledSectionHeader("Body & Structure");
-        addStyledDetailRow("Body Class", currentVehicleData.bodyClass);
-        addStyledDetailRow("Vehicle Type", currentVehicleData.vehicleType);
+
+        // Format body class text for better readability
+        String bodyClass = currentVehicleData.bodyClass;
+        if (bodyClass != null && bodyClass.contains("/")) {
+            // If it has a slash, just use the first part for cleaner display
+            bodyClass = bodyClass.split("/")[0].trim();
+        }
+        addStyledDetailRow("Body Class", bodyClass);
+
+        // Format vehicle type similarly
+        String vehicleType = currentVehicleData.vehicleType;
+        if (vehicleType != null && vehicleType.contains("(")) {
+            // Show full vehicle type but formatted better
+            vehicleType = vehicleType.replace("(", "\n(");
+        }
+        addStyledDetailRow("Vehicle Type", vehicleType);
         addStyledDetailRow("Doors", currentVehicleData.doors);
         if (currentVehicleData.wheelBase != null && !currentVehicleData.wheelBase.isEmpty()) {
             addStyledDetailRow("Wheelbase", currentVehicleData.wheelBase + " inches");
@@ -1337,7 +1368,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
         LinearLayout row = new LinearLayout(getContext());
         row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setPadding(dpToPx(8), dpToPx(4), dpToPx(8), dpToPx(4));
+        row.setPadding(dpToPx(12), dpToPx(6), dpToPx(12), dpToPx(6));
         row.setBackgroundColor(Color.parseColor("#1F1F1F"));
 
         // Check if there's a description available
@@ -1398,9 +1429,12 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         valueView.setTextColor(Color.parseColor("#FFFFFF"));
         valueView.setTypeface(Typeface.DEFAULT_BOLD);
         valueView.setGravity(Gravity.END);
+        valueView.setSingleLine(false);
+        valueView.setMaxLines(2);
         LinearLayout.LayoutParams valueParams = new LinearLayout.LayoutParams(
+            0,
             LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
+            2.0f
         );
 
         row.addView(labelView, labelParams);

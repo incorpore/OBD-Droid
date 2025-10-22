@@ -3,9 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_import_report"
-        android:title="Import Report"
-        android:icon="@drawable/ic_file_download_24"
+        android:id="@+id/action_refresh"
+        android:title="Refresh"
+        android:icon="@drawable/ic_refresh_24"
         app:showAsAction="never"/>
 
     <item

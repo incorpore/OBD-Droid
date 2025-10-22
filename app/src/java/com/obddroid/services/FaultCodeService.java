@@ -44,7 +44,7 @@ public class FaultCodeService implements RawTelegramListener {
     private static final long SCAN_TIMEOUT_MS = 2_500L;
     private static final long CLEAR_TIMEOUT_MS = 1_500L;
 
-    private enum ScanMode { CONFIRMED, PENDING }
+    private enum ScanMode { CONFIRMED, PENDING, PERMANENT }
 
     // Execution and state management
     private final ExecutorService scanExecutor = Executors.newSingleThreadExecutor(r -> {
@@ -62,6 +62,15 @@ public class FaultCodeService implements RawTelegramListener {
     private boolean waitingForPrompt;
 
     /**
+     * Fault code type
+     */
+    public enum CodeType {
+        CONFIRMED,    // Mode 03 - Active codes that triggered MIL (Stored)
+        PENDING,      // Mode 07 - Potential issues not yet confirmed
+        PERMANENT     // Mode 0A - Emissions-related codes that can't be cleared
+    }
+
+    /**
      * Fault code information
      */
     public static class FaultCodeInfo {
@@ -70,13 +79,20 @@ public class FaultCodeService implements RawTelegramListener {
         public final boolean isPending;
         public final boolean hasFreeze;
         public final int dtcNumber;
+        public final CodeType type;
 
         public FaultCodeInfo(String code, String description, boolean isPending, boolean hasFreeze, int dtcNumber) {
+            this(code, description, isPending, hasFreeze, dtcNumber,
+                 isPending ? CodeType.PENDING : CodeType.CONFIRMED);
+        }
+
+        public FaultCodeInfo(String code, String description, boolean isPending, boolean hasFreeze, int dtcNumber, CodeType type) {
             this.code = code;
             this.description = description;
             this.isPending = isPending;
             this.hasFreeze = hasFreeze;
             this.dtcNumber = dtcNumber;
+            this.type = type;
         }
     }
 
@@ -95,10 +111,18 @@ public class FaultCodeService implements RawTelegramListener {
     }
 
     /**
-     * Scan for both confirmed and pending fault codes in a single request chain.
+     * Scan for permanent (Mode 0A) fault codes.
+     */
+    public CompletableFuture<List<FaultCodeInfo>> scanPermanentCodes() {
+        return startScan(EnumSet.of(ScanMode.PERMANENT));
+    }
+
+    /**
+     * Scan for all types of fault codes in a single request chain.
+     * Includes confirmed (Mode 03), pending (Mode 07), and permanent (Mode 0A) codes.
      */
     public CompletableFuture<List<FaultCodeInfo>> scanAllCodes() {
-        return startScan(EnumSet.of(ScanMode.CONFIRMED, ScanMode.PENDING));
+        return startScan(EnumSet.of(ScanMode.CONFIRMED, ScanMode.PENDING, ScanMode.PERMANENT));
     }
 
     /**
@@ -184,24 +208,38 @@ public class FaultCodeService implements RawTelegramListener {
             if (modes.contains(ScanMode.CONFIRMED)) {
                 String response = sendAndAwait("03", SCAN_TIMEOUT_MS);
                 log.fine(() -> "Mode 03 response: " + response);
-                results.addAll(parseFaultCodes(response, false));
+                results.addAll(parseFaultCodes(response, CodeType.CONFIRMED));
             }
             if (modes.contains(ScanMode.PENDING)) {
                 String response = sendAndAwait("07", SCAN_TIMEOUT_MS);
                 log.fine(() -> "Mode 07 response: " + response);
-                results.addAll(parseFaultCodes(response, true));
+                results.addAll(parseFaultCodes(response, CodeType.PENDING));
+            }
+            if (modes.contains(ScanMode.PERMANENT)) {
+                String response = sendAndAwait("0A", SCAN_TIMEOUT_MS);
+                log.fine(() -> "Mode 0A response: " + response);
+                results.addAll(parseFaultCodes(response, CodeType.PERMANENT));
             }
         } finally {
             CommService.elm.removeRawTelegramListener(this);
         }
 
-        // Sort confirmed codes first, then alphabetically.
+        // Sort by type priority (permanent > confirmed > pending), then alphabetically
         results.sort(Comparator
-            .comparing((FaultCodeInfo code) -> code.isPending)
+            .comparing((FaultCodeInfo code) -> getTypePriority(code.type))
             .thenComparing(code -> code.code));
 
         log.info(() -> "Scan complete. Found " + results.size() + " codes.");
         return results;
+    }
+
+    private int getTypePriority(CodeType type) {
+        switch (type) {
+            case PERMANENT: return 0;  // Highest priority
+            case CONFIRMED: return 1;
+            case PENDING: return 2;    // Lowest priority
+            default: return 3;
+        }
     }
 
     /**
@@ -277,7 +315,7 @@ public class FaultCodeService implements RawTelegramListener {
     /**
      * Parse fault codes from a response string.
      */
-    private List<FaultCodeInfo> parseFaultCodes(String response, boolean isPending) {
+    private List<FaultCodeInfo> parseFaultCodes(String response, CodeType codeType) {
         List<FaultCodeInfo> codes = new ArrayList<>();
         Set<Integer> seen = new HashSet<>();
         if (response == null || response.isEmpty()) {
@@ -289,7 +327,16 @@ public class FaultCodeService implements RawTelegramListener {
             return codes;
         }
 
-        String modePrefix = isPending ? "47" : "43";
+        // Determine mode response prefix based on code type
+        String modePrefix;
+        switch (codeType) {
+            case CONFIRMED: modePrefix = "43"; break;  // Mode 03 response
+            case PENDING: modePrefix = "47"; break;    // Mode 07 response
+            case PERMANENT: modePrefix = "4A"; break;   // Mode 0A response
+            default: modePrefix = "43";
+        }
+
+        boolean isPending = (codeType == CodeType.PENDING);
         int cursor = cleanData.indexOf(modePrefix);
         while (cursor >= 0 && cursor + 4 <= cleanData.length()) {
             int count;
@@ -312,8 +359,8 @@ public class FaultCodeService implements RawTelegramListener {
                     }
                     String dtcCode = convertToDtcCode(dtcValue);
                     String description = getDtcDescription(dtcValue);
-                    boolean hasFreeze = !isPending;
-                    codes.add(new FaultCodeInfo(dtcCode, description, isPending, hasFreeze, dtcValue));
+                    boolean hasFreeze = (codeType == CodeType.CONFIRMED); // Only confirmed codes have freeze frame
+                    codes.add(new FaultCodeInfo(dtcCode, description, isPending, hasFreeze, dtcValue, codeType));
                 } catch (NumberFormatException ex) {
                     log.log(Level.WARNING, "Failed to parse DTC value: " + dtcHex, ex);
                 }

@@ -117,6 +117,7 @@
         <activity
             android:name="com.obddroid.ui.activities.RecallActivity"
             android:label="@string/safety_recalls"
+            android:theme="@style/AppTheme.MaterialComponents"
             android:configChanges="touchscreen|orientation|screenSize"
             android:exported="false" />
         <activity

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_overflow"
+        android:icon="@drawable/ic_more_vert_24"
+        android:title="@string/menu_more"
+        app:contentDescription="@string/menu_more_description"
+        app:showAsAction="always">
+
+        <menu>
+            <item
+                android:id="@+id/action_refresh_recalls"
+                android:icon="@drawable/ic_refresh_24"
+                android:title="Refresh"
+                app:iconTint="@color/text_secondary_dark"
+                app:showAsAction="never" />
+
+            <item
+                android:id="@+id/action_save_report"
+                android:icon="@drawable/ic_file_upload_24"
+                android:title="Save Report"
+                app:iconTint="@color/text_secondary_dark"
+                app:showAsAction="never" />
+        </menu>
+    </item>
+
+</menu>

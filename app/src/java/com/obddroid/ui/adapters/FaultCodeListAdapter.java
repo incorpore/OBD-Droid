@@ -87,23 +87,42 @@ public class FaultCodeListAdapter extends RecyclerView.Adapter<FaultCodeListAdap
             codeText.setText(code.code);
             descriptionText.setText(code.description);
 
-            int pendingColor = ContextCompat.getColor(context, R.color.fault_pending);
-            int confirmedColor = ContextCompat.getColor(context, R.color.fault_error);
-            int tintColor = code.isPending ? pendingColor : confirmedColor;
+            // Determine color and label based on code type
+            int color;
+            int labelResId;
 
-            statusBadge.setText(code.isPending
-                ? R.string.fault_codes_status_pending
-                : R.string.fault_codes_status_confirmed);
+            switch (code.type) {
+                case PERMANENT:
+                    // Permanent codes - Critical/Red - Can't be cleared with scan tool
+                    color = ContextCompat.getColor(context, R.color.fault_critical);
+                    labelResId = R.string.fault_codes_status_permanent;
+                    break;
+                case CONFIRMED:
+                    // Confirmed/Stored codes - Error/Orange - Triggered MIL
+                    color = ContextCompat.getColor(context, R.color.fault_error);
+                    labelResId = R.string.fault_codes_status_confirmed;
+                    break;
+                case PENDING:
+                    // Pending codes - Warning/Yellow - Not yet confirmed
+                    color = ContextCompat.getColor(context, R.color.fault_pending);
+                    labelResId = R.string.fault_codes_status_pending;
+                    break;
+                default:
+                    color = ContextCompat.getColor(context, R.color.fault_error);
+                    labelResId = R.string.fault_codes_status_confirmed;
+            }
+
+            statusBadge.setText(labelResId);
 
             if (statusBadge.getBackground() != null) {
                 DrawableCompat.setTint(
                     DrawableCompat.wrap(statusBadge.getBackground()).mutate(),
-                    tintColor
+                    color
                 );
             } else {
-                statusBadge.setBackgroundColor(tintColor);
+                statusBadge.setBackgroundColor(color);
             }
-            ImageViewCompat.setImageTintList(statusIcon, ColorStateList.valueOf(tintColor));
+            ImageViewCompat.setImageTintList(statusIcon, ColorStateList.valueOf(color));
 
             cardView.setOnClickListener(v -> {
                 if (listener != null) {

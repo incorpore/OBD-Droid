@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-- **Vehicle History Experience (Customer-facing):** Phase 1 polish is code-complete; Phase 2 design/copy alignment is progressing asynchronously with regression assets/analytics specs ready to execute. Phase 3 (owner timelines + advanced visualizations) remains in discovery.
+- **Vehicle History Experience (Customer-facing):** Phase 1 polish is code-complete; Phase 2 design/copy alignment is progressing asynchronously with regression assets/analytics specs ready to execute once Android implementation begins. Phase 3 (owner timelines + advanced visualizations) remains in discovery.
 - **Process Variable (PV) Infrastructure Refactor (Core telemetry):** `PvChange` enum payload prototype is live with `MainActivity` + VIN helper migrated and JVM coverage in place; next focus is expanding listener adoption and collapsing the legacy bitmask.
 - **ECU Module Refactor (Diagnostics domain):** Interface proposal for conversions/catalogs is published for architecture review (2024-07-23) to unblock staged renames aligned with PV interface work.
 
@@ -19,7 +19,7 @@
 
 | Initiative | Objective | Current Status | Upcoming Milestone |
 | --- | --- | --- | --- |
-| Vehicle History Experience | Deliver richer AutoCheck insights with accessible UI/analytics coverage | Phase 1 complete; Phase 2 alignment happening via async reviews; regression & analytics packs delivered | Apply design/content feedback and ship feature-flagged Phase 2 UI |
+| Vehicle History Experience | Deliver richer AutoCheck insights with accessible UI/analytics coverage | Phase 1 complete; Phase 2 alignment happening via async reviews; Android implementation not yet started; regression & analytics packs delivered | Apply design/content feedback and ship feature-flagged Phase 2 UI |
 | PV Infrastructure Refactor | Modernize PV eventing + storage for type safety and maintainability | Typed lists live; `PvChange` prototype + MainActivity migration merged with unit coverage | Expand enum payload to remaining listeners and start interface extraction |
 | ECU Module Refactor | Clean up conversion/catalog APIs and remove shared mutable state | Interface proposal circulated for architecture review | Incorporate council feedback and wire compatibility adapters |
 
@@ -113,7 +113,7 @@
 
 1. Consolidate asynchronous Phase 2 feedback from Design/Content, publish decisions, and update design/content specs plus engineering backlog accordingly.
 2. Expand `PvChange` adoption to VehicleInfoFooter, data services, and adapter layers while sketching `ProcessVariable` interfaces for shared use.
-3. Complete architecture review of ECU abstractions, spin up compatibility adapters, and align QA/analytics checkpoints ahead of the Phase 2 feature flag ramp.
+3. Complete (or reschedule) the ECU abstraction architecture review, spin up compatibility adapters, and align QA/analytics checkpoints ahead of the Phase 2 feature flag ramp.
 
 ## Risks & Mitigations
 
@@ -126,6 +126,6 @@
 
 1. **Capture async Vehicle History Phase 2 decisions**, publish an updated spec packet, and reflect action items in the delivery backlog.
 2. **Expand `PvChange` adoption** to VehicleInfoFooter, ObdDataService listeners, and adapters while queuing interface design spikes.
-3. **Present ECU abstraction proposal** at Architecture Council (2024-07-23) and translate feedback into implementation tickets.
+3. **Present ECU abstraction proposal** at Architecture Council (originally targeted for 2024-07-23) and translate feedback into implementation tickets once the session is re-slotted.
 4. **Support QA execution** of the VIN/PID regression matrix during staging builds; monitor analytics event logging alongside tests.
-5. **Build & validate Looker updates** outlined in `docs/analytics-phase2-dashboard-update.md` before feature flag ramp (target 2024-07-22 completion).
+5. **Build & validate Looker updates** outlined in `docs/analytics-phase2-dashboard-update.md` before feature flag ramp (re-baseline once client events are implemented).
