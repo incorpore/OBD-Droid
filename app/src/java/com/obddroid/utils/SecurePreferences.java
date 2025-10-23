@@ -158,7 +158,7 @@ public class SecurePreferences
     }
 
     /**
-     * Retrieves the Live Data Sharing password, falling back to the legacy MQTT key if needed.
+     * Retrieves the Live Data Sharing password.
      */
     public String getLiveDataSharingPassword()
     {
@@ -167,7 +167,7 @@ public class SecurePreferences
     }
 
     /**
-     * Clears the stored Live Data Sharing password and removes the legacy MQTT key.
+     * Clears the stored Live Data Sharing password.
      */
     public void clearLiveDataSharingPassword()
     {
