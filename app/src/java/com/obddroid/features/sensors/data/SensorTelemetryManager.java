@@ -1,4 +1,4 @@
-package com.obddroid.features.sensors;
+package com.obddroid.features.sensors.data;
 
 import android.content.Context;
 import android.content.SharedPreferences;

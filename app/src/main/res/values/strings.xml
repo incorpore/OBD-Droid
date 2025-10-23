@@ -500,4 +500,7 @@ period of time while the ECU recalibrates itself.
     <string name="mqtt_status_error_unknown">Unknown MQTT error</string>
     <string name="mqtt_status_snackbar_failure">MQTT publish failed: %1$s</string>
     <string name="mqtt_status_snackbar_recovered">MQTT publishing recovered</string>
+    <string name="mqtt_not_configured_title">MQTT Not Configured</string>
+    <string name="mqtt_not_configured_message">MQTT Publishing requires configuration before it can be enabled.\n\nPlease configure the following in Settings:\n• MQTT Broker Host (required)\n• Port (default: 1883)\n• Topic Prefix\n• Username/Password (if required)</string>
+    <string name="mqtt_not_configured_open_settings">Open Settings</string>
 </resources>

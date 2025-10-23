@@ -1,4 +1,4 @@
-package com.obddroid.features.mqtt;
+package com.obddroid.features.mqtt.data;
 
 import android.content.Context;
 import android.content.SharedPreferences;

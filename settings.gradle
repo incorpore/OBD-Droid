@@ -22,10 +22,6 @@ include ':dtc-database-android'
 project(':dtc-database-android').projectDir = new File(rootDir, 'modules/dtc-database/android/dtc-database-android')
 
 // Vehicle History Module
-include ':vehicle-history-java'
-project(':vehicle-history-java').projectDir = new File(rootDir, 'modules/vehicle-history')
-include ':vehicle-history-android'
-project(':vehicle-history-android').projectDir = new File(rootDir, 'modules/vehicle-history/android/vehicle-history-android')
 
 // NHTSA Recall Lookup (single module with both Java core and Android wrapper)
 include ':nhtsa-recall-lookup'

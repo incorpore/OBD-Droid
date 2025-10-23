@@ -93,9 +93,6 @@ dependencies {
     // DTC Database - Comprehensive diagnostic trouble code database
     implementation project(':dtc-database-android')
 
-    // Vehicle History Module - AutoCheck integration
-    implementation project(':vehicle-history-android')
-
     // NHTSA Recall Lookup - Vehicle recall campaign data
     implementation project(':nhtsa-recall-lookup')
 }

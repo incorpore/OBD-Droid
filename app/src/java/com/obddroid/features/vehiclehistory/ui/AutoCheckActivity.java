@@ -1,4 +1,4 @@
-package com.obddroid.ui.activities;
+package com.obddroid.features.vehiclehistory.ui;
 
 import android.app.Dialog;
 import android.content.ContentValues;
@@ -28,8 +28,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import com.google.gson.Gson;
 import com.obddroid.R;
-import com.obddroid.vehiclehistory.AutoCheckService;
-import com.obddroid.vehicle.AutoCheckReport;
+import com.obddroid.features.vehiclehistory.data.AutoCheckService;
+import com.obddroid.features.vehiclehistory.model.AutoCheckReport;
 import com.obddroid.vehicle.VehicleManager;
 import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.utils.SnackbarHelper;

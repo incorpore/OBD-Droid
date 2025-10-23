@@ -7,13 +7,11 @@ import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
-import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.DialogInterface;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -56,12 +54,12 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
-import com.obddroid.features.csvlogging.CsvLoggingController;
-import com.obddroid.features.csvlogging.CsvLoggingService;
-import com.obddroid.features.csvlogging.CsvLoggingState;
-import com.obddroid.features.gps.GpsTelemetryManager;
-import com.obddroid.features.sensors.SensorTelemetryManager;
-import com.obddroid.features.mqtt.MqttTelemetryManager;
+import com.obddroid.features.csvlogging.ui.CsvLoggingController;
+import com.obddroid.features.csvlogging.ui.CsvLoggingUiCoordinator;
+import com.obddroid.features.gps.data.GpsTelemetryManager;
+import com.obddroid.features.mqtt.ui.MqttTelemetryUiCoordinator;
+import com.obddroid.features.sensors.data.SensorTelemetryManager;
+import com.obddroid.features.vehiclehistory.ui.AutoCheckActivity;
 
 import com.obddroid.core.ecu.DtcCatalog;
 import com.obddroid.core.ecu.DtcCatalogProvider;
@@ -195,7 +193,6 @@ public class MainActivity extends AppCompatActivity
      * empty string set as default parameter
      */
     private static final Set<String> emptyStringSet = new HashSet<>();
-    private static final String PREF_MQTT_ENABLED = MqttTelemetryManager.PREF_ENABLED_STATE;
     private static final String PREF_GPS_ENABLED = "gps_telemetry_enabled";
     private static final String PREF_SENSOR_ENABLED = "motion_telemetry_enabled";
     /**
@@ -218,45 +215,10 @@ public class MainActivity extends AppCompatActivity
      */
     private static Menu menu;
 
-    private final BroadcastReceiver csvLoggingReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (!CsvLoggingService.ACTION_STATUS_BROADCAST.equals(intent.getAction())) {
-                return;
-            }
-            invalidateOptionsMenu();
-            int status = intent.getIntExtra(CsvLoggingService.EXTRA_STATUS, CsvLoggingService.STATUS_STOPPED);
-            String fileName = intent.getStringExtra(CsvLoggingService.EXTRA_FILE_NAME);
-            switch (status) {
-                case CsvLoggingService.STATUS_STARTED:
-                    showFeatureToggleSnackbar(true, R.string.csv_logging_started);
-                    break;
-                case CsvLoggingService.STATUS_STOPPED:
-                    showFeatureToggleSnackbar(false, R.string.csv_logging_stopped);
-                    if (!TextUtils.isEmpty(fileName)) {
-                        SnackbarHelper.showSuccess(MainActivity.this, getString(R.string.csv_logging_finished_text, fileName));
-                    }
-                    break;
-                case CsvLoggingService.STATUS_AUTO_PAUSED:
-                    SnackbarHelper.showWarning(MainActivity.this, getString(R.string.csv_logging_auto_pause_message));
-                    if (!TextUtils.isEmpty(fileName)) {
-                        SnackbarHelper.showInfo(MainActivity.this, getString(R.string.csv_logging_finished_text, fileName));
-                    }
-                    break;
-                case CsvLoggingService.STATUS_ERROR:
-                    SnackbarHelper.showError(MainActivity.this, getString(R.string.csv_logging_error));
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
-    private boolean csvLoggingReceiverRegistered = false;
+    private CsvLoggingUiCoordinator csvLoggingUiCoordinator;
     private GpsTelemetryManager gpsTelemetryManager;
     private SensorTelemetryManager sensorTelemetryManager;
-    private MqttTelemetryManager mqttTelemetryManager;
-    private String lastMqttStatusCodeNotified = "";
-    private String lastMqttStatusMessageNotified = "";
+    private MqttTelemetryUiCoordinator mqttTelemetryUiCoordinator;
     /**
      * Data list adapters
      */
@@ -908,9 +870,8 @@ public class MainActivity extends AppCompatActivity
     {
         super.onPause();
 
-        if (csvLoggingReceiverRegistered) {
-            unregisterReceiver(csvLoggingReceiver);
-            csvLoggingReceiverRegistered = false;
+        if (csvLoggingUiCoordinator != null) {
+            csvLoggingUiCoordinator.onPause();
         }
 
         // stop data display update timer
@@ -923,15 +884,7 @@ public class MainActivity extends AppCompatActivity
     {
         super.onResume();
 
-        if (!csvLoggingReceiverRegistered) {
-            IntentFilter filter = new IntentFilter(CsvLoggingService.ACTION_STATUS_BROADCAST);
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(csvLoggingReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-            } else {
-                registerReceiver(csvLoggingReceiver, filter);
-            }
-            csvLoggingReceiverRegistered = true;
-        }
+        getCsvLoggingUiCoordinator().onResume();
 
         invalidateOptionsMenu();
 
@@ -1084,9 +1037,12 @@ public class MainActivity extends AppCompatActivity
             sensorTelemetryManager.stop();
         }
 
-        if (mqttTelemetryManager != null) {
-            mqttTelemetryManager.setStatusListener(null);
-            mqttTelemetryManager.stop();
+        if (csvLoggingUiCoordinator != null) {
+            csvLoggingUiCoordinator.onDestroy();
+        }
+
+        if (mqttTelemetryUiCoordinator != null) {
+            mqttTelemetryUiCoordinator.release();
         }
 
         super.onDestroy();
@@ -1271,93 +1227,35 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void toggleMqttPublisher() {
-        MqttTelemetryManager manager = getMqttTelemetryManager();
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        if (manager.isActive()) {
-            manager.stop();
-            prefs.edit().putBoolean(PREF_MQTT_ENABLED, false).apply();
-            showFeatureToggleSnackbar(false, R.string.mqtt_publisher_stopped);
-        } else {
-            if (manager.start()) {
-                prefs.edit().putBoolean(PREF_MQTT_ENABLED, true).apply();
-                showFeatureToggleSnackbar(true, R.string.mqtt_publisher_started);
-            } else {
-                prefs.edit().putBoolean(PREF_MQTT_ENABLED, false).apply();
-                // Show dialog to guide user to settings
-                showMqttConfigurationDialog();
-            }
-        }
-        invalidateOptionsMenu();
+        getMqttTelemetryCoordinator().togglePublisher();
     }
 
+    private CsvLoggingUiCoordinator getCsvLoggingUiCoordinator() {
+        if (csvLoggingUiCoordinator == null) {
+            csvLoggingUiCoordinator = new CsvLoggingUiCoordinator(
+                this,
+                this::showFeatureToggleSnackbar,
+                this::invalidateOptionsMenu
+            );
+        }
+        return csvLoggingUiCoordinator;
+    }
+
+    private MqttTelemetryUiCoordinator getMqttTelemetryCoordinator() {
+        if (mqttTelemetryUiCoordinator == null) {
+            mqttTelemetryUiCoordinator = new MqttTelemetryUiCoordinator(
+                this,
+                this::showFeatureToggleSnackbar,
+                this::invalidateOptionsMenu
+            );
+        }
+        return mqttTelemetryUiCoordinator;
+    }
     private void showFeatureToggleSnackbar(boolean enabled, @StringRes int messageRes) {
         if (enabled) {
             SnackbarHelper.showSuccess(this, getString(messageRes));
         } else {
             SnackbarHelper.showInfo(this, getString(messageRes));
-        }
-    }
-
-    private void showMqttConfigurationDialog() {
-        new AlertDialog.Builder(this)
-            .setTitle("MQTT Not Configured")
-            .setMessage("MQTT Publishing requires configuration before it can be enabled.\n\n" +
-                       "Please configure the following in Settings:\n" +
-                       "• MQTT Broker Host (required)\n" +
-                       "• Port (default: 1883)\n" +
-                       "• Topic Prefix\n" +
-                       "• Username/Password (if required)")
-            .setPositiveButton("Open Settings", (dialog, which) -> {
-                Intent intent = new Intent(this, SettingsActivity.class);
-                startActivity(intent);
-            })
-            .setNegativeButton("Cancel", null)
-            .show();
-    }
-
-    private MqttTelemetryManager getMqttTelemetryManager() {
-        if (mqttTelemetryManager == null) {
-            mqttTelemetryManager = new MqttTelemetryManager(this);
-            mqttTelemetryManager.setStatusListener(this::handleMqttStatusUpdate);
-        }
-        return mqttTelemetryManager;
-    }
-
-    private void handleMqttStatusUpdate(String statusCode, String detail) {
-        if (statusCode == null) {
-            statusCode = MqttTelemetryManager.STATUS_IDLE;
-        }
-        if (detail == null) {
-            detail = "";
-        }
-
-        String previousCode = lastMqttStatusCodeNotified;
-        String previousMessage = lastMqttStatusMessageNotified;
-
-        if (statusCode.equals(previousCode) && detail.equals(previousMessage)) {
-            return;
-        }
-
-        lastMqttStatusCodeNotified = statusCode;
-        lastMqttStatusMessageNotified = detail;
-
-        switch (statusCode) {
-            case MqttTelemetryManager.STATUS_FAILURE: {
-                String reason = detail.trim().isEmpty()
-                    ? getString(R.string.mqtt_status_error_unknown)
-                    : detail.trim();
-                SnackbarHelper.showError(this, getString(R.string.mqtt_status_snackbar_failure, reason));
-                break;
-            }
-            case MqttTelemetryManager.STATUS_SUCCESS: {
-                if (!MqttTelemetryManager.STATUS_FAILURE.equals(previousCode)) {
-                    return;
-                }
-                SnackbarHelper.showSuccess(this, getString(R.string.mqtt_status_snackbar_recovered));
-                break;
-            }
-            default:
-                break;
         }
     }
 

@@ -24,8 +24,8 @@ import com.obddroid.R;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
-import com.obddroid.features.gps.GpsTelemetryManager;
-import com.obddroid.features.sensors.SensorTelemetryManager;
+import com.obddroid.features.gps.data.GpsTelemetryManager;
+import com.obddroid.features.sensors.data.SensorTelemetryManager;
 import com.obddroid.services.CommService;
 import com.obddroid.ui.adapters.ObdItemAdapter;
 import com.obddroid.ui.components.VehicleInfoFooter;
@@ -357,20 +357,12 @@ public class LiveDataActivity extends AppCompatActivity
             return;
         }
 
-        try {
-            Class<?> chartActivityClass = Class.forName("com.obddroid.ui.activities.ChartActivity");
-            chartActivityClass.getMethod("setAdapter", adapter.getClass().getSuperclass())
-                    .invoke(null, adapter);
+        ChartActivity.setAdapter(adapter);
+        Intent intent = new Intent(this, ChartActivity.class);
+        intent.putExtra(ChartActivity.POSITIONS, getSelectedPositions());
+        startActivity(intent);
 
-            Intent intent = new Intent(this, chartActivityClass);
-            intent.putExtra("positions", getSelectedPositions());
-            startActivity(intent);
-
-            log.info("Launched Chart view with " + listView.getCheckedItemCount() + " items");
-        } catch (Exception e) {
-            log.warning("Failed to launch Chart view: " + e.getMessage());
-            SnackbarHelper.showError(this, "Chart view not available");
-        }
+        log.info("Launched Chart view with " + listView.getCheckedItemCount() + " items");
     }
 
     private void launchDashboardView() {
@@ -379,21 +371,13 @@ public class LiveDataActivity extends AppCompatActivity
             return;
         }
 
-        try {
-            Class<?> dashboardActivityClass = Class.forName("com.obddroid.ui.activities.DashBoardActivity");
-            dashboardActivityClass.getMethod("setAdapter", adapter.getClass().getSuperclass())
-                    .invoke(null, adapter);
+        DashBoardActivity.setAdapter(adapter);
+        Intent intent = new Intent(this, DashBoardActivity.class);
+        intent.putExtra(DashBoardActivity.POSITIONS, getSelectedPositions());
+        intent.putExtra(DashBoardActivity.RES_ID, R.layout.dashboard);
+        startActivity(intent);
 
-            Intent intent = new Intent(this, dashboardActivityClass);
-            intent.putExtra("positions", getSelectedPositions());
-            intent.putExtra("res_id", R.layout.dashboard);
-            startActivity(intent);
-
-            log.info("Launched Dashboard view with " + listView.getCheckedItemCount() + " items");
-        } catch (Exception e) {
-            log.warning("Failed to launch Dashboard view: " + e.getMessage());
-            SnackbarHelper.showError(this, "Dashboard view not available");
-        }
+        log.info("Launched Dashboard view with " + listView.getCheckedItemCount() + " items");
     }
 
     private void launchHudView() {
@@ -402,21 +386,13 @@ public class LiveDataActivity extends AppCompatActivity
             return;
         }
 
-        try {
-            Class<?> dashboardActivityClass = Class.forName("com.obddroid.ui.activities.DashBoardActivity");
-            dashboardActivityClass.getMethod("setAdapter", adapter.getClass().getSuperclass())
-                    .invoke(null, adapter);
+        DashBoardActivity.setAdapter(adapter);
+        Intent intent = new Intent(this, DashBoardActivity.class);
+        intent.putExtra(DashBoardActivity.POSITIONS, getSelectedPositions());
+        intent.putExtra(DashBoardActivity.RES_ID, R.layout.head_up);
+        startActivity(intent);
 
-            Intent intent = new Intent(this, dashboardActivityClass);
-            intent.putExtra("positions", getSelectedPositions());
-            intent.putExtra("res_id", R.layout.head_up);
-            startActivity(intent);
-
-            log.info("Launched HUD view with " + listView.getCheckedItemCount() + " items");
-        } catch (Exception e) {
-            log.warning("Failed to launch HUD view: " + e.getMessage());
-            SnackbarHelper.showError(this, "HUD view not available");
-        }
+        log.info("Launched HUD view with " + listView.getCheckedItemCount() + " items");
     }
 
     private void applyFilter() {
@@ -425,7 +401,8 @@ public class LiveDataActivity extends AppCompatActivity
             return;
         }
 
-        // TODO: Implement filtering functionality
+        // Set list to filtered mode showing only selected items
+        // TODO: Actually implement filtering by hiding non-selected items
         SnackbarHelper.showInfo(this, "Filter functionality coming soon");
         log.info("Filter requested for " + listView.getCheckedItemCount() + " items");
     }

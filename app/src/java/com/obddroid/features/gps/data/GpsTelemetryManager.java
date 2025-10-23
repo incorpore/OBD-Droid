@@ -1,4 +1,4 @@
-package com.obddroid.features.gps;
+package com.obddroid.features.gps.data;
 
 import android.Manifest;
 import android.annotation.SuppressLint;

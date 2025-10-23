@@ -1,11 +1,11 @@
-package com.obddroid.vehiclehistory;
+package com.obddroid.features.vehiclehistory.data;
 
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.obddroid.vehicle.AutoCheckReport;
+import com.obddroid.features.vehiclehistory.model.AutoCheckReport;
 
 import org.json.JSONObject;
 
