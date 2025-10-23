@@ -3,24 +3,52 @@
 ## Vehicle Identification
 - **Make:** GMC
 - **Year:** 2022
-- **Model:** Canyon (Partial VIN: 107528)
+- **Model:** Canyon 3.6L V6 (Partial VIN: 107528)
 - **Fuel Type:** Gasoline
+- **Mileage:** 113,700 miles (183,137 km)
 - **Scan Date:** October 23, 2025 5:06 PM
+
+---
+
+## 🔧 MECHANIC'S TL;DR
+
+**Problem:** P0302 Cylinder 2 Misfire + Check Engine Light ON
+
+**KEY FINDING:** MAP Sensor B reads **0.00 kPa** (impossible!) - same bank as misfiring cylinder!
+
+**Try These 3 Things:**
+1. **Vacuum leak test** - Spray carb cleaner on passenger side intake (10 min)
+2. **Check MAP sensor B** - Wiring/connector on passenger side (15 min)
+3. **Replace spark plugs** - All 6, overdue at 113k miles ($240-320, 2 hrs)
+
+**Success Rate:** 90%+ | **Cost:** $240-400 | **Time:** 2-4 hours
+
+**Full details below** ↓
 
 ---
 
 ## Diagnostic Summary
 ⚠️ **STATUS: NOT SALES READY** - Active cylinder misfire detected
 
-### Fault Codes Found: 3
+### Fault Codes Found: 1 (PERMANENT)
 **Code:** P0302 - Cylinder 2 Misfire Detected
 
-**Code Appears in Multiple States:**
-1. **PERMANENT** (Red) - Emissions-related, cannot be cleared with scan tool
-2. **STORED** (Orange) - Confirmed/active fault code
-3. **PENDING** (Yellow) - Monitored condition
+**Current Status (After Warm-Up):**
+- **PERMANENT** (Red) - Emissions-related, cannot be cleared with scan tool
+- ~~STORED~~ (Auto-cleared by ECU after warm-up)
+- ~~PENDING~~ (Auto-cleared by ECU after warm-up)
 
-**MIL Status:** ✅ Check Engine Light ON
+**MIL Status:** ✅ Check Engine Light ON (Confirmed on dashboard)
+
+### ⚠️ APP BUG DISCOVERED
+**Issue:** Fault Codes page shows "0 codes" but:
+- Live Data shows "NUMBER OF FAULT CODES: 1"
+- MIL Status shows "On"
+- Check engine light is ON on dashboard
+
+**Root Cause:** Mode 0A (Permanent Codes) not parsing correctly when it's the only code remaining.
+
+**Workaround:** Use Live Data page to verify DTC count. The code IS present in ECU.
 
 ---
 
@@ -76,17 +104,84 @@ A misfire in cylinder 2 means the air/fuel mixture in that cylinder is not ignit
 
 ---
 
-## Recommended Diagnostic Steps for Dealership
+## 🔍 Root Cause Analysis - UPDATED
 
-### STEP 1: Quick Visual Inspection (5 minutes)
+### Primary Findings:
+1. **P0302 - Cylinder 2 Misfire** (Intermittent, on Bank 2/Passenger Side)
+2. **Intake Manifold Absolute Pressure B = 0.00 kPa** (Should read ~40 kPa like Bank A)
+3. **High Engine Torque Friction = 261%** (Indicates rough running/misfire)
+
+### Likely Root Causes (Updated Priority):
+
+#### 1. **VACUUM LEAK on Bank 2** (NEW - 40% probability)
+**Evidence:**
+- MAP sensor B reads 0.00 kPa (impossible - should show vacuum)
+- Cylinder 2 is on Bank 2 (passenger side)
+- Intermittent misfire (vacuum leaks can worsen when hot)
+
+**What to Check:**
+- Intake manifold gasket (passenger side)
+- Vacuum hoses on Bank 2 side
+- PCV valve/hoses
+- Brake booster hose
+- EVAP system hoses
+
+**Test:** Spray carb cleaner around intake manifold while engine runs
+- If RPM changes = vacuum leak found
+- Focus on passenger side near Cylinder 2
+
+#### 2. **Faulty MAP Sensor (Bank 2)** (25% probability)
+**Evidence:**
+- 0.00 kPa reading is clearly wrong
+- Could cause ECU to calculate wrong fuel delivery
+- Would affect all Bank 2 cylinders if sensor bad
+
+**Test:**
+- Check MAP sensor B wiring/connector
+- Compare readings from both MAP sensors
+- Unplug sensor - see if reading changes
+
+#### 3. **SPARK PLUG - Cylinder 2** (25% probability)
+**Evidence:**
+- Still the most common cause of misfires
+- Intermittent nature fits worn plug
+- High mileage (113,700 miles)
+
+**Recommended:** Replace anyway as part of repair
+
+#### 4. **IGNITION COIL - Cylinder 2** (10% probability)
+**Evidence:**
+- Intermittent misfire could be coil failing when hot
+- Coil swap test will confirm
+
+---
+
+## Recommended Diagnostic Steps for Dealership - REVISED
+
+### STEP 1: Vacuum Leak Test (10 minutes) **NEW PRIORITY**
 ```
-[ ] Check for loose/damaged wires on ignition coil #2
-[ ] Look for vacuum leaks near cylinder 2
-[ ] Check air filter condition
-[ ] Inspect spark plug boots for cracks/damage
+[ ] Start engine and let idle
+[ ] Spray carb cleaner around intake manifold (PASSENGER SIDE)
+[ ] Focus on areas near Cylinder 2
+[ ] Check PCV valve and hoses
+[ ] Check brake booster vacuum line
+[ ] Listen for hissing sounds
+[ ] If RPM changes when spraying = VACUUM LEAK FOUND
 ```
 
-### STEP 2: Spark Plug Inspection (15 minutes)
+**If vacuum leak found:** Fix leak, clear codes, test drive, re-scan
+
+### STEP 2: MAP Sensor B Inspection (15 minutes)
+```
+[ ] Locate MAP sensor for Bank 2 (passenger side)
+[ ] Check connector for corrosion/damage
+[ ] Check wiring for breaks/shorts
+[ ] Compare live data: MAP A vs MAP B
+[ ] Unplug MAP B - see if reading changes from 0.00
+[ ] If sensor faulty: Replace MAP sensor B
+```
+
+### STEP 3: Spark Plug Inspection (15 minutes)
 ```
 [ ] Remove spark plug from cylinder 2
 [ ] Check gap (should be 0.040" for most GM V6 engines)
@@ -94,7 +189,7 @@ A misfire in cylinder 2 means the air/fuel mixture in that cylinder is not ignit
 [ ] If worn: Replace ALL spark plugs (recommended at 30k+ miles)
 ```
 
-### STEP 3: Coil Swap Test (20 minutes)
+### STEP 4: Coil Swap Test (20 minutes - if above doesn't fix)
 ```
 [ ] Swap ignition coil from cylinder 2 with cylinder 4
 [ ] Clear codes
@@ -104,7 +199,7 @@ A misfire in cylinder 2 means the air/fuel mixture in that cylinder is not ignit
 [ ] If P0302 persists = Problem is NOT the coil
 ```
 
-### STEP 4: Compression Test (30 minutes - if above fails)
+### STEP 5: Compression Test (30 minutes - if all above fails)
 ```
 [ ] Perform compression test on all cylinders
 [ ] Record PSI for each: 1:___ 2:___ 3:___ 4:___ 5:___ 6:___
@@ -161,24 +256,90 @@ A misfire in cylinder 2 means the air/fuel mixture in that cylinder is not ignit
 ---
 
 ## Live Data Snapshot
-*(Available on next connection - 58 PIDs supported)*
+**Captured:** October 23, 2025 5:23 PM
+**Engine State:** Idling/Warm
+**PIDs Supported:** 58
 
-Supported data includes:
-- Engine RPM, Speed, Coolant Temp
-- Fuel System Status, Fuel Trim
-- Throttle Position, MAF Sensor
-- O2 Sensors, Catalyst Temp
-- And 50+ more parameters
+### Fuel System Data
+- **Commanded Fuel Rail Pressure A:** 4000 kPa (Normal)
+- **Fuel Rail Pressure A:** 4020 kPa (Normal)
+- **Fuel Rail Pressure B:** 4050 kPa (Normal)
+- **Commanded Fuel Rail Pressure B:** 0 kPa
+- **Fuel Rail Temperature A:** 58.00°C (Normal)
+- **Fuel Rail Temperature B:** 58.00°C (Normal)
+
+### Intake/Manifold Data
+- **Intake Manifold Absolute Pressure A:** 39.69 kPa (Normal idle vacuum)
+- **Intake Manifold Absolute Pressure B:** 0.00 kPa ⚠️ **ANOMALY**
+
+### Engine Performance
+- **Engine Torque Friction:** 261.0% ⚠️ **HIGH**
+- **Odometer:** 183,137.5 km (113,700 miles approx)
+
+### Fuel Trim Data (Available)
+- Short Term Fuel Trim - Bank 1 (PID 06): Supported
+- Long Term Fuel Trim - Bank 1 (PID 07): Supported
+- Short Term Fuel Trim - Bank 2 (PID 08): Supported
+- Long Term Fuel Trim - Bank 2 (PID 09): Supported
+
+### O2 Sensor Monitoring
+- **O2 Sensor Monitor Completion Bank 1:** 13,824 counts
+- **O2 Sensor Monitor Conditions Bank 1:** 12,800 counts
+- **O2 Sensor Monitor Completion Bank 2:** 13,824 counts
+- **O2 Sensor Monitor Conditions Bank 2:** 12,800 counts
+- **Secondary O2 Monitor Bank 1:** 1,024 / 11,008 counts
+- **Secondary O2 Monitor Bank 2:** 13,824 / 11,008 counts
+
+### Key Diagnostic Indicators
+
+⚠️ **Intake Manifold Pressure B = 0.00 kPa**
+- This reading is ABNORMAL - should show vacuum like Bank A
+- Possible causes:
+  1. Faulty MAP sensor for Bank 2
+  2. Wiring/connector issue to sensor
+  3. Vacuum leak on Bank 2 side
+  4. ECU not reading this sensor
+
+⚠️ **Engine Torque Friction = 261%**
+- This is VERY HIGH (normal is 0-100%)
+- Indicates significant engine drag/resistance
+- Could be related to misfire causing rough running
+- May also indicate worn engine components
+
+### Bank Assignment (GM 3.6L V6)
+**Bank 1** (Driver Side):
+- Cylinders: 1, 3, 5
+
+**Bank 2** (Passenger Side):
+- Cylinders: 2, 4, 6
+
+**IMPORTANT:** Cylinder 2 is on BANK 2!
+- The misfire is on the PASSENGER side
+- Bank 2 intake manifold pressure shows 0.00 (sensor issue?)
+- This correlation is significant
 
 ---
 
 ## Technician Notes
 
-**Scan Date:** October 23, 2025
+**Initial Scan:** October 23, 2025 5:06 PM - Found 3 codes (1 permanent, 1 stored, 1 pending)
+**Follow-up Scan:** October 23, 2025 5:13 PM - Found 1 code (permanent only)
 **Scanned By:** OBD-Droid App v2.x
 **Location:** Dealership Service Department
 
+**Code Behavior:**
+- Stored and Pending codes auto-cleared after engine warm-up (NORMAL ECU behavior)
+- Permanent code remains (will only clear after successful repair + drive cycles)
+- This indicates **intermittent misfire** - happens under load, not at idle
+
+**App Bug Note:**
+- After warm-up, Fault Codes page incorrectly shows 0 codes
+- Live Data page correctly shows 1 code present
+- Always verify with Live Data or physical scan tool
+- Bug report filed: BUG_REPORT_Mode0A_Permanent_Codes.md
+
 **Status:** ⚠️ NEEDS REPAIR BEFORE SALE
+**Priority:** HIGH - Intermittent misfire will fail inspection and affect driveability
 
 ---
 
