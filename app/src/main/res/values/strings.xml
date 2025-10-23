@@ -365,6 +365,36 @@ period of time while the ECU recalibrates itself.
         <item>\n</item>
         <item>\r\n</item>
     </string-array>
+    <string-array name="mqtt_protocol_options">
+        <item>TCP (tcp://)</item>
+        <item>SSL/TLS (ssl://)</item>
+    </string-array>
+    <string-array name="mqtt_protocol_values" translatable="false">
+        <item>tcp</item>
+        <item>ssl</item>
+    </string-array>
+    <string-array name="mqtt_qos_options">
+        <item>At most once (QoS 0)</item>
+        <item>At least once (QoS 1)</item>
+        <item>Exactly once (QoS 2)</item>
+    </string-array>
+    <string-array name="mqtt_qos_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="mqtt_update_period_options">
+        <item>5 seconds</item>
+        <item>10 seconds</item>
+        <item>30 seconds</item>
+        <item>60 seconds</item>
+    </string-array>
+    <string-array name="mqtt_update_period_values" translatable="false">
+        <item>5</item>
+        <item>10</item>
+        <item>30</item>
+        <item>60</item>
+    </string-array>
     <string name="comm_baudrate">Baud Rate</string>
     <string name="comm_baudrate_description">USB serial communication speed (bits per second)</string>
     <string name="full_screen_display">Immersive Mode</string>
@@ -395,4 +425,79 @@ period of time while the ECU recalibrates itself.
     <string name="ecu_already_selected">This ECU is already selected</string>
     <string name="ecu_selected_success">ECU selected successfully</string>
     <string name="ecu_select_error">Failed to select ECU. Please try again.</string>
+    <!-- CSV logging -->
+    <string name="csv_logging_title">CSV Data Logging</string>
+    <string name="csv_logging_channel_description">Record live OBD measurements to CSV files</string>
+    <string name="csv_logging_start">Start CSV Logging</string>
+    <string name="csv_logging_stop">Stop CSV Logging</string>
+    <string name="csv_logging_notification_title">CSV logging active</string>
+    <string name="csv_logging_notification_text">Captured %1$d points across %2$d rows</string>
+    <string name="csv_logging_finished_text">Log saved as %1$s</string>
+    <string name="csv_logging_auto_paused">Logging paused after inactivity. Latest file: %1$s</string>
+    <string name="csv_logging_share">Share log</string>
+    <string name="csv_logging_started">CSV logging started</string>
+    <string name="csv_logging_stopped">CSV logging stopped</string>
+    <string name="csv_logging_auto_pause_message">CSV logging paused after 60 seconds of inactivity</string>
+    <string name="csv_logging_error">Unable to start CSV logging – storage unavailable</string>
+    <!-- GPS telemetry -->
+    <string name="gps_field_latitude">GPS Latitude</string>
+    <string name="gps_field_longitude">GPS Longitude</string>
+    <string name="gps_field_altitude">GPS Altitude</string>
+    <string name="gps_field_bearing">GPS Bearing</string>
+    <string name="gps_field_speed">GPS Speed</string>
+    <string name="gps_telemetry_start">Enable GPS Telemetry</string>
+    <string name="gps_telemetry_stop">Disable GPS Telemetry</string>
+    <string name="gps_telemetry_started">GPS telemetry enabled</string>
+    <string name="gps_telemetry_stopped">GPS telemetry disabled</string>
+    <string name="gps_permission_rationale">Location access is required to record GPS telemetry with your vehicle data.</string>
+    <string name="gps_permission_denied">Location permission denied. GPS telemetry remains disabled.</string>
+    <!-- Motion sensor telemetry -->
+    <string name="sensor_field_acc_x">Accel X</string>
+    <string name="sensor_field_acc_y">Accel Y</string>
+    <string name="sensor_field_acc_z">Accel Z</string>
+    <string name="motion_telemetry_start">Enable Motion Telemetry</string>
+    <string name="motion_telemetry_stop">Disable Motion Telemetry</string>
+    <string name="motion_telemetry_started">Motion telemetry enabled</string>
+    <string name="motion_telemetry_stopped">Motion telemetry disabled</string>
+    <!-- MQTT telemetry -->
+    <string name="mqtt_settings_title">MQTT Publishing</string>
+    <string name="mqtt_host_title">Broker Host</string>
+    <string name="mqtt_host_summary">Hostname or IP address of the MQTT broker.</string>
+    <string name="mqtt_port_title">Broker Port</string>
+    <string name="mqtt_port_summary">TCP port for the MQTT broker (default 1883).</string>
+    <string name="mqtt_protocol_title">Protocol</string>
+    <string name="mqtt_prefix_title">Topic Prefix</string>
+    <string name="mqtt_prefix_summary">Prefix prepended to each topic (e.g. obddroid/vehicle/).</string>
+    <string name="mqtt_username_title">Username</string>
+    <string name="mqtt_password_title">Password</string>
+    <string name="mqtt_client_id_title">Client Identifier</string>
+    <string name="mqtt_qos_title">QoS Level</string>
+    <string name="mqtt_update_period_title">Publish Interval</string>
+    <string name="mqtt_retain_title">Retain Messages</string>
+    <string name="mqtt_selected_items_title">Data Items to Publish</string>
+    <string name="mqtt_publish_all_items">All available data items will be published.</string>
+    <string name="mqtt_items_selected">%1$d items selected.</string>
+    <string name="mqtt_password_configured">Password configured</string>
+    <string name="mqtt_password_not_configured">Not configured - tap to set</string>
+    <string name="mqtt_password_cleared">MQTT password removed</string>
+    <string name="mqtt_password_saved">MQTT password saved securely</string>
+    <string name="mqtt_publisher_start">Enable MQTT Publishing</string>
+    <string name="mqtt_publisher_stop">Disable MQTT Publishing</string>
+    <string name="mqtt_publisher_started">MQTT publishing enabled</string>
+    <string name="mqtt_publisher_stopped">MQTT publishing disabled</string>
+    <string name="mqtt_publisher_config_error">MQTT configuration incomplete. Please verify broker settings.</string>
+    <string name="mqtt_status_title">MQTT Status</string>
+    <string name="mqtt_status_never">No publish attempts yet</string>
+    <string name="mqtt_status_waiting_for_data">Publisher initialized, waiting for data to send</string>
+    <string name="mqtt_status_publish_success">Last publish succeeded</string>
+    <string name="mqtt_status_failure">Last publish failed at %1$s: %2$s</string>
+    <string name="mqtt_status_success">Last publish succeeded at %1$s</string>
+    <string name="mqtt_status_stopped">MQTT publishing stopped</string>
+    <string name="mqtt_status_stopped_at">Publishing stopped at %1$s</string>
+    <string name="mqtt_status_waiting_since">Publisher waiting for data since %1$s</string>
+    <string name="mqtt_status_error_configuration">Broker settings incomplete</string>
+    <string name="mqtt_status_error_client">Unable to create MQTT client</string>
+    <string name="mqtt_status_error_unknown">Unknown MQTT error</string>
+    <string name="mqtt_status_snackbar_failure">MQTT publish failed: %1$s</string>
+    <string name="mqtt_status_snackbar_recovered">MQTT publishing recovered</string>
 </resources>

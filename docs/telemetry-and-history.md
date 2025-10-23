@@ -1,6 +1,5 @@
 # Telemetry & Vehicle History Workstreams
 
-**Assigned Agent:** Agent C  
 **Last Updated:** 2025-01-06
 
 ## Workstream Snapshot

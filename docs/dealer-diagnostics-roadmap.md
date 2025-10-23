@@ -401,6 +401,29 @@ public class AuditLogger {
 
 ---
 
+## Backlog Summary
+
+| Status | Time | Task | Source Document(s) |
+|---|---|---|---|
+|  | Very Long | Implement flash programming flows (UDS $34–$37) for module reprogramming and rollback safety | dealer-diagnostics-roadmap.md |
+|  | Very Long | Build module coding capabilities so technicians can change equipment/variant options | dealer-diagnostics-roadmap.md |
+|  | Very Long | Implement variant coding workflow to manage market- or trim-specific configuration flags | dealer-diagnostics-roadmap.md |
+|  | Very Long | Implement full UDS core service support (session control, read/write by ID, diagnostics control) | dealer-diagnostics-roadmap.md |
+|  | Very Long | Implement security access ($27) including seed/key exchange, throttling, and audit logging | dealer-diagnostics-roadmap.md |
+|  | Very Long | Build guided diagnostics workflows that tie scan results to service procedures and checklists | dealer-diagnostics-roadmap.md |
+|  | Long | Support adaptation writing via UDS $2E with validation and rollback tooling | dealer-diagnostics-roadmap.md |
+|  | Long | Support retrofit feature activation (software-enabled upgrades) with entitlement tracking | dealer-diagnostics-roadmap.md |
+|  | Long | Deliver extended PID support using UDS $22 across OEM datasets (load definitions, format units) | dealer-diagnostics-roadmap.md |
+|  | Long | Implement full Mode 8 test control coverage with safety gating and UI flows | dealer-diagnostics-roadmap.md |
+|  | Long | Add actuator control capabilities using UDS $2F (engine, transmission, body, climate, safety systems) | dealer-diagnostics-roadmap.md |
+|  | Long | Implement routine control ($31) for service calibrations and functional tests | dealer-diagnostics-roadmap.md |
+|  | Long | Integrate technical service bulletin data into diagnostic recommendations and workflows | dealer-diagnostics-roadmap.md |
+|  | Long | Build service reset function suite (oil, brake, battery, DPF, transmission, steering angle) | dealer-diagnostics-roadmap.md |
+|  | Long | Implement safety framework/interlocks for bidirectional controls (stationary checks, voltage thresholds) | dealer-diagnostics-roadmap.md |
+|  | Medium | Implement basic adaptation reading flows for OEM-specific channels | dealer-diagnostics-roadmap.md |
+
+---
+
 ## 9. Testing & Validation ✅
 
 ### Test Coverage Requirements

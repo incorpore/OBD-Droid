@@ -1,9 +1,5 @@
 # ECU Conversion & Catalog Abstractions – Proposal
 
-**Author:** Agent B  
-**Review Window:** 2024-07-19 – 2024-07-24  
-**Intended Reviewers:** Architecture Council, Diagnostics Platform Tech Leads, QA Lead (Diagnostics)
-
 ## Objective
 Introduce interface-first boundaries for ECU conversion logic and diagnostic catalog data so the upcoming refactor can proceed without repeated churn. The abstractions below decouple call sites from the legacy `HashMap` implementations while staying binary-compatible with existing modules.
 
@@ -44,12 +40,6 @@ public interface DtcCatalog {
 - Add contract tests for each interface (baseline implemented in JVM tests, instrumentation coverage for Android-specific locale rendering).  
 - Snapshot tests for conversion formatting to guarantee legacy text remains stable.  
 - Build-time lint to forbid direct instantiation of legacy `Conversions` classes once Phase 2 lands.
-
-## Architectural Review Plan
-- Circulate this proposal and require async comments by 2024-07-22.  
-- Live review scheduled with Architecture Council on 2024-07-23 (30 minutes, prior to council agenda).  
-- Track decisions/action items in `ARC-217` Jira. Acceptance criteria: no blocking concerns, identified risks have owners.  
-- Post-review, publish finalized interfaces and adapters in `modules/dtc-database` + `app` modules with change summary.
 
 ## Risks & Mitigations
 - **Binary Compatibility:** Android builds that still reference concrete classes may fail if adapters are missing—ship adapters with no-op behaviour first.  

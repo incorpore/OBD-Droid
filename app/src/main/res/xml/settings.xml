@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+                  xmlns:app="http://schemas.android.com/apk/res-auto"
                   android:icon="@android:drawable/ic_menu_manage"
                   android:title="@string/settings">
 
@@ -35,6 +36,100 @@
             android:title="Auto-reconnect on startup"
             android:summary="Automatically reconnect to your last adapter when the app starts"
             android:defaultValue="true"
+            android:layout="@layout/preference_indented" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/mqtt_settings_title"
+        android:layout="@layout/preference_category">
+
+        <EditTextPreference
+            android:key="mqtt_host"
+            android:title="@string/mqtt_host_title"
+            android:summary="@string/mqtt_host_summary"
+            app:useSimpleSummaryProvider="true"
+            android:layout="@layout/preference_indented" />
+
+        <EditTextPreference
+            android:key="mqtt_port"
+            android:title="@string/mqtt_port_title"
+            android:summary="@string/mqtt_port_summary"
+            android:defaultValue="1883"
+            android:inputType="number"
+            app:useSimpleSummaryProvider="true"
+            android:layout="@layout/preference_indented" />
+
+        <ListPreference
+            android:key="mqtt_protocol"
+            android:title="@string/mqtt_protocol_title"
+            android:entries="@array/mqtt_protocol_options"
+            android:entryValues="@array/mqtt_protocol_values"
+            android:defaultValue="tcp"
+            app:useSimpleSummaryProvider="true"
+            android:layout="@layout/preference_indented" />
+
+        <EditTextPreference
+            android:key="mqtt_prefix"
+            android:title="@string/mqtt_prefix_title"
+            android:summary="@string/mqtt_prefix_summary"
+            android:defaultValue="obddroid/"
+            app:useSimpleSummaryProvider="true"
+            android:layout="@layout/preference_indented" />
+
+        <EditTextPreference
+            android:key="mqtt_username"
+            android:title="@string/mqtt_username_title"
+            app:useSimpleSummaryProvider="true"
+            android:layout="@layout/preference_indented" />
+
+        <EditTextPreference
+            android:key="mqtt_password"
+            android:title="@string/mqtt_password_title"
+            android:layout="@layout/preference_indented" />
+
+        <Preference
+            android:key="mqtt_status"
+            android:title="@string/mqtt_status_title"
+            android:summary="@string/mqtt_status_never"
+            android:selectable="false"
+            android:layout="@layout/preference_indented"
+            app:iconSpaceReserved="false" />
+
+        <EditTextPreference
+            android:key="mqtt_client_id"
+            android:title="@string/mqtt_client_id_title"
+            app:useSimpleSummaryProvider="true"
+            android:layout="@layout/preference_indented" />
+
+        <ListPreference
+            android:key="mqtt_qos"
+            android:title="@string/mqtt_qos_title"
+            android:entries="@array/mqtt_qos_options"
+            android:entryValues="@array/mqtt_qos_values"
+            android:defaultValue="0"
+            app:useSimpleSummaryProvider="true"
+            android:layout="@layout/preference_indented" />
+
+        <ListPreference
+            android:key="mqtt_update_period"
+            android:title="@string/mqtt_update_period_title"
+            android:entries="@array/mqtt_update_period_options"
+            android:entryValues="@array/mqtt_update_period_values"
+            android:defaultValue="30"
+            app:useSimpleSummaryProvider="true"
+            android:layout="@layout/preference_indented" />
+
+        <CheckBoxPreference
+            android:key="mqtt_retain"
+            android:title="@string/mqtt_retain_title"
+            android:defaultValue="true"
+            android:layout="@layout/preference_indented" />
+
+        <MultiSelectListPreference
+            android:key="mqtt_selected_items"
+            android:title="@string/mqtt_selected_items_title"
+            android:defaultValue="@array/empty"
             android:layout="@layout/preference_indented" />
 
     </PreferenceCategory>

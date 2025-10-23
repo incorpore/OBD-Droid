@@ -1,205 +1,32 @@
-# OBD-Droid Documentation
+# OBD-Droid Documentation Hub
 
-## 🚗 About OBD-Droid
-OBD-Droid is a professional-grade OBD-II diagnostic application for Android that provides comprehensive vehicle diagnostics, real-time data monitoring, and unique safety features not found in other OBD apps.
+Below is an updated map of every document in this directory. Use it as your quick-start index when jumping into planning, execution, or case-study work.
 
-### Version: 1.0.0 (Pre-Launch)
-### Status: 75% Ready for Play Store Launch
-### Target Launch: 4-5 weeks
+## Core Backlogs & Plans
+- [docs-master-todo.md](./docs-master-todo.md) – Central engineering backlog for core platform efforts (GPS, sensors, MQTT, gauges, AI assistants).
+- [obd-unified-plan.md](./obd-unified-plan.md) – Simplified sequencing for near-term must-do work and stretch goals.
+- [platform-enhancement.md](./platform-enhancement.md) – Broader platform upgrades (Vehicle History, PV refactor) and cross-team coordination.
+- [androbod-plugin-integration.md](./androbod-plugin-integration.md) – Status of CSV/GPS/Motion/MQTT integrations and follow-ups after migrating off plugins.
+- [telemetry-and-history.md](./telemetry-and-history.md) – Detailed roadmap for Vehicle History improvements and telemetry retention.
+- [ecu-module-refactor.md](./ecu-module-refactor.md) & [ecu-conversion-abstractions.md](./ecu-conversion-abstractions.md) – Deep dives on the ECU conversion/catalog refactor.
 
----
+## Dealer Diagnostics Track
+- [dealer-diagnostics-roadmap.md](./dealer-diagnostics-roadmap.md) – High-level vision plus backlog summary for OEM-level diagnostics.
 
-## ✨ Key Features
+## Launch & Growth
+- [launch-plan.md](./launch-plan.md) – End-to-end Play Store launch workflow (technical prep, compliance, monetization, beta, rollout).
+- [store-assets-checklist.md](./store-assets-checklist.md) – Visual/copy/ASO checklist for Play Store assets.
+- [analytics-phase2-dashboard-update.md](./analytics-phase2-dashboard-update.md) – Looker/analytics requirements tied to Vehicle History Phase 2.
 
-### Core Diagnostics
-- **Fault Code Management** - Read/Clear DTCs with support for:
-  - Stored Codes (Mode 03)
-  - Pending Codes (Mode 07)
-  - Permanent Codes (Mode 0A) - *Unique feature*
-- **Live Data Monitoring** - Real-time PIDs with gauge views
-- **Freeze Frame Data** - Capture conditions when faults occur
-- **ECU Module Scanning** - Comprehensive module information
-- **Emissions Testing** - I/M readiness monitoring
+## Field Case Studies & Reports
+- [ford-f150-diagnostic-learnings.md](./ford-f150-diagnostic-learnings.md)
+- [ford-f150-diagnostic-session-addendum.md](./ford-f150-diagnostic-session-addendum.md)
+- [ford-f150-power-steering-report.md](./ford-f150-power-steering-report.md)
+- [ford-2014-f150-fix-guide.md](./ford-2014-f150-fix-guide.md)
 
-### Unique Features
-- **🚨 Safety Recalls** - Real-time NHTSA recall lookup
-- **📋 Vehicle History** - AutoCheck integration for history reports
-- **⛽ Fuel Economy** - Trip tracking and MPG calculations
-- **🔧 Test Control** - Advanced diagnostic test execution
-
-### Professional Tools
-- **Data Export** - CSV/JSON export capabilities
-- **Baseline Comparison** - ECU scan comparison tool
-- **Multi-Protocol Support** - All OBD-II protocols
-- **Dark Theme** - Professional Material Design UI
+## Reference & Matrices
+- [vin-pid-regression-matrix.md](./vin-pid-regression-matrix.md) – VIN/PID coverage matrix (moved into QA suites; keep for reference).
 
 ---
 
-## 📁 Documentation
-
-### Launch & Business
-- [`LAUNCH_PLAN.md`](./LAUNCH_PLAN.md) - **Complete Android Play Store launch roadmap** (4-5 week timeline)
-
-### Technical Documentation
-- [`obd-unified-plan.md`](./obd-unified-plan.md) - Master technical coordination plan
-- [`agent-ecu-module-refactor.md`](./agent-ecu-module-refactor.md) - ECU module architecture
-- [`agent-platform-enhancement.md`](./agent-platform-enhancement.md) - Platform enhancement roadmap
-- [`agent-telemetry-and-history.md`](./agent-telemetry-and-history.md) - Telemetry & history implementation
-
-### Implementation Guides
-- [`ecu-conversion-abstractions.md`](./ecu-conversion-abstractions.md) - ECU interface patterns
-- [`vin-pid-regression-matrix.md`](./vin-pid-regression-matrix.md) - Testing matrices
-- [`analytics-phase2-dashboard-update.md`](./analytics-phase2-dashboard-update.md) - Analytics implementation
-
----
-
-## 🏗️ Architecture
-
-### Technology Stack
-- **Language**: Java (Android SDK)
-- **Min SDK**: 24 (Android 7.0)
-- **Target SDK**: 33 (Android 13)
-- **Architecture**: MVVM with Repository pattern
-- **UI Framework**: Material Components
-- **Dependencies**:
-  - NHTSA VIN Decoder
-  - DTC Database
-  - Automotive Logo Library
-
-### Key Services
-```
-CommService.java         - Bluetooth/OBD adapter communication
-FaultCodeService.java    - DTC scanning (Mode 03/07/0A)
-ObdProt.java            - OBD protocol implementation
-VehicleManager.java     - Vehicle data management
-```
-
----
-
-## 🎯 Project Status
-
-### ✅ Completed Features
-- [x] Core OBD-II functionality
-- [x] Material Design UI
-- [x] Live data monitoring
-- [x] Fault code scanning (3 types)
-- [x] Safety recalls integration
-- [x] Vehicle history integration
-- [x] Fuel economy tracking
-- [x] Data export capabilities
-
-### 🔧 In Progress
-- [ ] Remove debug logging
-- [ ] Add crash reporting (Firebase)
-- [ ] Create app icon
-- [ ] Write privacy policy
-
-### 📋 Todo for Launch
-- [ ] Beta testing program
-- [ ] Play Store assets
-- [ ] Monetization setup
-- [ ] Marketing materials
-
----
-
-## 💰 Monetization Strategy
-
-### Freemium Model (Recommended)
-**Free Version**
-- Basic Live Data
-- Read Fault Codes
-- 5 scans/day limit
-
-**Pro Version ($9.99)**
-- Unlimited scans
-- All features unlocked
-- No advertisements
-- Export capabilities
-
----
-
-## 🚀 Quick Start for Contributors
-
-### Setup
-1. Clone repository
-2. Open in Android Studio
-3. Connect Android device (USB debugging enabled)
-4. Build and run
-
-### Build Commands
-```bash
-# Build debug APK
-./gradlew assembleDebug
-
-# Install on device
-./gradlew installDebug
-
-# Launch app
-adb shell am start -n com.obddroid/.ui.activities.MainActivity
-```
-
-### Key Activities
-- `MainActivity` - Main navigation shell
-- `FaultCodesActivity` - DTC scanning and management
-- `RecallActivity` - Safety recall lookups
-- `FuelEconomyActivity` - MPG tracking
-- `EcuListActivity` - ECU module information
-
----
-
-## 📊 Competitive Analysis
-
-### vs. Torque Pro ($4.95)
-✅ Better UI/UX design
-✅ Safety Recalls feature
-✅ Vehicle History integration
-❌ Less gauge customization
-
-### vs. OBD Fusion ($9.99)
-✅ Comparable diagnostics
-✅ Superior visual design
-✅ Unique safety features
-❌ Less data logging features
-
-### vs. BlueDriver ($99.99)
-✅ Much more affordable
-✅ Better UI design
-✅ Same DTC capabilities
-❌ No repair reports
-
----
-
-## 📈 Launch Timeline
-
-| Phase | Timeline | Focus |
-|-------|----------|-------|
-| **Phase 1** | Week 1-2 | Technical fixes, crash reporting |
-| **Phase 2** | Week 2-3 | Store assets, legal docs |
-| **Phase 3** | Week 3 | Monetization, IAP setup |
-| **Phase 4** | Week 3-4 | Beta testing program |
-| **Phase 5** | Week 4 | Play Store setup |
-| **Phase 6** | Week 5 | Launch! 🎉 |
-
----
-
-## 📞 Support & Contact
-
-- **GitHub Issues**: [Report bugs](https://github.com/yourusername/OBD-Droid/issues)
-- **Documentation**: This directory
-- **License**: [To be determined]
-
----
-
-## 🏆 Unique Selling Points
-
-1. **Only OBD app with integrated NHTSA Safety Recalls**
-2. **Vehicle History Reports** via AutoCheck API
-3. **Three DTC types** (Stored, Pending, Permanent)
-4. **Professional Material Design** UI
-5. **Comprehensive feature set** in one app
-
----
-
-*Last Updated: October 21, 2025*
-*Version: 1.0*
-*Status: Pre-Launch*
+*Need onboarding or build instructions? Head back to the project README in the repository root.*

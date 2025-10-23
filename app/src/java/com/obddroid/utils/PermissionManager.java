@@ -29,6 +29,7 @@ public class PermissionManager {
     public static final int PERMISSION_REQUEST_STORAGE = 101;
     public static final int PERMISSION_REQUEST_NOTIFICATION = 102;
     public static final int PERMISSION_REQUEST_ALL = 103;
+    public static final int PERMISSION_REQUEST_LOCATION = 104;
 
     // Bluetooth permissions for Android 12+ (API 31+)
     private static final String[] BLUETOOTH_PERMISSIONS_S = new String[]{
@@ -46,6 +47,11 @@ public class PermissionManager {
     private static final String[] STORAGE_PERMISSIONS = new String[]{
         Manifest.permission.WRITE_EXTERNAL_STORAGE,
         Manifest.permission.READ_EXTERNAL_STORAGE
+    };
+
+    private static final String[] LOCATION_PERMISSIONS = new String[]{
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION
     };
 
     /**
@@ -118,6 +124,15 @@ public class PermissionManager {
                 new String[]{Manifest.permission.POST_NOTIFICATIONS},
                 PERMISSION_REQUEST_NOTIFICATION);
         }
+    }
+
+    public static boolean hasLocationPermission(Context context) {
+        return hasPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+            || hasPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION);
+    }
+
+    public static void requestLocationPermission(Activity activity) {
+        requestPermissions(activity, LOCATION_PERMISSIONS, PERMISSION_REQUEST_LOCATION);
     }
 
     /**
@@ -214,6 +229,21 @@ public class PermissionManager {
                 }
             })
             .setNegativeButton("Not Now", null)
+            .create()
+            .show();
+    }
+
+    public static void showLocationRationale(final Activity activity) {
+        new AlertDialog.Builder(activity)
+            .setTitle(R.string.gps_telemetry_start)
+            .setMessage(R.string.gps_permission_rationale)
+            .setPositiveButton("Grant Permission", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    requestLocationPermission(activity);
+                }
+            })
+            .setNegativeButton(android.R.string.cancel, null)
             .create()
             .show();
     }

@@ -1,7 +1,5 @@
 # Platform Enhancement Master Plan
 
-**Assigned Agent:** Agent B
-
 ## TODO
 - [x] Circulate Phase 2 UI/UX summary and copy recommendations to Design & Content asynchronously.
 - [x] Implement `PvChange` prototype and migrate an initial listener to validate the new event flow (see `app/src/java/com/obddroid/core/pvs/ProcessVariables.java` + `MainActivity`).

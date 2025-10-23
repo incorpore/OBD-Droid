@@ -22,6 +22,7 @@ public class SecurePreferences
     private static final Logger log = Logger.getLogger(SecurePreferences.class.getName());
     private static final String PREFS_NAME = "obddroid_secure_prefs";
     private static final String KEY_OPENAI_API_KEY = "openai_api_key";
+    private static final String KEY_MQTT_PASSWORD = "mqtt_password";
     private static final String ALGORITHM = "AES";
 
     private final SharedPreferences preferences;
@@ -143,5 +144,31 @@ public class SecurePreferences
     public void clearOpenAiApiKey()
     {
         preferences.edit().remove(KEY_OPENAI_API_KEY).apply();
+    }
+
+    /**
+     * Stores the MQTT password securely.
+     */
+    public void setMqttPassword(String password)
+    {
+        String encrypted = encrypt(password);
+        preferences.edit().putString(KEY_MQTT_PASSWORD, encrypted).apply();
+    }
+
+    /**
+     * Retrieves the MQTT password.
+     */
+    public String getMqttPassword()
+    {
+        String encrypted = preferences.getString(KEY_MQTT_PASSWORD, "");
+        return decrypt(encrypted);
+    }
+
+    /**
+     * Clears the stored MQTT password.
+     */
+    public void clearMqttPassword()
+    {
+        preferences.edit().remove(KEY_MQTT_PASSWORD).apply();
     }
 }

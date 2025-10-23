@@ -7,11 +7,15 @@ import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.DialogInterface;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -22,6 +26,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.StrictMode;
 import androidx.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.Menu;
@@ -40,12 +45,21 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+
+import com.obddroid.features.csvlogging.CsvLoggingController;
+import com.obddroid.features.csvlogging.CsvLoggingService;
+import com.obddroid.features.csvlogging.CsvLoggingState;
+import com.obddroid.features.gps.GpsTelemetryManager;
+import com.obddroid.features.sensors.SensorTelemetryManager;
+import com.obddroid.features.mqtt.MqttTelemetryManager;
 
 import com.obddroid.core.ecu.DtcCatalog;
 import com.obddroid.core.ecu.DtcCatalogProvider;
@@ -74,6 +88,7 @@ import com.obddroid.services.ObdDataService;
 import com.obddroid.ui.components.AutoHider;
 import com.obddroid.utils.ExportTask;
 import com.obddroid.utils.FileHelper;
+import com.obddroid.utils.PermissionManager;
 import com.obddroid.utils.SnackbarHelper;
 import com.obddroid.vehicle.VehicleManager;
 import com.obddroid.R;
@@ -178,6 +193,9 @@ public class MainActivity extends AppCompatActivity
      * empty string set as default parameter
      */
     private static final Set<String> emptyStringSet = new HashSet<>();
+    private static final String PREF_MQTT_ENABLED = MqttTelemetryManager.PREF_ENABLED_STATE;
+    private static final String PREF_GPS_ENABLED = "gps_telemetry_enabled";
+    private static final String PREF_SENSOR_ENABLED = "motion_telemetry_enabled";
     /**
      * app preferences ...
      */
@@ -197,6 +215,46 @@ public class MainActivity extends AppCompatActivity
      * menu object
      */
     private static Menu menu;
+
+    private final BroadcastReceiver csvLoggingReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (!CsvLoggingService.ACTION_STATUS_BROADCAST.equals(intent.getAction())) {
+                return;
+            }
+            invalidateOptionsMenu();
+            int status = intent.getIntExtra(CsvLoggingService.EXTRA_STATUS, CsvLoggingService.STATUS_STOPPED);
+            String fileName = intent.getStringExtra(CsvLoggingService.EXTRA_FILE_NAME);
+            switch (status) {
+                case CsvLoggingService.STATUS_STARTED:
+                    SnackbarHelper.showInfo(MainActivity.this, getString(R.string.csv_logging_started));
+                    break;
+                case CsvLoggingService.STATUS_STOPPED:
+                    SnackbarHelper.showInfo(MainActivity.this, getString(R.string.csv_logging_stopped));
+                    if (!TextUtils.isEmpty(fileName)) {
+                        SnackbarHelper.showSuccess(MainActivity.this, getString(R.string.csv_logging_finished_text, fileName));
+                    }
+                    break;
+                case CsvLoggingService.STATUS_AUTO_PAUSED:
+                    SnackbarHelper.showWarning(MainActivity.this, getString(R.string.csv_logging_auto_pause_message));
+                    if (!TextUtils.isEmpty(fileName)) {
+                        SnackbarHelper.showInfo(MainActivity.this, getString(R.string.csv_logging_finished_text, fileName));
+                    }
+                    break;
+                case CsvLoggingService.STATUS_ERROR:
+                    SnackbarHelper.showError(MainActivity.this, getString(R.string.csv_logging_error));
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+    private boolean csvLoggingReceiverRegistered = false;
+    private GpsTelemetryManager gpsTelemetryManager;
+    private SensorTelemetryManager sensorTelemetryManager;
+    private MqttTelemetryManager mqttTelemetryManager;
+    private String lastMqttStatusCodeNotified = "";
+    private String lastMqttStatusMessageNotified = "";
     /**
      * Data list adapters
      */
@@ -848,13 +906,49 @@ public class MainActivity extends AppCompatActivity
     {
         super.onPause();
 
+        if (csvLoggingReceiverRegistered) {
+            unregisterReceiver(csvLoggingReceiver);
+            csvLoggingReceiverRegistered = false;
+        }
+
         // stop data display update timer
-        updateTimer.cancel();
+        if (updateTimer != null) {
+            updateTimer.cancel();
+        }
     }
 
     @Override protected void onResume()
     {
         super.onResume();
+
+        if (!csvLoggingReceiverRegistered) {
+            IntentFilter filter = new IntentFilter(CsvLoggingService.ACTION_STATUS_BROADCAST);
+            registerReceiver(csvLoggingReceiver, filter);
+            csvLoggingReceiverRegistered = true;
+        }
+
+        invalidateOptionsMenu();
+
+        SharedPreferences defaultPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        if (defaultPrefs.getBoolean(PREF_GPS_ENABLED, false)) {
+            ensureGpsTelemetryReady();
+        }
+
+        if (defaultPrefs.getBoolean(PREF_SENSOR_ENABLED, false)) {
+            startSensorTelemetryInternal();
+            defaultPrefs.edit().putBoolean(PREF_SENSOR_ENABLED, true).apply();
+        }
+
+        if (defaultPrefs.getBoolean(PREF_MQTT_ENABLED, false)) {
+            MqttTelemetryManager manager = getMqttTelemetryManager();
+            if (!manager.isActive()) {
+                if (!manager.start()) {
+                    defaultPrefs.edit().putBoolean(PREF_MQTT_ENABLED, false).apply();
+                    SnackbarHelper.showError(this, getString(R.string.mqtt_publisher_config_error));
+                }
+            }
+        }
 
         // Synchronize UI with actual connection state
         // This prevents "Connecting..." from persisting after navigation
@@ -994,6 +1088,19 @@ public class MainActivity extends AppCompatActivity
             unsupportedModeHelper.onDestroy();
         }
 
+        if (gpsTelemetryManager != null) {
+            gpsTelemetryManager.stop();
+        }
+
+        if (sensorTelemetryManager != null) {
+            sensorTelemetryManager.stop();
+        }
+
+        if (mqttTelemetryManager != null) {
+            mqttTelemetryManager.setStatusListener(null);
+            mqttTelemetryManager.stop();
+        }
+
         super.onDestroy();
     }
 
@@ -1085,7 +1192,203 @@ public class MainActivity extends AppCompatActivity
         MainActivity.menu = menu;
         // update menu item status for current conversion
         setConversionSystem(EcuDataItem.cnvSystem);
+        updateCsvLoggingMenu(menu);
+        updateGpsTelemetryMenu(menu);
+        updateSensorTelemetryMenu(menu);
+        updateMqttPublisherMenu(menu);
         return true;
+    }
+
+    private void updateCsvLoggingMenu(Menu menu) {
+        if (menu == null) {
+            return;
+        }
+        MenuItem item = menu.findItem(R.id.action_csv_logging);
+        if (item != null) {
+            boolean recording = CsvLoggingState.isRecording();
+            item.setTitle(recording ? R.string.csv_logging_stop : R.string.csv_logging_start);
+            item.setIcon(recording ? R.drawable.ic_save_24 : R.drawable.ic_csv_24);
+        }
+    }
+
+    private void updateGpsTelemetryMenu(Menu menu) {
+        if (menu == null) {
+            return;
+        }
+        MenuItem item = menu.findItem(R.id.action_gps_telemetry);
+        if (item != null) {
+            boolean active = gpsTelemetryManager != null && gpsTelemetryManager.isActive();
+            item.setTitle(active ? R.string.gps_telemetry_stop : R.string.gps_telemetry_start);
+            item.setIcon(R.drawable.ic_gps_24);
+        }
+    }
+
+    private void updateSensorTelemetryMenu(Menu menu) {
+        if (menu == null) {
+            return;
+        }
+        MenuItem item = menu.findItem(R.id.action_sensor_telemetry);
+        if (item != null) {
+            boolean active = sensorTelemetryManager != null && sensorTelemetryManager.isActive();
+            item.setTitle(active ? R.string.motion_telemetry_stop : R.string.motion_telemetry_start);
+            item.setIcon(R.drawable.ic_sensors_24);
+        }
+    }
+
+    private void updateMqttPublisherMenu(Menu menu) {
+        if (menu == null) {
+            return;
+        }
+        MenuItem item = menu.findItem(R.id.action_mqtt_publisher);
+        if (item != null) {
+            boolean active = mqttTelemetryManager != null && mqttTelemetryManager.isActive();
+            item.setTitle(active ? R.string.mqtt_publisher_stop : R.string.mqtt_publisher_start);
+            item.setIcon(R.drawable.ic_mqtt_24);
+        }
+    }
+
+    private void toggleGpsTelemetry() {
+        if (gpsTelemetryManager == null) {
+            gpsTelemetryManager = new GpsTelemetryManager(this);
+        }
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        if (gpsTelemetryManager.isActive()) {
+            gpsTelemetryManager.stop();
+            SnackbarHelper.showInfo(this, getString(R.string.gps_telemetry_stopped));
+            prefs.edit().putBoolean(PREF_GPS_ENABLED, false).apply();
+            invalidateOptionsMenu();
+        } else {
+            ensureGpsTelemetryReady();
+            prefs.edit().putBoolean(PREF_GPS_ENABLED, true).apply();
+        }
+    }
+
+    private void ensureGpsTelemetryReady() {
+        if (!PermissionManager.hasLocationPermission(this)) {
+            boolean showRationale = ActivityCompat.shouldShowRequestPermissionRationale(
+                this, Manifest.permission.ACCESS_FINE_LOCATION) ||
+                ActivityCompat.shouldShowRequestPermissionRationale(
+                    this, Manifest.permission.ACCESS_COARSE_LOCATION);
+            if (showRationale) {
+                PermissionManager.showLocationRationale(this);
+            } else {
+                PermissionManager.requestLocationPermission(this);
+            }
+            return;
+        }
+        startGpsTelemetryInternal();
+    }
+
+    private void startGpsTelemetryInternal() {
+        if (gpsTelemetryManager == null) {
+            gpsTelemetryManager = new GpsTelemetryManager(this);
+        }
+        gpsTelemetryManager.start();
+        SnackbarHelper.showSuccess(this, getString(R.string.gps_telemetry_started));
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .edit()
+            .putBoolean(PREF_GPS_ENABLED, true)
+            .apply();
+        invalidateOptionsMenu();
+    }
+
+    private void toggleSensorTelemetry() {
+        if (sensorTelemetryManager == null) {
+            sensorTelemetryManager = new SensorTelemetryManager(this);
+        }
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        if (sensorTelemetryManager.isActive()) {
+            sensorTelemetryManager.stop();
+            SnackbarHelper.showInfo(this, getString(R.string.motion_telemetry_stopped));
+            prefs.edit().putBoolean(PREF_SENSOR_ENABLED, false).apply();
+        } else {
+            startSensorTelemetryInternal();
+            prefs.edit().putBoolean(PREF_SENSOR_ENABLED, true).apply();
+        }
+        invalidateOptionsMenu();
+    }
+
+    private void startSensorTelemetryInternal() {
+        if (sensorTelemetryManager == null) {
+            sensorTelemetryManager = new SensorTelemetryManager(this);
+        }
+        sensorTelemetryManager.start();
+        SnackbarHelper.showSuccess(this, getString(R.string.motion_telemetry_started));
+        invalidateOptionsMenu();
+    }
+
+    private void toggleMqttPublisher() {
+        MqttTelemetryManager manager = getMqttTelemetryManager();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        if (manager.isActive()) {
+            manager.stop();
+            prefs.edit().putBoolean(PREF_MQTT_ENABLED, false).apply();
+            SnackbarHelper.showInfo(this, getString(R.string.mqtt_publisher_stopped));
+        } else {
+            if (manager.start()) {
+                prefs.edit().putBoolean(PREF_MQTT_ENABLED, true).apply();
+                SnackbarHelper.showSuccess(this, getString(R.string.mqtt_publisher_started));
+            } else {
+                prefs.edit().putBoolean(PREF_MQTT_ENABLED, false).apply();
+                SnackbarHelper.showError(this, getString(R.string.mqtt_publisher_config_error));
+            }
+        }
+        invalidateOptionsMenu();
+    }
+
+    private MqttTelemetryManager getMqttTelemetryManager() {
+        if (mqttTelemetryManager == null) {
+            mqttTelemetryManager = new MqttTelemetryManager(this);
+            mqttTelemetryManager.setStatusListener(this::handleMqttStatusUpdate);
+        }
+        return mqttTelemetryManager;
+    }
+
+    private void handleMqttStatusUpdate(String statusCode, String detail) {
+        if (statusCode == null) {
+            statusCode = MqttTelemetryManager.STATUS_IDLE;
+        }
+        if (detail == null) {
+            detail = "";
+        }
+
+        String previousCode = lastMqttStatusCodeNotified;
+        String previousMessage = lastMqttStatusMessageNotified;
+
+        if (statusCode.equals(previousCode) && detail.equals(previousMessage)) {
+            return;
+        }
+
+        lastMqttStatusCodeNotified = statusCode;
+        lastMqttStatusMessageNotified = detail;
+
+        switch (statusCode) {
+            case MqttTelemetryManager.STATUS_FAILURE: {
+                String reason = detail.trim().isEmpty()
+                    ? getString(R.string.mqtt_status_error_unknown)
+                    : detail.trim();
+                SnackbarHelper.showError(this, getString(R.string.mqtt_status_snackbar_failure, reason));
+                break;
+            }
+            case MqttTelemetryManager.STATUS_SUCCESS: {
+                if (!MqttTelemetryManager.STATUS_FAILURE.equals(previousCode)) {
+                    return;
+                }
+                SnackbarHelper.showSuccess(this, getString(R.string.mqtt_status_snackbar_recovered));
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        updateCsvLoggingMenu(menu);
+        updateGpsTelemetryMenu(menu);
+        updateSensorTelemetryMenu(menu);
+        updateMqttPublisherMenu(menu);
+        return super.onPrepareOptionsMenu(menu);
     }
 
     /**
@@ -1109,6 +1412,23 @@ public class MainActivity extends AppCompatActivity
             case R.id.disconnect:
                 // Show styled confirmation dialog before disconnecting
                 showDisconnectConfirmDialog();
+                return true;
+
+            case R.id.action_csv_logging:
+                CsvLoggingController.toggleLogging(this);
+                invalidateOptionsMenu();
+                return true;
+
+            case R.id.action_gps_telemetry:
+                toggleGpsTelemetry();
+                return true;
+
+            case R.id.action_sensor_telemetry:
+                toggleSensorTelemetry();
+                return true;
+
+            case R.id.action_mqtt_publisher:
+                toggleMqttPublisher();
                 return true;
 
             case R.id.settings:
@@ -1418,6 +1738,23 @@ public class MainActivity extends AppCompatActivity
                 // let context know that we are in list mode again ...
                 dataViewMode = DATA_VIEW_MODE.LIST;
                 break;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
+    {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PermissionManager.PERMISSION_REQUEST_LOCATION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startGpsTelemetryInternal();
+            } else {
+                SnackbarHelper.showWarning(this, getString(R.string.gps_permission_denied));
+                PreferenceManager.getDefaultSharedPreferences(this)
+                    .edit()
+                    .putBoolean(PREF_GPS_ENABLED, false)
+                    .apply();
+            }
         }
     }
 

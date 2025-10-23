@@ -1,7 +1,5 @@
 # ECU Module Refactor Workstream
 
-**Assigned Agent:** Agent A
-
 ## TODO
 - [x] Draft `RawToPhysicalConverter` + adapter implementation; submit for review to validate interface naming.
 - [x] Sketch data classes for `PidDefinition`/`PidRuntime` and outline migration facade for `EcuDataItem`.

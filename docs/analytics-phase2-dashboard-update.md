@@ -1,14 +1,7 @@
 # Analytics Plan – Vehicle History Phase 2
 
-**Owner:** Data & Analytics – Samira H.  
-**Prepared by:** Agent B (2024-07-16) • _Status refreshed 2025-01-06_  
 **Dashboard Target:** Looker – `Vehicle History Experience` folder (`vh_phase2_usage`)  
 **Implementation Note:** The Android client does **not** yet emit the events or feature flags referenced below; this plan remains pending until Vehicle History Phase 2 UI work lands.
-
-## Objectives
-- Track engagement with the new recall module, usage badges, and odometer breakdown.  
-- Ensure `PvChange` enum migration does not break downstream event pipelines.  
-- Provide day-0 adoption readouts for Product, QA, and Support teams.
 
 ## Event Instrumentation Summary
 | UI Interaction | Event Name | Properties | Notes |
@@ -34,15 +27,3 @@
 - Publish updated event schema to analytics repo (`analytics/events/vehicle_history_phase2.yaml`).  
 - Deploy ETL changes in Airflow DAG `vh_feature_events` (add enum-to-string mapping for `PvChange` types).  
 - Backfill 30 days of historical data to populate baseline comparison tiles.
-
-## Validation & Rollout
-- Pre-launch validation via Looker dev workspace (dashboard snapshot scheduled for 2024-07-24).  
-- QA to run logcat + Snowplow stream verification during staging rollout.  
-- Production dashboard go-live targeted for 2024-07-30 (aligned with feature flag ramp to 10%).  
-- Add post-launch alert (PagerDuty) for event ingestion failures >15 minutes.
-
-## Owners & Follow-Up
-- **Dashboard Build:** Data viz (Samira H.) – ensure tile queries merged by 2024-07-22.  
-- **Schema Review:** Analytics Engineering (Miguel R.) – sign-off on new fields by 2024-07-19.  
-- **Product Review:** Vehicle History PM (Dana T.) – dashboard walkthrough scheduled 2024-07-31.  
-- **Support Enablement:** Provide weekly digest to Support Ops summarizing recall interaction metrics during ramp.

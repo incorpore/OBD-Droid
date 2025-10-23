@@ -31,13 +31,17 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import com.obddroid.core.ecu.EcuDataItem;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
+import com.obddroid.features.mqtt.MqttTelemetryManager;
 import com.obddroid.services.CommService;
 import com.obddroid.R;
 import com.obddroid.utils.SecurePreferences;
 import com.obddroid.utils.SnackbarHelper;
 
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -196,10 +200,11 @@ public class SettingsActivity
 			setupElmCmdSelection();
             // set up ELM adaptive timing mode selection
 			setupElmTimingSelection();
-			// set up selectable PID list
-			setupPidSelection();
-			// set up AI features
-			setupAiFeatures();
+            // set up selectable PID list
+            setupPidSelection();
+            setupMqttPreferences();
+            // set up AI features
+            setupAiFeatures();
 			// update network selection fields - REMOVED
 			// updateNetworkSelections(); // REMOVED - now in UnifiedAdapterSelectionActivity
 			// add handler for selection update
@@ -334,6 +339,163 @@ public class SettingsActivity
 			{
 				itemList.setValues(selections);
 			}
+		}
+
+		void setupMqttPreferences()
+		{
+			MultiSelectListPreference mqttItems =
+				(MultiSelectListPreference) findPreference(MqttTelemetryManager.PREF_SELECTED_ITEMS);
+			if (mqttItems != null)
+			{
+				if (items == null || items.isEmpty())
+				{
+					items = ObdProt.dataItems.getSvcDataItems(ObdProt.OBD_SVC_DATA);
+				}
+				CharSequence[] titles = new CharSequence[items.size()];
+				CharSequence[] keys = new CharSequence[items.size()];
+				HashSet<String> defaults = new HashSet<>();
+				int i = 0;
+				for (EcuDataItem currItem : items)
+				{
+					titles[i] = currItem.label;
+					keys[i] = currItem.toString();
+					defaults.add(currItem.toString());
+					i++;
+				}
+				mqttItems.setEntries(titles);
+				mqttItems.setEntryValues(keys);
+				if (mqttItems.getValues() == null || mqttItems.getValues().isEmpty())
+				{
+					mqttItems.setValues(defaults);
+				}
+				mqttItems.setSummaryProvider(preference -> {
+					Set<String> values = ((MultiSelectListPreference) preference).getValues();
+					if (values == null || values.isEmpty())
+					{
+						return getString(R.string.mqtt_publish_all_items);
+					}
+					return getString(R.string.mqtt_items_selected, values.size());
+				});
+			}
+
+			EditTextPreference passwordPref = (EditTextPreference) findPreference(MqttTelemetryManager.PREF_PASSWORD);
+			if (passwordPref != null)
+			{
+				String existing = securePreferences.getMqttPassword();
+				if (existing != null && !existing.isEmpty())
+				{
+					passwordPref.setSummary(R.string.mqtt_password_configured);
+				}
+				else
+				{
+					passwordPref.setSummary(R.string.mqtt_password_not_configured);
+				}
+
+				passwordPref.setOnPreferenceChangeListener((preference, newValue) ->
+				{
+					String password = String.valueOf(newValue);
+					if (password.trim().isEmpty())
+					{
+					securePreferences.clearMqttPassword();
+					passwordPref.setSummary(R.string.mqtt_password_not_configured);
+					SnackbarHelper.showInfo(getActivity(), getString(R.string.mqtt_password_cleared));
+					}
+					else
+					{
+						securePreferences.setMqttPassword(password);
+						passwordPref.setSummary(R.string.mqtt_password_configured);
+						SnackbarHelper.showSuccess(getActivity(), getString(R.string.mqtt_password_saved));
+					}
+					passwordPref.setText("");
+					return false;
+				});
+			}
+
+			updateMqttStatusPreference();
+		}
+
+		private void updateMqttStatusPreference()
+		{
+			Preference statusPref = findPreference(MqttTelemetryManager.PREF_STATUS);
+			if (statusPref == null)
+			{
+				return;
+			}
+
+			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext());
+			String statusCode = sharedPreferences.getString(MqttTelemetryManager.PREF_LAST_STATUS_CODE, "");
+			long timestamp = sharedPreferences.getLong(MqttTelemetryManager.PREF_LAST_STATUS_TIME, 0L);
+			String detail = sharedPreferences.getString(MqttTelemetryManager.PREF_LAST_STATUS_MESSAGE, "");
+
+			if (statusCode == null)
+			{
+				statusCode = "";
+			}
+			if (detail == null)
+			{
+				detail = "";
+			}
+
+			String summary;
+			if (timestamp == 0L && statusCode.isEmpty())
+			{
+				summary = getString(R.string.mqtt_status_never);
+			}
+			else
+			{
+				DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+				String formattedTime = timestamp > 0 ? formatter.format(new Date(timestamp)) : "";
+
+				switch (statusCode)
+				{
+					case MqttTelemetryManager.STATUS_SUCCESS:
+						if (formattedTime.isEmpty())
+						{
+							summary = getString(R.string.mqtt_status_publish_success);
+						}
+						else
+						{
+							summary = getString(R.string.mqtt_status_success, formattedTime);
+						}
+						break;
+					case MqttTelemetryManager.STATUS_FAILURE:
+						String reason = detail.trim().isEmpty()
+							? getString(R.string.mqtt_status_error_unknown)
+							: detail;
+						if (formattedTime.isEmpty())
+						{
+							summary = reason;
+						}
+						else
+						{
+							summary = getString(R.string.mqtt_status_failure, formattedTime, reason);
+						}
+						break;
+					case MqttTelemetryManager.STATUS_STOPPED:
+						if (formattedTime.isEmpty())
+						{
+							summary = getString(R.string.mqtt_status_stopped);
+						}
+						else
+						{
+							summary = getString(R.string.mqtt_status_stopped_at, formattedTime);
+						}
+						break;
+					case MqttTelemetryManager.STATUS_IDLE:
+					default:
+						if (formattedTime.isEmpty())
+						{
+							summary = getString(R.string.mqtt_status_waiting_for_data);
+						}
+						else
+						{
+							summary = getString(R.string.mqtt_status_waiting_since, formattedTime);
+						}
+						break;
+				}
+			}
+
+			statusPref.setSummary(summary);
 		}
 
 		/**
@@ -537,6 +699,13 @@ public class SettingsActivity
 					.setEnabled(ElmProt.AdaptTimingMode.SOFTWARE.toString()
 						          .equals(((ListPreference)pref).getValue())
 					           );
+
+			if (MqttTelemetryManager.PREF_LAST_STATUS_CODE.equals(key)
+				|| MqttTelemetryManager.PREF_LAST_STATUS_TIME.equals(key)
+				|| MqttTelemetryManager.PREF_LAST_STATUS_MESSAGE.equals(key))
+			{
+				updateMqttStatusPreference();
+			}
 		}
 	}
 }
