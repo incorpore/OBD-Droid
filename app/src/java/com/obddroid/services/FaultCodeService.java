@@ -207,18 +207,24 @@ public class FaultCodeService implements RawTelegramListener {
         try {
             if (modes.contains(ScanMode.CONFIRMED)) {
                 String response = sendAndAwait("03", SCAN_TIMEOUT_MS);
-                log.fine(() -> "Mode 03 response: " + response);
-                results.addAll(parseFaultCodes(response, CodeType.CONFIRMED));
+                log.info("Mode 03 RAW response: [" + response + "]");
+                List<FaultCodeInfo> confirmed = parseFaultCodes(response, CodeType.CONFIRMED);
+                log.info("Mode 03 parsed " + confirmed.size() + " codes");
+                results.addAll(confirmed);
             }
             if (modes.contains(ScanMode.PENDING)) {
                 String response = sendAndAwait("07", SCAN_TIMEOUT_MS);
-                log.fine(() -> "Mode 07 response: " + response);
-                results.addAll(parseFaultCodes(response, CodeType.PENDING));
+                log.info("Mode 07 RAW response: [" + response + "]");
+                List<FaultCodeInfo> pending = parseFaultCodes(response, CodeType.PENDING);
+                log.info("Mode 07 parsed " + pending.size() + " codes");
+                results.addAll(pending);
             }
             if (modes.contains(ScanMode.PERMANENT)) {
                 String response = sendAndAwait("0A", SCAN_TIMEOUT_MS);
-                log.fine(() -> "Mode 0A response: " + response);
-                results.addAll(parseFaultCodes(response, CodeType.PERMANENT));
+                log.info("Mode 0A RAW response: [" + response + "]");
+                List<FaultCodeInfo> permanent = parseFaultCodes(response, CodeType.PERMANENT);
+                log.info("Mode 0A parsed " + permanent.size() + " codes");
+                results.addAll(permanent);
             }
         } finally {
             CommService.elm.removeRawTelegramListener(this);
@@ -318,12 +324,19 @@ public class FaultCodeService implements RawTelegramListener {
     private List<FaultCodeInfo> parseFaultCodes(String response, CodeType codeType) {
         List<FaultCodeInfo> codes = new ArrayList<>();
         Set<Integer> seen = new HashSet<>();
+
+        log.info("parseFaultCodes called for " + codeType + " with response: [" + response + "]");
+
         if (response == null || response.isEmpty()) {
+            log.info("Response is null or empty, returning 0 codes");
             return codes;
         }
 
         String cleanData = response.replaceAll("\\s+", "").toUpperCase(Locale.US);
+        log.info("Cleaned data: [" + cleanData + "]");
+
         if (cleanData.contains("NODATA") || cleanData.length() < 4) {
+            log.info("Response contains NODATA or too short, returning 0 codes");
             return codes;
         }
 
