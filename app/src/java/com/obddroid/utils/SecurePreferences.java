@@ -22,7 +22,8 @@ public class SecurePreferences
     private static final Logger log = Logger.getLogger(SecurePreferences.class.getName());
     private static final String PREFS_NAME = "obddroid_secure_prefs";
     private static final String KEY_OPENAI_API_KEY = "openai_api_key";
-    private static final String KEY_MQTT_PASSWORD = "mqtt_password";
+    private static final String KEY_LIVE_DATA_SHARING_PASSWORD = "live_data_sharing_password";
+    private static final String LEGACY_KEY_MQTT_PASSWORD = "mqtt_password";
     private static final String ALGORITHM = "AES";
 
     private final SharedPreferences preferences;
@@ -147,28 +148,38 @@ public class SecurePreferences
     }
 
     /**
-     * Stores the MQTT password securely.
+     * Stores the Live Data Sharing password securely and clears the legacy key if present.
      */
-    public void setMqttPassword(String password)
+    public void setLiveDataSharingPassword(String password)
     {
         String encrypted = encrypt(password);
-        preferences.edit().putString(KEY_MQTT_PASSWORD, encrypted).apply();
+        preferences.edit()
+            .putString(KEY_LIVE_DATA_SHARING_PASSWORD, encrypted)
+            .remove(LEGACY_KEY_MQTT_PASSWORD)
+            .apply();
     }
 
     /**
-     * Retrieves the MQTT password.
+     * Retrieves the Live Data Sharing password, falling back to the legacy MQTT key if needed.
      */
-    public String getMqttPassword()
+    public String getLiveDataSharingPassword()
     {
-        String encrypted = preferences.getString(KEY_MQTT_PASSWORD, "");
+        String encrypted = preferences.getString(KEY_LIVE_DATA_SHARING_PASSWORD, null);
+        if (encrypted == null || encrypted.isEmpty())
+        {
+            encrypted = preferences.getString(LEGACY_KEY_MQTT_PASSWORD, "");
+        }
         return decrypt(encrypted);
     }
 
     /**
-     * Clears the stored MQTT password.
+     * Clears the stored Live Data Sharing password and removes the legacy MQTT key.
      */
-    public void clearMqttPassword()
+    public void clearLiveDataSharingPassword()
     {
-        preferences.edit().remove(KEY_MQTT_PASSWORD).apply();
+        preferences.edit()
+            .remove(KEY_LIVE_DATA_SHARING_PASSWORD)
+            .remove(LEGACY_KEY_MQTT_PASSWORD)
+            .apply();
     }
 }

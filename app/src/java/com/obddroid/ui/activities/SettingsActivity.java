@@ -381,7 +381,7 @@ public class SettingsActivity
 			EditTextPreference passwordPref = (EditTextPreference) findPreference(LiveDataSharingManager.PREF_PASSWORD);
 			if (passwordPref != null)
 			{
-				String existing = securePreferences.getMqttPassword();
+				String existing = securePreferences.getLiveDataSharingPassword();
 				if (existing != null && !existing.isEmpty())
 				{
 					passwordPref.setSummary(R.string.live_data_sharing_password_configured);
@@ -396,13 +396,13 @@ public class SettingsActivity
 					String password = String.valueOf(newValue);
 					if (password.trim().isEmpty())
 					{
-					securePreferences.clearMqttPassword();
+					securePreferences.clearLiveDataSharingPassword();
 					passwordPref.setSummary(R.string.live_data_sharing_password_not_configured);
 					SnackbarHelper.showInfo(getActivity(), getString(R.string.live_data_sharing_password_cleared));
 					}
 					else
 					{
-						securePreferences.setMqttPassword(password);
+						securePreferences.setLiveDataSharingPassword(password);
 						passwordPref.setSummary(R.string.live_data_sharing_password_configured);
 						SnackbarHelper.showSuccess(getActivity(), getString(R.string.live_data_sharing_password_saved));
 					}

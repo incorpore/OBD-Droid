@@ -57,7 +57,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import com.obddroid.features.csvlogging.ui.CsvLoggingController;
 import com.obddroid.features.csvlogging.ui.CsvLoggingUiCoordinator;
 import com.obddroid.features.gps.data.GpsTelemetryManager;
-import com.obddroid.features.mqtt.ui.MqttTelemetryUiCoordinator;
+import com.obddroid.features.livedatasharing.ui.LiveDataSharingUiCoordinator;
 import com.obddroid.features.sensors.data.SensorTelemetryManager;
 import com.obddroid.features.vehiclehistory.ui.AutoCheckActivity;
 
@@ -218,7 +218,7 @@ public class MainActivity extends AppCompatActivity
     private CsvLoggingUiCoordinator csvLoggingUiCoordinator;
     private GpsTelemetryManager gpsTelemetryManager;
     private SensorTelemetryManager sensorTelemetryManager;
-    private MqttTelemetryUiCoordinator mqttTelemetryUiCoordinator;
+    private LiveDataSharingUiCoordinator liveDataSharingUiCoordinator;
     /**
      * Data list adapters
      */
@@ -888,8 +888,8 @@ public class MainActivity extends AppCompatActivity
 
         invalidateOptionsMenu();
 
-        // GPS/Motion/MQTT telemetry are now managed by their respective activities
-        // (LiveDataActivity for GPS/Motion, Settings for MQTT)
+        // GPS/Motion/Live Data Sharing telemetry are now managed by their respective activities
+        // (LiveDataActivity for GPS/Motion, Settings for Live Data Sharing)
 
         // Synchronize UI with actual connection state
         // This prevents "Connecting..." from persisting after navigation
@@ -1041,8 +1041,8 @@ public class MainActivity extends AppCompatActivity
             csvLoggingUiCoordinator.onDestroy();
         }
 
-        if (mqttTelemetryUiCoordinator != null) {
-            mqttTelemetryUiCoordinator.release();
+        if (liveDataSharingUiCoordinator != null) {
+            liveDataSharingUiCoordinator.release();
         }
 
         super.onDestroy();
@@ -1227,7 +1227,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void toggleMqttPublisher() {
-        getMqttTelemetryCoordinator().togglePublisher();
+        getLiveDataSharingCoordinator().togglePublisher();
     }
 
     private CsvLoggingUiCoordinator getCsvLoggingUiCoordinator() {
@@ -1241,15 +1241,15 @@ public class MainActivity extends AppCompatActivity
         return csvLoggingUiCoordinator;
     }
 
-    private MqttTelemetryUiCoordinator getMqttTelemetryCoordinator() {
-        if (mqttTelemetryUiCoordinator == null) {
-            mqttTelemetryUiCoordinator = new MqttTelemetryUiCoordinator(
+    private LiveDataSharingUiCoordinator getLiveDataSharingCoordinator() {
+        if (liveDataSharingUiCoordinator == null) {
+            liveDataSharingUiCoordinator = new LiveDataSharingUiCoordinator(
                 this,
                 this::showFeatureToggleSnackbar,
                 this::invalidateOptionsMenu
             );
         }
-        return mqttTelemetryUiCoordinator;
+        return liveDataSharingUiCoordinator;
     }
     private void showFeatureToggleSnackbar(boolean enabled, @StringRes int messageRes) {
         if (enabled) {
