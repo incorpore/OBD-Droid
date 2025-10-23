@@ -310,7 +310,10 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
 
     @Override
     public void pvChanged(PvChangeEvent event) {
-        runOnUiThread(this::updateDisplay);
+        // Debounce updates to prevent memory exhaustion from rapid OBD data changes
+        // With 80+ PIDs updating, this was being called 100+ times/second causing OOM
+        updateHandler.removeCallbacksAndMessages(null);
+        updateHandler.postDelayed(this::updateDisplay, UPDATE_INTERVAL);
     }
 
     /**
