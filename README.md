@@ -63,9 +63,9 @@ OBD-Droid/
 
 ### 2. Telemetry & Logging
 - CSV logging: `features/csvlogging/` (foreground service + UI coordinator).
-- GPS telemetry: `features/gps/GpsTelemetryManager` exposes synthetic PIDs.
-- Motion sensors: `features/sensors/SensorTelemetryManager`.
-- MQTT publishing: `features/mqtt/MqttTelemetryManager` with
+- GPS telemetry: `features/gps/data/GpsTelemetryManager` exposes synthetic PIDs.
+- Motion sensors: `features/sensors/data/SensorTelemetryManager`.
+- MQTT publishing: `features/mqtt/data/MqttTelemetryManager` with
   `features/mqtt/ui/MqttTelemetryUiCoordinator`.
 - All feature toggles surface consistent snackbars via the helper in
   `MainActivity`.

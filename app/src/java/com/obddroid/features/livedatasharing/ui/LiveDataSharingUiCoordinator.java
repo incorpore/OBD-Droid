@@ -1,4 +1,4 @@
-package com.obddroid.features.mqtt.ui;
+package com.obddroid.features.livedatasharing.ui;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -8,32 +8,32 @@ import androidx.preference.PreferenceManager;
 
 import com.obddroid.R;
 import com.obddroid.features.common.FeatureToggleNotifier;
-import com.obddroid.features.mqtt.MqttTelemetryManager;
+import com.obddroid.features.livedatasharing.data.LiveDataSharingManager;
 import com.obddroid.utils.SnackbarHelper;
 
 /**
- * Orchestrates MQTT telemetry interactions with the host activity, keeping UI
+ * Orchestrates Live Data Sharing interactions with the host activity, keeping UI
  * concerns (snackbars, dialogs, preference flags) alongside the feature code.
  */
-public final class MqttTelemetryUiCoordinator {
+public final class LiveDataSharingUiCoordinator {
 
     private final Activity host;
     private final FeatureToggleNotifier notifier;
     private final Runnable menuInvalidator;
     private final SharedPreferences preferences;
-    private final MqttTelemetryManager telemetryManager;
+    private final LiveDataSharingManager telemetryManager;
 
     private String lastStatusCode = "";
     private String lastStatusMessage = "";
 
-    public MqttTelemetryUiCoordinator(Activity host,
+    public LiveDataSharingUiCoordinator(Activity host,
                                       FeatureToggleNotifier notifier,
                                       Runnable menuInvalidator) {
         this.host = host;
         this.notifier = notifier;
         this.menuInvalidator = menuInvalidator;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(host);
-        this.telemetryManager = new MqttTelemetryManager(host);
+        this.telemetryManager = new LiveDataSharingManager(host);
         this.telemetryManager.setStatusListener(this::handleStatusUpdate);
     }
 
@@ -45,18 +45,18 @@ public final class MqttTelemetryUiCoordinator {
         if (telemetryManager.isActive()) {
             telemetryManager.stop();
             preferences.edit()
-                .putBoolean(MqttTelemetryManager.PREF_ENABLED_STATE, false)
+                .putBoolean(LiveDataSharingManager.PREF_ENABLED_STATE, false)
                 .apply();
-            notifier.showToggle(false, R.string.mqtt_publisher_stopped);
+            notifier.showToggle(false, R.string.live_data_sharing_publisher_stopped);
         } else {
             if (telemetryManager.start()) {
                 preferences.edit()
-                    .putBoolean(MqttTelemetryManager.PREF_ENABLED_STATE, true)
+                    .putBoolean(LiveDataSharingManager.PREF_ENABLED_STATE, true)
                     .apply();
-                notifier.showToggle(true, R.string.mqtt_publisher_started);
+                notifier.showToggle(true, R.string.live_data_sharing_publisher_started);
             } else {
                 preferences.edit()
-                    .putBoolean(MqttTelemetryManager.PREF_ENABLED_STATE, false)
+                    .putBoolean(LiveDataSharingManager.PREF_ENABLED_STATE, false)
                     .apply();
                 showConfigurationDialog();
             }
@@ -71,7 +71,7 @@ public final class MqttTelemetryUiCoordinator {
 
     private void handleStatusUpdate(String statusCode, String detail) {
         if (statusCode == null) {
-            statusCode = MqttTelemetryManager.STATUS_IDLE;
+            statusCode = LiveDataSharingManager.STATUS_IDLE;
         }
         if (detail == null) {
             detail = "";
@@ -86,18 +86,18 @@ public final class MqttTelemetryUiCoordinator {
         lastStatusMessage = detail;
 
         switch (statusCode) {
-            case MqttTelemetryManager.STATUS_FAILURE: {
+            case LiveDataSharingManager.STATUS_FAILURE: {
                 String reason = detail.trim().isEmpty()
-                    ? host.getString(R.string.mqtt_status_error_unknown)
+                    ? host.getString(R.string.live_data_sharing_status_error_unknown)
                     : detail.trim();
-                SnackbarHelper.showError(host, host.getString(R.string.mqtt_status_snackbar_failure, reason));
+                SnackbarHelper.showError(host, host.getString(R.string.live_data_sharing_status_snackbar_failure, reason));
                 break;
             }
-            case MqttTelemetryManager.STATUS_SUCCESS: {
-                if (!MqttTelemetryManager.STATUS_FAILURE.equals(previousCode)) {
+            case LiveDataSharingManager.STATUS_SUCCESS: {
+                if (!LiveDataSharingManager.STATUS_FAILURE.equals(previousCode)) {
                     return;
                 }
-                SnackbarHelper.showSuccess(host, host.getString(R.string.mqtt_status_snackbar_recovered));
+                SnackbarHelper.showSuccess(host, host.getString(R.string.live_data_sharing_status_snackbar_recovered));
                 break;
             }
             default:
@@ -107,9 +107,9 @@ public final class MqttTelemetryUiCoordinator {
 
     private void showConfigurationDialog() {
         new AlertDialog.Builder(host)
-            .setTitle(R.string.mqtt_not_configured_title)
-            .setMessage(host.getString(R.string.mqtt_not_configured_message))
-            .setPositiveButton(R.string.mqtt_not_configured_open_settings, (dialog, which) -> {
+            .setTitle(R.string.live_data_sharing_not_configured_title)
+            .setMessage(host.getString(R.string.live_data_sharing_not_configured_message))
+            .setPositiveButton(R.string.live_data_sharing_not_configured_open_settings, (dialog, which) -> {
                 try {
                     host.startActivity(new android.content.Intent(host, com.obddroid.ui.activities.SettingsActivity.class));
                 } catch (android.content.ActivityNotFoundException ignored) {

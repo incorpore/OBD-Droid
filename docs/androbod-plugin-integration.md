@@ -1,6 +1,6 @@
 # AndrOBD Plugin Migration Plan
 
-- Migrated the AndrOBD CSV logging plugin into native feature code (`com.obddroid.features.csvlogging`) with notifications, auto-pause, and share support; the original plugin sources have been removed.
+- Migrated the AndrOBD CSV logging plugin into native feature code (`com.obddroid.features.csvlogging.data`) with notifications, auto-pause, and share support; the original plugin sources have been removed.
 - Upstream repo version: `fr3ts0n/AndrOBD-Plugin` (snapshot referenced during migration).
 - The legacy plugin modules (`modules/androbod-plugins/GpsProvider`, `SensorProvider`, `MqttPublisher`) have been removed now that their behaviour lives in-core under `com.obddroid.features.*`.
 - All upstream plugins ship GPLv3+ headers; preserve attribution when reusing code.
@@ -16,7 +16,7 @@
 ## CSV Logger (Integrated)
 
 - Feature: Records every PID update to rolling CSV segments inside `getExternalFilesDir()`, provides a foreground notification, auto-pause after inactivity, and share support.
-- Implementation: `com.obddroid.features.csvlogging` package (service, state holder, writer thread) with UI hooks in `MainActivity`.
+- Implementation: `com.obddroid.features.csvlogging.data` package (service, state holder, writer thread) with UI hooks in `MainActivity`.
 - Follow-ups: Extend settings coverage (user-configurable timeouts, storage location), add instrumentation tests for start/stop flows, ensure storage quota handling and analytics integration.
 
 ## GPS Provider (Integrated)
@@ -34,7 +34,7 @@
 ## MQTT Publisher (Integrated)
 
 - Feature: Periodically publishes selected PID values to a user-configured MQTT broker.
-- Implementation: `com.obddroid.features.mqtt.MqttTelemetryManager` uses HiveMQ’s blocking client, a scheduled executor to push snapshots, and shared preferences (with `SecurePreferences` backing for passwords) for configuration. Settings now expose broker host/port/protocol/topic prefix/user credentials/QoS/interval, data-item selection, and a live status summary of the last publish attempt; `MainActivity` listens for status callbacks to surface failures and recoveries via snackbars. MainActivity toggle starts/stops publishing and persists the enabled state.
+- Implementation: `com.obddroid.features.mqtt.data.MqttTelemetryManager` uses HiveMQ’s blocking client, a scheduled executor to push snapshots, and shared preferences (with `SecurePreferences` backing for passwords) for configuration. Settings now expose broker host/port/protocol/topic prefix/user credentials/QoS/interval, data-item selection, and a live status summary of the last publish attempt; `MainActivity` listens for status callbacks to surface failures and recoveries via snackbars. MainActivity toggle starts/stops publishing and persists the enabled state.
 - Follow-ups: add connection diagnostics/notifications, tighten TLS certificate handling, expand tests for configuration parsing and topic construction, and consider migrating to WorkManager for Doze-aware scheduling.
 
 ## Cross-Cutting Tasks

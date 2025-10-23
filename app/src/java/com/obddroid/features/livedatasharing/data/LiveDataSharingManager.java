@@ -1,4 +1,4 @@
-package com.obddroid.features.mqtt.data;
+package com.obddroid.features.livedatasharing.data;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -42,9 +42,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Publishes selected PID updates to a configured MQTT broker at a periodic interval.
  */
-public class MqttTelemetryManager {
+public class LiveDataSharingManager {
 
-    private static final String TAG = "MqttTelemetry";
+    private static final String TAG = "LiveDataSharing";
 
     public static final String PREF_ENABLED_STATE = "mqtt_enabled_state";
     public static final String PREF_PROTOCOL = "mqtt_protocol";
@@ -121,7 +121,7 @@ public class MqttTelemetryManager {
     private int publishPeriodSeconds = 30;
     private Set<String> selectedMnemonics = Collections.emptySet();
 
-    public MqttTelemetryManager(Context context) {
+    public LiveDataSharingManager(Context context) {
         this.appContext = context.getApplicationContext();
         this.preferences = PreferenceManager.getDefaultSharedPreferences(appContext);
         this.securePreferences = new SecurePreferences(appContext);
@@ -154,12 +154,12 @@ public class MqttTelemetryManager {
         }
 
         if (!loadConfiguration()) {
-            recordStatus(STATUS_FAILURE, appContext.getString(R.string.mqtt_status_error_configuration));
+            recordStatus(STATUS_FAILURE, appContext.getString(R.string.live_data_sharing_status_error_configuration));
             return false;
         }
 
         executor = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread thread = new Thread(r, "mqtt-publisher");
+            Thread thread = new Thread(r, "live-data-sharing-publisher");
             thread.setDaemon(true);
             return thread;
         });
@@ -174,7 +174,7 @@ public class MqttTelemetryManager {
             TimeUnit.SECONDS
         );
 
-        recordStatus(STATUS_IDLE, appContext.getString(R.string.mqtt_status_waiting_for_data));
+        recordStatus(STATUS_IDLE, appContext.getString(R.string.live_data_sharing_status_waiting_for_data));
         active = true;
         return true;
     }
@@ -197,7 +197,7 @@ public class MqttTelemetryManager {
         detachAllPvs();
         valueMap.clear();
 
-        recordStatus(STATUS_STOPPED, appContext.getString(R.string.mqtt_status_stopped));
+        recordStatus(STATUS_STOPPED, appContext.getString(R.string.live_data_sharing_status_stopped));
         active = false;
     }
 
@@ -273,7 +273,7 @@ public class MqttTelemetryManager {
         try {
             boolean success = publishSnapshot(snapshot);
             if (success) {
-                recordStatus(STATUS_SUCCESS, appContext.getString(R.string.mqtt_status_publish_success));
+                recordStatus(STATUS_SUCCESS, appContext.getString(R.string.live_data_sharing_status_publish_success));
             }
         } catch (Exception ex) {
             Log.e(TAG, "MQTT publish failed", ex);
@@ -284,7 +284,7 @@ public class MqttTelemetryManager {
     private boolean publishSnapshot(Map<String, String> snapshot) {
         Mqtt3BlockingClient client = buildClient();
         if (client == null) {
-            recordStatus(STATUS_FAILURE, appContext.getString(R.string.mqtt_status_error_client));
+            recordStatus(STATUS_FAILURE, appContext.getString(R.string.live_data_sharing_status_error_client));
             return false;
         }
 
@@ -438,7 +438,7 @@ public class MqttTelemetryManager {
 
     private String summarizeException(Exception ex) {
         if (ex == null) {
-            return appContext.getString(R.string.mqtt_status_error_unknown);
+            return appContext.getString(R.string.live_data_sharing_status_error_unknown);
         }
         String message = ex.getMessage();
         if (message == null || message.trim().isEmpty()) {

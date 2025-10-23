@@ -31,7 +31,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import com.obddroid.core.ecu.EcuDataItem;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
-import com.obddroid.features.mqtt.MqttTelemetryManager;
+import com.obddroid.features.livedatasharing.data.LiveDataSharingManager;
 import com.obddroid.services.CommService;
 import com.obddroid.R;
 import com.obddroid.utils.SecurePreferences;
@@ -202,7 +202,7 @@ public class SettingsActivity
 			setupElmTimingSelection();
             // set up selectable PID list
             setupPidSelection();
-            setupMqttPreferences();
+            setupLiveDataSharingPreferences();
             // set up AI features
             setupAiFeatures();
 			// update network selection fields - REMOVED
@@ -341,10 +341,10 @@ public class SettingsActivity
 			}
 		}
 
-		void setupMqttPreferences()
+		void setupLiveDataSharingPreferences()
 		{
 			MultiSelectListPreference mqttItems =
-				(MultiSelectListPreference) findPreference(MqttTelemetryManager.PREF_SELECTED_ITEMS);
+				(MultiSelectListPreference) findPreference(LiveDataSharingManager.PREF_SELECTED_ITEMS);
 			if (mqttItems != null)
 			{
 				if (items == null || items.isEmpty())
@@ -372,23 +372,23 @@ public class SettingsActivity
 					Set<String> values = ((MultiSelectListPreference) preference).getValues();
 					if (values == null || values.isEmpty())
 					{
-						return getString(R.string.mqtt_publish_all_items);
+						return getString(R.string.live_data_sharing_publish_all_items);
 					}
-					return getString(R.string.mqtt_items_selected, values.size());
+					return getString(R.string.live_data_sharing_items_selected, values.size());
 				});
 			}
 
-			EditTextPreference passwordPref = (EditTextPreference) findPreference(MqttTelemetryManager.PREF_PASSWORD);
+			EditTextPreference passwordPref = (EditTextPreference) findPreference(LiveDataSharingManager.PREF_PASSWORD);
 			if (passwordPref != null)
 			{
 				String existing = securePreferences.getMqttPassword();
 				if (existing != null && !existing.isEmpty())
 				{
-					passwordPref.setSummary(R.string.mqtt_password_configured);
+					passwordPref.setSummary(R.string.live_data_sharing_password_configured);
 				}
 				else
 				{
-					passwordPref.setSummary(R.string.mqtt_password_not_configured);
+					passwordPref.setSummary(R.string.live_data_sharing_password_not_configured);
 				}
 
 				passwordPref.setOnPreferenceChangeListener((preference, newValue) ->
@@ -397,26 +397,26 @@ public class SettingsActivity
 					if (password.trim().isEmpty())
 					{
 					securePreferences.clearMqttPassword();
-					passwordPref.setSummary(R.string.mqtt_password_not_configured);
-					SnackbarHelper.showInfo(getActivity(), getString(R.string.mqtt_password_cleared));
+					passwordPref.setSummary(R.string.live_data_sharing_password_not_configured);
+					SnackbarHelper.showInfo(getActivity(), getString(R.string.live_data_sharing_password_cleared));
 					}
 					else
 					{
 						securePreferences.setMqttPassword(password);
-						passwordPref.setSummary(R.string.mqtt_password_configured);
-						SnackbarHelper.showSuccess(getActivity(), getString(R.string.mqtt_password_saved));
+						passwordPref.setSummary(R.string.live_data_sharing_password_configured);
+						SnackbarHelper.showSuccess(getActivity(), getString(R.string.live_data_sharing_password_saved));
 					}
 					passwordPref.setText("");
 					return false;
 				});
 			}
 
-			updateMqttStatusPreference();
+			updateLiveDataSharingStatusPreference();
 		}
 
-		private void updateMqttStatusPreference()
+		private void updateLiveDataSharingStatusPreference()
 		{
-			Preference statusPref = findPreference(MqttTelemetryManager.PREF_STATUS);
+			Preference statusPref = findPreference(LiveDataSharingManager.PREF_STATUS);
 			if (statusPref == null)
 			{
 				return;
@@ -427,9 +427,9 @@ public class SettingsActivity
 				return;
 			}
 			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext());
-			String statusCode = sharedPreferences.getString(MqttTelemetryManager.PREF_LAST_STATUS_CODE, "");
-			long timestamp = sharedPreferences.getLong(MqttTelemetryManager.PREF_LAST_STATUS_TIME, 0L);
-			String detail = sharedPreferences.getString(MqttTelemetryManager.PREF_LAST_STATUS_MESSAGE, "");
+			String statusCode = sharedPreferences.getString(LiveDataSharingManager.PREF_LAST_STATUS_CODE, "");
+			long timestamp = sharedPreferences.getLong(LiveDataSharingManager.PREF_LAST_STATUS_TIME, 0L);
+			String detail = sharedPreferences.getString(LiveDataSharingManager.PREF_LAST_STATUS_MESSAGE, "");
 
 			if (statusCode == null)
 			{
@@ -443,7 +443,7 @@ public class SettingsActivity
 			String summary;
 			if (timestamp == 0L && statusCode.isEmpty())
 			{
-				summary = getString(R.string.mqtt_status_never);
+				summary = getString(R.string.live_data_sharing_status_never);
 			}
 			else
 			{
@@ -452,19 +452,19 @@ public class SettingsActivity
 
 				switch (statusCode)
 				{
-					case MqttTelemetryManager.STATUS_SUCCESS:
+					case LiveDataSharingManager.STATUS_SUCCESS:
 						if (formattedTime.isEmpty())
 						{
-							summary = getString(R.string.mqtt_status_publish_success);
+							summary = getString(R.string.live_data_sharing_status_publish_success);
 						}
 						else
 						{
-							summary = getString(R.string.mqtt_status_success, formattedTime);
+							summary = getString(R.string.live_data_sharing_status_success, formattedTime);
 						}
 						break;
-					case MqttTelemetryManager.STATUS_FAILURE:
+					case LiveDataSharingManager.STATUS_FAILURE:
 						String reason = detail.trim().isEmpty()
-							? getString(R.string.mqtt_status_error_unknown)
+							? getString(R.string.live_data_sharing_status_error_unknown)
 							: detail;
 						if (formattedTime.isEmpty())
 						{
@@ -472,28 +472,28 @@ public class SettingsActivity
 						}
 						else
 						{
-							summary = getString(R.string.mqtt_status_failure, formattedTime, reason);
+							summary = getString(R.string.live_data_sharing_status_failure, formattedTime, reason);
 						}
 						break;
-					case MqttTelemetryManager.STATUS_STOPPED:
+					case LiveDataSharingManager.STATUS_STOPPED:
 						if (formattedTime.isEmpty())
 						{
-							summary = getString(R.string.mqtt_status_stopped);
+							summary = getString(R.string.live_data_sharing_status_stopped);
 						}
 						else
 						{
-							summary = getString(R.string.mqtt_status_stopped_at, formattedTime);
+							summary = getString(R.string.live_data_sharing_status_stopped_at, formattedTime);
 						}
 						break;
-					case MqttTelemetryManager.STATUS_IDLE:
+					case LiveDataSharingManager.STATUS_IDLE:
 					default:
 						if (formattedTime.isEmpty())
 						{
-							summary = getString(R.string.mqtt_status_waiting_for_data);
+							summary = getString(R.string.live_data_sharing_status_waiting_for_data);
 						}
 						else
 						{
-							summary = getString(R.string.mqtt_status_waiting_since, formattedTime);
+							summary = getString(R.string.live_data_sharing_status_waiting_since, formattedTime);
 						}
 						break;
 				}
@@ -704,11 +704,11 @@ public class SettingsActivity
 						          .equals(((ListPreference)pref).getValue())
 					           );
 
-			if (MqttTelemetryManager.PREF_LAST_STATUS_CODE.equals(key)
-				|| MqttTelemetryManager.PREF_LAST_STATUS_TIME.equals(key)
-				|| MqttTelemetryManager.PREF_LAST_STATUS_MESSAGE.equals(key))
+			if (LiveDataSharingManager.PREF_LAST_STATUS_CODE.equals(key)
+				|| LiveDataSharingManager.PREF_LAST_STATUS_TIME.equals(key)
+				|| LiveDataSharingManager.PREF_LAST_STATUS_MESSAGE.equals(key))
 			{
-				updateMqttStatusPreference();
+				updateLiveDataSharingStatusPreference();
 			}
 		}
 	}

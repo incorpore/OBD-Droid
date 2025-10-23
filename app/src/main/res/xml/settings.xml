@@ -41,94 +41,94 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="@string/mqtt_settings_title"
+        android:title="@string/live_data_sharing_settings_title"
         android:layout="@layout/preference_category">
 
         <EditTextPreference
-            android:key="mqtt_host"
-            android:title="@string/mqtt_host_title"
-            android:summary="@string/mqtt_host_summary"
+            android:key="live_data_sharing_host"
+            android:title="@string/live_data_sharing_host_title"
+            android:summary="@string/live_data_sharing_host_summary"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <EditTextPreference
-            android:key="mqtt_port"
-            android:title="@string/mqtt_port_title"
-            android:summary="@string/mqtt_port_summary"
+            android:key="live_data_sharing_port"
+            android:title="@string/live_data_sharing_port_title"
+            android:summary="@string/live_data_sharing_port_summary"
             android:defaultValue="1883"
             android:inputType="number"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <ListPreference
-            android:key="mqtt_protocol"
-            android:title="@string/mqtt_protocol_title"
-            android:entries="@array/mqtt_protocol_options"
-            android:entryValues="@array/mqtt_protocol_values"
+            android:key="live_data_sharing_protocol"
+            android:title="@string/live_data_sharing_protocol_title"
+            android:entries="@array/live_data_sharing_protocol_options"
+            android:entryValues="@array/live_data_sharing_protocol_values"
             android:defaultValue="tcp"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <EditTextPreference
-            android:key="mqtt_prefix"
-            android:title="@string/mqtt_prefix_title"
-            android:summary="@string/mqtt_prefix_summary"
+            android:key="live_data_sharing_prefix"
+            android:title="@string/live_data_sharing_prefix_title"
+            android:summary="@string/live_data_sharing_prefix_summary"
             android:defaultValue="obddroid/"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <EditTextPreference
-            android:key="mqtt_username"
-            android:title="@string/mqtt_username_title"
+            android:key="live_data_sharing_username"
+            android:title="@string/live_data_sharing_username_title"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <EditTextPreference
-            android:key="mqtt_password"
-            android:title="@string/mqtt_password_title"
+            android:key="live_data_sharing_password"
+            android:title="@string/live_data_sharing_password_title"
             android:layout="@layout/preference_indented" />
 
         <Preference
-            android:key="mqtt_status"
-            android:title="@string/mqtt_status_title"
-            android:summary="@string/mqtt_status_never"
+            android:key="live_data_sharing_status"
+            android:title="@string/live_data_sharing_status_title"
+            android:summary="@string/live_data_sharing_status_never"
             android:selectable="false"
             android:layout="@layout/preference_indented"
             app:iconSpaceReserved="false" />
 
         <EditTextPreference
-            android:key="mqtt_client_id"
-            android:title="@string/mqtt_client_id_title"
+            android:key="live_data_sharing_client_id"
+            android:title="@string/live_data_sharing_client_id_title"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <ListPreference
-            android:key="mqtt_qos"
-            android:title="@string/mqtt_qos_title"
-            android:entries="@array/mqtt_qos_options"
-            android:entryValues="@array/mqtt_qos_values"
+            android:key="live_data_sharing_qos"
+            android:title="@string/live_data_sharing_qos_title"
+            android:entries="@array/live_data_sharing_qos_options"
+            android:entryValues="@array/live_data_sharing_qos_values"
             android:defaultValue="0"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <ListPreference
-            android:key="mqtt_update_period"
-            android:title="@string/mqtt_update_period_title"
-            android:entries="@array/mqtt_update_period_options"
-            android:entryValues="@array/mqtt_update_period_values"
+            android:key="live_data_sharing_update_period"
+            android:title="@string/live_data_sharing_update_period_title"
+            android:entries="@array/live_data_sharing_update_period_options"
+            android:entryValues="@array/live_data_sharing_update_period_values"
             android:defaultValue="30"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <CheckBoxPreference
-            android:key="mqtt_retain"
-            android:title="@string/mqtt_retain_title"
+            android:key="live_data_sharing_retain"
+            android:title="@string/live_data_sharing_retain_title"
             android:defaultValue="true"
             android:layout="@layout/preference_indented" />
 
         <MultiSelectListPreference
-            android:key="mqtt_selected_items"
-            android:title="@string/mqtt_selected_items_title"
+            android:key="live_data_sharing_selected_items"
+            android:title="@string/live_data_sharing_selected_items_title"
             android:defaultValue="@array/empty"
             android:layout="@layout/preference_indented" />
 

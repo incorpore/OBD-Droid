@@ -9,7 +9,7 @@ import androidx.core.content.ContextCompat;
 
 import com.obddroid.R;
 import com.obddroid.features.common.FeatureToggleNotifier;
-import com.obddroid.features.csvlogging.CsvLoggingService;
+import com.obddroid.features.csvlogging.data.CsvLoggingService;
 import com.obddroid.utils.SnackbarHelper;
 
 import java.util.Objects;
@@ -19,7 +19,7 @@ import java.util.Objects;
  * {@link CsvLoggingService} status broadcasts and surfacing snackbars above the
  * {@code VehicleInfoFooter}. This keeps {@link com.obddroid.ui.activities.MainActivity}
  * light while still reusing existing feature infrastructure under
- * {@code com.obddroid.features.csvlogging}.
+ * {@code com.obddroid.features.csvlogging.data}.
  */
 public final class CsvLoggingUiCoordinator {
 
