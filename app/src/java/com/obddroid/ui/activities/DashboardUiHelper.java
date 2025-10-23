@@ -35,17 +35,12 @@ final class DashboardUiHelper {
             addCardPressAnimation(liveDataCard);
             liveDataCard.setOnClickListener(v -> {
                 log.info("Live Data card clicked!");
-                ElmProt.STAT ecuState = activity.getEcuConnectionState();
-                if (ecuState == ElmProt.STAT.ECU_DETECTED || ecuState == ElmProt.STAT.CONNECTED) {
-                    activity.setObdService(ObdProt.OBD_SVC_DATA, "Live Data");
-                } else {
-                    SnackbarHelper.showWarning(activity, "Please connect to vehicle first");
-                }
+                activity.launchLiveDataActivity();
             });
             liveDataCard.setOnLongClickListener(v -> showCardInfoDialog(
                 activity,
                 "Live Data",
-                "Monitor real-time sensor values from the vehicle."
+                "Monitor real-time sensor values from the vehicle, including GPS and motion telemetry."
             ));
         } else {
             log.warning("Live Data card NOT found!");

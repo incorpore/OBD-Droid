@@ -1522,28 +1522,31 @@ public class ObdProt extends ProtoHeader
                 cachedLiveDataPIDs.clear();
                 cachedSyntheticPIDs.clear();
 
-                // Use getTyped to properly access typed entries
-                if (PidPvs instanceof TypedPvList) {
-                    TypedPvList<String, ?> typedPvs = (TypedPvList<String, ?>) PidPvs;
-                    for (Map.Entry<String, ?> entry : typedPvs.entrySetTyped()) {
-                        String key = entry.getKey();
-                        Object value = entry.getValue();
+                // Iterate over raw entries (handles both Integer and String keys)
+                // PidPvs is a raw HashMap, so we need to iterate carefully
+                @SuppressWarnings({"rawtypes", "unchecked"})
+                Set entrySet = PidPvs.entrySet();
+                for (Object obj : entrySet) {
+                    @SuppressWarnings("unchecked")
+                    Map.Entry entry = (Map.Entry) obj;
+                    Object keyObj = entry.getKey();
+                    Object value = entry.getValue();
 
-                        if (value instanceof EcuDataPv) {
-                            EcuDataPv pv = (EcuDataPv) value;
-                            // Check if it's a synthetic PID (String key starting with F1xx)
+                    if (value instanceof EcuDataPv) {
+                        EcuDataPv pv = (EcuDataPv) value;
+
+                        // Handle String keys (synthetic PIDs like "F100.0")
+                        if (keyObj instanceof String) {
+                            String key = (String) keyObj;
                             if (key.startsWith("F1")) {
                                 cachedSyntheticPIDs.put(key, pv);
                                 log.fine("ENHANCED: Cached synthetic PID: " + key);
-                            } else {
-                                // Try to parse as integer for regular PIDs
-                                try {
-                                    Integer pid = Integer.parseInt(key.split("\\.")[0], 16);
-                                    cachedLiveDataPIDs.put(pid, pv);
-                                } catch (NumberFormatException e) {
-                                    // Not a regular PID, skip
-                                }
                             }
+                        }
+                        // Handle Integer keys (regular OBD PIDs)
+                        else if (keyObj instanceof Integer) {
+                            Integer pid = (Integer) keyObj;
+                            cachedLiveDataPIDs.put(pid, pv);
                         }
                     }
                 }

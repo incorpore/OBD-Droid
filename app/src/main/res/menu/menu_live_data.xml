@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- GPS Telemetry Toggle -->
+    <item
+        android:id="@+id/action_toggle_gps_telemetry"
+        android:title="Enable GPS Telemetry"
+        android:icon="@drawable/ic_gps_24"
+        app:showAsAction="never" />
+
+    <!-- Motion Telemetry Toggle -->
+    <item
+        android:id="@+id/action_toggle_motion_telemetry"
+        android:title="Enable Motion Telemetry"
+        android:icon="@drawable/ic_sensors_24"
+        app:showAsAction="never" />
+
+</menu>

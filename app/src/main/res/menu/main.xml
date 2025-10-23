@@ -14,30 +14,6 @@
         android:title="@string/disconnect"
         android:visible="false"/>
     <item
-        android:id="@+id/action_csv_logging"
-        android:icon="@drawable/ic_csv_24"
-        app:showAsAction="never"
-        android:title="@string/csv_logging_start"
-        android:visible="true"/>
-    <item
-        android:id="@+id/action_gps_telemetry"
-        android:icon="@drawable/ic_gps_24"
-        app:showAsAction="never"
-        android:title="@string/gps_telemetry_start"
-        android:visible="true"/>
-    <item
-        android:id="@+id/action_sensor_telemetry"
-        android:icon="@drawable/ic_sensors_24"
-        app:showAsAction="never"
-        android:title="@string/motion_telemetry_start"
-        android:visible="true"/>
-    <item
-        android:id="@+id/action_mqtt_publisher"
-        android:icon="@drawable/ic_mqtt_24"
-        app:showAsAction="never"
-        android:title="@string/mqtt_publisher_start"
-        android:visible="true"/>
-    <item
         android:id="@+id/settings"
         android:icon="@drawable/ic_settings_24"
         android:enabled="true"

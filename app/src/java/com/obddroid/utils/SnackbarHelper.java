@@ -90,6 +90,12 @@ public class SnackbarHelper {
 
         Snackbar snackbar = Snackbar.make(rootView, message, duration.getValue());
 
+        View footer = activity.findViewById(com.obddroid.R.id.vehicle_info_footer);
+        // Don't use anchor view - we'll position manually to align flush with footer
+        // if (footer != null) {
+        //     snackbar.setAnchorView(footer);
+        // }
+
         // Add action button if provided
         if (actionText != null && actionListener != null) {
             snackbar.setAction(actionText, actionListener);
@@ -110,10 +116,29 @@ public class SnackbarHelper {
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) snackbarView.getLayoutParams();
         params.gravity = Gravity.BOTTOM;
         params.width = FrameLayout.LayoutParams.MATCH_PARENT;
-        // Add bottom margin to appear flush above the VehicleInfoFooter
-        float scale = activity.getResources().getDisplayMetrics().density;
-        int bottomMargin = (int) (80 * scale + 0.5f); // 80dp to sit flush on top of footer
-        params.setMargins(0, 0, 0, bottomMargin); // No side margins for full width
+
+        // Get the actual footer height and position snackbar right above it
+        int footerHeight = 0;
+        if (footer != null) {
+            footer.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+            footerHeight = footer.getMeasuredHeight();
+            if (footerHeight == 0 && footer.getHeight() > 0) {
+                footerHeight = footer.getHeight();
+            }
+        }
+
+        // If we couldn't get footer height, use default 80dp
+        if (footerHeight == 0) {
+            float scale = activity.getResources().getDisplayMetrics().density;
+            footerHeight = (int) (80 * scale + 0.5f);
+        }
+
+        float density = activity.getResources().getDisplayMetrics().density;
+        int desiredGapPx = (int) (12 * density + 0.5f); // keep Snackbar ~12dp above footer
+
+        // Set bottom margin so Snackbar sits slightly above the footer
+        int marginBottom = Math.max(footerHeight - desiredGapPx, 0);
+        params.setMargins(0, 0, 0, marginBottom);
         snackbarView.setLayoutParams(params);
 
         // Remove the default Snackbar rounded corners for flush appearance
@@ -121,14 +146,44 @@ public class SnackbarHelper {
 
         // Create a rectangle background with the message type color
         snackbarView.setBackgroundColor(type.getColor());
+        snackbarView.setElevation(8f);
+        snackbarView.setTranslationZ(8f);
 
-        // Set elevation LOWER than VehicleInfoFooter so it slides from behind
-        // VehicleInfoFooter should have higher elevation to stay on top
-        snackbarView.setElevation(2f);  // Lower than footer's elevation
 
-        // Set the snackbar's Z translation to be behind the footer initially
-        snackbarView.setTranslationZ(-4f);
+        snackbar.addCallback(new Snackbar.Callback() {
+            @Override
+            public void onDismissed(Snackbar transientBottomBar, int event) {
+                snackbarView.animate().translationY(snackbarView.getHeight()).setDuration(200).start();
+            }
+        });
 
+        snackbarView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                       int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                snackbarView.removeOnLayoutChangeListener(this);
+
+                // Calculate how much to push down to align with footer
+                int additionalOffset = 0;
+                if (footer != null && footer.getHeight() > 0) {
+                    // Get the snackbar's current bottom position
+                    int[] snackbarLocation = new int[2];
+                    snackbarView.getLocationOnScreen(snackbarLocation);
+                    int snackbarBottom = snackbarLocation[1] + snackbarView.getHeight();
+
+                    // Get the footer's top position
+                    int[] footerLocation = new int[2];
+                    footer.getLocationOnScreen(footerLocation);
+                    int footerTop = footerLocation[1];
+
+                    // Calculate offset needed to align snackbar bottom with footer top
+                    additionalOffset = footerTop - desiredGapPx - snackbarBottom;
+                }
+
+                snackbarView.setTranslationY(snackbarView.getHeight());
+                snackbarView.animate().translationY(additionalOffset).setDuration(220).start();
+            }
+        });
         // Show it
         snackbar.show();
     }

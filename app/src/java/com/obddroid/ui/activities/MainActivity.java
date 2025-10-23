@@ -935,26 +935,8 @@ public class MainActivity extends AppCompatActivity
 
         invalidateOptionsMenu();
 
-        SharedPreferences defaultPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-
-        if (defaultPrefs.getBoolean(PREF_GPS_ENABLED, false)) {
-            ensureGpsTelemetryReady();
-        }
-
-        if (defaultPrefs.getBoolean(PREF_SENSOR_ENABLED, false)) {
-            startSensorTelemetryInternal();
-            defaultPrefs.edit().putBoolean(PREF_SENSOR_ENABLED, true).apply();
-        }
-
-        if (defaultPrefs.getBoolean(PREF_MQTT_ENABLED, false)) {
-            MqttTelemetryManager manager = getMqttTelemetryManager();
-            if (!manager.isActive()) {
-                if (!manager.start()) {
-                    defaultPrefs.edit().putBoolean(PREF_MQTT_ENABLED, false).apply();
-                    SnackbarHelper.showError(this, getString(R.string.mqtt_publisher_config_error));
-                }
-            }
-        }
+        // GPS/Motion/MQTT telemetry are now managed by their respective activities
+        // (LiveDataActivity for GPS/Motion, Settings for MQTT)
 
         // Synchronize UI with actual connection state
         // This prevents "Connecting..." from persisting after navigation
@@ -1198,59 +1180,7 @@ public class MainActivity extends AppCompatActivity
         MainActivity.menu = menu;
         // update menu item status for current conversion
         setConversionSystem(EcuDataItem.cnvSystem);
-        updateCsvLoggingMenu(menu);
-        updateGpsTelemetryMenu(menu);
-        updateSensorTelemetryMenu(menu);
-        updateMqttPublisherMenu(menu);
         return true;
-    }
-
-    private void updateCsvLoggingMenu(Menu menu) {
-        if (menu == null) {
-            return;
-        }
-        MenuItem item = menu.findItem(R.id.action_csv_logging);
-        if (item != null) {
-            boolean recording = CsvLoggingState.isRecording();
-            item.setTitle(recording ? R.string.csv_logging_stop : R.string.csv_logging_start);
-            item.setIcon(recording ? R.drawable.ic_save_24 : R.drawable.ic_csv_24);
-        }
-    }
-
-    private void updateGpsTelemetryMenu(Menu menu) {
-        if (menu == null) {
-            return;
-        }
-        MenuItem item = menu.findItem(R.id.action_gps_telemetry);
-        if (item != null) {
-            boolean active = gpsTelemetryManager != null && gpsTelemetryManager.isActive();
-            item.setTitle(active ? R.string.gps_telemetry_stop : R.string.gps_telemetry_start);
-            item.setIcon(R.drawable.ic_gps_24);
-        }
-    }
-
-    private void updateSensorTelemetryMenu(Menu menu) {
-        if (menu == null) {
-            return;
-        }
-        MenuItem item = menu.findItem(R.id.action_sensor_telemetry);
-        if (item != null) {
-            boolean active = sensorTelemetryManager != null && sensorTelemetryManager.isActive();
-            item.setTitle(active ? R.string.motion_telemetry_stop : R.string.motion_telemetry_start);
-            item.setIcon(R.drawable.ic_sensors_24);
-        }
-    }
-
-    private void updateMqttPublisherMenu(Menu menu) {
-        if (menu == null) {
-            return;
-        }
-        MenuItem item = menu.findItem(R.id.action_mqtt_publisher);
-        if (item != null) {
-            boolean active = mqttTelemetryManager != null && mqttTelemetryManager.isActive();
-            item.setTitle(active ? R.string.mqtt_publisher_stop : R.string.mqtt_publisher_start);
-            item.setIcon(R.drawable.ic_mqtt_24);
-        }
     }
 
     private void toggleGpsTelemetry() {
@@ -1298,10 +1228,13 @@ public class MainActivity extends AppCompatActivity
         invalidateOptionsMenu();
 
         // Refresh adapter to show GPS fields by re-reading preferences
-        if (mPidAdapter != null) {
+        // Only refresh if PidPvs is not empty (avoid wiping data during protocol state changes)
+        if (mPidAdapter != null && !ObdProt.PidPvs.isEmpty()) {
             Log.d("MainActivity", "Refreshing PID adapter after GPS start, PidPvs size: " + ObdProt.PidPvs.size());
             mPidAdapter.setPvList(ObdProt.PidPvs);
             Log.d("MainActivity", "PID adapter now has " + mPidAdapter.getCount() + " items");
+        } else if (ObdProt.PidPvs.isEmpty()) {
+            Log.w("MainActivity", "Skipping adapter refresh - PidPvs is empty (protocol may be resetting)");
         } else {
             Log.w("MainActivity", "mPidAdapter is null, cannot refresh!");
         }
@@ -1332,7 +1265,7 @@ public class MainActivity extends AppCompatActivity
         invalidateOptionsMenu();
 
         // Refresh adapter to show sensor fields by re-reading preferences
-        if (mPidAdapter != null) {
+        if (mPidAdapter != null && !ObdProt.PidPvs.isEmpty()) {
             mPidAdapter.setPvList(ObdProt.PidPvs);
         }
     }
@@ -1430,10 +1363,6 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        updateCsvLoggingMenu(menu);
-        updateGpsTelemetryMenu(menu);
-        updateSensorTelemetryMenu(menu);
-        updateMqttPublisherMenu(menu);
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -1458,23 +1387,6 @@ public class MainActivity extends AppCompatActivity
             case R.id.disconnect:
                 // Show styled confirmation dialog before disconnecting
                 showDisconnectConfirmDialog();
-                return true;
-
-            case R.id.action_csv_logging:
-                CsvLoggingController.toggleLogging(this);
-                invalidateOptionsMenu();
-                return true;
-
-            case R.id.action_gps_telemetry:
-                toggleGpsTelemetry();
-                return true;
-
-            case R.id.action_sensor_telemetry:
-                toggleSensorTelemetry();
-                return true;
-
-            case R.id.action_mqtt_publisher:
-                toggleMqttPublisher();
                 return true;
 
             case R.id.settings:
@@ -2754,6 +2666,15 @@ public class MainActivity extends AppCompatActivity
             log.log(Level.WARNING, "Error reconnecting to adapter", e);
             SnackbarHelper.showError(this, "Failed to reconnect. Please select an adapter manually.");
         }
+    }
+
+    /**
+     * Launch the Live Data activity
+     */
+    void launchLiveDataActivity() {
+        log.info("Launching Live Data activity");
+        Intent intent = new Intent(this, LiveDataActivity.class);
+        startActivity(intent);
     }
 
     /**

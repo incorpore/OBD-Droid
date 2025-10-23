@@ -105,6 +105,11 @@
             android:configChanges="touchscreen|orientation|screenSize"
             android:exported="false" />
         <activity
+            android:name="com.obddroid.ui.activities.LiveDataActivity"
+            android:label="Live Data"
+            android:configChanges="touchscreen|orientation|screenSize"
+            android:exported="false" />
+        <activity
             android:name="com.obddroid.ui.activities.FuelEconomyActivity"
             android:label="Fuel Economy"
             android:configChanges="touchscreen|orientation|screenSize"

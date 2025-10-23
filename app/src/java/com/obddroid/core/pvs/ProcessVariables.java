@@ -602,8 +602,10 @@ public final class ProcessVariables {
         /** remove listener for Pv changes */
         public synchronized void removePvChangeListener(PvChangeListener l) {
             ensurePvChangeListeners();
-            PvChangeListeners.remove(l);
-            allowEvents = !PvChangeListeners.isEmpty();
+            synchronized (PvChangeListeners) {
+                PvChangeListeners.remove(l);
+                allowEvents = !PvChangeListeners.isEmpty();
+            }
             log.finer("-PvListener:" + toString() + "->" + String.valueOf(l));
         }
 
@@ -612,8 +614,10 @@ public final class ProcessVariables {
          */
         public synchronized void addPvChangeListener(PvChangeListener l, int eventMask) {
             ensurePvChangeListeners();
-            PvChangeListeners.put(l, Integer.valueOf(eventMask));
-            allowEvents = true;
+            synchronized (PvChangeListeners) {
+                PvChangeListeners.put(l, Integer.valueOf(eventMask));
+                allowEvents = true;
+            }
             log.finer("+PvListener:" + toString() + "->" + String.valueOf(l));
         }
 
@@ -638,20 +642,22 @@ public final class ProcessVariables {
 
                 ensurePvChangeListeners();
                 // loop through all registered listeners ...
-                // Create a copy to avoid ConcurrentModificationException
-                Set entries = new java.util.HashSet(PvChangeListeners.entrySet());
-                Iterator it = entries.iterator();
+                // Synchronize on listeners map to avoid ConcurrentModificationException
+                synchronized (PvChangeListeners) {
+                    Set entries = PvChangeListeners.entrySet();
+                    Iterator it = entries.iterator();
 
-                while (it.hasNext()) {
-                    curr = (Map.Entry) it.next();
+                    while (it.hasNext()) {
+                        curr = (Map.Entry) it.next();
 
-                    if (curr.getKey() != null && curr.getKey() != this) {
-                        // check if listener wants to be notified by this event
-                        evtMask = (Integer) curr.getValue();
+                        if (curr.getKey() != null && curr.getKey() != this) {
+                            // check if listener wants to be notified by this event
+                            evtMask = (Integer) curr.getValue();
 
-                        if ((evtMask.intValue() & e.getType()) != 0) {
-                            log.finer("Notify:" + curr);
-                            ((PvChangeListener) curr.getKey()).pvChanged(e);
+                            if ((evtMask.intValue() & e.getType()) != 0) {
+                                log.finer("Notify:" + curr);
+                                ((PvChangeListener) curr.getKey()).pvChanged(e);
+                            }
                         }
                     }
                 }
