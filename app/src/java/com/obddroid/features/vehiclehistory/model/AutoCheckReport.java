@@ -1,0 +1,273 @@
+package com.obddroid.features.vehiclehistory.model;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * AutoCheck Vehicle History Report Data Model
+ * Corresponds to the AutoCheckReport interface from the API
+ */
+public class AutoCheckReport {
+    private String vin;
+    private String year;
+    private String make;
+    private String model;
+    private String style;
+    private String engine;
+    private String country;
+    private Integer owners;
+    private String usage;  // "Lease", "Personal", "Commercial", etc.
+    private Integer lastOdometer;
+    private Date lastOdometerDate;
+    private Integer score;
+    private ScoreRange scoreRange;
+    private Integer vehicleAge;
+    private String titleBrand;
+    private String accidentDamage;
+    private Boolean totalLoss;
+    private Boolean structuralDamage;
+    private Boolean airbagDeployed;
+    private Boolean odometerRollback;
+    private String recalls;
+    private Integer serviceRecords;
+    private List<HistoryEvent> historyEvents;
+
+    // Score Analysis (NEW)
+    private String vehicleComparison;
+    private String vehicleOutlook;
+    private List<String> increasingFactors;
+    private List<String> decreasingFactors;
+
+    // Nested classes
+    public static class ScoreRange {
+        public int low;
+        public int high;
+
+        public ScoreRange(int low, int high) {
+            this.low = low;
+            this.high = high;
+        }
+    }
+
+    public static class HistoryEvent {
+        public String date;
+        public String location;
+        public String odometer;
+        public String source;
+        public String details;
+
+        public HistoryEvent(String date, String details) {
+            this.date = date;
+            this.details = details;
+        }
+    }
+
+    // Constructor
+    public AutoCheckReport(String vin) {
+        this.vin = vin;
+        this.historyEvents = new ArrayList<>();
+        this.increasingFactors = new ArrayList<>();
+        this.decreasingFactors = new ArrayList<>();
+    }
+
+    // Parse from JSON
+    public static AutoCheckReport fromJSON(JSONObject json) throws JSONException {
+        String vin = json.getString("vin");
+        AutoCheckReport report = new AutoCheckReport(vin);
+
+        if (json.has("year")) report.year = json.getString("year");
+        if (json.has("make")) report.make = json.getString("make");
+        if (json.has("model")) report.model = json.getString("model");
+        if (json.has("style")) report.style = json.getString("style");
+        if (json.has("engine")) report.engine = json.getString("engine");
+        if (json.has("country")) report.country = json.getString("country");
+        if (json.has("owners")) report.owners = json.getInt("owners");
+        if (json.has("usage")) report.usage = json.getString("usage");
+        if (json.has("lastOdometer")) report.lastOdometer = json.getInt("lastOdometer");
+        if (json.has("score")) report.score = json.getInt("score");
+        if (json.has("titleBrand")) report.titleBrand = json.getString("titleBrand");
+        if (json.has("accidentDamage")) report.accidentDamage = json.getString("accidentDamage");
+        if (json.has("recalls")) report.recalls = json.getString("recalls");
+        if (json.has("serviceRecords")) report.serviceRecords = json.getInt("serviceRecords");
+        if (json.has("vehicleAge")) {
+            Integer parsedAge = parseInteger(json.opt("vehicleAge"));
+            if (parsedAge != null && parsedAge >= 0) {
+                report.vehicleAge = parsedAge;
+            }
+        }
+
+        // Boolean fields
+        if (json.has("totalLoss")) report.totalLoss = json.getBoolean("totalLoss");
+        if (json.has("structuralDamage")) report.structuralDamage = json.getBoolean("structuralDamage");
+        if (json.has("airbagDeployed")) report.airbagDeployed = json.getBoolean("airbagDeployed");
+        if (json.has("odometerRollback")) report.odometerRollback = json.getBoolean("odometerRollback");
+
+        // Score range
+        if (json.has("scoreRange")) {
+            JSONObject scoreRangeJson = json.getJSONObject("scoreRange");
+            report.scoreRange = new ScoreRange(
+                scoreRangeJson.getInt("low"),
+                scoreRangeJson.getInt("high")
+            );
+        }
+
+        // History events
+        if (json.has("historyEvents")) {
+            JSONArray eventsArray = json.getJSONArray("historyEvents");
+            for (int i = 0; i < eventsArray.length(); i++) {
+                JSONObject eventJson = eventsArray.getJSONObject(i);
+
+                // Get date - try "eventDate" first, then "date", default to "Unknown"
+                String date = "Unknown Date";
+                if (eventJson.has("eventDate")) {
+                    date = eventJson.getString("eventDate");
+                } else if (eventJson.has("date")) {
+                    date = eventJson.getString("date");
+                }
+
+                // Get details - default to empty if not present
+                String details = eventJson.has("details") ? eventJson.getString("details") : "";
+
+                HistoryEvent event = new HistoryEvent(date, details);
+
+                if (eventJson.has("location")) event.location = eventJson.getString("location");
+                if (eventJson.has("odometer")) event.odometer = eventJson.getString("odometer");
+                if (eventJson.has("source")) event.source = eventJson.getString("source");
+                if (eventJson.has("dataSource")) event.source = eventJson.getString("dataSource");
+
+                report.historyEvents.add(event);
+            }
+        }
+
+        // Score Analysis fields
+        if (json.has("vehicleComparison")) report.vehicleComparison = json.getString("vehicleComparison");
+        if (json.has("vehicleOutlook")) report.vehicleOutlook = json.getString("vehicleOutlook");
+
+        if (json.has("increasingFactors")) {
+            JSONArray factors = json.getJSONArray("increasingFactors");
+            for (int i = 0; i < factors.length(); i++) {
+                report.increasingFactors.add(factors.getString(i));
+            }
+        }
+
+        if (json.has("decreasingFactors")) {
+            JSONArray factors = json.getJSONArray("decreasingFactors");
+            for (int i = 0; i < factors.length(); i++) {
+                report.decreasingFactors.add(factors.getString(i));
+            }
+        }
+
+        return report;
+    }
+
+    // Getters
+    public String getVin() { return vin; }
+    public String getYear() { return year; }
+    public String getMake() { return make; }
+    public String getModel() { return model; }
+    public String getStyle() { return style; }
+    public String getEngine() { return engine; }
+    public String getCountry() { return country; }
+    public Integer getOwners() { return owners; }
+    public String getUsage() { return usage; }
+    public Integer getLastOdometer() { return lastOdometer; }
+    public Date getLastOdometerDate() { return lastOdometerDate; }
+    public Integer getScore() { return score; }
+    public ScoreRange getScoreRange() { return scoreRange; }
+    public Integer getVehicleAge() {
+        if (vehicleAge != null && vehicleAge >= 0) {
+            return vehicleAge;
+        }
+        if (year == null) {
+            return null;
+        }
+        String numericYear = year.replaceAll("\\D", "");
+        if (numericYear.isEmpty()) {
+            return null;
+        }
+        try {
+            int modelYear = Integer.parseInt(numericYear);
+            int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+            int age = currentYear - modelYear;
+            if (age < 0 || age > 150) {
+                return null;
+            }
+            return age;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+    public String getTitleBrand() { return titleBrand; }
+    public String getAccidentDamage() { return accidentDamage; }
+    public Boolean getTotalLoss() { return totalLoss; }
+    public Boolean getStructuralDamage() { return structuralDamage; }
+    public Boolean getAirbagDeployed() { return airbagDeployed; }
+    public Boolean getOdometerRollback() { return odometerRollback; }
+    public String getRecalls() { return recalls; }
+    public Integer getServiceRecords() { return serviceRecords; }
+    public List<HistoryEvent> getHistoryEvents() { return historyEvents; }
+
+    // Score Analysis getters
+    public String getVehicleComparison() { return vehicleComparison; }
+    public String getVehicleOutlook() { return vehicleOutlook; }
+    public List<String> getIncreasingFactors() { return increasingFactors; }
+    public List<String> getDecreasingFactors() { return decreasingFactors; }
+
+    // Helper methods
+    public String getVehicleName() {
+        StringBuilder name = new StringBuilder();
+        if (year != null) name.append(year).append(" ");
+        if (make != null) name.append(make).append(" ");
+        if (model != null) name.append(model);
+        return name.toString().trim();
+    }
+
+    public boolean hasAccidents() {
+        return accidentDamage != null && !accidentDamage.equalsIgnoreCase("none");
+    }
+
+    public boolean hasCleanTitle() {
+        return titleBrand != null && (titleBrand.equalsIgnoreCase("clean") || titleBrand.equalsIgnoreCase("no problem"));
+    }
+
+    public String getScoreSummary() {
+        if (score == null) return "N/A";
+        if (scoreRange != null) {
+            return String.format("%d (%d-%d)", score, scoreRange.low, scoreRange.high);
+        }
+        return String.valueOf(score);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("AutoCheck Report: %s (VIN: %s, Score: %s, Owners: %d)",
+                getVehicleName(), vin, getScoreSummary(), owners != null ? owners : 0);
+    }
+
+    private static Integer parseInteger(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value instanceof String) {
+            String digits = ((String) value).replaceAll("[^0-9-]", "");
+            if (digits.isEmpty()) {
+                return null;
+            }
+            try {
+                return Integer.parseInt(digits);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+}

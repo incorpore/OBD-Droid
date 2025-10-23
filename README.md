@@ -66,7 +66,9 @@ OBD-Droid/
 - GPS telemetry: `features/gps/data/GpsTelemetryManager` exposes synthetic PIDs.
 - Motion sensors: `features/sensors/data/SensorTelemetryManager`.
 - Live Data Sharing: `features/livedatasharing/data/LiveDataSharingManager`
-  with `features/livedatasharing/ui/LiveDataSharingUiCoordinator`.
+  with `features/livedatasharing/ui/LiveDataSharingUiCoordinator`. Publishes
+  the live dashboard values you choose to any server or broker you point it at,
+  so teams can watch vehicle data in real time without touching the phone.
 - All feature toggles surface consistent snackbars via the helper in
   `MainActivity`.
 

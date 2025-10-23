@@ -2,7 +2,6 @@ package com.obddroid.vehicle;
 
 import android.content.Context;
 import android.util.Log;
-import io.github.vindecoder.android.VINDecoderAndroid;
 import io.github.vindecoder.nhtsa.VehicleData;
 import com.obddroid.core.obd.ElmProt;
 import java.util.ArrayList;
@@ -36,8 +35,8 @@ public class VehicleManager {
     // Listeners for vehicle changes
     private final List<VehicleChangeListener> listeners = new ArrayList<>();
 
-    // VIN decoder (Android wrapper with built-in threading)
-    private VINDecoderAndroid vinDecoder;
+    // Enhanced VIN decoder (tries online NHTSA, falls back to offline)
+    private EnhancedVINDecoder vinDecoder;
 
     /**
      * Listener interface for vehicle changes
@@ -76,10 +75,10 @@ public class VehicleManager {
         if (instance == null) {
             instance = new VehicleManager();
         }
-        // Initialize decoder if not already done
+        // Initialize enhanced decoder if not already done
         if (instance.vinDecoder == null && context != null) {
-            instance.vinDecoder = new VINDecoderAndroid(context.getApplicationContext());
-            Log.d(TAG, "VIN Decoder initialized with context");
+            instance.vinDecoder = new EnhancedVINDecoder(context.getApplicationContext());
+            Log.d(TAG, "Enhanced VIN Decoder initialized (online + offline support)");
         }
         return instance;
     }
@@ -157,10 +156,10 @@ public class VehicleManager {
             listener.onDecodingStarted();
         }
 
-        // Decode using offline decoder (always offline, no network calls)
+        // Decode using enhanced decoder (tries online, falls back to offline)
         if (vinDecoder != null) {
             final String vinToDecode = vin;
-            vinDecoder.decodeAsync(vinToDecode, new VINDecoderAndroid.DecodeCallback() {
+            vinDecoder.decodeAsync(vinToDecode, new EnhancedVINDecoder.DecodeCallback() {
                 @Override
                 public void onSuccess(VehicleData vehicleData) {
                     Log.d(TAG, "VIN decode successful: " + vehicleData.getDisplayName());

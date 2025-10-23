@@ -147,7 +147,7 @@ public class SecurePreferences
     }
 
     /**
-     * Stores the Live Data Sharing password securely and clears the legacy key if present.
+     * Stores the Live Data Sharing password securely.
      */
     public void setLiveDataSharingPassword(String password)
     {
