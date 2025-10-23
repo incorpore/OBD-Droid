@@ -40,28 +40,28 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Publishes selected PID updates to a configured MQTT broker at a periodic interval.
+ * Publishes selected PID updates to a configured Live Data Sharing server at a periodic interval.
  */
 public class LiveDataSharingManager {
 
     private static final String TAG = "LiveDataSharing";
 
-    public static final String PREF_ENABLED_STATE = "mqtt_enabled_state";
-    public static final String PREF_PROTOCOL = "mqtt_protocol";
-    public static final String PREF_HOST = "mqtt_host";
-    public static final String PREF_PORT = "mqtt_port";
-    public static final String PREF_PREFIX = "mqtt_prefix";
-    public static final String PREF_USERNAME = "mqtt_username";
-    public static final String PREF_PASSWORD = "mqtt_password";
-    public static final String PREF_CLIENT_ID = "mqtt_client_id";
-    public static final String PREF_QOS = "mqtt_qos";
-    public static final String PREF_RETAIN = "mqtt_retain";
-    public static final String PREF_UPDATE_PERIOD = "mqtt_update_period";
-    public static final String PREF_SELECTED_ITEMS = "mqtt_selected_items";
-    public static final String PREF_STATUS = "mqtt_status";
-    public static final String PREF_LAST_STATUS_CODE = "mqtt_last_status_code";
-    public static final String PREF_LAST_STATUS_MESSAGE = "mqtt_last_status_message";
-    public static final String PREF_LAST_STATUS_TIME = "mqtt_last_status_time";
+    public static final String PREF_ENABLED_STATE = "live_data_sharing_enabled_state";
+    public static final String PREF_PROTOCOL = "live_data_sharing_protocol";
+    public static final String PREF_HOST = "live_data_sharing_host";
+    public static final String PREF_PORT = "live_data_sharing_port";
+    public static final String PREF_PREFIX = "live_data_sharing_prefix";
+    public static final String PREF_USERNAME = "live_data_sharing_username";
+    public static final String PREF_PASSWORD = "live_data_sharing_password";
+    public static final String PREF_CLIENT_ID = "live_data_sharing_client_id";
+    public static final String PREF_QOS = "live_data_sharing_qos";
+    public static final String PREF_RETAIN = "live_data_sharing_retain";
+    public static final String PREF_UPDATE_PERIOD = "live_data_sharing_update_period";
+    public static final String PREF_SELECTED_ITEMS = "live_data_sharing_selected_items";
+    public static final String PREF_STATUS = "live_data_sharing_status";
+    public static final String PREF_LAST_STATUS_CODE = "live_data_sharing_last_status_code";
+    public static final String PREF_LAST_STATUS_MESSAGE = "live_data_sharing_last_status_message";
+    public static final String PREF_LAST_STATUS_TIME = "live_data_sharing_last_status_time";
 
     public static final String STATUS_IDLE = "idle";
     public static final String STATUS_SUCCESS = "success";
@@ -207,7 +207,7 @@ public class LiveDataSharingManager {
 
         host = preferences.getString(PREF_HOST, "");
         if (host == null || host.trim().isEmpty()) {
-            Log.w(TAG, "MQTT host not configured");
+            Log.w(TAG, "Live Data Sharing host not configured");
             return false;
         }
         host = host.trim();
@@ -228,7 +228,7 @@ public class LiveDataSharingManager {
         }
 
         username = preferences.getString(PREF_USERNAME, "");
-        password = securePreferences.getMqttPassword();
+        password = securePreferences.getLiveDataSharingPassword();
         clientId = preferences.getString(PREF_CLIENT_ID, "");
         if (clientId == null || clientId.trim().isEmpty()) {
             clientId = "obddroid-" + UUID.randomUUID();
@@ -276,7 +276,7 @@ public class LiveDataSharingManager {
                 recordStatus(STATUS_SUCCESS, appContext.getString(R.string.live_data_sharing_status_publish_success));
             }
         } catch (Exception ex) {
-            Log.e(TAG, "MQTT publish failed", ex);
+            Log.e(TAG, "Live Data Sharing publish failed", ex);
             recordStatus(STATUS_FAILURE, summarizeException(ex));
         }
     }
@@ -313,13 +313,13 @@ public class LiveDataSharingManager {
                         .retain(retainMessages)
                         .send();
                 } catch (Exception publishException) {
-                    Log.e(TAG, "Failed to publish MQTT topic", publishException);
+                    Log.e(TAG, "Failed to publish Live Data Sharing topic", publishException);
                     recordStatus(STATUS_FAILURE, summarizeException(publishException));
                     hadFailure[0] = true;
                 }
             });
         } catch (Exception ex) {
-            Log.e(TAG, "MQTT publish failed", ex);
+            Log.e(TAG, "Live Data Sharing publish failed", ex);
             recordStatus(STATUS_FAILURE, summarizeException(ex));
             hadFailure[0] = true;
         } finally {
@@ -327,7 +327,7 @@ public class LiveDataSharingManager {
                 try {
                     client.disconnect();
                 } catch (Exception disconnectException) {
-                    Log.w(TAG, "Failed to disconnect MQTT client", disconnectException);
+                    Log.w(TAG, "Failed to disconnect Live Data Sharing client", disconnectException);
                 }
             }
         }
@@ -349,7 +349,7 @@ public class LiveDataSharingManager {
             }
             return baseBuilder.useMqttVersion3().buildBlocking();
         } catch (Exception ex) {
-            Log.e(TAG, "Unable to create MQTT client", ex);
+            Log.e(TAG, "Unable to create Live Data Sharing client", ex);
             recordStatus(STATUS_FAILURE, summarizeException(ex));
             return null;
         }

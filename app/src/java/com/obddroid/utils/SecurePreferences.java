@@ -23,7 +23,6 @@ public class SecurePreferences
     private static final String PREFS_NAME = "obddroid_secure_prefs";
     private static final String KEY_OPENAI_API_KEY = "openai_api_key";
     private static final String KEY_LIVE_DATA_SHARING_PASSWORD = "live_data_sharing_password";
-    private static final String LEGACY_KEY_MQTT_PASSWORD = "mqtt_password";
     private static final String ALGORITHM = "AES";
 
     private final SharedPreferences preferences;
@@ -155,7 +154,6 @@ public class SecurePreferences
         String encrypted = encrypt(password);
         preferences.edit()
             .putString(KEY_LIVE_DATA_SHARING_PASSWORD, encrypted)
-            .remove(LEGACY_KEY_MQTT_PASSWORD)
             .apply();
     }
 
@@ -164,11 +162,7 @@ public class SecurePreferences
      */
     public String getLiveDataSharingPassword()
     {
-        String encrypted = preferences.getString(KEY_LIVE_DATA_SHARING_PASSWORD, null);
-        if (encrypted == null || encrypted.isEmpty())
-        {
-            encrypted = preferences.getString(LEGACY_KEY_MQTT_PASSWORD, "");
-        }
+        String encrypted = preferences.getString(KEY_LIVE_DATA_SHARING_PASSWORD, "");
         return decrypt(encrypted);
     }
 
@@ -179,7 +173,6 @@ public class SecurePreferences
     {
         preferences.edit()
             .remove(KEY_LIVE_DATA_SHARING_PASSWORD)
-            .remove(LEGACY_KEY_MQTT_PASSWORD)
             .apply();
     }
 }

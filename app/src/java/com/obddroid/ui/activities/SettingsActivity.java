@@ -343,9 +343,9 @@ public class SettingsActivity
 
 		void setupLiveDataSharingPreferences()
 		{
-			MultiSelectListPreference mqttItems =
+			MultiSelectListPreference sharingItems =
 				(MultiSelectListPreference) findPreference(LiveDataSharingManager.PREF_SELECTED_ITEMS);
-			if (mqttItems != null)
+			if (sharingItems != null)
 			{
 				if (items == null || items.isEmpty())
 				{
@@ -362,13 +362,13 @@ public class SettingsActivity
 					defaults.add(currItem.toString());
 					i++;
 				}
-				mqttItems.setEntries(titles);
-				mqttItems.setEntryValues(keys);
-				if (mqttItems.getValues() == null || mqttItems.getValues().isEmpty())
+				sharingItems.setEntries(titles);
+				sharingItems.setEntryValues(keys);
+				if (sharingItems.getValues() == null || sharingItems.getValues().isEmpty())
 				{
-					mqttItems.setValues(defaults);
+					sharingItems.setValues(defaults);
 				}
-				mqttItems.setSummaryProvider(preference -> {
+				sharingItems.setSummaryProvider(preference -> {
 					Set<String> values = ((MultiSelectListPreference) preference).getValues();
 					if (values == null || values.isEmpty())
 					{
@@ -396,9 +396,9 @@ public class SettingsActivity
 					String password = String.valueOf(newValue);
 					if (password.trim().isEmpty())
 					{
-					securePreferences.clearLiveDataSharingPassword();
-					passwordPref.setSummary(R.string.live_data_sharing_password_not_configured);
-					SnackbarHelper.showInfo(getActivity(), getString(R.string.live_data_sharing_password_cleared));
+						securePreferences.clearLiveDataSharingPassword();
+						passwordPref.setSummary(R.string.live_data_sharing_password_not_configured);
+						SnackbarHelper.showInfo(getActivity(), getString(R.string.live_data_sharing_password_cleared));
 					}
 					else
 					{

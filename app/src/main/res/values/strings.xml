@@ -462,7 +462,7 @@ period of time while the ECU recalibrates itself.
     <!-- Live Data Sharing telemetry -->
     <string name="live_data_sharing_settings_title">Live Data Sharing</string>
     <string name="live_data_sharing_host_title">Server Host</string>
-    <string name="live_data_sharing_host_summary">Hostname or IP address of your sharing server (MQTT broker).</string>
+    <string name="live_data_sharing_host_summary">Hostname or IP address of your sharing server.</string>
     <string name="live_data_sharing_port_title">Server Port</string>
     <string name="live_data_sharing_port_summary">TCP port for the server (default 1883).</string>
     <string name="live_data_sharing_protocol_title">Protocol</string>
@@ -501,6 +501,6 @@ period of time while the ECU recalibrates itself.
     <string name="live_data_sharing_status_snackbar_failure">Live data sharing failed: %1$s</string>
     <string name="live_data_sharing_status_snackbar_recovered">Live data sharing recovered</string>
     <string name="live_data_sharing_not_configured_title">Live Data Sharing Not Configured</string>
-    <string name="live_data_sharing_not_configured_message">Live Data Sharing uses MQTT under the hood and requires configuration before it can be enabled.\n\nPlease configure the following in Settings:\n• Server Host (required)\n• Port (default: 1883)\n• Topic Prefix\n• Username/Password (if required)</string>
+    <string name="live_data_sharing_not_configured_message">Live Data Sharing requires configuration before it can be enabled.\n\nPlease configure the following in Settings:\n• Server Host (required)\n• Port (default: 1883)\n• Topic Prefix\n• Username/Password (if required)</string>
     <string name="live_data_sharing_not_configured_open_settings">Open Settings</string>
 </resources>

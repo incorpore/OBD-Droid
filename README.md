@@ -2,7 +2,7 @@
 
 OBD‑Droid is our in-house Android platform for professional-grade vehicle
 diagnostics, telemetry, and reporting. The app now includes scoped feature
-modules (live diagnostics, CSV logging, GPS & motion telemetry, MQTT export,
+modules (live diagnostics, CSV logging, GPS & motion telemetry, Live Data Sharing export,
 Vehicle History AutoCheck integration, Ford PSCM intelligence, etc.) and an
 expanded documentation set that lives under `docs/`.
 
@@ -17,8 +17,8 @@ work.
 - **Live diagnostics** now include Ford PSCM lockout detection, extended
   address probing, and improved error surfacing (see
   `docs/ford-f150-diagnostic-learnings.md` + addendum).
-- **Feature modules** – CSV logging, GPS telemetry, motion sensors, and MQTT
-  publishing – live under `app/src/java/com/obddroid/features/` and expose UI
+- **Feature modules** – CSV logging, GPS telemetry, motion sensors, and Live
+  Data Sharing – live under `app/src/java/com/obddroid/features/` and expose UI
   coordinators so screens just delegate.
 - **Vehicle history** is delivered through the AutoCheck companion API and
   lives in `features/vehiclehistory` (migrated from the monolithic activity).
@@ -39,7 +39,7 @@ OBD-Droid/
 │   │   ├── csvlogging/                   # Foreground service, UI coordinator
 │   │   ├── gps/                          # Synthetic PID generator
 │   │   ├── sensors/                      # Motion telemetry
-│   │   └── mqtt/                         # Publisher + UI integration
+│   │   └── livedatasharing/              # Publisher + UI integration
 │   ├── src/java/com/obddroid/ui/         # Screens, components, adapters
 │   └── src/main/res/                     # Layouts, menu, drawables, strings
 ├── modules/                              # Shared libraries (VIN decoder, DTC DB,
@@ -65,8 +65,8 @@ OBD-Droid/
 - CSV logging: `features/csvlogging/` (foreground service + UI coordinator).
 - GPS telemetry: `features/gps/data/GpsTelemetryManager` exposes synthetic PIDs.
 - Motion sensors: `features/sensors/data/SensorTelemetryManager`.
-- MQTT publishing: `features/mqtt/data/MqttTelemetryManager` with
-  `features/mqtt/ui/MqttTelemetryUiCoordinator`.
+- Live Data Sharing: `features/livedatasharing/data/LiveDataSharingManager`
+  with `features/livedatasharing/ui/LiveDataSharingUiCoordinator`.
 - All feature toggles surface consistent snackbars via the helper in
   `MainActivity`.
 
@@ -143,10 +143,10 @@ testing on an actual device.
 
 ### Telemetry Toggles (in-app)
 1. Open Main screen or Live Data.
-2. Enable/disable CSV Logging, GPS telemetry, Motion telemetry, MQTT publisher.
+2. Enable/disable CSV Logging, GPS telemetry, Motion telemetry, Live Data Sharing.
 3. Confirm green/informational snackbar appears just above the footer for each
    toggle.
-4. Check `Settings → Telemetry` for MQTT configuration and status history.
+4. Check `Settings → Telemetry` for Live Data Sharing configuration and status history.
 
 ### Ford PSCM Regression
 1. Run full module scan (expect PSCM at 0x726).

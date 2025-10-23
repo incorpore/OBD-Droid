@@ -1226,7 +1226,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void toggleMqttPublisher() {
+    private void toggleLiveDataSharing() {
         getLiveDataSharingCoordinator().togglePublisher();
     }
 
