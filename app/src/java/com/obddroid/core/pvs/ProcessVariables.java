@@ -638,7 +638,8 @@ public final class ProcessVariables {
 
                 ensurePvChangeListeners();
                 // loop through all registered listeners ...
-                Set entries = PvChangeListeners.entrySet();
+                // Create a copy to avoid ConcurrentModificationException
+                Set entries = new java.util.HashSet(PvChangeListeners.entrySet());
                 Iterator it = entries.iterator();
 
                 while (it.hasNext()) {

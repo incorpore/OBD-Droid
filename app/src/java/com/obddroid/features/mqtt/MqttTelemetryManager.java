@@ -289,7 +289,7 @@ public class MqttTelemetryManager {
         }
 
         boolean connected = false;
-        boolean hadFailure = false;
+        final boolean[] hadFailure = {false};
         try {
             Mqtt3ConnectBuilder.Send<?> connectBuilder = client.connectWith()
                 .cleanSession(true);
@@ -315,13 +315,13 @@ public class MqttTelemetryManager {
                 } catch (Exception publishException) {
                     Log.e(TAG, "Failed to publish MQTT topic", publishException);
                     recordStatus(STATUS_FAILURE, summarizeException(publishException));
-                    hadFailure = true;
+                    hadFailure[0] = true;
                 }
             });
         } catch (Exception ex) {
             Log.e(TAG, "MQTT publish failed", ex);
             recordStatus(STATUS_FAILURE, summarizeException(ex));
-            hadFailure = true;
+            hadFailure[0] = true;
         } finally {
             if (connected) {
                 try {
@@ -332,7 +332,7 @@ public class MqttTelemetryManager {
             }
         }
 
-        if (hadFailure) {
+        if (hadFailure[0]) {
             return false;
         }
         return true;
@@ -460,9 +460,10 @@ public class MqttTelemetryManager {
             }
         });
     }
-}
+
     public interface StatusListener {
         void onStatusChanged(String statusCode, String detail);
     }
 
     private volatile StatusListener statusListener;
+}

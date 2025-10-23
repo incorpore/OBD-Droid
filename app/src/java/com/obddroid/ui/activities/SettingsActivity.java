@@ -422,6 +422,10 @@ public class SettingsActivity
 				return;
 			}
 
+			// Check if fragment is attached before accessing context
+			if (!isAdded() || getContext() == null) {
+				return;
+			}
 			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext());
 			String statusCode = sharedPreferences.getString(MqttTelemetryManager.PREF_LAST_STATUS_CODE, "");
 			long timestamp = sharedPreferences.getLong(MqttTelemetryManager.PREF_LAST_STATUS_TIME, 0L);

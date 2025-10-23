@@ -1,8 +1,6 @@
 # Ford F-150 Diagnostic Session - Addendum
 ## Additional Learnings from Live Diagnostic Session
 
-**Date:** October 22, 2025 (Evening Session)
-**Session Duration:** 4 hours
 **Diagnostic Tools Used:**
 - OBD-Droid (Android app via Bluetooth)
 - Snap-on Intelligent Diagnostics Professional Scanner

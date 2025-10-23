@@ -403,6 +403,8 @@ public class ObdProt extends ProtoHeader
     private final ConcurrentHashMap<Integer, Boolean> permanentlySupportedPIDs = new ConcurrentHashMap<>();
     /** Cache for live data PIDs - thread-safe */
     private final ConcurrentHashMap<Integer, EcuDataPv> cachedLiveDataPIDs = new ConcurrentHashMap<>();
+    /** Cache for synthetic PIDs (GPS, sensors) with String keys - thread-safe */
+    private final ConcurrentHashMap<String, EcuDataPv> cachedSyntheticPIDs = new ConcurrentHashMap<>();
     /** Cache for vehicle info - thread-safe */
     private final ConcurrentHashMap<Integer, EcuDataPv> cachedVehicleInfo = new ConcurrentHashMap<>();
     /** Cache for freeze frames by frame ID - bounded with LRU eviction */
@@ -1518,15 +1520,35 @@ public class ObdProt extends ProtoHeader
             case OBD_SVC_DATA:
                 // Cache live data PIDs - thread-safe
                 cachedLiveDataPIDs.clear();
-                for (Object key : PidPvs.keySet()) {
-                    if (key instanceof Integer) {
-                        Integer pid = (Integer) key;
-                        Object value = PidPvs.get(pid);
+                cachedSyntheticPIDs.clear();
+
+                // Use getTyped to properly access typed entries
+                if (PidPvs instanceof TypedPvList) {
+                    TypedPvList<String, ?> typedPvs = (TypedPvList<String, ?>) PidPvs;
+                    for (Map.Entry<String, ?> entry : typedPvs.entrySetTyped()) {
+                        String key = entry.getKey();
+                        Object value = entry.getValue();
+
                         if (value instanceof EcuDataPv) {
-                            cachedLiveDataPIDs.put(pid, (EcuDataPv) value);
+                            EcuDataPv pv = (EcuDataPv) value;
+                            // Check if it's a synthetic PID (String key starting with F1xx)
+                            if (key.startsWith("F1")) {
+                                cachedSyntheticPIDs.put(key, pv);
+                                log.fine("ENHANCED: Cached synthetic PID: " + key);
+                            } else {
+                                // Try to parse as integer for regular PIDs
+                                try {
+                                    Integer pid = Integer.parseInt(key.split("\\.")[0], 16);
+                                    cachedLiveDataPIDs.put(pid, pv);
+                                } catch (NumberFormatException e) {
+                                    // Not a regular PID, skip
+                                }
+                            }
                         }
                     }
                 }
+
+                log.info("ENHANCED: Cached " + cachedLiveDataPIDs.size() + " regular PIDs and " + cachedSyntheticPIDs.size() + " synthetic PIDs");
 
                 // First time seeing PIDs? Save them permanently
                 if (!pidsDiscoveryComplete.get() && PidPvs.size() > 0) {
@@ -1590,15 +1612,29 @@ public class ObdProt extends ProtoHeader
      * Restore cached data for a service - thread-safe
      */
     private synchronized void restoreCachedData(int toService) {
+        log.info("ENHANCED: restoreCachedData called for service: " + toService);
         try {
             switch (toService) {
                 case OBD_SVC_DATA:
+                    log.info("ENHANCED: Service=DATA, PidPvs.size=" + PidPvs.size() + ", cachedSynthetic.size=" + cachedSyntheticPIDs.size());
                     // Restore live data if empty and we have cache
                     if (PidPvs.isEmpty() && !cachedLiveDataPIDs.isEmpty()) {
                         for (Map.Entry<Integer, EcuDataPv> entry : cachedLiveDataPIDs.entrySet()) {
                             PidPvs.put(entry.getKey(), entry.getValue());
                         }
-                        log.info("ENHANCED: Restored " + PidPvs.size() + " cached live data PIDs");
+                        log.info("ENHANCED: Restored " + cachedLiveDataPIDs.size() + " cached live data PIDs");
+                    }
+
+                    // ALWAYS restore synthetic PIDs (GPS, sensors) regardless of PidPvs state
+                    if (!cachedSyntheticPIDs.isEmpty()) {
+                        log.info("ENHANCED: Restoring " + cachedSyntheticPIDs.size() + " synthetic PIDs...");
+                        for (Map.Entry<String, EcuDataPv> entry : cachedSyntheticPIDs.entrySet()) {
+                            PidPvs.put(entry.getKey(), entry.getValue());
+                            log.info("ENHANCED: Restored synthetic PID: " + entry.getKey());
+                        }
+                        log.info("ENHANCED: Restored " + cachedSyntheticPIDs.size() + " synthetic PIDs (GPS/sensors), PidPvs.size now=" + PidPvs.size());
+                    } else {
+                        log.info("ENHANCED: No synthetic PIDs to restore (cache is empty)");
                     }
                     break;
 
@@ -1767,6 +1803,7 @@ public class ObdProt extends ProtoHeader
      */
     public synchronized void clearAllCaches() {
         cachedLiveDataPIDs.clear();
+        cachedSyntheticPIDs.clear();
         cachedVehicleInfo.clear();
         cachedFreezeFrames.clear();
         cachedFaultCodes.clear();

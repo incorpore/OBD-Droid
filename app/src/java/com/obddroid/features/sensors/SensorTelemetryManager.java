@@ -1,6 +1,7 @@
 package com.obddroid.features.sensors;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -9,6 +10,7 @@ import android.util.Log;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
 
 import com.obddroid.R;
 import com.obddroid.core.ecu.Conversion;
@@ -17,9 +19,12 @@ import com.obddroid.core.ecu.EcuDataItems;
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.ecu.LinearConversion;
 import com.obddroid.core.obd.ObdProt;
+import com.obddroid.ui.activities.SettingsActivity;
 
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Streams device motion sensor data (accelerometer) into the PID list so it can be graphed,
@@ -35,6 +40,7 @@ public class SensorTelemetryManager implements SensorEventListener {
     private final SensorManager sensorManager;
     private final Map<DataField, EcuDataItem> items = new EnumMap<>(DataField.class);
     private final Map<DataField, EcuDataPv> dataPvs = new EnumMap<>(DataField.class);
+    private final Set<String> registeredKeys = new HashSet<>();
 
     private Sensor accelerometer;
     private boolean active = false;
@@ -108,11 +114,14 @@ public class SensorTelemetryManager implements SensorEventListener {
 
             EcuDataItems.byMnemonic.put(field.mnemonic, item);
             ObdProt.dataItems.appendItemToService(SERVICE, item);
-            ObdProt.PidPvs.put(pid, item.pv);
+            String key = item.toString();
+            registeredKeys.add(key);
+            ObdProt.PidPvs.putTyped(key, item.pv);
 
             items.put(field, item);
             dataPvs.put(field, item.pv);
         }
+        ensureLiveDataPreferences();
     }
 
     private static Conversion[] createIdentityConversions(String units) {
@@ -155,6 +164,31 @@ public class SensorTelemetryManager implements SensorEventListener {
             return max;
         }
         return value;
+    }
+
+    private void ensureLiveDataPreferences() {
+        if (registeredKeys.isEmpty()) {
+            return;
+        }
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(appContext);
+        Set<String> current = prefs.getStringSet(SettingsActivity.KEY_DATA_ITEMS, null);
+
+        // If preference is null or empty, create a new set with sensor items
+        if (current == null || current.isEmpty()) {
+            Set<String> updated = new HashSet<>(registeredKeys);
+            prefs.edit().putStringSet(SettingsActivity.KEY_DATA_ITEMS, updated).apply();
+            return;
+        }
+
+        // If sensor items are already in preferences, no need to update
+        if (current.containsAll(registeredKeys)) {
+            return;
+        }
+
+        // Add sensor items to existing preferences
+        Set<String> updated = new HashSet<>(current);
+        updated.addAll(registeredKeys);
+        prefs.edit().putStringSet(SettingsActivity.KEY_DATA_ITEMS, updated).apply();
     }
 
     private enum DataField {

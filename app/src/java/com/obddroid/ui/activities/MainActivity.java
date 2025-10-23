@@ -27,6 +27,7 @@ import android.os.Message;
 import android.os.StrictMode;
 import androidx.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.Menu;
@@ -46,6 +47,7 @@ import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -227,10 +229,10 @@ public class MainActivity extends AppCompatActivity
             String fileName = intent.getStringExtra(CsvLoggingService.EXTRA_FILE_NAME);
             switch (status) {
                 case CsvLoggingService.STATUS_STARTED:
-                    SnackbarHelper.showInfo(MainActivity.this, getString(R.string.csv_logging_started));
+                    showFeatureToggleSnackbar(true, R.string.csv_logging_started);
                     break;
                 case CsvLoggingService.STATUS_STOPPED:
-                    SnackbarHelper.showInfo(MainActivity.this, getString(R.string.csv_logging_stopped));
+                    showFeatureToggleSnackbar(false, R.string.csv_logging_stopped);
                     if (!TextUtils.isEmpty(fileName)) {
                         SnackbarHelper.showSuccess(MainActivity.this, getString(R.string.csv_logging_finished_text, fileName));
                     }
@@ -923,7 +925,11 @@ public class MainActivity extends AppCompatActivity
 
         if (!csvLoggingReceiverRegistered) {
             IntentFilter filter = new IntentFilter(CsvLoggingService.ACTION_STATUS_BROADCAST);
-            registerReceiver(csvLoggingReceiver, filter);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(csvLoggingReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                registerReceiver(csvLoggingReceiver, filter);
+            }
             csvLoggingReceiverRegistered = true;
         }
 
@@ -1254,7 +1260,7 @@ public class MainActivity extends AppCompatActivity
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         if (gpsTelemetryManager.isActive()) {
             gpsTelemetryManager.stop();
-            SnackbarHelper.showInfo(this, getString(R.string.gps_telemetry_stopped));
+            showFeatureToggleSnackbar(false, R.string.gps_telemetry_stopped);
             prefs.edit().putBoolean(PREF_GPS_ENABLED, false).apply();
             invalidateOptionsMenu();
         } else {
@@ -1284,12 +1290,21 @@ public class MainActivity extends AppCompatActivity
             gpsTelemetryManager = new GpsTelemetryManager(this);
         }
         gpsTelemetryManager.start();
-        SnackbarHelper.showSuccess(this, getString(R.string.gps_telemetry_started));
+        showFeatureToggleSnackbar(true, R.string.gps_telemetry_started);
         PreferenceManager.getDefaultSharedPreferences(this)
             .edit()
             .putBoolean(PREF_GPS_ENABLED, true)
             .apply();
         invalidateOptionsMenu();
+
+        // Refresh adapter to show GPS fields by re-reading preferences
+        if (mPidAdapter != null) {
+            Log.d("MainActivity", "Refreshing PID adapter after GPS start, PidPvs size: " + ObdProt.PidPvs.size());
+            mPidAdapter.setPvList(ObdProt.PidPvs);
+            Log.d("MainActivity", "PID adapter now has " + mPidAdapter.getCount() + " items");
+        } else {
+            Log.w("MainActivity", "mPidAdapter is null, cannot refresh!");
+        }
     }
 
     private void toggleSensorTelemetry() {
@@ -1299,7 +1314,7 @@ public class MainActivity extends AppCompatActivity
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         if (sensorTelemetryManager.isActive()) {
             sensorTelemetryManager.stop();
-            SnackbarHelper.showInfo(this, getString(R.string.motion_telemetry_stopped));
+            showFeatureToggleSnackbar(false, R.string.motion_telemetry_stopped);
             prefs.edit().putBoolean(PREF_SENSOR_ENABLED, false).apply();
         } else {
             startSensorTelemetryInternal();
@@ -1313,8 +1328,13 @@ public class MainActivity extends AppCompatActivity
             sensorTelemetryManager = new SensorTelemetryManager(this);
         }
         sensorTelemetryManager.start();
-        SnackbarHelper.showSuccess(this, getString(R.string.motion_telemetry_started));
+        showFeatureToggleSnackbar(true, R.string.motion_telemetry_started);
         invalidateOptionsMenu();
+
+        // Refresh adapter to show sensor fields by re-reading preferences
+        if (mPidAdapter != null) {
+            mPidAdapter.setPvList(ObdProt.PidPvs);
+        }
     }
 
     private void toggleMqttPublisher() {
@@ -1323,17 +1343,43 @@ public class MainActivity extends AppCompatActivity
         if (manager.isActive()) {
             manager.stop();
             prefs.edit().putBoolean(PREF_MQTT_ENABLED, false).apply();
-            SnackbarHelper.showInfo(this, getString(R.string.mqtt_publisher_stopped));
+            showFeatureToggleSnackbar(false, R.string.mqtt_publisher_stopped);
         } else {
             if (manager.start()) {
                 prefs.edit().putBoolean(PREF_MQTT_ENABLED, true).apply();
-                SnackbarHelper.showSuccess(this, getString(R.string.mqtt_publisher_started));
+                showFeatureToggleSnackbar(true, R.string.mqtt_publisher_started);
             } else {
                 prefs.edit().putBoolean(PREF_MQTT_ENABLED, false).apply();
-                SnackbarHelper.showError(this, getString(R.string.mqtt_publisher_config_error));
+                // Show dialog to guide user to settings
+                showMqttConfigurationDialog();
             }
         }
         invalidateOptionsMenu();
+    }
+
+    private void showFeatureToggleSnackbar(boolean enabled, @StringRes int messageRes) {
+        if (enabled) {
+            SnackbarHelper.showSuccess(this, getString(messageRes));
+        } else {
+            SnackbarHelper.showInfo(this, getString(messageRes));
+        }
+    }
+
+    private void showMqttConfigurationDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle("MQTT Not Configured")
+            .setMessage("MQTT Publishing requires configuration before it can be enabled.\n\n" +
+                       "Please configure the following in Settings:\n" +
+                       "• MQTT Broker Host (required)\n" +
+                       "• Port (default: 1883)\n" +
+                       "• Topic Prefix\n" +
+                       "• Username/Password (if required)")
+            .setPositiveButton("Open Settings", (dialog, which) -> {
+                Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
+            })
+            .setNegativeButton("Cancel", null)
+            .show();
     }
 
     private MqttTelemetryManager getMqttTelemetryManager() {
@@ -3008,6 +3054,12 @@ public class MainActivity extends AppCompatActivity
             } else {
                 listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
             }
+        }
+
+        // Wire up vehicle footer for data views
+        vehicleInfoFooter = findViewById(R.id.vehicle_footer);
+        if (vehicleInfoFooter != null) {
+            vehicleInfoFooter.setVisibility(View.VISIBLE);
         }
 
         // Hide clear codes button by default (will be shown for fault codes)

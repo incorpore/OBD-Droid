@@ -3,6 +3,7 @@ package com.obddroid.features.gps;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -14,6 +15,7 @@ import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 
 import com.obddroid.R;
 import com.obddroid.core.ecu.Conversion;
@@ -22,9 +24,12 @@ import com.obddroid.core.ecu.EcuDataItems;
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.ecu.LinearConversion;
 import com.obddroid.core.obd.ObdProt;
+import com.obddroid.ui.activities.SettingsActivity;
 
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Captures device GPS telemetry and exposes it as synthetic PIDs so the rest of the app (dashboards,
@@ -41,6 +46,7 @@ public class GpsTelemetryManager implements LocationListener {
     private final LocationManager locationManager;
     private final Map<GpsField, EcuDataItem> items = new EnumMap<>(GpsField.class);
     private final Map<GpsField, EcuDataPv> dataPvs = new EnumMap<>(GpsField.class);
+    private final Set<String> registeredKeys = new HashSet<>();
 
     private boolean active = false;
 
@@ -101,18 +107,26 @@ public class GpsTelemetryManager implements LocationListener {
                 description,
                 field.mnemonic
             );
+
             // Seed PV defaults
             item.pv.put(EcuDataPv.FID_VALUE, Double.valueOf(0d));
             item.pv.put(EcuDataPv.FID_UNITS, field.units);
             item.pv.put(EcuDataPv.FID_FORMAT, field.formatPattern);
+            item.pv.put(EcuDataPv.FID_DESCRIPT, description);
 
             EcuDataItems.byMnemonic.put(field.mnemonic, item);
             ObdProt.dataItems.appendItemToService(SERVICE, item);
-            ObdProt.PidPvs.put(pid, item.pv);
+            String key = item.toString();
+            registeredKeys.add(key);
+            ObdProt.PidPvs.putTyped(key, item.pv);
 
             items.put(field, item);
             dataPvs.put(field, item.pv);
+
+            Log.d(TAG, "Registered GPS field: " + field.mnemonic + " with key: " + key);
         }
+        Log.d(TAG, "Total GPS fields registered: " + registeredKeys.size());
+        ensureLiveDataPreferences();
     }
 
     private static Conversion[] createIdentityConversions(String units) {
@@ -209,6 +223,38 @@ public class GpsTelemetryManager implements LocationListener {
             return max;
         }
         return value;
+    }
+
+    private void ensureLiveDataPreferences() {
+        if (registeredKeys.isEmpty()) {
+            Log.w(TAG, "No registered keys to add to preferences");
+            return;
+        }
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(appContext);
+        Set<String> current = prefs.getStringSet(SettingsActivity.KEY_DATA_ITEMS, null);
+
+        Log.d(TAG, "Current preference size: " + (current == null ? "null" : current.size()));
+        Log.d(TAG, "GPS keys to add: " + registeredKeys.size());
+
+        // If preference is null or empty, create a new set with GPS items
+        if (current == null || current.isEmpty()) {
+            Set<String> updated = new HashSet<>(registeredKeys);
+            prefs.edit().putStringSet(SettingsActivity.KEY_DATA_ITEMS, updated).apply();
+            Log.d(TAG, "Created new preference set with " + updated.size() + " GPS items");
+            return;
+        }
+
+        // If GPS items are already in preferences, no need to update
+        if (current.containsAll(registeredKeys)) {
+            Log.d(TAG, "GPS items already in preferences");
+            return;
+        }
+
+        // Add GPS items to existing preferences
+        Set<String> updated = new HashSet<>(current);
+        updated.addAll(registeredKeys);
+        prefs.edit().putStringSet(SettingsActivity.KEY_DATA_ITEMS, updated).apply();
+        Log.d(TAG, "Updated preferences from " + current.size() + " to " + updated.size() + " items");
     }
 
     private enum GpsField {

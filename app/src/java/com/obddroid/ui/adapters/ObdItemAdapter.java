@@ -141,11 +141,22 @@ public class ObdItemAdapter extends ArrayAdapter<Object>
     private Collection<Object> getMatchingItems(PvList pvs, Set<String> pidsToShow)
     {
         HashSet<Object> filtered = new HashSet<>();
+        int gpsCount = 0;
         for (String key : pidsToShow)
         {
             IndexedProcessVar pv = (IndexedProcessVar) pvs.get(key);
-            if (pv != null)
+            if (pv != null) {
                 filtered.add(pv);
+                if (key.startsWith("F1")) {
+                    gpsCount++;
+                    android.util.Log.d("ObdItemAdapter", "Found GPS field with key: " + key);
+                }
+            } else if (key.startsWith("F1")) {
+                android.util.Log.w("ObdItemAdapter", "GPS key in prefs but not found in PvList: " + key);
+            }
+        }
+        if (gpsCount > 0) {
+            android.util.Log.d("ObdItemAdapter", "Total GPS fields matched: " + gpsCount + " out of " + filtered.size() + " total items");
         }
         return (filtered);
     }
