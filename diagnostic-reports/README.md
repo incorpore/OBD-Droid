@@ -6,6 +6,27 @@ Use the OBD-Droid app to capture vehicle data, diagnose issues, and present repa
 
 ---
 
+## 👥 Two Templates for Different Use Cases
+
+### **For Mechanics & Technicians:**
+`TEMPLATE_diagnostic_report.md` - Customer-facing diagnostic reports
+- Root cause analysis
+- Repair recommendations
+- Cost estimates
+- Verification procedures
+
+### **For Used Car Dealers:**
+`TEMPLATE_dealer_diagnostic.md` - Auction acquisitions & reconditioning
+- Pre-purchase inspection
+- Profit margin analysis
+- Recon timeline planning
+- Wholesale vs retail decisions
+- Arbitration claim tracking
+
+**Choose the template that matches your business!**
+
+---
+
 ## 📱 How It Works
 
 ```
@@ -274,16 +295,26 @@ diagnostic-reports/screenshots/
 
 ## 🔄 Workflow Summary
 
-### New Issue Detected
+### For Mechanics/Technicians: Customer Repairs
 
 1. **Scan with OBD-Droid** → Capture all data
-2. **Create report** → Copy template to active/
+2. **Create report** → Copy `TEMPLATE_diagnostic_report.md` to active/
 3. **Analyze data** → Determine root cause
 4. **Recommend repairs** → Quick fix + full solution
 5. **Get approval** → Customer decision
 6. **Perform repair** → Fix the issue
 7. **Verify with OBD-Droid** → Confirm resolution
 8. **Move to resolved/** → Archive successful repair
+
+### For Dealers: Auction Acquisitions
+
+1. **Pre-Purchase Scan** → OBD-Droid at auction or immediately after delivery
+2. **Create report** → Copy `TEMPLATE_dealer_diagnostic.md` to active/
+3. **Calculate profit margin** → Purchase price + recon cost vs retail value
+4. **Decision matrix** → Retail / Quick flip / Wholesale out / Arbitration
+5. **Recon timeline** → Schedule parts/labor, track days in shop
+6. **Final verification** → OBD-Droid clean scan before lot
+7. **Move to resolved/** → Vehicle sold, archive report
 
 ### Follow-Up Scans
 
@@ -406,3 +437,132 @@ For advanced users:
 **Powered by:** OBD-Droid App
 **Version:** 2.0 (OBD-Droid Integrated)
 **Last Updated:** October 23, 2025
+
+---
+
+## 🚗 Dealer-Specific Workflow
+
+### Used Car Dealer Pre-Purchase Inspection
+
+**AT AUCTION (or immediately after delivery):**
+
+1. **Quick OBD-Droid Scan** (2-3 minutes)
+   - *Main Menu → Fault Codes*
+   - Screenshot any DTCs
+   - Check MIL status
+
+2. **Quick Decision Matrix**
+   ```
+   NO CODES + MIL OFF = Potential buy (pending test drive)
+   1-2 MINOR CODES = Calculate repair cost, adjust bid
+   3+ CODES or CRITICAL = Pass or low-ball bid
+   MIL ON + UNDISCLOSED = Arbitration claim after purchase
+   ```
+
+3. **Live Data Spot Check** (1-2 minutes)
+   - Start engine, let idle
+   - *Main Menu → Live Data*
+   - Look for obvious red flags:
+     - Coolant temp normal?
+     - Fuel trim reasonable?
+     - O2 sensors switching?
+     - MAF/MAP readings normal?
+
+4. **Emissions Monitor Check** (if state requires)
+   - *Main Menu → Emissions*
+   - All monitors READY? → Can pass inspection
+   - Monitors NOT READY? → May need drive cycle or repairs
+
+**BACK AT THE SHOP:**
+
+1. **Create Dealer Diagnostic Report**
+   ```bash
+   cp diagnostic-reports/TEMPLATE_dealer_diagnostic.md \
+      diagnostic-reports/active/Stock_[#]_YYYY_Make_Model.md
+   ```
+
+2. **Fill in Financial Analysis**
+   - Purchase price + fees
+   - Estimated repair costs (based on OBD findings)
+   - Market retail value
+   - Profit margin calculation
+   - Decision: Retail / Flip / Wholesale
+
+3. **Recon Planning**
+   - Schedule shop time
+   - Order parts
+   - Set target lot date
+   - Track carrying costs
+
+4. **Final Verification Before Lot**
+   - Clear all codes
+   - Re-scan with OBD-Droid
+   - Screenshot clean scan for file
+   - Test drive
+   - Detail
+   - Photograph for listing
+
+**PROFIT MARGIN TARGETS:**
+
+| Repair Cost | Minimum Profit Margin | Notes |
+|-------------|----------------------|--------|
+| Under $500 | 25-30% | Quick flips, low risk |
+| $500-$1,500 | 30-40% | Standard recon |
+| $1,500-$3,000 | 40-50% | Higher risk, more time |
+| Over $3,000 | 50%+ or wholesale | May not be worth retail effort |
+
+**ARBITRATION CLAIMS:**
+
+Use OBD-Droid screenshots as evidence:
+- Undisclosed check engine light
+- Undisclosed fault codes
+- Incomplete emissions monitors (if not disclosed)
+- Frame/structural codes not on condition report
+
+**Screenshot before any repairs for arbitration!**
+
+---
+
+## 📊 Dealer Example Reports
+
+### Example: Auction Purchase Decision
+**File:** `active/Stock_12345_2017_Nissan_Frontier.md`
+
+**Scenario:** Truck purchased at auction, MIL was disclosed but specific codes were not.
+
+**OBD-Droid Findings:**
+- P0420 - Catalyst efficiency (Bank 1)
+- P0430 - Catalyst efficiency (Bank 2)
+
+**Decision Matrix:**
+```
+Purchase Price:        $8,500
+Auction Fees:            $300
+Aftermarket Cats:        $800 (both sides)
+Shop Labor (6 hrs):      $360
+Detail/Recon:            $200
+Total Investment:     $10,160
+
+Market Retail Value:  $14,995
+Projected Profit:      $4,835
+Profit Margin:           47%
+
+DECISION: ✅ KEEP & RETAIL
+- Good profit margin
+- Common repair, low risk
+- 4-5 day recon timeline
+- Can offer 60-day warranty post-repair
+```
+
+**Alternative if cats were $2,500 (OEM):**
+```
+Total Investment:     $11,860
+Market Retail:        $14,995
+Profit:                $3,135
+Margin:                  26%
+
+DECISION: 🟡 QUICK FLIP or WHOLESALE
+- Profit margin too thin for retail effort
+- Wholesale at $9,500 = $700 profit (8% margin)
+- OR quick flip AS-IS with disclosure at $11,000
+```
