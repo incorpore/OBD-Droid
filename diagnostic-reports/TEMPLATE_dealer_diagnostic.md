@@ -4,14 +4,28 @@
 ---
 
 ## Vehicle Info
+*From OBD-Droid VIN Decoder*
 
 | | |
 |---|---|
 | **Stock #** | |
-| **VIN** | |
-| **Year/Make/Model** | |
-| **Mileage** | |
-| **Acquired From** | |
+| **VIN** | [Full VIN] |
+| **Year** | [Auto-filled from VIN] |
+| **Make** | [Auto-filled from VIN] |
+| **Model** | [Auto-filled from VIN] |
+| **Trim** | [Auto-filled from VIN] |
+| **Engine** | [Size/type - e.g., 4.0L V6] |
+| **Displacement** | [Liters/CID] |
+| **Fuel Type** | [Gasoline/Diesel/Flex] |
+| **Transmission** | [Auto/Manual, speeds] |
+| **Drive Type** | [FWD/RWD/AWD/4WD] |
+| **Body Style** | [Sedan/Truck/SUV] |
+| **Mileage** | [Current odometer] |
+| **Acquired From** | [Auction/Trade/Wholesale] |
+| **Purchase Price** | $[Amount] |
+
+**OBD Protocol:** [ISO 15765-4 CAN / etc.]
+**ECU Module:** [ECM - EngineControl / etc.]
 
 ---
 
