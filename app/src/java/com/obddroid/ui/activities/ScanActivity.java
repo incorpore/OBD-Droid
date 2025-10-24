@@ -1,0 +1,404 @@
+package com.obddroid.ui.activities;
+
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.view.Gravity;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
+
+import com.obddroid.R;
+import com.obddroid.scan.ScanConfiguration;
+import com.obddroid.scan.ScanOrchestrator;
+import com.obddroid.scan.ScanReport;
+import com.obddroid.scan.StageResult;
+import com.obddroid.vehicle.VehicleManager;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.ScanProgressListener {
+
+    private TextView vehicleName;
+    private TextView vehicleDetails;
+    private TextView progressText;
+    private TextView progressPercentage;
+    private TextView currentStageText;
+    private ProgressBar progressBar;
+    private LinearLayout stagesContainer;
+    private CardView resultsCard;
+    private TextView resultsSummary;
+    private Button startButton;
+    private Button cancelButton;
+    private Button viewCopilotButton;
+
+    private ScanOrchestrator scanService;
+    private boolean serviceBound = false;
+    private int totalStages = 0;
+    private int completedStages = 0;
+    private Map<Integer, View> stageViews = new HashMap<>();
+    private ScanReport lastReport;
+
+    private final ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            ScanOrchestrator.LocalBinder binder = (ScanOrchestrator.LocalBinder) service;
+            scanService = binder.getService();
+            scanService.setProgressListener(ScanActivity.this);
+            serviceBound = true;
+
+            // If scan is already running, update UI
+            if (scanService.isScanning()) {
+                onScanStartInProgress();
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            serviceBound = false;
+            scanService = null;
+        }
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_scan);
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Full Vehicle Scan");
+        }
+
+        initializeViews();
+        setupListeners();
+        loadVehicleInfo();
+
+        // Bind to scan service
+        Intent intent = new Intent(this, ScanOrchestrator.class);
+        startService(intent); // Ensure service is created
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    private void initializeViews() {
+        vehicleName = findViewById(R.id.vehicle_name);
+        vehicleDetails = findViewById(R.id.vehicle_details);
+        progressText = findViewById(R.id.progress_text);
+        progressPercentage = findViewById(R.id.progress_percentage);
+        currentStageText = findViewById(R.id.current_stage_text);
+        progressBar = findViewById(R.id.progress_bar);
+        stagesContainer = findViewById(R.id.stages_container);
+        resultsCard = findViewById(R.id.results_card);
+        resultsSummary = findViewById(R.id.results_summary);
+        startButton = findViewById(R.id.start_button);
+        cancelButton = findViewById(R.id.cancel_button);
+        viewCopilotButton = findViewById(R.id.view_copilot_button);
+    }
+
+    private void setupListeners() {
+        startButton.setOnClickListener(v -> startScan());
+        cancelButton.setOnClickListener(v -> cancelScan());
+        viewCopilotButton.setOnClickListener(v -> openCoPilot());
+    }
+
+    private void loadVehicleInfo() {
+        VehicleManager vehicleManager = VehicleManager.getInstance(this);
+
+        String displayName = vehicleManager.getVehicleDisplayName();
+        if (displayName != null && !displayName.isEmpty()) {
+            vehicleName.setText(displayName);
+        }
+
+        String vin = vehicleManager.getCurrentVIN();
+        if (vin != null && !vin.isEmpty()) {
+            vehicleDetails.setText("VIN: " + vin + "\nReady for comprehensive diagnostic scan");
+        } else {
+            vehicleDetails.setText("Ready for comprehensive diagnostic scan");
+        }
+    }
+
+    private void startScan() {
+        if (!serviceBound || scanService == null) {
+            Toast.makeText(this, "Scan service not ready", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (scanService.isScanning()) {
+            Toast.makeText(this, "Scan already in progress", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Reset UI
+        stagesContainer.removeAllViews();
+        stageViews.clear();
+        completedStages = 0;
+        totalStages = 0;
+        resultsCard.setVisibility(View.GONE);
+
+        // Update buttons
+        startButton.setVisibility(View.GONE);
+        cancelButton.setVisibility(View.VISIBLE);
+        viewCopilotButton.setVisibility(View.GONE);
+
+        // Start scan with default configuration
+        ScanConfiguration config = ScanConfiguration.getDefault();
+        scanService.startScan(config);
+    }
+
+    private void cancelScan() {
+        if (serviceBound && scanService != null) {
+            scanService.cancelScan();
+        }
+    }
+
+    private void openCoPilot() {
+        Intent intent = new Intent(this, CoPilotActivity.class);
+        startActivity(intent);
+    }
+
+    private void onScanStartInProgress() {
+        startButton.setVisibility(View.GONE);
+        cancelButton.setVisibility(View.VISIBLE);
+        progressText.setText("Scan in progress...");
+    }
+
+    @Override
+    public void onScanStarted(int totalStages) {
+        runOnUiThread(() -> {
+            this.totalStages = totalStages;
+            this.completedStages = 0;
+
+            progressBar.setMax(totalStages);
+            progressBar.setProgress(0);
+            progressText.setText("Starting scan...");
+            progressPercentage.setText("0%");
+            currentStageText.setText(totalStages + " stages to complete");
+
+            vehicleDetails.setText("Scanning in progress - please wait");
+        });
+    }
+
+    @Override
+    public void onStageStarted(int stageIndex, String stageName) {
+        runOnUiThread(() -> {
+            // Add stage to UI if not already present
+            if (!stageViews.containsKey(stageIndex)) {
+                View stageView = createStageView(stageName, "in_progress");
+                stagesContainer.addView(stageView);
+                stageViews.put(stageIndex, stageView);
+            }
+
+            updateStageView(stageIndex, stageName, "in_progress", null);
+
+            currentStageText.setText("Stage " + (stageIndex + 1) + "/" + totalStages + ": " + stageName);
+            progressText.setText(stageName + "...");
+        });
+    }
+
+    @Override
+    public void onStageCompleted(int stageIndex, StageResult result) {
+        runOnUiThread(() -> {
+            completedStages++;
+
+            int progress = (int) ((completedStages / (float) totalStages) * 100);
+            progressBar.setProgress(completedStages);
+            progressPercentage.setText(progress + "%");
+
+            String status = result.isSuccess() ? "success" :
+                           result.getStatus() == StageResult.Status.SKIPPED ? "skipped" : "failed";
+
+            updateStageView(stageIndex, null, status, result.getMessage());
+
+            if (completedStages == totalStages) {
+                currentStageText.setText("All stages completed");
+            }
+        });
+    }
+
+    @Override
+    public void onScanCompleted(ScanReport report) {
+        runOnUiThread(() -> {
+            this.lastReport = report;
+
+            progressBar.setProgress(totalStages);
+            progressPercentage.setText("100%");
+            progressText.setText("Scan Complete!");
+            currentStageText.setText("Duration: " + (report.getTotalDurationMs() / 1000.0) + " seconds");
+
+            vehicleDetails.setText("Scan completed successfully");
+
+            // Show results
+            resultsCard.setVisibility(View.VISIBLE);
+            resultsSummary.setText(report.getSummary());
+
+            // Update buttons
+            cancelButton.setVisibility(View.GONE);
+            startButton.setText("Scan Again");
+            startButton.setVisibility(View.VISIBLE);
+            viewCopilotButton.setVisibility(View.VISIBLE);
+
+            Toast.makeText(this, "Scan complete! " + report.getStageResults().size() + " stages finished",
+                Toast.LENGTH_LONG).show();
+        });
+    }
+
+    @Override
+    public void onScanCancelled() {
+        runOnUiThread(() -> {
+            progressText.setText("Scan Cancelled");
+            currentStageText.setText("Scan was cancelled by user");
+            vehicleDetails.setText("Scan cancelled - partial data may be available");
+
+            cancelButton.setVisibility(View.GONE);
+            startButton.setText("Start New Scan");
+            startButton.setVisibility(View.VISIBLE);
+
+            Toast.makeText(this, "Scan cancelled", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    @Override
+    public void onScanFailed(Exception error) {
+        runOnUiThread(() -> {
+            progressText.setText("Scan Failed");
+            currentStageText.setText("Error: " + error.getMessage());
+            vehicleDetails.setText("Scan failed - please try again");
+
+            cancelButton.setVisibility(View.GONE);
+            startButton.setText("Retry Scan");
+            startButton.setVisibility(View.VISIBLE);
+
+            Toast.makeText(this, "Scan failed: " + error.getMessage(), Toast.LENGTH_LONG).show();
+        });
+    }
+
+    private View createStageView(String stageName, String status) {
+        LinearLayout stageLayout = new LinearLayout(this);
+        stageLayout.setOrientation(LinearLayout.HORIZONTAL);
+        stageLayout.setPadding(0, dpToPx(8), 0, dpToPx(8));
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        stageLayout.setLayoutParams(params);
+
+        // Status icon
+        TextView icon = new TextView(this);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(
+            dpToPx(24), dpToPx(24)
+        );
+        iconParams.gravity = Gravity.CENTER_VERTICAL;
+        iconParams.setMarginEnd(dpToPx(12));
+        icon.setLayoutParams(iconParams);
+        icon.setGravity(Gravity.CENTER);
+        icon.setTextSize(16);
+        icon.setTag("icon");
+
+        // Stage name
+        TextView nameText = new TextView(this);
+        LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(
+            0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f
+        );
+        nameText.setLayoutParams(nameParams);
+        nameText.setText(stageName);
+        nameText.setTextColor(getColor(R.color.text_primary));
+        nameText.setTextSize(14);
+        nameText.setTag("name");
+
+        // Message text (initially hidden)
+        TextView messageText = new TextView(this);
+        messageText.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        messageText.setTextColor(getColor(R.color.text_secondary));
+        messageText.setTextSize(12);
+        messageText.setVisibility(View.GONE);
+        messageText.setTag("message");
+
+        stageLayout.addView(icon);
+        stageLayout.addView(nameText);
+
+        updateStageStatus(stageLayout, status, null);
+
+        return stageLayout;
+    }
+
+    private void updateStageView(int stageIndex, String stageName, String status, String message) {
+        View stageView = stageViews.get(stageIndex);
+        if (stageView != null && stageView instanceof LinearLayout) {
+            if (stageName != null) {
+                TextView nameText = stageView.findViewWithTag("name");
+                if (nameText != null) {
+                    nameText.setText(stageName);
+                }
+            }
+            updateStageStatus((LinearLayout) stageView, status, message);
+        }
+    }
+
+    private void updateStageStatus(LinearLayout stageLayout, String status, String message) {
+        TextView icon = stageLayout.findViewWithTag("icon");
+
+        if (icon != null) {
+            switch (status) {
+                case "pending":
+                    icon.setText("○");
+                    icon.setTextColor(getColor(R.color.text_secondary));
+                    break;
+                case "in_progress":
+                    icon.setText("⟳");
+                    icon.setTextColor(getColor(R.color.colorPrimary));
+                    break;
+                case "success":
+                    icon.setText("✓");
+                    icon.setTextColor(getColor(R.color.fault_success));
+                    break;
+                case "skipped":
+                    icon.setText("⊘");
+                    icon.setTextColor(getColor(R.color.text_secondary));
+                    break;
+                case "failed":
+                    icon.setText("✗");
+                    icon.setTextColor(getColor(R.color.fault_error));
+                    break;
+            }
+        }
+    }
+
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (serviceBound) {
+            unbindService(serviceConnection);
+            serviceBound = false;
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+}

@@ -14,6 +14,13 @@
         android:title="@string/disconnect"
         android:visible="false"/>
     <item
+        android:id="@+id/full_scan"
+        android:icon="@android:drawable/ic_menu_search"
+        android:enabled="true"
+        app:showAsAction="ifRoom"
+        android:title="Full Scan"
+        android:visible="true"/>
+    <item
         android:id="@+id/copilot"
         android:icon="@android:drawable/ic_dialog_info"
         android:enabled="true"

@@ -1302,12 +1302,17 @@ public class MainActivity extends AppCompatActivity
                 launchActivityForResult(settingsIntent, REQUEST_SETTINGS);
                 return true;
 
+            case R.id.full_scan:
+                // Launch the Full Vehicle Scan Activity
+                Intent scanIntent = new Intent(this, ScanActivity.class);
+                startActivity(scanIntent);
+                return true;
+
             case R.id.copilot:
                 // Launch the CoPilot Activity
                 Intent copilotIntent = new Intent(this, CoPilotActivity.class);
                 startActivity(copilotIntent);
                 return true;
-
 
 
             case R.id.service_home:
