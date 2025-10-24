@@ -1,6 +1,38 @@
-# 🔧 Vehicle Diagnostic Report System
+# 🔧 OBD-Droid Diagnostic Report System
 
-Professional diagnostic reporting system for tracking vehicle issues, root causes, damage assessment, and repair procedures.
+**Professional diagnostic reporting powered by OBD-Droid data**
+
+Use the OBD-Droid app to capture vehicle data, diagnose issues, and present repair solutions in a professional, structured format.
+
+---
+
+## 📱 How It Works
+
+```
+1. Connect OBD-Droid to Vehicle
+         ↓
+2. Capture Data via App
+   - Fault Codes (Mode 03, 07, 0A)
+   - Freeze Frame Data
+   - Live Data Parameters
+   - Emissions Monitor Status
+   - Vehicle History/Recalls
+         ↓
+3. Analyze Data
+   - Compare to normal ranges
+   - Identify abnormalities
+   - Determine root cause
+         ↓
+4. Create Diagnostic Report
+   - Use template
+   - Document findings
+   - Present repair solutions
+         ↓
+5. Verify Repair with OBD-Droid
+   - Clear codes
+   - Monitor live data
+   - Confirm fix
+```
 
 ---
 
@@ -11,293 +43,366 @@ diagnostic-reports/
 ├── README.md                          ← You are here
 ├── TEMPLATE_diagnostic_report.md      ← Copy this for new reports
 ├── active/                            ← Currently diagnosing issues
+│   └── YYYY_Make_Model_DTC_Issue.md
 ├── resolved/                          ← Completed repairs
-└── archived/                          ← Historical records
+│   └── YYYY_Make_Model_DTC_Issue.md
+└── archived/                          ← Historical records (1+ years old)
 ```
 
 ---
 
 ## 🚀 Quick Start
 
-### Creating a New Diagnostic Report
+### 1. Connect to Vehicle with OBD-Droid
 
-1. **Copy the template:**
-   ```bash
-   cp TEMPLATE_diagnostic_report.md active/YYYY_Make_Model_Issue.md
-   ```
+1. Launch OBD-Droid app
+2. Connect to ELM327 adapter
+3. Wait for connection confirmation
 
-2. **Name the file descriptively:**
-   - Format: `YYYY_Make_Model_DTCcode_Description.md`
-   - Example: `2022_GMC_Canyon_P0302_Cylinder2_Misfire.md`
+### 2. Capture Diagnostic Data
 
-3. **Fill out the report:**
-   - Vehicle information
-   - Diagnosis summary
-   - Root cause analysis
-   - Damage assessment
-   - Repair recommendations
-   - Cost estimates
+**Navigate through app to capture:**
 
-4. **Move when resolved:**
-   ```bash
-   mv active/report.md resolved/report.md
-   ```
+#### A. Fault Codes
+*Main Menu → Fault Codes*
+- Screenshot confirmed codes (Mode 03)
+- Screenshot pending codes (Mode 07)
+- Screenshot permanent codes (Mode 0A)
+- Note MIL status
 
----
+#### B. Freeze Frame
+*Tap on fault code → View freeze frame*
+- Screenshot freeze frame data
+- Note critical parameters at fault moment
 
-## 📋 Report Sections Explained
+#### C. Live Data
+*Main Menu → Live Data*
+- Screenshot current parameters
+- Identify abnormal readings
+- Compare to normal ranges
 
-### 1. **Vehicle Information**
-Basic vehicle identification and scan date.
+#### D. Emissions Status
+*Main Menu → Emissions*
+- Screenshot monitor readiness
+- Note incomplete monitors
+- Check IUMPR data
 
-### 2. **Diagnosis Summary**
-**What is the problem?**
-- Brief summary of symptoms
-- Fault codes detected
-- Observable issues
+#### E. Vehicle Info
+*Main Menu → Vehicle History (if available)*
+- Check recalls
+- Review service history
+- Note VIN and vehicle details
 
-### 3. **Root Cause Analysis**
-**What caused this issue?**
-- Primary cause (the "why")
-- Contributing factors
-- Failure mode explanation
-- Timeline/history
+### 3. Create Diagnostic Report
 
-### 4. **Damage Assessment**
-**What damage has been caused?**
-- Current component damage
-- Potential future damage if not repaired
-- Safety concerns (safe to drive?)
+```bash
+# Copy template for new diagnosis
+cp TEMPLATE_diagnostic_report.md active/2022_GMC_Canyon_P0302_Misfire.md
 
-### 5. **Recommended Repairs**
-**What needs to be done to correct it?**
+# Edit the file
+# Fill in sections using data from OBD-Droid
 
-**IMPORTANT - Simple Part Replacement Solutions:**
-
-If a problem can be solved by simply replacing a part, include:
-
-✅ **Easy Fix Option:**
-```markdown
-### Quick Part Replacement Solution
-
-**If you want to try the simple fix first:**
-
-Component: [Part Name]
-Part Number: [OEM or aftermarket]
-Difficulty: Easy / Moderate / Difficult
-Time: [Hours]
-Cost: $[Parts only]
-
-**Steps:**
-1. [Step 1]
-2. [Step 2]
-3. [Step 3]
-
-**Success Rate:** [Percentage] - This fixes the issue [X]% of the time
-
-**If this doesn't work:** Proceed to full diagnostic/repair below
+# When repair is complete, move to resolved/
+mv active/2022_GMC_Canyon_P0302_Misfire.md resolved/
 ```
 
-**Example - MAP Sensor Replacement:**
-```markdown
-### Quick Part Replacement Solution
+---
 
-**If you want to try replacing the MAP Sensor B first:**
+## 📋 Report Structure (OBD-Droid Focused)
 
-Component: MAP Sensor B (Bank 2)
-Part Number: GM 12614970 or ACDelco 213-4609
-Difficulty: Easy (accessible, plug-and-play)
-Time: 15-30 minutes
-Cost: $45-$85 (parts only)
+### ✅ What OBD-Droid Provides Automatically
 
-**Steps:**
-1. Disconnect negative battery terminal
-2. Locate MAP Sensor B on passenger side intake manifold
-3. Disconnect electrical connector
-4. Remove 2 screws holding sensor
-5. Install new sensor with new O-ring
-6. Reconnect connector and battery
-7. Clear codes and test drive
+The app already captures:
+- ✅ **VIN Decoding** (Year, Make, Model, Engine)
+- ✅ **Fault Codes** (Mode 03, 07, 0A with descriptions)
+- ✅ **Freeze Frame Data** (Parameters at fault moment)
+- ✅ **Live Data** (Real-time OBD parameters)
+- ✅ **Emissions Monitors** (Readiness status, IUMPR)
+- ✅ **Vehicle History** (Recalls, AutoCheck integration)
+- ✅ **Vehicle Profiles** (Saved vehicle information)
 
-**Success Rate:** 30% - This fixes the issue IF the sensor is bad
-                   70% of the time it's a vacuum leak, not the sensor
+### 📝 What You Document in Reports
 
-**If this doesn't work:** Perform vacuum leak test (see full repair below)
+Your diagnostic report adds:
+- **Root Cause Analysis** (Why the fault occurred)
+- **Damage Assessment** (Current + future damage)
+- **Repair Solutions** (What to do, how much it costs)
+- **Quick Fix Options** (Simple part replacement if applicable)
+- **Verification Plan** (How to confirm repair worked)
+
+---
+
+## 🎯 Using OBD-Droid Data for Diagnosis
+
+### Fault Code → Root Cause Workflow
+
+**Example: P0302 - Cylinder 2 Misfire**
+
+1. **OBD-Droid shows:**
+   - Fault code: P0302
+   - Freeze frame: MAP Sensor B = 0.00 kPa (abnormal!)
+   - Live data: Fuel Trim Bank 2 = +12.5% (lean)
+   - Misfire counter: Cylinder 2 = 47 counts
+
+2. **Analysis:**
+   - Cylinder 2 is on Bank 2 (passenger side)
+   - MAP Sensor B monitors Bank 2
+   - Both issues on same side = correlation!
+   - High fuel trim = engine adding fuel = vacuum leak
+
+3. **Root Cause:**
+   - Vacuum leak on passenger side intake manifold
+   - Affecting Cylinder 2 combustion
+   - Causing MAP Sensor B to read incorrectly
+
+4. **Repair Solution:**
+   - Quick fix: Try replacing MAP Sensor B ($50-$80, 30% success)
+   - Full fix: Vacuum leak test + intake manifold gasket ($990-$1,355)
+
+---
+
+## 💡 Quick Fix vs Full Repair
+
+### When to Suggest Quick Part Replacement
+
+**Include "Quick Fix" section if:**
+- ✅ Part costs under $100
+- ✅ Easy to access (no special tools)
+- ✅ OBD-Droid data suggests sensor failure
+- ✅ Common failure item on this vehicle
+- ✅ Low risk if wrong diagnosis
+- ✅ Can verify with OBD-Droid after replacement
+
+**Example Parts Good for Quick Fix:**
+- MAP/MAF sensors
+- O2 sensors
+- Throttle position sensors
+- Coolant temperature sensors
+- Camshaft/crankshaft position sensors
+
+### How to Verify Quick Fix with OBD-Droid
+
+**Template:**
+1. Replace part
+2. Clear codes: *Fault Codes → Menu → Clear Codes*
+3. Drive 10-20 miles (include highway + city)
+4. Re-scan with OBD-Droid
+5. Check live data for parameter:
+   - **FIXED:** Parameter now normal ✓
+   - **NOT FIXED:** Still abnormal → Full diagnosis needed
+
+---
+
+## 📸 Screenshot Best Practices
+
+**Where to save screenshots:**
+```
+diagnostic-reports/screenshots/
+├── 2022_GMC_Canyon_P0302/
+│   ├── fault_codes.png          ← Fault code screen
+│   ├── freeze_frame.png         ← Freeze frame data
+│   ├── live_data_idle.png       ← Live data at idle
+│   ├── live_data_driving.png    ← Live data while driving
+│   ├── emissions.png            ← Monitor readiness
+│   └── post_repair_clear.png    ← After repair - no codes
 ```
 
-**When to suggest part replacement:**
-- Part is inexpensive (under $100)
-- Easy to access and replace
-- No special tools required
-- Common failure item
-- Low risk if wrong diagnosis
-- Can rule out before expensive repairs
+**What to capture:**
+- Full screen (not cropped)
+- Clear, readable text
+- Include timestamp if visible
+- Before AND after repair
 
-**Always include:**
-- Success rate / likelihood estimate
-- What to do if it doesn't work
-- Full diagnostic option if part swap fails
+**Reference in report:**
+```markdown
+**Screenshot:** screenshots/2022_GMC_Canyon_P0302/fault_codes.png
+```
 
 ---
 
-### 6. **Cost Estimate**
-Complete breakdown of parts, labor, supplies, and total cost.
+## ✅ Post-Repair Verification Checklist
 
-**Include multiple options:**
-- **Option 1:** Minimum repair (quick part swap)
-- **Option 2:** Standard repair (most common fix)
-- **Option 3:** Complete repair (best long-term value)
-- **DIY Option:** Parts-only cost if customer wants to DIY
+**Use OBD-Droid to verify repair:**
 
-### 7. **Diagnostic Data**
-OBD-II scan data, freeze frames, live data, and test results.
+1. **Clear All Codes**
+   - *Fault Codes → Menu → Clear Codes*
+   - Clears confirmed, pending, AND freeze frames
 
-### 8. **Documentation**
-Links to screenshots, photos, and evidence.
+2. **Monitor Live Data**
+   - Start engine, let idle for 2 minutes
+   - Check all parameters are within normal range
+   - Screenshot normal readings
 
-### 9. **Timeline & Next Steps**
-Repair timeline and action checklist.
+3. **Test Drive**
+   - Minimum 10-20 miles
+   - Include: idle, city (stop/go), highway (steady speed)
+   - Monitor live data during drive
 
-### 10. **Technical Notes**
-Detailed mechanic notes, TSBs, recalls, and special considerations.
+4. **Re-Scan for Codes**
+   - *Main Menu → Fault Codes*
+   - **No codes** = Good! ✓
+   - **Codes returned** = Issue not fixed ✗
 
-### 11. **Repair Verification Checklist**
-Pre-repair, during-repair, and post-repair verification steps.
+5. **Check Emissions Monitors**
+   - *Main Menu → Emissions*
+   - Monitors will show "Not Ready" after code clear
+   - Complete drive cycle to set monitors
+   - All complete = Ready for emissions test ✓
 
-### 12. **Contact & Follow-Up**
-Shop/mechanic contact info, customer contact, follow-up schedule, warranty.
+6. **Document Success**
+   - Screenshot "No Codes" screen
+   - Screenshot normal live data
+   - Screenshot complete emissions monitors
+   - Move report to resolved/ folder
 
 ---
 
-## 🎯 Best Practices
+## 📊 Example Diagnostic Reports
+
+### Example 1: 2022 GMC Canyon - P0302 Cylinder Misfire
+**File:** `active/2022_GMC_Canyon_P0302_Cylinder2_Misfire.md`
+
+**Key Features:**
+- Complete OBD-Droid data capture
+- Correlation analysis (Cylinder 2 + MAP Sensor B on same bank)
+- Quick fix option (MAP sensor replacement)
+- Full repair option (intake manifold gasket)
+- Detailed live data table with normal ranges
+- Cost breakdown for multiple repair options
+
+---
+
+## 🔄 Workflow Summary
+
+### New Issue Detected
+
+1. **Scan with OBD-Droid** → Capture all data
+2. **Create report** → Copy template to active/
+3. **Analyze data** → Determine root cause
+4. **Recommend repairs** → Quick fix + full solution
+5. **Get approval** → Customer decision
+6. **Perform repair** → Fix the issue
+7. **Verify with OBD-Droid** → Confirm resolution
+8. **Move to resolved/** → Archive successful repair
+
+### Follow-Up Scans
+
+- **50 miles:** Customer re-scans (optional)
+- **500 miles:** Verify no codes returned
+- **1 year:** Move to archived/ folder
+
+---
+
+## 🛠️ Integration with OBD-Droid Features
+
+### Vehicle Profiles
+Link diagnostic report to vehicle profile:
+```markdown
+**OBD-Droid Profile:** vehicle-profiles/2022_GMC_Canyon_VIN778459.md
+```
+
+### Fault Code History
+Track all fault codes across multiple scans:
+- Compare current codes to previous scans
+- Identify recurring issues
+- Document when codes first appeared
+
+### ECU Module Scanning
+For advanced users:
+- *Main Menu → ECU Modules → Scan for ECUs*
+- Discover all vehicle ECUs
+- Check which modules have fault codes
+- Diagnose issues in ABS, transmission, etc.
+
+---
+
+## 💰 Cost Transparency
+
+**Always provide three options:**
+
+1. **Quick Fix** - Try simple part replacement
+   - Cost: $50-$150
+   - Success rate: 20-80% depending on issue
+   - Verification: OBD-Droid re-scan
+
+2. **Standard Repair** - Most common fix
+   - Cost: $500-$1,500
+   - Success rate: 85-95%
+   - Recommended for most issues
+
+3. **Complete Repair** - Best long-term value
+   - Cost: $1,000-$2,500
+   - Success rate: 95-100%
+   - Prevents future related issues
+
+**Let customer choose based on budget and risk tolerance.**
+
+---
+
+## 📝 Best Practices
 
 ### ✅ DO:
-- Be specific and detailed
-- Include actual data values (not just "low" or "high")
-- Explain WHY each repair is needed
-- Provide cost breakdowns
-- Include photos/screenshots
-- Reference TSBs and recalls
-- Document everything for warranty/legal
-- **Suggest simple part replacement if applicable**
-- **Give success rate estimates for part swaps**
+- Capture data BEFORE clearing codes
+- Take screenshots of everything
+- Compare live data to normal ranges
+- Document freeze frame parameters
+- Suggest quick fix if applicable
+- Include success rate estimates
+- Verify repair with OBD-Droid
+- Link to vehicle profile
 
 ### ❌ DON'T:
-- Use vague language ("maybe", "possibly")
-- Skip cost estimates
-- Forget to capture freeze frame data
-- Recommend unnecessary repairs
-- **Suggest expensive repairs without trying simple fixes first**
-- **Recommend part replacement without explaining success likelihood**
+- Clear codes before capturing data
+- Guess at diagnosis without data
+- Skip freeze frame capture
+- Recommend expensive repairs without trying quick fix first
+- Forget to document post-repair verification
+- Ignore incomplete emissions monitors
 
 ---
 
-## 📊 Priority Levels
+## 🎓 Training Resources
 
-| Priority | Description | Timeframe |
-|----------|-------------|-----------|
-| 🔴 **CRITICAL** | Unsafe to drive, immediate repair | Same day |
-| 🟠 **HIGH** | Drive with caution, repair soon | 1-2 weeks |
-| 🟡 **MEDIUM** | Plan repair, monitor symptoms | 1-3 months |
-| 🟢 **LOW** | Preventive maintenance | Next service |
+### Understanding OBD-II Data
 
----
+**Fuel Trim (STFT/LTFT):**
+- Normal: -10% to +10%
+- Positive (+15%): Engine running lean (adding fuel)
+- Negative (-15%): Engine running rich (reducing fuel)
 
-## 🔄 Workflow
+**MAP Sensor:**
+- Normal at idle: 30-45 kPa
+- Reading 0 kPa: Sensor failure or vacuum leak
+- Reading 100+ kPa: Turbo/boost issue or sensor failure
 
-```
-NEW ISSUE
-   ↓
-[OBD-II Scan + Diagnosis]
-   ↓
-Create report in active/
-   ↓
-Fill out template sections
-   ↓
-[Try simple part replacement if applicable]
-   ↓
-   ├─→ Fixed? → Move to resolved/ ✓
-   └─→ Not fixed? → Continue full diagnostic
-       ↓
-   [Perform full repair]
-       ↓
-   Move to resolved/ ✓
-       ↓
-   [Archive after 1 year] → archived/
-```
+**O2 Sensors:**
+- Normal: 0.1V - 0.9V cycling
+- Stuck at 0.45V: Sensor failure
+- Not switching: Sensor or fuel system issue
 
----
-
-## 📝 Example Reports
-
-See `active/2022_GMC_Canyon_P0302_Cylinder2_Misfire.md` for a complete example report.
-
-**Key features demonstrated:**
-- Complete vehicle identification
-- Detailed root cause analysis (vacuum leak)
-- Damage assessment with future risk warnings
-- Multiple repair options with cost breakdowns
-- **Simple part replacement option included** (MAP sensor swap)
-- **Success rate estimate provided** (30% sensor, 70% vacuum leak)
-- Complete OBD-II data table
-- Cylinder layout diagram for technician
-- TSB reference (GM #18-NA-355)
-- Comprehensive repair verification checklist
-
----
-
-## 🛠️ Tools Integration
-
-This diagnostic report system integrates with:
-- **OBD-Droid app** - Automatic fault code capture
-- **Vehicle profiles** - Links to vehicle-specific data
-- **Service history** - Track repairs over time
-- **AutoCheck integration** - VIN decoding and history
-
----
-
-## 💡 Tips for Effective Reports
-
-### For Simple Issues:
-1. **Try the easy fix first** - Suggest part replacement if:
-   - Part is cheap ($20-$100)
-   - Easy to access
-   - Common failure point
-   - No tools required beyond basics
-
-2. **Example - O2 Sensor:**
-   - Cost: $50-$80
-   - Time: 20 minutes
-   - Success rate: 80%
-   - If it doesn't work: Check wiring/exhaust leaks
-
-### For Complex Issues:
-1. **Start with thorough diagnosis** - Don't guess
-2. **Rule out simple fixes** - Test before replacing expensive parts
-3. **Provide multiple options** - Let customer choose budget vs completeness
-4. **Document everything** - Protect yourself and customer
-
-### Always Ask:
-- "Can this be fixed by replacing one part?"
-  - **YES** → Include simple replacement option
-  - **NO** → Explain why (needs diagnosis, special tools, etc.)
-
-- "What's the success rate of part replacement?"
-  - **>70%** → Recommend trying it first
-  - **30-70%** → Offer as optional first step
-  - **<30%** → Don't recommend, do proper diagnosis
+**Misfire Counters:**
+- Normal: 0 counts
+- 1-10 counts: Minor, monitor
+- 10+ counts: Active misfire, repair needed
+- 50+ counts: Severe, immediate repair
 
 ---
 
 ## 📞 Support
 
-For questions about the diagnostic report system:
-- Check the template: `TEMPLATE_diagnostic_report.md`
-- Review examples: `active/` directory
-- Consult OBD-Droid documentation
+**For OBD-Droid app issues:**
+- Check app documentation
+- Review fault code definitions
+- Verify adapter connection
+
+**For diagnostic report questions:**
+- Review template: `TEMPLATE_diagnostic_report.md`
+- Check examples: `active/` directory
+- Follow workflow in this README
 
 ---
 
 **System Created by:** Wal33D <aquataze@yahoo.com>
-**Version:** 1.0
+**Powered by:** OBD-Droid App
+**Version:** 2.0 (OBD-Droid Integrated)
 **Last Updated:** October 23, 2025
