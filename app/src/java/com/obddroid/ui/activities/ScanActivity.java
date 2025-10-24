@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import com.obddroid.R;
+import com.obddroid.scan.DiagnosticAnalyzer;
 import com.obddroid.scan.ScanConfiguration;
 import com.obddroid.scan.ScanOrchestrator;
 import com.obddroid.scan.ScanReport;
@@ -41,8 +42,12 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
     private LinearLayout stagesContainer;
     private CardView resultsCard;
     private TextView resultsSummary;
+    private CardView aiAnalysisCard;
+    private TextView aiAnalysisText;
+    private ProgressBar aiAnalysisProgress;
     private Button startButton;
     private Button cancelButton;
+    private Button analyzeButton;
     private Button viewCopilotButton;
 
     private ScanOrchestrator scanService;
@@ -103,14 +108,19 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         stagesContainer = findViewById(R.id.stages_container);
         resultsCard = findViewById(R.id.results_card);
         resultsSummary = findViewById(R.id.results_summary);
+        aiAnalysisCard = findViewById(R.id.ai_analysis_card);
+        aiAnalysisText = findViewById(R.id.ai_analysis_text);
+        aiAnalysisProgress = findViewById(R.id.ai_analysis_progress);
         startButton = findViewById(R.id.start_button);
         cancelButton = findViewById(R.id.cancel_button);
+        analyzeButton = findViewById(R.id.analyze_button);
         viewCopilotButton = findViewById(R.id.view_copilot_button);
     }
 
     private void setupListeners() {
         startButton.setOnClickListener(v -> startScan());
         cancelButton.setOnClickListener(v -> cancelScan());
+        analyzeButton.setOnClickListener(v -> runAIAnalysis());
         viewCopilotButton.setOnClickListener(v -> openCoPilot());
     }
 
@@ -251,11 +261,48 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             cancelButton.setVisibility(View.GONE);
             startButton.setText("Scan Again");
             startButton.setVisibility(View.VISIBLE);
+            analyzeButton.setVisibility(View.VISIBLE);
             viewCopilotButton.setVisibility(View.VISIBLE);
 
             Toast.makeText(this, "Scan complete! " + report.getStageResults().size() + " stages finished",
                 Toast.LENGTH_LONG).show();
         });
+    }
+
+    private void runAIAnalysis() {
+        if (lastReport == null) {
+            Toast.makeText(this, "No scan data available for analysis", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Show analysis card and progress
+        aiAnalysisCard.setVisibility(View.VISIBLE);
+        aiAnalysisProgress.setVisibility(View.VISIBLE);
+        aiAnalysisText.setText("Analyzing scan data with AI...");
+        analyzeButton.setEnabled(false);
+
+        // Run analysis
+        DiagnosticAnalyzer analyzer = new DiagnosticAnalyzer(this);
+        analyzer.analyzeScan(lastReport)
+            .thenAccept(analysis -> runOnUiThread(() -> {
+                aiAnalysisProgress.setVisibility(View.GONE);
+                aiAnalysisText.setText(analysis.getAnalysisText());
+                analyzeButton.setEnabled(true);
+                analyzeButton.setText("Re-analyze");
+
+                Toast.makeText(this, "AI analysis complete!", Toast.LENGTH_SHORT).show();
+            }))
+            .exceptionally(error -> {
+                runOnUiThread(() -> {
+                    aiAnalysisProgress.setVisibility(View.GONE);
+                    aiAnalysisText.setText("Analysis failed: " + error.getMessage());
+                    analyzeButton.setEnabled(true);
+
+                    Toast.makeText(this, "AI analysis failed: " + error.getMessage(),
+                        Toast.LENGTH_LONG).show();
+                });
+                return null;
+            });
     }
 
     @Override
