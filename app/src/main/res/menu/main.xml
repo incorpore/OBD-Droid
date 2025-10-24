@@ -14,6 +14,13 @@
         android:title="@string/disconnect"
         android:visible="false"/>
     <item
+        android:id="@+id/copilot"
+        android:icon="@android:drawable/ic_dialog_info"
+        android:enabled="true"
+        app:showAsAction="ifRoom"
+        android:title="CoPilot"
+        android:visible="true"/>
+    <item
         android:id="@+id/settings"
         android:icon="@drawable/ic_settings_24"
         android:enabled="true"

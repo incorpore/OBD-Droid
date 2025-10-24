@@ -151,6 +151,12 @@
                 android:value="com.obddroid.ui.activities.FaultCodesActivity" />
         </activity>
         <activity
+            android:name="com.obddroid.ui.activities.CoPilotActivity"
+            android:label="CoPilot"
+            android:configChanges="touchscreen|orientation|screenSize"
+            android:parentActivityName="com.obddroid.ui.activities.MainActivity"
+            android:exported="false" />
+        <activity
             android:name="com.obddroid.ui.activities.EcuComparisonActivity"
             android:label="ECU Comparison"
             android:configChanges="touchscreen|orientation|screenSize"

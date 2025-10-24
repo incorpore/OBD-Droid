@@ -503,4 +503,13 @@ period of time while the ECU recalibrates itself.
     <string name="live_data_sharing_not_configured_title">Live Data Sharing Not Configured</string>
     <string name="live_data_sharing_not_configured_message">Live Data Sharing requires configuration before it can be enabled.\n\nPlease configure the following in Settings:\n• Server Host (required)\n• Port (default: 1883)\n• Topic Prefix\n• Username/Password (if required)</string>
     <string name="live_data_sharing_not_configured_open_settings">Open Settings</string>
+
+    <!-- CoPilot settings -->
+    <string name="copilot_settings_title">CoPilot Assistant</string>
+    <string name="copilot_enable_title">Enable CoPilot</string>
+    <string name="copilot_enable_summary">Knight Rider–style AI companion that can explain diagnostics and assist with workflows.</string>
+    <string name="copilot_wake_word_title">Use wake word</string>
+    <string name="copilot_wake_word_summary">Listen for “OBD Droid” before activating voice mode. Disable for noisy bays or privacy-sensitive environments.</string>
+    <string name="copilot_agent_api_title">Use Agent API memory</string>
+    <string name="copilot_agent_api_summary">Store conversations with OpenAI’s Agent/Conversations API so CoPilot remembers context across sessions.</string>
 </resources>

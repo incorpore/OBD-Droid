@@ -90,7 +90,9 @@ import com.obddroid.utils.ExportTask;
 import com.obddroid.utils.FileHelper;
 import com.obddroid.utils.PermissionManager;
 import com.obddroid.utils.SnackbarHelper;
+import com.obddroid.copilot.CoPilotController;
 import com.obddroid.vehicle.VehicleManager;
+import com.obddroid.vehicle.discovery.DiscoveryManager;
 import com.obddroid.R;
 
 import java.beans.PropertyChangeEvent;
@@ -434,6 +436,7 @@ public class MainActivity extends AppCompatActivity
 
                         SnackbarHelper.showSuccess(MainActivity.this,
                                 getString(R.string.connected_to) + mConnectedDeviceName);
+                        DiscoveryManager.getInstance().updateAdapterName(mConnectedDeviceName);
                         break;
 
                     case MESSAGE_TOAST:
@@ -587,6 +590,8 @@ public class MainActivity extends AppCompatActivity
                             }
                             log.info(ecuList.toString());
 
+                            DiscoveryManager.getInstance().recordEcuAddressSnapshot(ecuAddresses);
+
                             // Auto-proceed without ECU selection dialog
                             // CAN bus protocol naturally routes queries to correct ECUs based on PID
                             // No need to filter or manually select - let the bus handle it
@@ -709,6 +714,8 @@ public class MainActivity extends AppCompatActivity
 
         // Initialize VehicleManager with context
         VehicleManager.getInstance(this);
+        DiscoveryManager.getInstance().initialize(getApplicationContext());
+        CoPilotController.getInstance().initialize(this);
 
         // Initialize DTC catalogue (resource or database-backed depending on feature toggle)
         DtcCatalogProvider catalogProvider = new DtcCatalogProvider(
@@ -1045,6 +1052,8 @@ public class MainActivity extends AppCompatActivity
             liveDataSharingUiCoordinator.release();
         }
 
+        DiscoveryManager.getInstance().shutdown();
+
         super.onDestroy();
     }
 
@@ -1293,6 +1302,11 @@ public class MainActivity extends AppCompatActivity
                 launchActivityForResult(settingsIntent, REQUEST_SETTINGS);
                 return true;
 
+            case R.id.copilot:
+                // Launch the CoPilot Activity
+                Intent copilotIntent = new Intent(this, CoPilotActivity.class);
+                startActivity(copilotIntent);
+                return true;
 
 
 
@@ -3154,8 +3168,12 @@ public class MainActivity extends AppCompatActivity
         updateServiceMenuItems(true);
         // display connection status
         setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
+        // begin discovery logging prior to issuing adapter reset so we capture early events
+        DiscoveryManager.getInstance().startSession(mConnectedDeviceName);
         // send RESET to Elm adapter
         CommService.elm.reset();
+
+        CoPilotController.getInstance().startSession(mConnectedDeviceName);
 
         // Stay on main screen after connection (don't auto-select service)
         setObdService(ObdProt.OBD_SVC_NONE, null);
@@ -3192,6 +3210,10 @@ public class MainActivity extends AppCompatActivity
         ecuUserSelected = false;
         // Return to main screen
         setObdService(ObdProt.OBD_SVC_NONE, null);
+
+        CoPilotController.getInstance().endSession("adapter disconnected");
+
+        DiscoveryManager.getInstance().endSession("Adapter disconnected");
     }
 
     /**
