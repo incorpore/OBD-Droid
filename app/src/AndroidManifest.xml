@@ -181,6 +181,10 @@
             android:name="com.obddroid.features.csvlogging.data.CsvLoggingService"
             android:exported="false"
             android:foregroundServiceType="dataSync"/>
+        <service
+            android:name="com.obddroid.scan.ScanOrchestrator"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"/>
     </application>
 
 </manifest>

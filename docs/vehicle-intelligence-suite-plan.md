@@ -251,8 +251,6 @@ and even launch commands.
 - **Transport Selection:**
   - **WebRTC** for on-device interactions (fast peer-to-peer audio, easier lip
     sync with the animated avatar).
-  - **WebSocket** for server-side voice workflows (e.g., phone/SIP bridges) or
-    when running through a relay service.
 - **SDK Usage:** Start with the TypeScript Realtime Agents SDK to prototype and
   study best practices, then port the handshake and session management into an
   Android-native WebRTC layer.
@@ -323,7 +321,7 @@ and even launch commands.
 | Risk | Mitigation |
 |------|------------|
 | GPT latency or cost spikes | Model fallback (GPT-3.5), offline caching for common diagnoses, upfront cost estimate. |
-| Wake-word false positives / noisy bays | Tunable sensitivity, push-to-talk fallback, visual confirmations, telemetry on false triggers. |
+| Wake-word false positives / noisy bays | Tunable sensitivity, push-to-talk fallback, visual confirmations |
 | Tool misuse via Agent API | Strict JSON schema validation, confirmation dialogs, rate limiting, audit logs. |
 | Token bloat in conversations | Conversations API summaries, periodic pruning, user-adjustable verbosity. |
 | Privacy concerns | Explicit consent screens, easy data purge/export, on-device wake-word processing. |
@@ -341,5 +339,3 @@ and even launch commands.
 6. Sketch animated avatar states (idle, listening, thinking, speaking).
 7. Prototype WebRTC session flow (Android ↔ OpenAI) and outline chained ASR/TTS
    fallback.
-8. Schedule cross-team review to align on privacy messaging, cost ceilings, and
-   data-retention policies.
