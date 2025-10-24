@@ -111,10 +111,9 @@ See `active/2022_GMC_Canyon_P0302_Cylinder2_Misfire.md` for complete example.
 - [ ] MIL (Check Engine) OFF
 - [ ] All live data normal (Mode 01)
 - [ ] Emissions monitors READY (Mode 06)
-- [ ] Test drive 20+ miles
+- [ ] Test drive 10+ miles
 - [ ] Screenshot clean scan
 
 ---
 
-**Template Version:** 2.0 (Dealer Edition)
 **Last Updated:** October 2025
