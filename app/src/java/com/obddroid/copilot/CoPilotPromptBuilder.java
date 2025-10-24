@@ -2,6 +2,7 @@ package com.obddroid.copilot;
 
 import android.content.Context;
 
+import com.obddroid.scan.ScanResultsManager;
 import com.obddroid.vehicle.VehicleManager;
 import com.obddroid.vehicle.discovery.DiscoveryManager;
 import com.obddroid.utils.OpenAiService;
@@ -15,12 +16,14 @@ import java.util.List;
 
 final class CoPilotPromptBuilder {
 
+    private final Context context;
     private final VehicleManager vehicleManager;
     private final DiscoveryManager discoveryManager;
     private final CoPilotCommandBridge commandBridge;
 
     CoPilotPromptBuilder(Context context, CoPilotCommandBridge commandBridge) {
-        this.vehicleManager = VehicleManager.getInstance(context.getApplicationContext());
+        this.context = context.getApplicationContext();
+        this.vehicleManager = VehicleManager.getInstance(this.context);
         this.discoveryManager = DiscoveryManager.getInstance();
         this.commandBridge = commandBridge;
     }
@@ -36,20 +39,31 @@ final class CoPilotPromptBuilder {
     }
 
     private String buildSystemPrompt(CoPilotSession session) {
-        JSONObject context = new JSONObject();
+        JSONObject contextData = new JSONObject();
         try {
-            context.put("sessionId", session.getSessionId());
-            context.put("vehicle", buildVehicleContext());
-            context.put("discovery", discoveryManager.getDiscoverySummary());
-            context.put("availableCommands", commandBridge.describeCommands());
-            context.put("metadata", session.getMetadata());
+            contextData.put("sessionId", session.getSessionId());
+            contextData.put("vehicle", buildVehicleContext());
+            contextData.put("discovery", discoveryManager.getDiscoverySummary());
+            contextData.put("availableCommands", commandBridge.describeCommands());
+            contextData.put("metadata", session.getMetadata());
+
+            // Add latest scan results if available
+            ScanResultsManager scanManager = ScanResultsManager.getInstance(context);
+            if (scanManager.hasScans()) {
+                JSONObject scanSummary = scanManager.getLatestScanSummary();
+                if (scanSummary != null) {
+                    contextData.put("latestScan", scanSummary);
+                }
+            }
         } catch (JSONException ignored) {
         }
 
-        return "You are OBD Droid CoPilot, a proactive diagnostic assistant. " +
+        return "You are OBD Droid CoPilot, a proactive diagnostic assistant with access to vehicle scan data. " +
             "Respond conversationally, reference the provided JSON context, and " +
-            "offer actionable guidance. When unsure, request more data or suggest " +
-            "running relevant scans. Context JSON:\n" + context.toString();
+            "offer actionable guidance. When discussing fault codes or diagnostics, explain in clear terms. " +
+            "If scan data is available (latestScan), reference specific findings. " +
+            "When unsure, request more data or suggest running relevant scans. " +
+            "Context JSON:\n" + contextData.toString();
     }
 
     private JSONObject buildVehicleContext() throws JSONException {

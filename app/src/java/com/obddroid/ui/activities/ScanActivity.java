@@ -23,6 +23,7 @@ import com.obddroid.R;
 import com.obddroid.scan.ScanConfiguration;
 import com.obddroid.scan.ScanOrchestrator;
 import com.obddroid.scan.ScanReport;
+import com.obddroid.scan.ScanResultsManager;
 import com.obddroid.scan.StageResult;
 import com.obddroid.vehicle.VehicleManager;
 
@@ -231,6 +232,9 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
     public void onScanCompleted(ScanReport report) {
         runOnUiThread(() -> {
             this.lastReport = report;
+
+            // Store scan results for CoPilot access
+            ScanResultsManager.getInstance(this).storeScanReport(report);
 
             progressBar.setProgress(totalStages);
             progressPercentage.setText("100%");
