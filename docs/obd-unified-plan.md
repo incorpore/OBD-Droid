@@ -7,9 +7,9 @@
 - [ ] Stand up Gauges hub page with selectable gauges and retire the legacy implementation.
 
 ## Stretch Goals
-- [ ] Build full vehicle scan workflow + report export.
-- [ ] Prototype Knight Rider-style CoPilot conversational UI.
-- [ ] Add AI diagnosis assistant on top of full-scan data.
+- [x] **COMPLETED** - Build full vehicle scan workflow + report export (ScanOrchestrator, ScanActivity, 4 MVP stages).
+- [x] **COMPLETED** - Prototype Knight Rider-style CoPilot conversational UI (Full implementation with Lottie avatar, voice I/O, expert AI).
+- [x] **COMPLETED** - Add AI diagnosis assistant on top of full-scan data (DiagnosticAnalyzer with one-tap analysis).
 
 ## Parking Lot / Research
 - [ ] ECU conversion/class renames (ValueConversion etc.) once PvChange migration stabilizes.

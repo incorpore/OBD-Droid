@@ -16,17 +16,19 @@ Below is an updated map of every document in this directory. Use it as your quic
 
 ## Launch & Growth
 - [launch-plan.md](./launch-plan.md) – End-to-end Play Store launch workflow (technical prep, compliance, monetization, beta, rollout).
-- [store-assets-checklist.md](./store-assets-checklist.md) – Visual/copy/ASO checklist for Play Store assets.
-- [analytics-phase2-dashboard-update.md](./analytics-phase2-dashboard-update.md) – Looker/analytics requirements tied to Vehicle History Phase 2.
+
+## Recent Deliverables
+- [copilot-complete-transformation.md](./copilot-complete-transformation.md) – Complete CoPilot transformation session summary (UI, Voice, AI).
+- [copilot-redesign-summary.md](./copilot-redesign-summary.md) – Detailed CoPilot UI redesign documentation.
+- [agent-api-integration-analysis.md](./agent-api-integration-analysis.md) – OpenAI Agent API integration analysis and roadmap.
+- [VERIFICATION-CHECKLIST.md](./VERIFICATION-CHECKLIST.md) – Pre-deployment verification for CoPilot features.
+
+## Archive
+- [archive/analytics-phase2-dashboard-update.md](./archive/analytics-phase2-dashboard-update.md) – Vehicle History Phase 2 analytics (not yet implemented).
+- [archive/store-assets-checklist.md](./archive/store-assets-checklist.md) – Play Store assets checklist.
 
 ## Field Case Studies & Reports
-- [ford-f150-diagnostic-learnings.md](./ford-f150-diagnostic-learnings.md)
-- [ford-f150-diagnostic-session-addendum.md](./ford-f150-diagnostic-session-addendum.md)
-- [ford-f150-power-steering-report.md](./ford-f150-power-steering-report.md)
-- [ford-2014-f150-fix-guide.md](./ford-2014-f150-fix-guide.md)
-
-## Reference & Matrices
-- [vin-pid-regression-matrix.md](./vin-pid-regression-matrix.md) – VIN/PID coverage matrix (moved into QA suites; keep for reference).
+- [ford-f150-diagnostic-learnings.md](./ford-f150-diagnostic-learnings.md) – Field diagnostic case study and OEM-specific learnings.
 
 ---
 

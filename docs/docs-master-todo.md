@@ -3,8 +3,8 @@
 |---|---|---|---|
 |  | Very Long | Implement Toyota/Lexus-specific diagnostics (KWP2000 addressing, mode 0x21 active tests) | ford-f150-diagnostic-learnings.md |
 |  | Very Long | Expand European OEM support (VW/Audi/BMW) with UDS hierarchies and module mapping | ford-f150-diagnostic-learnings.md |
-|  | Very Long | Implement an end-to-end “Full Vehicle Scan” workflow that iterates every supported OBD/UDS mode, logs results, and generates a structured report surfaced in-app and for export | README.md |
-|  | Very Long | Add an AI diagnosis assistant that consumes full-scan reports and app telemetry to suggest fixes, surface warnings, and optionally run automated scans | README.md |
+| ✅ | Very Long | Implement an end-to-end "Full Vehicle Scan" workflow that iterates every supported OBD/UDS mode, logs results, and generates a structured report surfaced in-app and for export | README.md · **COMPLETED** - ScanOrchestrator with 4 MVP stages, ScanActivity UI, report generation |
+| ✅ | Very Long | Add an AI diagnosis assistant that consumes full-scan reports and app telemetry to suggest fixes, surface warnings, and optionally run automated scans | README.md · **COMPLETED** - DiagnosticAnalyzer integrated with ScanActivity |
 |  | Very Long | Deliver an in-app Vehicle History Library that lists previously scanned vehicles, stores their diagnostic reports/telemetry, and supports filtering/search/export | README.md |
 |  | Long | Migrate high-traffic consumers (EcuConversions, fault-code services, etc.) to the new PidDefinition/PidRuntime bridge helpers | agent-ecu-module-refactor.md |
 |  | Long | Implement GM-specific module discovery (0x241–0x24F) and extended DTC support (mode 0x19) | ford-f150-diagnostic-learnings.md |
@@ -25,7 +25,7 @@
 |  | Long | Surface GPS telemetry in dashboards/trip history views | androbod-plugin-integration.md |
 |  | Long | Integrate motion sensor readings into UI visualisations/analytics | androbod-plugin-integration.md |
 | ✅ | Long | Align remaining `com.fr3ts0n.androbd.plugin` support classes with upstream or retire them cleanly | androbod-plugin-integration.md |
-|  | Long | Build an interactive “CoPilot” dashboard experience with an animated AI avatar (Knight Rider-style) for conversational diagnostics, tips, and playful responses | README.md |
+| ✅ | Long | Build an interactive "CoPilot" dashboard experience with an animated AI avatar (Knight Rider-style) for conversational diagnostics, tips, and playful responses | README.md · **COMPLETED** - Full CoPilot UI with Lottie avatar, voice I/O, expert AI prompts |
 |  | Medium | Implement Ford PSCM lockout detection with on-screen guidance and reset playbook | ford-f150-diagnostic-session-addendum.md |
 |  | Medium | Implement adaptive communication strategy for degraded OBD ports (dynamic timeouts, retries, user alerts) | ford-f150-diagnostic-session-addendum.md |
 |  | Medium | Populate `testEcuConversions`/`testPidDefinitions` with concrete suites and wire into CI | agent-ecu-module-refactor.md |
@@ -33,8 +33,8 @@
 |  | Medium | Replace bitmask-based `PvChangeEvent` usage with enum payloads across remaining listeners | agent-telemetry-and-history.md |
 |  | Medium | Expand PvChange adoption to VehicleInfoFooter, data services, and adapter layers | agent-platform-enhancement.md |
 |  | Medium | Deploy the AutoCheck companion API to the production infrastructure (Node 18 runtime, TLS reverse proxy, Experian credentials via secrets manager, uptime monitoring) | README.md · claude.md · start-autocheck-dev.sh |
-|  | Medium | Implement Vehicle History Phase 2 analytics events in the Android client (recall expand, badge tap, odometer expand, VIN auto-detect) | analytics-phase2-dashboard-update.md |
-|  | Medium | Update analytics schema/ETL (event spec, Airflow DAG `vh_feature_events`, enum mapping) for Phase 2 | analytics-phase2-dashboard-update.md |
+|  | Medium | Implement Vehicle History Phase 2 analytics events in the Android client (recall expand, badge tap, odometer expand, VIN auto-detect) | archive/analytics-phase2-dashboard-update.md |
+|  | Medium | Update analytics schema/ETL (event spec, Airflow DAG `vh_feature_events`, enum mapping) for Phase 2 | archive/analytics-phase2-dashboard-update.md |
 |  | Medium | Add lifecycle tests for sensor telemetry manager registration/unregistration | androbod-plugin-integration.md |
 |  | Medium | Draft architectural RFC describing telemetry managers’ integration with dashboards/exports | androbod-plugin-integration.md |
 |  | Medium | Extend settings UX (CSV timeouts, motion/GPS persistence, Remote Telemetry diagnostics) and document privacy impacts | androbod-plugin-integration.md |
@@ -50,12 +50,12 @@
 |  | Medium | Capture cross-functional decisions for Vehicle History Phase 2 and update specs/backlog accordingly | agent-platform-enhancement.md |
 |  | Medium | Present ECU abstraction proposal to Architecture Council and translate feedback into actionable work | agent-platform-enhancement.md |
 |  | Medium | Support QA executing VIN/PID regression matrix (TR-1893/TR-1894) and monitor analytics events | agent-platform-enhancement.md · vin-pid-regression-matrix.md |
-|  | Medium | Build and validate Looker dashboard updates for Vehicle History Phase 2 metrics | agent-platform-enhancement.md · analytics-phase2-dashboard-update.md |
+|  | Medium | Build and validate Looker dashboard updates for Vehicle History Phase 2 metrics | agent-platform-enhancement.md · archive/analytics-phase2-dashboard-update.md |
 |  | Medium | Finalize localized copy and accessibility guidance for Vehicle History Phase 2 components | agent-telemetry-and-history.md |
 |  | Medium | Complete analytics instrumentation & dashboard updates once client events land | agent-telemetry-and-history.md |
-|  | Medium | Backfill 30 days of historical analytics data for Phase 2 dashboards | analytics-phase2-dashboard-update.md |
-|  | Medium | Validate Phase 2 events in Looker dev workspace and staging log streams | analytics-phase2-dashboard-update.md |
-|  | Medium | Configure PagerDuty alerting for analytics ingestion failures (>15 min) | analytics-phase2-dashboard-update.md |
+|  | Medium | Backfill 30 days of historical analytics data for Phase 2 dashboards | archive/analytics-phase2-dashboard-update.md |
+|  | Medium | Validate Phase 2 events in Looker dev workspace and staging log streams | archive/analytics-phase2-dashboard-update.md |
+|  | Medium | Configure PagerDuty alerting for analytics ingestion failures (>15 min) | archive/analytics-phase2-dashboard-update.md |
 |  | Medium | Add instrumentation/unit coverage for CSV logging, GPS, sensor, and Remote Telemetry toggles (permissions, lifecycle, cadence) | androbod-plugin-integration.md |
 |  | Medium | Add Remote Telemetry configuration/topic parsing tests | androbod-plugin-integration.md |
 |  | Medium | Update privacy policy and disclosures for GPS, sensor, and Remote Telemetry background data capture | androbod-plugin-integration.md |
