@@ -11,6 +11,7 @@ import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,10 +28,14 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+
 import com.obddroid.R;
 import com.obddroid.copilot.ChatMessage;
 import com.obddroid.copilot.CoPilotCallback;
 import com.obddroid.copilot.CoPilotController;
+import com.obddroid.copilot.CoPilotTtsManager;
 import com.obddroid.ui.adapters.ChatMessageAdapter;
 
 import java.util.ArrayList;
@@ -54,8 +59,10 @@ public class CoPilotActivity extends AppCompatActivity {
 
     private ChatMessageAdapter chatAdapter;
     private CoPilotController copilotController;
+    private CoPilotTtsManager ttsManager;
     private Markwon markwon;
     private SpeechRecognizer speechRecognizer;
+    private SharedPreferences preferences;
     private boolean isListening = false;
 
     @Override
@@ -69,9 +76,15 @@ public class CoPilotActivity extends AppCompatActivity {
         }
 
         copilotController = CoPilotController.getInstance();
+        ttsManager = CoPilotTtsManager.getInstance(this);
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         // Initialize Markwon for markdown rendering
         markwon = Markwon.create(this);
+
+        // Configure TTS from settings
+        boolean ttsEnabled = preferences.getBoolean("copilot_tts_enabled", true);
+        ttsManager.setEnabled(ttsEnabled);
 
         initializeViews();
         setupRecyclerView();
@@ -100,6 +113,11 @@ public class CoPilotActivity extends AppCompatActivity {
         layoutManager.setStackFromEnd(true);
         chatRecyclerView.setLayoutManager(layoutManager);
         chatRecyclerView.setAdapter(chatAdapter);
+
+        // Setup speaker button click listener for TTS
+        chatAdapter.setSpeakerClickListener((message, speakerButton) -> {
+            playResponseAudio(message.getContent(), speakerButton);
+        });
     }
 
     private void setupListeners() {
@@ -268,6 +286,12 @@ public class CoPilotActivity extends AppCompatActivity {
 
                     // Scroll to bottom
                     chatRecyclerView.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+
+                    // Auto-play TTS if enabled
+                    boolean autoPlay = preferences.getBoolean("copilot_tts_auto_play", true);
+                    if (autoPlay && ttsManager.isEnabled()) {
+                        playResponseAudio(response, null);
+                    }
                 });
             }
 
@@ -324,11 +348,69 @@ public class CoPilotActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Plays audio for an AI response using TTS.
+     */
+    private void playResponseAudio(String text, ImageButton speakerButton) {
+        if (!ttsManager.isEnabled()) {
+            Toast.makeText(this, "Voice responses are disabled in settings", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Stop any currently playing audio
+        ttsManager.stopPlayback();
+
+        // Update status
+        copilotStatus.setText("Speaking...");
+
+        // Animate avatar faster during speech
+        animateAvatar(true);
+
+        ttsManager.speak(text, new CoPilotTtsManager.TtsCallback() {
+            @Override
+            public void onTtsStart() {
+                runOnUiThread(() -> {
+                    if (speakerButton != null) {
+                        speakerButton.setImageResource(android.R.drawable.ic_media_pause);
+                    }
+                });
+            }
+
+            @Override
+            public void onTtsComplete() {
+                runOnUiThread(() -> {
+                    copilotStatus.setText("Ready to assist with diagnostics");
+                    animateAvatar(false);
+                    if (speakerButton != null) {
+                        speakerButton.setImageResource(android.R.drawable.ic_lock_silent_mode_off);
+                    }
+                });
+            }
+
+            @Override
+            public void onTtsError(String error) {
+                runOnUiThread(() -> {
+                    copilotStatus.setText("Ready to assist with diagnostics");
+                    animateAvatar(false);
+                    if (speakerButton != null) {
+                        speakerButton.setImageResource(android.R.drawable.ic_lock_silent_mode_off);
+                    }
+                    Toast.makeText(CoPilotActivity.this,
+                            "Voice playback error: " + error,
+                            Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if (speechRecognizer != null) {
             speechRecognizer.destroy();
+        }
+        if (ttsManager != null) {
+            ttsManager.cleanup();
         }
     }
 

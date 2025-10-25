@@ -1,3 +1,35 @@
+# Vehicle Profiles
+**OBD-Droid Baseline & Diagnostic Records**
+
+Central hub for vehicle profile reports captured with OBD-Droid. Use this folder to document baseline scans, diagnostic snapshots, and post-repair confirmations for every stock unit.
+
+---
+
+## 📂 Directory Structure
+
+```
+vehicle-profiles/
+├── README.md                        ← Overview + template
+├── 2022_GMC_Canyon_VIN107528.md      ← Example profile (diagnostic)
+└── 2017_Nissan_Frontier_VIN778459.md ← Example profile (baseline)
+```
+
+---
+
+## 🚀 Quick Start
+
+1. **Scan the vehicle** with OBD-Droid (Modes 01/02/03/06/07/09 as needed) and gather screenshots/logs.
+2. **Create a new profile file** named `YYYY_Make_Model_VINXXXXXX.md` (use last 6 of VIN for uniqueness).
+3. **Copy the template section below** (`## 📋 Vehicle Profile Template`) into the new file.
+4. **Fill in each section** with data from the scan, highlighting abnormal readings and action items.
+5. **Update over time**: add notes for repairs, follow-up scans, and final verification.
+
+Tip: Keep supporting artifacts (screenshots, logs) in a matching folder under `vehicle-profiles/<VIN>/` if needed.
+
+---
+
+## 📋 Vehicle Profile Template
+
 # Vehicle Profile: [YYYY Make Model]
 **Complete OBD-Droid Baseline Scan**
 

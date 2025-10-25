@@ -509,7 +509,25 @@ period of time while the ECU recalibrates itself.
     <string name="copilot_enable_title">Enable CoPilot</string>
     <string name="copilot_enable_summary">Knight Rider–style AI companion that can explain diagnostics and assist with workflows.</string>
     <string name="copilot_wake_word_title">Use wake word</string>
-    <string name="copilot_wake_word_summary">Listen for “OBD Droid” before activating voice mode. Disable for noisy bays or privacy-sensitive environments.</string>
+    <string name="copilot_wake_word_summary">Listen for "OBD Droid" before activating voice mode. Disable for noisy bays or privacy-sensitive environments.</string>
     <string name="copilot_agent_api_title">Use Agent API memory</string>
-    <string name="copilot_agent_api_summary">Store conversations with OpenAI’s Agent/Conversations API so CoPilot remembers context across sessions.</string>
+    <string name="copilot_agent_api_summary">Store conversations with OpenAI\'s Agent/Conversations API so CoPilot remembers context across sessions.</string>
+
+    <!-- CoPilot TTS voice options -->
+    <string-array name="copilot_voice_options" translatable="false">
+        <item>Alloy (Neutral)</item>
+        <item>Echo (Male)</item>
+        <item>Fable (British Male)</item>
+        <item>Onyx (Deep Male)</item>
+        <item>Nova (Female)</item>
+        <item>Shimmer (Soft Female)</item>
+    </string-array>
+    <string-array name="copilot_voice_values" translatable="false">
+        <item>alloy</item>
+        <item>echo</item>
+        <item>fable</item>
+        <item>onyx</item>
+        <item>nova</item>
+        <item>shimmer</item>
+    </string-array>
 </resources>

@@ -200,6 +200,32 @@
             android:layout="@layout/preference_indented"
             app:dependency="copilot_enabled" />
 
+        <SwitchPreferenceCompat
+            android:key="copilot_tts_enabled"
+            android:title="Voice Responses"
+            android:summary="CoPilot speaks responses aloud (requires OpenAI API key)"
+            android:defaultValue="true"
+            android:layout="@layout/preference_indented"
+            app:dependency="copilot_enabled" />
+
+        <ListPreference
+            android:key="copilot_tts_voice"
+            android:title="Voice Selection"
+            android:entries="@array/copilot_voice_options"
+            android:entryValues="@array/copilot_voice_values"
+            android:defaultValue="alloy"
+            android:summary="Choose CoPilot's voice"
+            android:layout="@layout/preference_indented"
+            app:dependency="copilot_tts_enabled" />
+
+        <SwitchPreferenceCompat
+            android:key="copilot_tts_auto_play"
+            android:title="Auto-Play Responses"
+            android:summary="Automatically speak responses without tapping play button"
+            android:defaultValue="true"
+            android:layout="@layout/preference_indented"
+            app:dependency="copilot_tts_enabled" />
+
     </PreferenceCategory>
 
     <PreferenceCategory

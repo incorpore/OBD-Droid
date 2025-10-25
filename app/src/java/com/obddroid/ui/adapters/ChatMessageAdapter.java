@@ -3,6 +3,7 @@ package com.obddroid.ui.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -22,12 +23,21 @@ import io.noties.markwon.Markwon;
 
 public class ChatMessageAdapter extends RecyclerView.Adapter<ChatMessageAdapter.MessageViewHolder> {
 
+    public interface OnSpeakerClickListener {
+        void onSpeakerClick(ChatMessage message, ImageButton speakerButton);
+    }
+
     private final List<ChatMessage> messages = new ArrayList<>();
     private final Markwon markwon;
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+    private OnSpeakerClickListener speakerClickListener;
 
     public ChatMessageAdapter(Markwon markwon) {
         this.markwon = markwon;
+    }
+
+    public void setSpeakerClickListener(OnSpeakerClickListener listener) {
+        this.speakerClickListener = listener;
     }
 
     public void addMessage(ChatMessage message) {
@@ -68,6 +78,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatMessageAdapter.
         private final TextView userMessageTime;
         private final TextView aiMessageText;
         private final TextView aiMessageTime;
+        private final ImageButton aiMessageSpeaker;
 
         MessageViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -77,6 +88,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatMessageAdapter.
             userMessageTime = itemView.findViewById(R.id.user_message_time);
             aiMessageText = itemView.findViewById(R.id.ai_message_text);
             aiMessageTime = itemView.findViewById(R.id.ai_message_time);
+            aiMessageSpeaker = itemView.findViewById(R.id.ai_message_speaker);
         }
 
         void bind(ChatMessage message) {
@@ -96,6 +108,13 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatMessageAdapter.
                 // Render markdown for AI responses
                 markwon.setMarkdown(aiMessageText, message.getContent());
                 aiMessageTime.setText(timeStr);
+
+                // Setup speaker button
+                aiMessageSpeaker.setOnClickListener(v -> {
+                    if (speakerClickListener != null) {
+                        speakerClickListener.onSpeakerClick(message, aiMessageSpeaker);
+                    }
+                });
             }
         }
     }
