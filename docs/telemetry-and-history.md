@@ -33,7 +33,7 @@
 
 ### Dependencies & Coordination
 - Align rollout with ECU refactor timelines so PID runtime objects can rely on the new typed interfaces.
-- Keep QA in the loop using the VIN/PID regression matrix (`docs/vin-pid-regression-matrix.md`) to validate telemetry behavior.
+- Keep QA in the loop using the VIN/PID regression matrix maintained in TestRail runs TR-1893/TR-1894 to validate telemetry behavior.
 - Coordinate with Analytics to ensure enum-backed events land in downstream pipelines before bitmask removal.
 
 ### Risks & Mitigations
@@ -62,7 +62,7 @@
 
 ## Analytics & QA Alignment
 - Event taxonomy (`vehicle_history_recall_expand`, `vehicle_history_usage_badge_tap`, `vehicle_history_odometer_expand`, `vehicle_history_vin_autodetect`) defined in `docs/analytics-phase2-dashboard-update.md`; Airflow + Looker updates are on hold until the Android client emits the events.
-- Regression assets curated in `docs/vin-pid-regression-matrix.md`, covering VIN fixtures, PID datasets, and owners for staged testing (TestRail runs TR-1893/TR-1894).
+- Regression assets curated in TestRail runs TR-1893/TR-1894, covering VIN fixtures, PID datasets, and owners for staged testing.
 - Staging validation to include logcat checks, Snowplow stream verification, and dashboard smoke tests prior to production rollout.
 
 ## Next Actions

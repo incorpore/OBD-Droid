@@ -4,7 +4,7 @@
 - [x] Circulate Phase 2 UI/UX summary and copy recommendations to Design & Content asynchronously.
 - [x] Implement `PvChange` prototype and migrate an initial listener to validate the new event flow (see `app/src/java/com/obddroid/core/pvs/ProcessVariables.java` + `MainActivity`).
 - [x] Author abstraction proposals for ECU conversion/catalog interfaces and review with architecture stakeholders (`docs/ecu-conversion-abstractions.md`).
-- [x] Compile VIN/PID regression matrices and distribute to QA (`docs/vin-pid-regression-matrix.md` shared with QA Vehicle Experiences).
+- [x] Compile VIN/PID regression matrices and distribute to QA (shared via TestRail runs TR-1893/TR-1894).
 - [x] Update analytics dashboards once Phase 2 features roll out (`docs/analytics-phase2-dashboard-update.md` delivered to Data team).
 
 ## Executive Summary
@@ -25,7 +25,7 @@
 
 - **Design & Content:** Async reviews in progress; distribute updated frames/copy decks via shared channel and capture approvals in Confluence.
 - **Analytics/Data:** Event taxonomy and dashboard updates defined in `docs/analytics-phase2-dashboard-update.md`; Data Eng owns schema rollout and Looker updates ahead of feature ramp.
-- **QA/Test Automation:** Regression matrix published in `docs/vin-pid-regression-matrix.md` and imported into TestRail runs TR-1893/TR-1894; automation owners assigned per scenario.
+- **QA/Test Automation:** Regression matrix published in TestRail runs TR-1893/TR-1894; automation owners assigned per scenario.
 - **Architecture Council:** ECU abstraction proposal (`docs/ecu-conversion-abstractions.md`) added to 2024-07-23 council docket to validate sequencing with PV refactor.
 
 ## Initiative Detail
@@ -53,7 +53,7 @@
 - Add analytics hooks and localization coverage; unit/UI tests for expand/collapse + badge interactions.
 
 **QA & Analytics**
-- Regression matrix published in `docs/vin-pid-regression-matrix.md` and synced to TestRail runs TR-1893/TR-1894.
+- Regression matrix maintained in TestRail runs TR-1893/TR-1894 and kept in sync with release cadence.
 - Accessibility validation (TalkBack focus, dynamic type, contrast) queued for Phase 2 QA execution.
 - Looker dashboard updates per `docs/analytics-phase2-dashboard-update.md` with production go-live scheduled 2024-07-30.
 

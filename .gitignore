@@ -121,6 +121,9 @@ app/src/main/assets/dtc_codes.db
 # External plugins (if any)
 /modules/androbod-plugins
 
+claude.md
+start-autocheck-dev.sh
 ################################################################################
 # End of .gitignore
 ################################################################################
+

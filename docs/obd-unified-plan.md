@@ -3,7 +3,7 @@
 ## Must Do Next
 - [ ] Stabilize PvChange enum payload and migrate top listeners (MainActivity, VehicleInfoFooter).
 - [ ] Ship Vehicle History Phase 2 UI behind feature flags (recall list, usage badges, odometer sub-checks).
-- [ ] Deploy AutoCheck companion API to production and point the app at the hosted endpoint.
+- [ ] Deploy AutoCheck companion API on our server to production and point the app at the hosted endpoint.
 - [ ] Stand up Gauges hub page with selectable gauges and retire the legacy implementation.
 
 ## Stretch Goals
