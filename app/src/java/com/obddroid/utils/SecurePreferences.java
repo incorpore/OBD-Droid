@@ -22,7 +22,7 @@ public class SecurePreferences
     private static final Logger log = Logger.getLogger(SecurePreferences.class.getName());
     private static final String PREFS_NAME = "obddroid_secure_prefs";
     private static final String KEY_OPENAI_API_KEY = "openai_api_key";
-    private static final String KEY_LIVE_DATA_SHARING_PASSWORD = "live_data_sharing_password";
+    private static final String KEY_REMOTE_TELEMETRY_PASSWORD = "remote_telemetry_password";
     private static final String ALGORITHM = "AES";
 
     private final SharedPreferences preferences;
@@ -147,32 +147,32 @@ public class SecurePreferences
     }
 
     /**
-     * Stores the Live Data Sharing password securely.
+     * Stores the Remote Telemetry password securely.
      */
-    public void setLiveDataSharingPassword(String password)
+    public void setRemoteTelemetryPassword(String password)
     {
         String encrypted = encrypt(password);
         preferences.edit()
-            .putString(KEY_LIVE_DATA_SHARING_PASSWORD, encrypted)
+            .putString(KEY_REMOTE_TELEMETRY_PASSWORD, encrypted)
             .apply();
     }
 
     /**
-     * Retrieves the Live Data Sharing password.
+     * Retrieves the Remote Telemetry password.
      */
-    public String getLiveDataSharingPassword()
+    public String getRemoteTelemetryPassword()
     {
-        String encrypted = preferences.getString(KEY_LIVE_DATA_SHARING_PASSWORD, "");
+        String encrypted = preferences.getString(KEY_REMOTE_TELEMETRY_PASSWORD, "");
         return decrypt(encrypted);
     }
 
     /**
-     * Clears the stored Live Data Sharing password.
+     * Clears the stored Remote Telemetry password.
      */
-    public void clearLiveDataSharingPassword()
+    public void clearRemoteTelemetryPassword()
     {
         preferences.edit()
-            .remove(KEY_LIVE_DATA_SHARING_PASSWORD)
+            .remove(KEY_REMOTE_TELEMETRY_PASSWORD)
             .apply();
     }
 }

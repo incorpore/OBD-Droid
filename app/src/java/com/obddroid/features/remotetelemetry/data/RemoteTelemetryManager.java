@@ -1,4 +1,4 @@
-package com.obddroid.features.livedatasharing.data;
+package com.obddroid.features.remotetelemetry.data;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -40,28 +40,28 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Publishes selected PID updates to a configured Live Data Sharing server at a periodic interval.
+ * Publishes selected PID updates to a configured Remote Telemetry server at a periodic interval.
  */
-public class LiveDataSharingManager {
+public class RemoteTelemetryManager {
 
-    private static final String TAG = "LiveDataSharing";
+    private static final String TAG = "RemoteTelemetry";
 
-    public static final String PREF_ENABLED_STATE = "live_data_sharing_enabled_state";
-    public static final String PREF_PROTOCOL = "live_data_sharing_protocol";
-    public static final String PREF_HOST = "live_data_sharing_host";
-    public static final String PREF_PORT = "live_data_sharing_port";
-    public static final String PREF_PREFIX = "live_data_sharing_prefix";
-    public static final String PREF_USERNAME = "live_data_sharing_username";
-    public static final String PREF_PASSWORD = "live_data_sharing_password";
-    public static final String PREF_CLIENT_ID = "live_data_sharing_client_id";
-    public static final String PREF_QOS = "live_data_sharing_qos";
-    public static final String PREF_RETAIN = "live_data_sharing_retain";
-    public static final String PREF_UPDATE_PERIOD = "live_data_sharing_update_period";
-    public static final String PREF_SELECTED_ITEMS = "live_data_sharing_selected_items";
-    public static final String PREF_STATUS = "live_data_sharing_status";
-    public static final String PREF_LAST_STATUS_CODE = "live_data_sharing_last_status_code";
-    public static final String PREF_LAST_STATUS_MESSAGE = "live_data_sharing_last_status_message";
-    public static final String PREF_LAST_STATUS_TIME = "live_data_sharing_last_status_time";
+    public static final String PREF_ENABLED_STATE = "remote_telemetry_enabled_state";
+    public static final String PREF_PROTOCOL = "remote_telemetry_protocol";
+    public static final String PREF_HOST = "remote_telemetry_host";
+    public static final String PREF_PORT = "remote_telemetry_port";
+    public static final String PREF_PREFIX = "remote_telemetry_prefix";
+    public static final String PREF_USERNAME = "remote_telemetry_username";
+    public static final String PREF_PASSWORD = "remote_telemetry_password";
+    public static final String PREF_CLIENT_ID = "remote_telemetry_client_id";
+    public static final String PREF_QOS = "remote_telemetry_qos";
+    public static final String PREF_RETAIN = "remote_telemetry_retain";
+    public static final String PREF_UPDATE_PERIOD = "remote_telemetry_update_period";
+    public static final String PREF_SELECTED_ITEMS = "remote_telemetry_selected_items";
+    public static final String PREF_STATUS = "remote_telemetry_status";
+    public static final String PREF_LAST_STATUS_CODE = "remote_telemetry_last_status_code";
+    public static final String PREF_LAST_STATUS_MESSAGE = "remote_telemetry_last_status_message";
+    public static final String PREF_LAST_STATUS_TIME = "remote_telemetry_last_status_time";
 
     public static final String STATUS_IDLE = "idle";
     public static final String STATUS_SUCCESS = "success";
@@ -121,7 +121,7 @@ public class LiveDataSharingManager {
     private int publishPeriodSeconds = 30;
     private Set<String> selectedMnemonics = Collections.emptySet();
 
-    public LiveDataSharingManager(Context context) {
+    public RemoteTelemetryManager(Context context) {
         this.appContext = context.getApplicationContext();
         this.preferences = PreferenceManager.getDefaultSharedPreferences(appContext);
         this.securePreferences = new SecurePreferences(appContext);
@@ -154,7 +154,7 @@ public class LiveDataSharingManager {
         }
 
         if (!loadConfiguration()) {
-            recordStatus(STATUS_FAILURE, appContext.getString(R.string.live_data_sharing_status_error_configuration));
+            recordStatus(STATUS_FAILURE, appContext.getString(R.string.remote_telemetry_status_error_configuration));
             return false;
         }
 
@@ -174,7 +174,7 @@ public class LiveDataSharingManager {
             TimeUnit.SECONDS
         );
 
-        recordStatus(STATUS_IDLE, appContext.getString(R.string.live_data_sharing_status_waiting_for_data));
+        recordStatus(STATUS_IDLE, appContext.getString(R.string.remote_telemetry_status_waiting_for_data));
         active = true;
         return true;
     }
@@ -197,7 +197,7 @@ public class LiveDataSharingManager {
         detachAllPvs();
         valueMap.clear();
 
-        recordStatus(STATUS_STOPPED, appContext.getString(R.string.live_data_sharing_status_stopped));
+        recordStatus(STATUS_STOPPED, appContext.getString(R.string.remote_telemetry_status_stopped));
         active = false;
     }
 
@@ -207,7 +207,7 @@ public class LiveDataSharingManager {
 
         host = preferences.getString(PREF_HOST, "");
         if (host == null || host.trim().isEmpty()) {
-            Log.w(TAG, "Live Data Sharing host not configured");
+            Log.w(TAG, "Remote Telemetry host not configured");
             return false;
         }
         host = host.trim();
@@ -228,7 +228,7 @@ public class LiveDataSharingManager {
         }
 
         username = preferences.getString(PREF_USERNAME, "");
-        password = securePreferences.getLiveDataSharingPassword();
+        password = securePreferences.getRemoteTelemetryPassword();
         clientId = preferences.getString(PREF_CLIENT_ID, "");
         if (clientId == null || clientId.trim().isEmpty()) {
             clientId = "obddroid-" + UUID.randomUUID();
@@ -273,10 +273,10 @@ public class LiveDataSharingManager {
         try {
             boolean success = publishSnapshot(snapshot);
             if (success) {
-                recordStatus(STATUS_SUCCESS, appContext.getString(R.string.live_data_sharing_status_publish_success));
+                recordStatus(STATUS_SUCCESS, appContext.getString(R.string.remote_telemetry_status_publish_success));
             }
         } catch (Exception ex) {
-            Log.e(TAG, "Live Data Sharing publish failed", ex);
+            Log.e(TAG, "Remote Telemetry publish failed", ex);
             recordStatus(STATUS_FAILURE, summarizeException(ex));
         }
     }
@@ -284,7 +284,7 @@ public class LiveDataSharingManager {
     private boolean publishSnapshot(Map<String, String> snapshot) {
         Mqtt3BlockingClient client = buildClient();
         if (client == null) {
-            recordStatus(STATUS_FAILURE, appContext.getString(R.string.live_data_sharing_status_error_client));
+            recordStatus(STATUS_FAILURE, appContext.getString(R.string.remote_telemetry_status_error_client));
             return false;
         }
 
@@ -313,13 +313,13 @@ public class LiveDataSharingManager {
                         .retain(retainMessages)
                         .send();
                 } catch (Exception publishException) {
-                    Log.e(TAG, "Failed to publish Live Data Sharing topic", publishException);
+                    Log.e(TAG, "Failed to publish Remote Telemetry topic", publishException);
                     recordStatus(STATUS_FAILURE, summarizeException(publishException));
                     hadFailure[0] = true;
                 }
             });
         } catch (Exception ex) {
-            Log.e(TAG, "Live Data Sharing publish failed", ex);
+            Log.e(TAG, "Remote Telemetry publish failed", ex);
             recordStatus(STATUS_FAILURE, summarizeException(ex));
             hadFailure[0] = true;
         } finally {
@@ -327,7 +327,7 @@ public class LiveDataSharingManager {
                 try {
                     client.disconnect();
                 } catch (Exception disconnectException) {
-                    Log.w(TAG, "Failed to disconnect Live Data Sharing client", disconnectException);
+                    Log.w(TAG, "Failed to disconnect Remote Telemetry client", disconnectException);
                 }
             }
         }
@@ -349,7 +349,7 @@ public class LiveDataSharingManager {
             }
             return baseBuilder.useMqttVersion3().buildBlocking();
         } catch (Exception ex) {
-            Log.e(TAG, "Unable to create Live Data Sharing client", ex);
+            Log.e(TAG, "Unable to create Remote Telemetry client", ex);
             recordStatus(STATUS_FAILURE, summarizeException(ex));
             return null;
         }
@@ -438,7 +438,7 @@ public class LiveDataSharingManager {
 
     private String summarizeException(Exception ex) {
         if (ex == null) {
-            return appContext.getString(R.string.live_data_sharing_status_error_unknown);
+            return appContext.getString(R.string.remote_telemetry_status_error_unknown);
         }
         String message = ex.getMessage();
         if (message == null || message.trim().isEmpty()) {

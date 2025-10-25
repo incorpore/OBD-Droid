@@ -3,9 +3,10 @@
 Below is an updated map of every document in this directory. Use it as your quick-start index when jumping into planning, execution, or case-study work.
 
 ## Core Backlogs & Plans
-- [docs-master-todo.md](./docs-master-todo.md) – Central engineering backlog for core platform efforts (GPS, sensors, Live Data Sharing, gauges, AI assistants).
+- [docs-master-todo.md](./docs-master-todo.md) – Central engineering backlog for core platform efforts (GPS, sensors, Remote Telemetry, gauges, AI assistants).
 - [obd-unified-plan.md](./obd-unified-plan.md) – Simplified sequencing for near-term must-do work and stretch goals.
 - [platform-enhancement.md](./platform-enhancement.md) – Broader platform upgrades (Vehicle History, PV refactor) and cross-team coordination.
+- [vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md) – Unified plan covering full scan orchestrator, AI diagnostic analyzer, and CoPilot conversational UI (voice + Agent API).
 - [androbod-plugin-integration.md](./androbod-plugin-integration.md) – Snapshot of the AndrOBD plug-in migration and the remaining telemetry polish tasks.
 - [telemetry-and-history.md](./telemetry-and-history.md) – Detailed roadmap for Vehicle History improvements and telemetry retention.
 - [ecu-module-refactor.md](./ecu-module-refactor.md) & [ecu-conversion-abstractions.md](./ecu-conversion-abstractions.md) – Deep dives on the ECU conversion/catalog refactor.

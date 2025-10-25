@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="40dp"
+    android:viewportWidth="40"
+    android:viewportHeight="40">
+
+    <!-- Three dots using paths -->
+    <path
+        android:fillColor="@color/text_secondary"
+        android:pathData="M10,17 A3,3 0 1,0 10,23 A3,3 0 1,0 10,17 Z"/>
+
+    <path
+        android:fillColor="@color/text_secondary"
+        android:pathData="M20,17 A3,3 0 1,0 20,23 A3,3 0 1,0 20,17 Z"/>
+
+    <path
+        android:fillColor="@color/text_secondary"
+        android:pathData="M30,17 A3,3 0 1,0 30,23 A3,3 0 1,0 30,17 Z"/>
+</vector>

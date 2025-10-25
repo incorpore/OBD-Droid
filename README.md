@@ -2,7 +2,7 @@
 
 OBD‑Droid is our in-house Android platform for professional-grade vehicle
 diagnostics, telemetry, and reporting. The app now includes scoped feature
-modules (live diagnostics, CSV logging, GPS & motion telemetry, Live Data Sharing export,
+modules (live diagnostics, CSV logging, GPS & motion telemetry, Remote Telemetry export,
 Vehicle History AutoCheck integration, Ford PSCM intelligence, etc.) and an
 expanded documentation set that lives under `docs/`.
 
@@ -17,8 +17,8 @@ work.
 - **Live diagnostics** now include Ford PSCM lockout detection, extended
   address probing, and improved error surfacing (see
   `docs/ford-f150-diagnostic-learnings.md` + addendum).
-- **Feature modules** – CSV logging, GPS telemetry, motion sensors, and Live
-  Data Sharing – live under `app/src/java/com/obddroid/features/` and expose UI
+- **Feature modules** – CSV logging, GPS telemetry, motion sensors, and Remote
+  Telemetry – live under `app/src/java/com/obddroid/features/` and expose UI
   coordinators so screens just delegate.
 - **Vehicle history** is delivered through the AutoCheck companion API and
   lives in `features/vehiclehistory` (migrated from the monolithic activity).
@@ -39,7 +39,7 @@ OBD-Droid/
 │   │   ├── csvlogging/                   # Foreground service, UI coordinator
 │   │   ├── gps/                          # Synthetic PID generator
 │   │   ├── sensors/                      # Motion telemetry
-│   │   └── livedatasharing/              # Publisher + UI integration
+│   │   └── remotetelemetry/              # Remote telemetry publisher + UI integration
 │   ├── src/java/com/obddroid/ui/         # Screens, components, adapters
 │   └── src/main/res/                     # Layouts, menu, drawables, strings
 ├── modules/                              # Shared libraries (VIN decoder, DTC DB,
@@ -65,8 +65,8 @@ OBD-Droid/
 - CSV logging: `features/csvlogging/` (foreground service + UI coordinator).
 - GPS telemetry: `features/gps/data/GpsTelemetryManager` exposes synthetic PIDs.
 - Motion sensors: `features/sensors/data/SensorTelemetryManager`.
-- Live Data Sharing: `features/livedatasharing/data/LiveDataSharingManager`
-  with `features/livedatasharing/ui/LiveDataSharingUiCoordinator`. Publishes
+- Remote Telemetry: `features/remotetelemetry/data/RemoteTelemetryManager`
+  with `features/remotetelemetry/ui/RemoteTelemetryUiCoordinator`. Publishes
   the live dashboard values you choose to any server or broker you point it at,
   so teams can watch vehicle data in real time without touching the phone.
 - All feature toggles surface consistent snackbars via the helper in
@@ -145,10 +145,10 @@ testing on an actual device.
 
 ### Telemetry Toggles (in-app)
 1. Open Main screen or Live Data.
-2. Enable/disable CSV Logging, GPS telemetry, Motion telemetry, Live Data Sharing.
+2. Enable/disable CSV Logging, GPS telemetry, Motion telemetry, Remote Telemetry.
 3. Confirm green/informational snackbar appears just above the footer for each
    toggle.
-4. Check `Settings → Telemetry` for Live Data Sharing configuration and status history.
+4. Check `Settings → Telemetry` for Remote Telemetry configuration and status history.
 
 ### Ford PSCM Regression
 1. Run full module scan (expect PSCM at 0x726).

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Background circle -->
+    <path
+        android:fillColor="@color/colorAccent"
+        android:fillAlpha="0.3"
+        android:pathData="M60,10 A50,50 0 1,0 60,110 A50,50 0 1,0 60,10 Z"/>
+
+    <!-- AI chip rectangle -->
+    <path
+        android:fillColor="@color/colorAccent"
+        android:pathData="M40,40 L80,40 L80,80 L40,80 Z"/>
+
+    <!-- Circuit lines -->
+    <path
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="2"
+        android:pathData="M50,40 L50,30 M70,40 L70,30 M40,50 L30,50 M40,70 L30,70 M80,50 L90,50 M80,70 L90,70 M50,80 L50,90 M70,80 L70,90"/>
+
+    <!-- Center dot using path -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M60,54 A6,6 0 1,0 60,66 A6,6 0 1,0 60,54 Z"/>
+</vector>

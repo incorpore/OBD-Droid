@@ -22,6 +22,8 @@
     <!-- Add for Android 14+ foreground services -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Add for CoPilot voice input -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <queries>
         <!-- For Bluetooth enabling -->

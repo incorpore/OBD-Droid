@@ -365,31 +365,31 @@ period of time while the ECU recalibrates itself.
         <item>\n</item>
         <item>\r\n</item>
     </string-array>
-    <string-array name="live_data_sharing_protocol_options">
+    <string-array name="remote_telemetry_protocol_options">
         <item>TCP (tcp://)</item>
         <item>SSL/TLS (ssl://)</item>
     </string-array>
-    <string-array name="live_data_sharing_protocol_values" translatable="false">
+    <string-array name="remote_telemetry_protocol_values" translatable="false">
         <item>tcp</item>
         <item>ssl</item>
     </string-array>
-    <string-array name="live_data_sharing_qos_options">
+    <string-array name="remote_telemetry_qos_options">
         <item>At most once (QoS 0)</item>
         <item>At least once (QoS 1)</item>
         <item>Exactly once (QoS 2)</item>
     </string-array>
-    <string-array name="live_data_sharing_qos_values" translatable="false">
+    <string-array name="remote_telemetry_qos_values" translatable="false">
         <item>0</item>
         <item>1</item>
         <item>2</item>
     </string-array>
-    <string-array name="live_data_sharing_update_period_options">
+    <string-array name="remote_telemetry_update_period_options">
         <item>5 seconds</item>
         <item>10 seconds</item>
         <item>30 seconds</item>
         <item>60 seconds</item>
     </string-array>
-    <string-array name="live_data_sharing_update_period_values" translatable="false">
+    <string-array name="remote_telemetry_update_period_values" translatable="false">
         <item>5</item>
         <item>10</item>
         <item>30</item>
@@ -459,50 +459,50 @@ period of time while the ECU recalibrates itself.
     <string name="motion_telemetry_stop">Disable Motion Telemetry</string>
     <string name="motion_telemetry_started">Motion telemetry enabled</string>
     <string name="motion_telemetry_stopped">Motion telemetry disabled</string>
-    <!-- Live Data Sharing telemetry -->
-    <string name="live_data_sharing_settings_title">Live Data Sharing</string>
-    <string name="live_data_sharing_host_title">Server Host</string>
-    <string name="live_data_sharing_host_summary">Hostname or IP address of your sharing server.</string>
-    <string name="live_data_sharing_port_title">Server Port</string>
-    <string name="live_data_sharing_port_summary">TCP port for the server (default 1883).</string>
-    <string name="live_data_sharing_protocol_title">Protocol</string>
-    <string name="live_data_sharing_prefix_title">Topic Prefix</string>
-    <string name="live_data_sharing_prefix_summary">Prefix prepended to each shared topic (e.g. obddroid/vehicle/).</string>
-    <string name="live_data_sharing_username_title">Username</string>
-    <string name="live_data_sharing_password_title">Password</string>
-    <string name="live_data_sharing_client_id_title">Client Identifier</string>
-    <string name="live_data_sharing_qos_title">QoS Level</string>
-    <string name="live_data_sharing_update_period_title">Publish Interval</string>
-    <string name="live_data_sharing_retain_title">Retain Messages</string>
-    <string name="live_data_sharing_selected_items_title">Data Items to Share</string>
-    <string name="live_data_sharing_publish_all_items">All available data items will be shared.</string>
-    <string name="live_data_sharing_items_selected">%1$d items selected.</string>
-    <string name="live_data_sharing_password_configured">Password configured</string>
-    <string name="live_data_sharing_password_not_configured">Not configured - tap to set</string>
-    <string name="live_data_sharing_password_cleared">Live data sharing password removed</string>
-    <string name="live_data_sharing_password_saved">Password saved securely</string>
-    <string name="live_data_sharing_publisher_start">Enable Live Data Sharing</string>
-    <string name="live_data_sharing_publisher_stop">Disable Live Data Sharing</string>
-    <string name="live_data_sharing_publisher_started">Live data sharing enabled</string>
-    <string name="live_data_sharing_publisher_stopped">Live data sharing disabled</string>
-    <string name="live_data_sharing_publisher_config_error">Live Data Sharing configuration incomplete. Please verify server settings.</string>
-    <string name="live_data_sharing_status_title">Live Data Sharing Status</string>
-    <string name="live_data_sharing_status_never">No share attempts yet</string>
-    <string name="live_data_sharing_status_waiting_for_data">Sharing initialized, waiting for new data</string>
-    <string name="live_data_sharing_status_publish_success">Last share succeeded</string>
-    <string name="live_data_sharing_status_failure">Last share failed at %1$s: %2$s</string>
-    <string name="live_data_sharing_status_success">Last share succeeded at %1$s</string>
-    <string name="live_data_sharing_status_stopped">Live data sharing stopped</string>
-    <string name="live_data_sharing_status_stopped_at">Sharing stopped at %1$s</string>
-    <string name="live_data_sharing_status_waiting_since">Sharing waiting for data since %1$s</string>
-    <string name="live_data_sharing_status_error_configuration">Server settings incomplete</string>
-    <string name="live_data_sharing_status_error_client">Unable to create sharing client</string>
-    <string name="live_data_sharing_status_error_unknown">Unknown sharing error</string>
-    <string name="live_data_sharing_status_snackbar_failure">Live data sharing failed: %1$s</string>
-    <string name="live_data_sharing_status_snackbar_recovered">Live data sharing recovered</string>
-    <string name="live_data_sharing_not_configured_title">Live Data Sharing Not Configured</string>
-    <string name="live_data_sharing_not_configured_message">Live Data Sharing requires configuration before it can be enabled.\n\nPlease configure the following in Settings:\n• Server Host (required)\n• Port (default: 1883)\n• Topic Prefix\n• Username/Password (if required)</string>
-    <string name="live_data_sharing_not_configured_open_settings">Open Settings</string>
+    <!-- Remote Telemetry -->
+    <string name="remote_telemetry_settings_title">Remote Telemetry</string>
+    <string name="remote_telemetry_host_title">Server Host</string>
+    <string name="remote_telemetry_host_summary">Hostname or IP address of your remote telemetry server.</string>
+    <string name="remote_telemetry_port_title">Server Port</string>
+    <string name="remote_telemetry_port_summary">TCP port for the server (default 1883).</string>
+    <string name="remote_telemetry_protocol_title">Protocol</string>
+    <string name="remote_telemetry_prefix_title">Topic Prefix</string>
+    <string name="remote_telemetry_prefix_summary">Prefix prepended to each published topic (e.g. obddroid/vehicle/).</string>
+    <string name="remote_telemetry_username_title">Username</string>
+    <string name="remote_telemetry_password_title">Password</string>
+    <string name="remote_telemetry_client_id_title">Client Identifier</string>
+    <string name="remote_telemetry_qos_title">QoS Level</string>
+    <string name="remote_telemetry_update_period_title">Publish Interval</string>
+    <string name="remote_telemetry_retain_title">Retain Messages</string>
+    <string name="remote_telemetry_selected_items_title">Data Items to Share</string>
+    <string name="remote_telemetry_publish_all_items">All available data items will be shared.</string>
+    <string name="remote_telemetry_items_selected">%1$d items selected.</string>
+    <string name="remote_telemetry_password_configured">Password configured</string>
+    <string name="remote_telemetry_password_not_configured">Not configured - tap to set</string>
+    <string name="remote_telemetry_password_cleared">Remote telemetry password removed</string>
+    <string name="remote_telemetry_password_saved">Password saved securely</string>
+    <string name="remote_telemetry_publisher_start">Enable Remote Telemetry</string>
+    <string name="remote_telemetry_publisher_stop">Disable Remote Telemetry</string>
+    <string name="remote_telemetry_publisher_started">Remote telemetry enabled</string>
+    <string name="remote_telemetry_publisher_stopped">Remote telemetry disabled</string>
+    <string name="remote_telemetry_publisher_config_error">Remote Telemetry configuration incomplete. Please verify server settings.</string>
+    <string name="remote_telemetry_status_title">Remote Telemetry Status</string>
+    <string name="remote_telemetry_status_never">No remote telemetry attempts yet</string>
+    <string name="remote_telemetry_status_waiting_for_data">Remote telemetry initialized, waiting for new data</string>
+    <string name="remote_telemetry_status_publish_success">Last remote telemetry upload succeeded</string>
+    <string name="remote_telemetry_status_failure">Last remote telemetry upload failed at %1$s: %2$s</string>
+    <string name="remote_telemetry_status_success">Last remote telemetry upload succeeded at %1$s</string>
+    <string name="remote_telemetry_status_stopped">Remote telemetry stopped</string>
+    <string name="remote_telemetry_status_stopped_at">Remote telemetry stopped at %1$s</string>
+    <string name="remote_telemetry_status_waiting_since">Remote telemetry waiting for data since %1$s</string>
+    <string name="remote_telemetry_status_error_configuration">Server settings incomplete</string>
+    <string name="remote_telemetry_status_error_client">Unable to create remote telemetry client</string>
+    <string name="remote_telemetry_status_error_unknown">Unknown remote telemetry error</string>
+    <string name="remote_telemetry_status_snackbar_failure">Remote telemetry failed: %1$s</string>
+    <string name="remote_telemetry_status_snackbar_recovered">Remote telemetry recovered</string>
+    <string name="remote_telemetry_not_configured_title">Remote Telemetry Not Configured</string>
+    <string name="remote_telemetry_not_configured_message">Remote Telemetry requires configuration before it can be enabled.\n\nPlease configure the following in Settings:\n• Server Host (required)\n• Port (default: 1883)\n• Topic Prefix\n• Username/Password (if required)</string>
+    <string name="remote_telemetry_not_configured_open_settings">Open Settings</string>
 
     <!-- CoPilot settings -->
     <string name="copilot_settings_title">CoPilot Assistant</string>

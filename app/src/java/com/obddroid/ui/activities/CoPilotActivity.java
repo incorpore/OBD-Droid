@@ -1,36 +1,62 @@
 package com.obddroid.ui.activities;
 
-import android.graphics.Color;
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.text.TextUtils;
-import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
-import androidx.core.widget.NestedScrollView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.airbnb.lottie.LottieAnimationView;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.textfield.TextInputEditText;
 import com.obddroid.R;
+import com.obddroid.copilot.ChatMessage;
 import com.obddroid.copilot.CoPilotCallback;
 import com.obddroid.copilot.CoPilotController;
+import com.obddroid.ui.adapters.ChatMessageAdapter;
+
+import java.util.ArrayList;
+
+import io.noties.markwon.Markwon;
 
 public class CoPilotActivity extends AppCompatActivity {
 
-    private EditText messageInput;
-    private Button sendButton;
-    private LinearLayout chatMessagesContainer;
-    private NestedScrollView chatScrollView;
-    private ProgressBar progressBar;
-    private TextView copilotStatus;
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
 
+    private LottieAnimationView aiAvatar;
+    private TextView copilotStatus;
+    private TextInputEditText messageInput;
+    private FloatingActionButton sendButton;
+    private FloatingActionButton voiceButton;
+    private RecyclerView chatRecyclerView;
+    private LinearLayout typingIndicator;
+    private FrameLayout loadingOverlay;
+    private TextView loadingText;
+    private ChipGroup suggestionChips;
+
+    private ChatMessageAdapter chatAdapter;
     private CoPilotController copilotController;
+    private Markwon markwon;
+    private SpeechRecognizer speechRecognizer;
+    private boolean isListening = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,38 +65,176 @@ public class CoPilotActivity extends AppCompatActivity {
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("CoPilot");
+            getSupportActionBar().setTitle("CoPilot AI Assistant");
         }
 
         copilotController = CoPilotController.getInstance();
 
+        // Initialize Markwon for markdown rendering
+        markwon = Markwon.create(this);
+
         initializeViews();
+        setupRecyclerView();
         setupListeners();
+        setupSpeechRecognizer();
         updateStatus();
+        showWelcomeMessage();
     }
 
     private void initializeViews() {
+        aiAvatar = findViewById(R.id.ai_avatar);
+        copilotStatus = findViewById(R.id.copilot_status);
         messageInput = findViewById(R.id.message_input);
         sendButton = findViewById(R.id.send_button);
-        chatMessagesContainer = findViewById(R.id.chat_messages_container);
-        chatScrollView = findViewById(R.id.chat_scroll_view);
-        progressBar = findViewById(R.id.progress_bar);
-        copilotStatus = findViewById(R.id.copilot_status);
+        voiceButton = findViewById(R.id.voice_button);
+        chatRecyclerView = findViewById(R.id.chat_recycler_view);
+        typingIndicator = findViewById(R.id.typing_indicator);
+        loadingOverlay = findViewById(R.id.loading_overlay);
+        loadingText = findViewById(R.id.loading_text);
+        suggestionChips = findViewById(R.id.suggestion_chips);
+    }
+
+    private void setupRecyclerView() {
+        chatAdapter = new ChatMessageAdapter(markwon);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager.setStackFromEnd(true);
+        chatRecyclerView.setLayoutManager(layoutManager);
+        chatRecyclerView.setAdapter(chatAdapter);
     }
 
     private void setupListeners() {
         sendButton.setOnClickListener(v -> sendMessage());
 
+        voiceButton.setOnClickListener(v -> toggleVoiceInput());
+
         messageInput.setOnEditorActionListener((v, actionId, event) -> {
             sendMessage();
             return true;
         });
+
+        // Setup suggestion chip listeners
+        for (int i = 0; i < suggestionChips.getChildCount(); i++) {
+            View child = suggestionChips.getChildAt(i);
+            if (child instanceof Chip) {
+                Chip chip = (Chip) child;
+                chip.setOnClickListener(v -> {
+                    messageInput.setText(chip.getText());
+                    sendMessage();
+                });
+            }
+        }
+    }
+
+    private void setupSpeechRecognizer() {
+        if (SpeechRecognizer.isRecognitionAvailable(this)) {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+            speechRecognizer.setRecognitionListener(new RecognitionListener() {
+                @Override
+                public void onReadyForSpeech(Bundle params) {
+                    copilotStatus.setText("Listening...");
+                }
+
+                @Override
+                public void onBeginningOfSpeech() {
+                    // Voice detected
+                }
+
+                @Override
+                public void onRmsChanged(float rmsdB) {
+                    // Audio level changed (could animate avatar here)
+                }
+
+                @Override
+                public void onBufferReceived(byte[] buffer) {
+                }
+
+                @Override
+                public void onEndOfSpeech() {
+                    copilotStatus.setText("Processing...");
+                }
+
+                @Override
+                public void onError(int error) {
+                    isListening = false;
+                    voiceButton.setImageResource(android.R.drawable.ic_btn_speak_now);
+                    updateStatus();
+                    Toast.makeText(CoPilotActivity.this, "Voice recognition error", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onResults(Bundle results) {
+                    isListening = false;
+                    voiceButton.setImageResource(android.R.drawable.ic_btn_speak_now);
+                    updateStatus();
+
+                    ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                    if (matches != null && !matches.isEmpty()) {
+                        String recognizedText = matches.get(0);
+                        messageInput.setText(recognizedText);
+                        sendMessage();
+                    }
+                }
+
+                @Override
+                public void onPartialResults(Bundle partialResults) {
+                }
+
+                @Override
+                public void onEvent(int eventType, Bundle params) {
+                }
+            });
+        }
+    }
+
+    private void toggleVoiceInput() {
+        if (speechRecognizer == null) {
+            Toast.makeText(this, "Voice recognition not available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.RECORD_AUDIO},
+                    REQUEST_RECORD_AUDIO_PERMISSION);
+            return;
+        }
+
+        if (isListening) {
+            speechRecognizer.stopListening();
+            isListening = false;
+            voiceButton.setImageResource(android.R.drawable.ic_btn_speak_now);
+        } else {
+            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,
+                    getPackageName());
+            intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+
+            speechRecognizer.startListening(intent);
+            isListening = true;
+            voiceButton.setImageResource(android.R.drawable.ic_notification_clear_all);
+            animateAvatar(true);
+        }
     }
 
     private void updateStatus() {
-        // Check if CoPilot is active (session started)
-        // For now, just show ready
-        copilotStatus.setText("Ready - Connected to vehicle");
+        copilotStatus.setText("Ready to assist with diagnostics");
+    }
+
+    private void showWelcomeMessage() {
+        ChatMessage welcomeMsg = new ChatMessage(
+                "Hello! I'm your AI diagnostic assistant. I can help you:\n\n" +
+                "• Explain scan results and fault codes\n" +
+                "• Provide repair recommendations\n" +
+                "• Answer questions about your vehicle\n" +
+                "• Guide you through diagnostics\n\n" +
+                "How can I help you today?",
+                false,
+                System.currentTimeMillis()
+        );
+        chatAdapter.addMessage(welcomeMsg);
     }
 
     private void sendMessage() {
@@ -81,90 +245,91 @@ public class CoPilotActivity extends AppCompatActivity {
         }
 
         // Add user message to chat
-        addMessageToChat(message, true);
+        ChatMessage userMsg = new ChatMessage(message, true, System.currentTimeMillis());
+        chatAdapter.addMessage(userMsg);
 
         // Clear input
         messageInput.setText("");
 
-        // Show progress
-        progressBar.setVisibility(View.VISIBLE);
-        sendButton.setEnabled(false);
+        // Show typing indicator
+        showTypingIndicator(true);
+        animateAvatar(true);
 
         // Send to CoPilot
         copilotController.sendUserMessage(message, new CoPilotCallback() {
             @Override
             public void onResponse(String response) {
                 runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    sendButton.setEnabled(true);
-                    addMessageToChat(response, false);
+                    showTypingIndicator(false);
+                    animateAvatar(false);
+
+                    ChatMessage aiMsg = new ChatMessage(response, false, System.currentTimeMillis());
+                    chatAdapter.addMessage(aiMsg);
+
+                    // Scroll to bottom
+                    chatRecyclerView.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                 });
             }
 
             @Override
             public void onError(String errorMessage) {
                 runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    sendButton.setEnabled(true);
+                    showTypingIndicator(false);
+                    animateAvatar(false);
+
                     Toast.makeText(CoPilotActivity.this,
-                        "Error: " + errorMessage,
-                        Toast.LENGTH_LONG).show();
-                    addMessageToChat("Error: " + errorMessage, false);
+                            "Error: " + errorMessage,
+                            Toast.LENGTH_LONG).show();
+
+                    ChatMessage errorMsg = new ChatMessage(
+                            "I apologize, but I encountered an error: " + errorMessage +
+                            "\n\nPlease check your internet connection and OpenAI API key in settings.",
+                            false,
+                            System.currentTimeMillis()
+                    );
+                    chatAdapter.addMessage(errorMsg);
+
+                    chatRecyclerView.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                 });
             }
         });
     }
 
-    private void addMessageToChat(String message, boolean isUser) {
-        // Create a card for the message
-        CardView cardView = new CardView(this);
-        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        cardParams.setMargins(0, 0, 0, dpToPx(8));
-
-        if (isUser) {
-            cardParams.gravity = Gravity.END;
-            cardView.setCardBackgroundColor(getColor(R.color.colorPrimary));
-        } else {
-            cardParams.gravity = Gravity.START;
-            cardView.setCardBackgroundColor(getColor(R.color.background_secondary));
-        }
-
-        cardView.setLayoutParams(cardParams);
-        cardView.setRadius(dpToPx(8));
-        cardView.setCardElevation(dpToPx(2));
-        cardView.setUseCompatPadding(true);
-
-        // Create text view for message
-        TextView textView = new TextView(this);
-        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        textView.setLayoutParams(textParams);
-        textView.setText(message);
-        textView.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
-
-        if (isUser) {
-            textView.setTextColor(Color.WHITE);
-        } else {
-            textView.setTextColor(getColor(R.color.text_primary));
-        }
-
-        textView.setTextSize(14);
-
-        cardView.addView(textView);
-        chatMessagesContainer.addView(cardView);
-
-        // Scroll to bottom
-        chatScrollView.post(() -> chatScrollView.fullScroll(View.FOCUS_DOWN));
+    private void showTypingIndicator(boolean show) {
+        typingIndicator.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
-    private int dpToPx(int dp) {
-        float density = getResources().getDisplayMetrics().density;
-        return Math.round(dp * density);
+    private void animateAvatar(boolean active) {
+        if (aiAvatar != null) {
+            if (active) {
+                aiAvatar.setSpeed(1.5f);
+                aiAvatar.playAnimation();
+            } else {
+                aiAvatar.setSpeed(1.0f);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                            @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                toggleVoiceInput();
+            } else {
+                Toast.makeText(this, "Microphone permission required for voice input",
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (speechRecognizer != null) {
+            speechRecognizer.destroy();
+        }
     }
 
     @Override

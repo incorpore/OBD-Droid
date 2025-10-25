@@ -41,94 +41,94 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="@string/live_data_sharing_settings_title"
+        android:title="@string/remote_telemetry_settings_title"
         android:layout="@layout/preference_category">
 
         <EditTextPreference
-            android:key="live_data_sharing_host"
-            android:title="@string/live_data_sharing_host_title"
-            android:summary="@string/live_data_sharing_host_summary"
+            android:key="remote_telemetry_host"
+            android:title="@string/remote_telemetry_host_title"
+            android:summary="@string/remote_telemetry_host_summary"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <EditTextPreference
-            android:key="live_data_sharing_port"
-            android:title="@string/live_data_sharing_port_title"
-            android:summary="@string/live_data_sharing_port_summary"
+            android:key="remote_telemetry_port"
+            android:title="@string/remote_telemetry_port_title"
+            android:summary="@string/remote_telemetry_port_summary"
             android:defaultValue="1883"
             android:inputType="number"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <ListPreference
-            android:key="live_data_sharing_protocol"
-            android:title="@string/live_data_sharing_protocol_title"
-            android:entries="@array/live_data_sharing_protocol_options"
-            android:entryValues="@array/live_data_sharing_protocol_values"
+            android:key="remote_telemetry_protocol"
+            android:title="@string/remote_telemetry_protocol_title"
+            android:entries="@array/remote_telemetry_protocol_options"
+            android:entryValues="@array/remote_telemetry_protocol_values"
             android:defaultValue="tcp"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <EditTextPreference
-            android:key="live_data_sharing_prefix"
-            android:title="@string/live_data_sharing_prefix_title"
-            android:summary="@string/live_data_sharing_prefix_summary"
+            android:key="remote_telemetry_prefix"
+            android:title="@string/remote_telemetry_prefix_title"
+            android:summary="@string/remote_telemetry_prefix_summary"
             android:defaultValue="obddroid/"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <EditTextPreference
-            android:key="live_data_sharing_username"
-            android:title="@string/live_data_sharing_username_title"
+            android:key="remote_telemetry_username"
+            android:title="@string/remote_telemetry_username_title"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <EditTextPreference
-            android:key="live_data_sharing_password"
-            android:title="@string/live_data_sharing_password_title"
+            android:key="remote_telemetry_password"
+            android:title="@string/remote_telemetry_password_title"
             android:layout="@layout/preference_indented" />
 
         <Preference
-            android:key="live_data_sharing_status"
-            android:title="@string/live_data_sharing_status_title"
-            android:summary="@string/live_data_sharing_status_never"
+            android:key="remote_telemetry_status"
+            android:title="@string/remote_telemetry_status_title"
+            android:summary="@string/remote_telemetry_status_never"
             android:selectable="false"
             android:layout="@layout/preference_indented"
             app:iconSpaceReserved="false" />
 
         <EditTextPreference
-            android:key="live_data_sharing_client_id"
-            android:title="@string/live_data_sharing_client_id_title"
+            android:key="remote_telemetry_client_id"
+            android:title="@string/remote_telemetry_client_id_title"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <ListPreference
-            android:key="live_data_sharing_qos"
-            android:title="@string/live_data_sharing_qos_title"
-            android:entries="@array/live_data_sharing_qos_options"
-            android:entryValues="@array/live_data_sharing_qos_values"
+            android:key="remote_telemetry_qos"
+            android:title="@string/remote_telemetry_qos_title"
+            android:entries="@array/remote_telemetry_qos_options"
+            android:entryValues="@array/remote_telemetry_qos_values"
             android:defaultValue="0"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <ListPreference
-            android:key="live_data_sharing_update_period"
-            android:title="@string/live_data_sharing_update_period_title"
-            android:entries="@array/live_data_sharing_update_period_options"
-            android:entryValues="@array/live_data_sharing_update_period_values"
+            android:key="remote_telemetry_update_period"
+            android:title="@string/remote_telemetry_update_period_title"
+            android:entries="@array/remote_telemetry_update_period_options"
+            android:entryValues="@array/remote_telemetry_update_period_values"
             android:defaultValue="30"
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_indented" />
 
         <CheckBoxPreference
-            android:key="live_data_sharing_retain"
-            android:title="@string/live_data_sharing_retain_title"
+            android:key="remote_telemetry_retain"
+            android:title="@string/remote_telemetry_retain_title"
             android:defaultValue="true"
             android:layout="@layout/preference_indented" />
 
         <MultiSelectListPreference
-            android:key="live_data_sharing_selected_items"
-            android:title="@string/live_data_sharing_selected_items_title"
+            android:key="remote_telemetry_selected_items"
+            android:title="@string/remote_telemetry_selected_items_title"
             android:defaultValue="@array/empty"
             android:layout="@layout/preference_indented" />
 

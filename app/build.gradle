@@ -95,4 +95,14 @@ dependencies {
 
     // NHTSA Recall Lookup - Vehicle recall campaign data
     implementation project(':nhtsa-recall-lookup')
+
+    // CoPilot AI Assistant UI
+    implementation 'com.airbnb.android:lottie:6.2.0'  // Animated avatars
+    implementation ('io.noties.markwon:core:4.6.2') {  // Markdown rendering in chat
+        exclude group: 'org.jetbrains', module: 'annotations-java5'
+    }
+    implementation ('io.noties.markwon:syntax-highlight:4.6.2') {  // Code blocks
+        exclude group: 'org.jetbrains', module: 'annotations-java5'
+    }
+    implementation 'com.google.android.material:material:1.11.0'  // Material chips, animations
 }
