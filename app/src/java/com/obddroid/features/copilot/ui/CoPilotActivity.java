@@ -1,6 +1,7 @@
 package com.obddroid.features.copilot.ui;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -46,6 +47,8 @@ public class CoPilotActivity extends AppCompatActivity {
 
     public static final String EXTRA_INITIAL_MESSAGE = "extra_initial_message";
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
+    private static final String PREFS_PRIVACY = "copilot_privacy";
+    private static final String KEY_COPILOT_PRIVACY_ACK = "copilot_first_use_ack";
 
     private LottieAnimationView aiAvatar;
     private TextView copilotStatus;
@@ -87,6 +90,8 @@ public class CoPilotActivity extends AppCompatActivity {
         boolean ttsEnabled = preferences.getBoolean("copilot_tts_enabled", true);
         ttsManager.setEnabled(ttsEnabled);
 
+        maybeShowPrivacyDialog();
+
         initializeViews();
         setupRecyclerView();
         setupListeners();
@@ -100,6 +105,44 @@ public class CoPilotActivity extends AppCompatActivity {
             messageInput.setText(initialMessage);
             sendMessage();
         }
+    }
+
+    private void maybeShowPrivacyDialog() {
+        boolean acknowledged = getSharedPreferences(PREFS_PRIVACY, MODE_PRIVATE)
+            .getBoolean(KEY_COPILOT_PRIVACY_ACK, false);
+        if (acknowledged) {
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+            .setTitle("CoPilot AI Assistant - First Use")
+            .setMessage("Welcome to CoPilot!\n\n" +
+                "CoPilot uses OpenAI's GPT-4 to help you:\n" +
+                "• Analyze diagnostic scan results\n" +
+                "• Explain fault codes in plain language\n" +
+                "• Provide repair recommendations\n" +
+                "• Answer automotive questions\n\n" +
+                "Privacy & Data:\n" +
+                "• Your messages and scan data (including VIN) are sent to OpenAI for analysis\n" +
+                "• Conversations are stored locally and with OpenAI for context continuity\n" +
+                "• No data is routed through OBD-Droid servers\n" +
+                "• You can delete conversations anytime via Settings → Conversation History\n" +
+                "• Your OpenAI API key is required (configure in Settings)\n\n" +
+                "By using CoPilot, you acknowledge that scan data will be processed by OpenAI's API.")
+            .setCancelable(false)
+            .setPositiveButton("I Understand - Continue", (dialog, which) -> {
+                getSharedPreferences(PREFS_PRIVACY, MODE_PRIVATE)
+                    .edit()
+                    .putBoolean(KEY_COPILOT_PRIVACY_ACK, true)
+                    .apply();
+                dialog.dismiss();
+            })
+            .setNegativeButton("Cancel", (dialog, which) -> {
+                dialog.dismiss();
+                Toast.makeText(this, "CoPilot requires your consent to proceed", Toast.LENGTH_LONG).show();
+                finish();
+            })
+            .show();
     }
 
     private void initializeViews() {
