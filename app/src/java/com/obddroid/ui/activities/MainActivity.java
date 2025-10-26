@@ -64,6 +64,7 @@ import com.obddroid.ui.coordinators.RemoteTelemetryUiCoordinator;
 import com.obddroid.telemetry.SensorTelemetryManager;
 import com.obddroid.features.vehiclehistory.ui.AutoCheckActivity;
 import com.obddroid.features.recalls.ui.RecallActivity;
+import com.obddroid.utils.DatabaseUpdateManager;
 
 import com.obddroid.ecu.DtcCatalog;
 import com.obddroid.ecu.DtcCatalogProvider;
@@ -723,6 +724,9 @@ public class MainActivity extends AppCompatActivity
         DiscoveryManager.getInstance().initialize(getApplicationContext());
         CoPilotController.getInstance().initialize(this);
 
+        // Check for VIN database updates (background, WiFi-only, monthly)
+        checkForDatabaseUpdates();
+
         // Initialize DTC catalogue (resource or database-backed depending on feature toggle)
         DtcCatalogProvider catalogProvider = new DtcCatalogProvider(
             () -> true // TODO: wire to remote config/experiments when available
@@ -986,6 +990,52 @@ public class MainActivity extends AppCompatActivity
      *
      * @see android.app.Activity#onDestroy()
      */
+    /**
+     * Check for VIN database updates in background
+     */
+    private void checkForDatabaseUpdates() {
+        DatabaseUpdateManager updateManager = new DatabaseUpdateManager(this);
+
+        updateManager.checkForUpdates(new DatabaseUpdateManager.UpdateCallback() {
+            @Override
+            public void onUpdateStarted() {
+                Log.d(TAG, "VIN database update started (background)");
+            }
+
+            @Override
+            public void onUpdateProgress(int bytesDownloaded, int totalBytes) {
+                // Silent background download - no UI updates
+                if (bytesDownloaded % (10 * 1024 * 1024) == 0) { // Log every 10MB
+                    Log.d(TAG, String.format("Database download: %d/%d MB",
+                        bytesDownloaded / 1024 / 1024,
+                        totalBytes / 1024 / 1024));
+                }
+            }
+
+            @Override
+            public void onUpdateSuccess(String newVersion) {
+                Log.d(TAG, "✓ VIN database updated successfully to version: " + newVersion);
+                // Optionally show a subtle notification to user
+            }
+
+            @Override
+            public void onUpdateFailed(String error) {
+                Log.w(TAG, "VIN database update failed: " + error);
+                // Silent failure - will retry next month
+            }
+
+            @Override
+            public void onUpdateNotNeeded() {
+                int daysSince = updateManager.getDaysSinceUpdate();
+                if (daysSince >= 0) {
+                    Log.d(TAG, String.format("VIN database is current (updated %d days ago)", daysSince));
+                } else {
+                    Log.d(TAG, "VIN database using bundled version");
+                }
+            }
+        });
+    }
+
     @Override
     protected void onDestroy()
     {

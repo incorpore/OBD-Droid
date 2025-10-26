@@ -28,6 +28,7 @@ public class CorgiVINDecoder {
 
     private final Context context;
     private SQLiteDatabase database;
+    private final Object databaseLock = new Object();
 
     /**
      * VIN decode result with all available fields
@@ -130,7 +131,12 @@ public class CorgiVINDecoder {
             return info;
         }
 
-        try {
+        synchronized (databaseLock) {
+            if (database == null || !database.isOpen()) {
+                initDatabase();
+            }
+
+            try {
             // Extract components
             String wmi = vin.substring(0, 3);
             char yearChar = vin.charAt(9);
@@ -154,13 +160,14 @@ public class CorgiVINDecoder {
                 info.errorMessage = "WMI not found in database";
             }
 
-        } catch (Exception e) {
-            Log.e(TAG, "Error decoding VIN: " + vin, e);
-            info.valid = false;
-            info.errorMessage = "Decode error: " + e.getMessage();
-        }
+            } catch (Exception e) {
+                Log.e(TAG, "Error decoding VIN: " + vin, e);
+                info.valid = false;
+                info.errorMessage = "Decode error: " + e.getMessage();
+            }
 
-        return info;
+            return info;
+        }
     }
 
     /**
@@ -394,9 +401,23 @@ public class CorgiVINDecoder {
      * Close database connection
      */
     public void close() {
-        if (database != null && database.isOpen()) {
-            database.close();
-            Log.d(TAG, "Database closed");
+        synchronized (databaseLock) {
+            if (database != null && database.isOpen()) {
+                database.close();
+                database = null;
+                Log.d(TAG, "Database closed");
+            }
+        }
+    }
+
+    /**
+     * Reload database (called after update)
+     */
+    public void reloadDatabase() {
+        synchronized (databaseLock) {
+            close();
+            initDatabase();
+            Log.d(TAG, "Database reloaded");
         }
     }
 }
