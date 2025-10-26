@@ -140,17 +140,14 @@ public class DashBoardActivity extends AppCompatActivity
 	void updateDashboardScaling()
 	{
 		// calculate minimum gauge size (1.6 inch) based on screen density
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-			WindowMetrics windowMetrics = getWindowManager().getCurrentWindowMetrics();
-			metrics.widthPixels = windowMetrics.getBounds().width();
-			metrics.heightPixels = windowMetrics.getBounds().height();
-			metrics.densityDpi = getResources().getConfiguration().densityDpi;
-		} else {
-			// Suppress deprecation warning - required for backward compatibility with API < 30
-			@SuppressWarnings("deprecation")
-			android.view.Display display = getWindowManager().getDefaultDisplay();
-			display.getMetrics(metrics);
-		}
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowMetrics windowMetrics = getWindowManager().getCurrentWindowMetrics();
+            metrics.widthPixels = windowMetrics.getBounds().width();
+            metrics.heightPixels = windowMetrics.getBounds().height();
+            metrics.densityDpi = getResources().getConfiguration().densityDpi;
+        } else {
+            metrics.setTo(getResources().getDisplayMetrics());
+        }
 		MIN_GAUGE_SIZE = Math.min( metrics.densityDpi * 15 / 10,
 								   Math.min(metrics.widthPixels, metrics.heightPixels));
 

@@ -30,6 +30,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -93,10 +94,12 @@ public class EcuComparisonActivity extends AppCompatActivity {
         }
 
         // Get data from intent
-        this.baselineScan = (EcuScan) getIntent().getSerializableExtra(EXTRA_BASELINE_SCAN);
-        @SuppressWarnings("unchecked")
-        List<EcuInfo> currentEcusTemp = (List<EcuInfo>) getIntent().getSerializableExtra(EXTRA_CURRENT_ECUS);
-        this.currentEcus = currentEcusTemp;
+        this.baselineScan = getSerializableExtraCompat(EXTRA_BASELINE_SCAN, EcuScan.class);
+        Serializable currentEcusSerializable = getSerializableExtraCompat(EXTRA_CURRENT_ECUS);
+        if (currentEcusSerializable instanceof List) {
+            //noinspection unchecked
+            this.currentEcus = (List<EcuInfo>) currentEcusSerializable;
+        }
         this.isCurrentFromImport = getIntent().getBooleanExtra(EXTRA_IS_FROM_IMPORT, false);
         this.currentImportFilename = getIntent().getStringExtra(EXTRA_IMPORT_FILENAME);
 
@@ -197,6 +200,27 @@ public class EcuComparisonActivity extends AppCompatActivity {
     private void exportComparisonToJSON() {
         showSnackbar("JSON export coming soon");
         // TODO: Implement JSON export
+    }
+
+    private <T extends Serializable> T getSerializableExtraCompat(String key, Class<T> clazz) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return getIntent().getSerializableExtra(key, clazz);
+        }
+        @SuppressWarnings("deprecation")
+        Serializable value = getIntent().getSerializableExtra(key);
+        if (clazz.isInstance(value)) {
+            return clazz.cast(value);
+        }
+        return null;
+    }
+
+    private Serializable getSerializableExtraCompat(String key) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return getIntent().getSerializableExtra(key, Serializable.class);
+        }
+        @SuppressWarnings("deprecation")
+        Serializable value = getIntent().getSerializableExtra(key);
+        return value;
     }
 
     private void exportComparisonToCSV() {

@@ -1,4 +1,4 @@
-package com.obddroid.ui.adapters;
+package com.obddroid.features.copilot.ui;
 
 import android.view.LayoutInflater;
 import android.view.View;

@@ -153,7 +153,7 @@
                 android:value="com.obddroid.ui.activities.FaultCodesActivity" />
         </activity>
         <activity
-            android:name="com.obddroid.ui.activities.CoPilotActivity"
+            android:name="com.obddroid.features.copilot.ui.CoPilotActivity"
             android:label="CoPilot"
             android:configChanges="touchscreen|orientation|screenSize"
             android:parentActivityName="com.obddroid.ui.activities.MainActivity"

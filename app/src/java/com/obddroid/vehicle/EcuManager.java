@@ -3,8 +3,10 @@ package com.obddroid.vehicle;
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
+import com.obddroid.core.pvs.ProcessVariables.ProcessVar;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
+import com.obddroid.core.pvs.ProcessVariables.TypedPvList;
 import com.obddroid.services.CommService;
 
 import java.beans.PropertyChangeEvent;
@@ -36,6 +38,8 @@ public class EcuManager {
     private final PvChangeListener mode9Listener = this::onMode9DataChange;
 
     private boolean isListening = false;
+    private final TypedPvList<Integer, ProcessVar> vehicleInfoStore =
+        ObdProt.getDataService().getTypedStoreForService(ObdProt.OBD_SVC_VEH_INFO);
 
     /**
      * Listener interface for ECU discovery updates
@@ -64,9 +68,9 @@ public class EcuManager {
             log.info("EcuManager: Starting to listen for ECU data");
 
             // Listen to Mode 9 data changes
-            if (ObdProt.VidPvs != null) {
-                ObdProt.VidPvs.addPvChangeListener(mode9Listener);
-                log.info("EcuManager: Added listener to VidPvs");
+            if (vehicleInfoStore != null) {
+                vehicleInfoStore.addPvChangeListener(mode9Listener);
+                log.info("EcuManager: Added listener to Mode 9 data store");
             }
 
             isListening = true;
@@ -85,16 +89,15 @@ public class EcuManager {
             loadEcuAddresses();
 
             // Then, process Mode 9 data to add names and calibration info
-            if (ObdProt.VidPvs != null && !ObdProt.VidPvs.isEmpty()) {
-                log.info("EcuManager: Loading existing Mode 9 data, VidPvs size: " + ObdProt.VidPvs.size());
+            if (vehicleInfoStore != null && !vehicleInfoStore.isEmpty()) {
+                log.info("EcuManager: Loading existing Mode 9 data, store size: " + vehicleInfoStore.size());
 
-                // Process all existing Mode 9 data
-                java.util.List<Map.Entry<Integer, EcuDataPv>> mode9Entries =
-                    new java.util.ArrayList<>(ObdProt.VidPvs.entrySetTyped());
-                for (Map.Entry<Integer, EcuDataPv> entry : mode9Entries) {
-                    EcuDataPv item = entry.getValue();
-                    if (item != null) {
-                        processMode9Data(item);
+                java.util.List<Map.Entry<Integer, ProcessVar>> mode9Entries =
+                    new java.util.ArrayList<>(vehicleInfoStore.entrySetTyped());
+                for (Map.Entry<Integer, ProcessVar> entry : mode9Entries) {
+                    ProcessVar value = entry.getValue();
+                    if (value instanceof EcuDataPv) {
+                        processMode9Data((EcuDataPv) value);
                     }
                 }
 
@@ -151,8 +154,8 @@ public class EcuManager {
         if (isListening) {
             log.info("EcuManager: Stopping ECU data listeners");
 
-            if (ObdProt.VidPvs != null) {
-                ObdProt.VidPvs.removePvChangeListener(mode9Listener);
+            if (vehicleInfoStore != null) {
+                vehicleInfoStore.removePvChangeListener(mode9Listener);
             }
 
             isListening = false;

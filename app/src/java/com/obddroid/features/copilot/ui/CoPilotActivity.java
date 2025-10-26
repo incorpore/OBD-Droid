@@ -1,4 +1,4 @@
-package com.obddroid.ui.activities;
+package com.obddroid.features.copilot.ui;
 
 import android.Manifest;
 import android.content.Intent;
@@ -29,14 +29,14 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 
 import com.obddroid.R;
 import com.obddroid.features.copilot.ChatMessage;
 import com.obddroid.features.copilot.CoPilotCallback;
 import com.obddroid.features.copilot.CoPilotController;
 import com.obddroid.features.copilot.CoPilotTtsManager;
-import com.obddroid.ui.adapters.ChatMessageAdapter;
+import com.obddroid.features.copilot.ui.ChatMessageAdapter;
 
 import java.util.ArrayList;
 

@@ -106,6 +106,7 @@ public class ObdItemAdapter extends ArrayAdapter<Object>
      * @param pvs list of PVs to be handled
      * @return Set of filtered data items
      */
+    @SuppressWarnings("unchecked")
     Collection getPreferredItems(PvList pvs)
     {
         // Get preference selections
