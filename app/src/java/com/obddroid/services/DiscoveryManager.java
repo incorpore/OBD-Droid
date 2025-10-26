@@ -19,7 +19,11 @@ import org.json.JSONObject;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
@@ -34,12 +38,137 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
+ * Unified Discovery System
  * Coordinates ECU discovery logging so testers can gather consistent datasets across vehicles.
+ * Combines event types, event data, log writing, and discovery management.
  */
 public final class DiscoveryManager implements EcuManager.EcuManagerListener,
         VehicleManager.VehicleChangeListener {
 
     private static final String TAG = "DiscoveryPipeline";
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // NESTED TYPES
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Types of discovery events emitted while scanning for vehicle ECUs.
+     */
+    public enum DiscoveryEventType {
+        SESSION_START,
+        SESSION_END,
+        CAPABILITY,
+        STATUS,
+        PASSIVE_ADDRESS,
+        ECU_DISCOVERED,
+        ECU_UPDATED,
+        VEHICLE_ID,
+        ERROR
+    }
+
+    /**
+     * Represents a single entry in the discovery log.
+     */
+    static final class DiscoveryEvent {
+
+        private final long timestampMs;
+        private final String sessionId;
+        private final DiscoveryEventType type;
+        private final String message;
+        private final Integer ecuAddress;
+        private final JSONObject data;
+
+        DiscoveryEvent(String sessionId,
+                       DiscoveryEventType type,
+                       @Nullable String message,
+                       @Nullable Integer ecuAddress,
+                       @Nullable JSONObject data) {
+            this.timestampMs = System.currentTimeMillis();
+            this.sessionId = sessionId;
+            this.type = type;
+            this.message = message;
+            this.ecuAddress = ecuAddress;
+            this.data = data;
+        }
+
+        String toJsonLine() throws JSONException {
+            JSONObject json = new JSONObject();
+            json.put("timestamp", timestampMs);
+            json.put("sessionId", sessionId);
+            json.put("type", type.name());
+            if (message != null && !message.isEmpty()) {
+                json.put("message", message);
+            }
+            if (ecuAddress != null) {
+                json.put("ecuAddress", String.format("0x%X", ecuAddress));
+            }
+            if (data != null && data.length() > 0) {
+                json.put("data", data);
+            }
+            return json.toString();
+        }
+
+        String toLogcatString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append(type.name());
+            if (message != null && !message.isEmpty()) {
+                builder.append(" | ").append(message);
+            }
+            if (ecuAddress != null) {
+                builder.append(" (addr=").append(String.format("0x%X", ecuAddress)).append(")");
+            }
+            return builder.toString();
+        }
+    }
+
+    /**
+     * Writes discovery events to newline-delimited JSON on disk.
+     */
+    static final class DiscoveryLogWriter implements AutoCloseable {
+
+        private final File logFile;
+        private final Writer writer;
+        private final Object lock = new Object();
+
+        DiscoveryLogWriter(Context context, String sessionId) throws IOException {
+            File baseDir = new File(context.getExternalFilesDir(null), "logs/discovery");
+            if (!baseDir.exists() && !baseDir.mkdirs()) {
+                throw new IOException("Unable to create discovery log directory: " + baseDir.getAbsolutePath());
+            }
+            logFile = new File(baseDir, sessionId + ".jsonl");
+            writer = new BufferedWriter(new FileWriter(logFile, true));
+        }
+
+        File getLogFile() {
+            return logFile;
+        }
+
+        void writeEvent(DiscoveryEvent event) throws IOException {
+            synchronized (lock) {
+                try {
+                    writer.write(event.toJsonLine());
+                    writer.write('\n');
+                    writer.flush();
+                } catch (Exception ex) {
+                    if (ex instanceof IOException) {
+                        throw (IOException) ex;
+                    }
+                    throw new IOException("Failed to encode discovery event", ex);
+                }
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            synchronized (lock) {
+                writer.close();
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // SINGLETON & INSTANCE FIELDS
+    // ═══════════════════════════════════════════════════════════════════════════════
 
     private static DiscoveryManager instance;
 
@@ -73,6 +202,10 @@ public final class DiscoveryManager implements EcuManager.EcuManagerListener,
         }
         return instance;
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // PUBLIC API
+    // ═══════════════════════════════════════════════════════════════════════════════
 
     public void initialize(Context context) {
         if (initialized.get()) {
@@ -261,6 +394,10 @@ public final class DiscoveryManager implements EcuManager.EcuManagerListener,
         return root;
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // PRIVATE HELPERS
+    // ═══════════════════════════════════════════════════════════════════════════════
+
     private void recordCapabilities() {
         if (!sessionActive.get()) {
             return;
@@ -339,7 +476,9 @@ public final class DiscoveryManager implements EcuManager.EcuManagerListener,
         return sdf.format(new Date()) + "_" + UUID.randomUUID().toString().substring(0, 8);
     }
 
-    // region EcuManagerListener callbacks
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // EcuManagerListener callbacks
+    // ═══════════════════════════════════════════════════════════════════════════════
 
     @Override
     public void onEcuDiscovered(EcuInfo ecu) {
@@ -387,9 +526,9 @@ public final class DiscoveryManager implements EcuManager.EcuManagerListener,
         return json;
     }
 
-    // endregion
-
-    // region VehicleChangeListener callbacks
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // VehicleChangeListener callbacks
+    // ═══════════════════════════════════════════════════════════════════════════════
 
     @Override
     public void onVINChanged(String vin) {
@@ -460,6 +599,4 @@ public final class DiscoveryManager implements EcuManager.EcuManagerListener,
             Log.w(TAG, "Failed to encode decode error", e);
         }
     }
-
-    // endregion
 }
