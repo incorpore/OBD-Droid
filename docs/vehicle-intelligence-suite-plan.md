@@ -1,6 +1,17 @@
-# Vehicle Intelligence Suite – Unified Plan
+# Vehicle Intelligence Suite – Unified Plan & Status
 
-_Last updated: October 2025_
+_Last updated: October 25, 2025_
+
+## 📊 Implementation Status Overview
+
+| Component | Status | Completion |
+|-----------|--------|------------|
+| **Full Vehicle Scan Orchestrator** | 🟡 Partial | 55% |
+| **AI Diagnostic Analyzer** | 🟡 Partial | 50% |
+| **CoPilot Conversational UI** | 🟢 Mostly Done | 75% |
+| **Shared Foundations** | 🟢 Mostly Done | 70% |
+
+**Overall Suite Completion: 62%**
 
 ## Purpose
 
@@ -62,8 +73,9 @@ results conversationally (hands-free if desired).
   workflows and realtime models can invoke them safely with guardrails.
 
 ## 1. Full Vehicle Scan Orchestrator
+**Status:** 🟡 55% Complete
 
-### Objectives
+###  Objectives
 
 - One-tap, unattended sweeping of OBD/UDS modes with structured capture.
 - Deterministic state machine of stages; resilience to adapter quirks.
@@ -83,38 +95,49 @@ results conversationally (hands-free if desired).
 
 ### Stage Coverage
 
-| # | Stage | Service | Notes |
-|---|-------|---------|-------|
-| 1 | Discovery Snapshot | — | Reuse `DiscoveryManager` session. |
-| 2 | Live Data Baseline | Mode 01 | Snapshot supported PIDs + key metrics. |
-| 3 | Freeze Frame | Mode 02 | Capture per-DTC frames if available. |
-| 4 | Confirmed DTCs | Mode 03 | Include descriptions + severity. |
-| 5 | Pending DTCs | Mode 07 | |
-| 6 | Permanent DTCs | Mode 0A | |
-| 7 | MIL Reset (optional) | Mode 04 | User confirmation required. |
-| 8 | O2/Monitor Tests | Modes 05/06 | Summaries vs thresholds. |
-| 9 | Component Tests | Mode 08 | Only if vehicle supports; fallback gracefully. |
-|10 | Vehicle Info | Mode 09 | Seed `EcuManager` / VIN metadata. |
-|11 | Extended UDS | Custom | OEM-specific (future packs). |
-|12 | AI Analysis Trigger | — | Fire AI Diagnostic Analyzer when enabled. |
+| # | Stage | Service | Status | Notes |
+|---|-------|---------|--------|-------|
+| 1 | Discovery Snapshot | — | ✅ Done | `DiscoverySnapshotStage.java` implemented |
+| 2 | Live Data Baseline | Mode 01 | ✅ Done | `LiveDataStage.java` implemented |
+| 3 | Freeze Frame | Mode 02 | ❌ Missing | Needs implementation |
+| 4 | Confirmed DTCs | Mode 03 | ✅ Done | `FaultCodeStage.java` implemented |
+| 5 | Pending DTCs | Mode 07 | ❌ Missing | Needs implementation |
+| 6 | Permanent DTCs | Mode 0A | ❌ Missing | Needs implementation |
+| 7 | MIL Reset (optional) | Mode 04 | ❌ Missing | User confirmation required |
+| 8 | O2/Monitor Tests | Modes 05/06 | ❌ Missing | Summaries vs thresholds |
+| 9 | Component Tests | Mode 08 | ❌ Missing | Only if vehicle supports |
+|10 | Vehicle Info | Mode 09 | ✅ Done | `VehicleInfoStage.java` implemented |
+|11 | Extended UDS | Custom | ❌ Missing | OEM-specific (future packs) |
+|12 | AI Analysis Trigger | — | ⚠️ Partial | Analyzer exists but not called post-scan |
+
+**Implemented: 4 of 12 stages (33%)**
 
 ### Key Components
 
-- `ScanStage` interface (`run()` returning `StageResult`).
-- `ScanContext` with handles to `ElmProt`, session IDs, configuration, logging
-  sinks.
-- Progress sheet with cancel + “view log” controls.
-- Zip export bundling report + raw stage JSON + optional attachments.
+✅ **Implemented:**
+- `ScanStage` interface with `execute()` method returning `StageResult`
+- `ScanContext` with handles to `ElmProt`, session IDs, configuration
+- `ScanOrchestrator` foreground service with stage execution engine
+- `ReportBuilder` - Full report generation (Markdown, JSON, summary, zip)
+- `ReportArtifacts` - Data model for generated files
+- Progress notification with cancel support
+- Individual stage JSON files in `stage_data/` directory
+
+❌ **Missing:**
+- UI for viewing/sharing generated reports
+- Share sheet integration
+- Quick link to AI explanation
 
 ### Deliverables Checklist
 
-- [ ] Stage engine + MVP stages (01/03/07/0A/09).
-- [ ] Cancellation + recovery (resume vs restart behavior).
-- [ ] Report writer (Markdown + JSON + zipped artifacts).
-- [ ] Share sheet & quick link to AI explanation once finished.
-- [ ] Verified on ≥3 vehicle platforms pre-pilot.
+- [x] Stage engine + MVP stages (01/03/07/0A/09) - **Partial: 01/03/09 done, 07/0A missing**
+- [x] Cancellation + recovery (resume vs restart behavior) - **Partial: Cancel works, no resume**
+- [x] Report writer (Markdown + JSON + zipped artifacts) - ✅ **COMPLETE**
+- [ ] Share sheet & quick link to AI explanation once finished - **Not implemented**
+- [ ] Verified on ≥3 vehicle platforms pre-pilot - **Not done**
 
 ## 2. AI Diagnostic Analyzer
+**Status:** 🟡 50% Complete
 
 ### Role
 
@@ -162,14 +185,15 @@ repair pathways.
 
 ### Development Checklist
 
-- [ ] `OpenAiService.analyzeFullScan()` & prompt builder.
-- [ ] `GptDiagnosticAnalyzer` parser with error handling.
-- [ ] Markdown/JSON writers integrated into ReportBuilder.
-- [ ] Settings UI for AI toggles, model choice, cost estimate, usage log.
-- [ ] Unit tests covering representative DTC scenarios (misfire, EVAP leak, etc.).
-- [ ] UX flow for retries / failures (e.g., network errors, API quota).
+- [x] `OpenAiService.analyzeFullScan()` & prompt builder - ✅ **Implemented as `DiagnosticAnalyzer.analyzeScan()`**
+- [x] `GptDiagnosticAnalyzer` parser with error handling - ⚠️ **Partial: Parser exists, basic error handling**
+- [ ] Markdown/JSON writers integrated into ReportBuilder - **Not integrated** (analyzer not called post-scan)
+- [ ] Settings UI for AI toggles, model choice, cost estimate, usage log - **Not implemented**
+- [ ] Unit tests covering representative DTC scenarios (misfire, EVAP leak, etc.) - **Not implemented**
+- [ ] UX flow for retries / failures (e.g., network errors, API quota) - **Not implemented**
 
 ## 3. CoPilot Conversational Interface
+**Status:** 🟢 75% Complete (Text mode fully functional, voice features missing)
 
 ### Vision
 
@@ -196,28 +220,33 @@ and even launch commands.
 
 ### Architecture Components
 
-1. `CoPilotController` – orchestrates UI state, orchestrator status, context
-   capture, and LLM requests.
-2. `VoiceService` – wake word, mic capture, ambient noise metering, push-to-talk.
-3. `PromptBuilder` – assembles system + user messages, including wake-word
-   metadata and command intent hints.
-4. `LLMClient` – streaming chat completions (GPT-5/GPT-4o), retry/backoff, model
-   switching.
-5. `ConversationStore` – rolling history with summarisation to stay within
-   token limits.
-6. `SecurityLayer` – consent, audio indicators, wake-word settings.
-7. `CoPilotCommandBridge` – executes allowed app actions with guardrails.
+✅ **Implemented:**
+1. `CoPilotController` – Session lifecycle, context capture, LLM requests
+2. `CoPilotPromptBuilder` – Assembles system + user messages with vehicle context
+3. `CoPilotActivity` – Full UI with text chat, animated Lottie avatar
+4. `CoPilotCommandBridge` – Executes whitelisted app actions
+5. `CoPilotSession` – Session management and conversation storage
+6. `CoPilotLogger` – JSONL logging to `logs/copilot/`
+7. `CoPilotTtsManager` – Text-to-speech integration
+8. `CoPilotSettings` – Preferences for CoPilot features
+
+❌ **Missing:**
+1. `VoiceService` – Wake word, mic capture, push-to-talk (not implemented)
+2. `ConversationStore` – Rolling history with summarization
+3. Agent API / Conversations API integration
+4. WebRTC for GPT-4o realtime voice
+5. Security layer for wake-word consent
 
 ### Roadmap Snapshot
 
-| Phase | Focus | Key Deliverables |
-|-------|-------|------------------|
-| 0 | Foundations | Wireframes, prompt schema, latency goals, API quota review. |
-| 1 | Backend wiring | `LLMClient`, SecurePreferences updates, telemetry providers, logging sink. |
-| 2 | UI shell | Panel fragment, animated face, streaming renderer, wake/mute UI. |
-| 3 | Context & commands | PromptBuilder v1, insight cards, command bridge, eval harness. |
-| 3b | Voice enablement (pilot) | Wake word engine, mic capture, GPT-4o realtime/ASR, TTS + lip sync. |
-| 4 | Pilot & feedback | Field testing, metrics, prompt tuning, voice rollout plan. |
+| Phase | Focus | Status |
+|-------|-------|--------|
+| 0 | Foundations | ✅ Complete (wireframes, latency goals, API quota) |
+| 1 | Backend wiring | ✅ Complete (LLMClient, SecurePreferences, logging) |
+| 2 | UI shell | ✅ Complete (panel, animated face, streaming) |
+| 3 | Context & commands | ✅ Partial (PromptBuilder done, command bridge basic) |
+| 3b | Voice enablement (pilot) | ❌ Not started (wake word, mic, GPT-4o realtime, TTS) |
+| 4 | Pilot & feedback | ❌ Not started (field testing, metrics, voice rollout) |
 
 ### Safety & UX Considerations
 
@@ -327,15 +356,63 @@ and even launch commands.
 | Privacy concerns | Explicit consent screens, easy data purge/export, on-device wake-word processing. |
 | Adapter variance | Stage timeouts, adaptive retries, per-make heuristics, continuous telemetry logging. |
 
-## Next 48 Hours – Action Items
+## 🚀 Recommended Next Steps
 
-1. Finalise DiscoveryManager event schema (`CAPABILITY`, `SCAN_STAGE`).
-2. Stub `ScanStage` interface + skeleton orchestrator service.
-3. Evaluate Agent/Conversations API usage for persistent CoPilot memory and
-   draft tool schema for the command bridge.
-4. Extend `OpenAiService` signature + create prompt template draft for full
-   scan analysis.
-5. Draft CoPilot command list + permission model.
-6. Sketch animated avatar states (idle, listening, thinking, speaking).
-7. Prototype WebRTC session flow (Android ↔ OpenAI) and outline chained ASR/TTS
-   fallback.
+### Phase 1: Complete Scan Orchestrator (1-2 weeks)
+1. **Add missing OBD stages:**
+   - `FreezeFrameStage` (Mode 02)
+   - `PendingDtcStage` (Mode 07)
+   - `PermanentDtcStage` (Mode 0A)
+2. **Build UI for viewing/sharing scan reports:**
+   - List of completed scans with metadata
+   - View markdown report in-app
+   - Share zip bundle via Android share sheet
+3. **Integrate AI analysis trigger:**
+   - Call `DiagnosticAnalyzer.analyzeScan()` after scan completes
+   - Append AI results to markdown report
+4. **Test on 3+ vehicles** for platform verification
+
+### Phase 2: AI Analyzer Settings & Cost Controls (1-2 weeks)
+1. **Build Settings UI:**
+   - AI toggle (default OFF)
+   - Model picker (GPT-3.5 / GPT-4 / GPT-4o)
+   - Cost estimate before analysis
+2. **Implement usage tracking screen:**
+   - Monthly spend/token counts
+   - Per-scan cost breakdown
+3. **Add privacy warning UI** before enabling AI
+4. **Write unit tests** for common DTC scenarios (misfire, EVAP, O2 sensor)
+
+### Phase 3: Agent API Integration (1-2 weeks)
+1. Integrate OpenAI Conversations API for persistent CoPilot memory
+2. Persist `conversation_id` with discovery session
+3. Implement conversation summarization for token efficiency
+4. Build purge/export UI for conversation data
+
+### Phase 4: Voice Pilot (Optional, 3-4 weeks)
+1. Implement wake word detection ("OBD Droid")
+2. Add push-to-talk functionality
+3. Prototype WebRTC + GPT-4o realtime integration
+4. Lip sync with animated avatar using prosody markers
+
+---
+
+## 📊 Priority Matrix
+
+### 🔴 HIGH PRIORITY (Blocking MVP)
+1. Add missing stages: Mode 02/07/0A
+2. UI for viewing/sharing scan reports
+3. Integrate AI analysis post-scan
+4. AI settings UI with cost controls
+
+### 🟡 MEDIUM PRIORITY (Post-MVP)
+1. Modes 05/06 (O2/Monitor tests)
+2. Mode 08 (Component tests)
+3. Agent API / Conversations API integration
+4. Unit tests for AI analyzer
+
+### 🟢 LOW PRIORITY (Future Enhancements)
+1. Wake word detection
+2. WebRTC voice integration
+3. Extended UDS / OEM-specific modes
+4. Resume functionality for cancelled scans
