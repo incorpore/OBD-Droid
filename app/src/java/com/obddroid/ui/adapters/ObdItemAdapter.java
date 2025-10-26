@@ -21,8 +21,6 @@ import com.obddroid.common.ProcessVariables.PvChangeListener;
 import com.obddroid.common.ProcessVariables.PvList;
 import com.obddroid.common.ProcessVariables.TypedPvList;
 
-import org.achartengine.model.XYSeries;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -260,40 +258,20 @@ public class ObdItemAdapter extends ArrayAdapter<Object>
         @Override
         public void pvChanged(PvChangeEvent event)
         {
-            // handle data item updates
-            if (allowDataUpdates)
-            {
-                IndexedProcessVar pv = (IndexedProcessVar) event.getSource();
-                XYSeries series = (XYSeries) pv.get(FID_DATA_SERIES);
-                if (series != null)
-                {
-                    if (event.getValue() instanceof Number)
-                    {
-                        series.add(event.getTime(),
-                                   ((Number) event.getValue()).doubleValue());
-
-                    }
-                }
-            }
+            // Data series now managed directly by ChartActivity
+            // This method kept for compatibility but no longer populates series data
         }
     };
 
     /**
      * Add data series to all process variables
+     * NOTE: Data series now managed directly by ChartActivity using MPAndroidChart.
+     * This method kept for compatibility but no longer creates XYSeries objects.
      */
     protected synchronized void addAllDataSeries()
     {
-        for (int pos = 0; pos < getCount(); pos++)
-        {
-            IndexedProcessVar pv = (IndexedProcessVar)getItem(pos);
-            XYSeries series = (XYSeries) pv.get(FID_DATA_SERIES);
-            if (series == null)
-            {
-                series = new XYSeries(String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT)));
-                pv.put(FID_DATA_SERIES, series);
-                pv.addPvChangeListener(dataChangeHandler, PvChangeEvent.PV_MODIFIED);
-            }
-        }
+        // Chart data now managed by ChartActivity
+        // This method kept for compatibility
     }
 
     @Override

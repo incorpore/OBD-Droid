@@ -1,12 +1,7 @@
 package com.obddroid.ui.activities;
-import android.graphics.Color;
 
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
-import android.graphics.Paint.Align;
+import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,366 +11,370 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.WindowManager;
-import android.widget.EditText;
 import android.widget.ListAdapter;
 
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
+
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.ValueFormatter;
+
+import com.obddroid.R;
 import com.obddroid.ecu.EcuDataPv;
 import com.obddroid.obd.ObdProt;
-
-import com.obddroid.ui.components.AutoHider;
-import com.obddroid.utils.ExportTask;
 import com.obddroid.ui.adapters.ColorAdapter;
 import com.obddroid.ui.adapters.ObdItemAdapter;
-import com.obddroid.R;
+import com.obddroid.ui.components.AutoHider;
+import com.obddroid.utils.ExportTask;
 
-import org.achartengine.ChartFactory;
-import org.achartengine.GraphicalView;
-import org.achartengine.model.XYMultipleSeriesDataset;
-import org.achartengine.model.XYSeries;
-import org.achartengine.renderer.BasicStroke;
-import org.achartengine.renderer.XYMultipleSeriesRenderer;
-import org.achartengine.renderer.XYSeriesRenderer;
-
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
 
 /**
- * <code>Activity</code> that displays the readout of one <code>Sensor</code>.
- * This <code>Activity</code> must be started with an <code>Intent</code> that
- * passes in the number of the <code>Sensor</code>(s) to display. If none is
- * passed, the first available <code>Sensor</code> is used.
+ * Activity that displays real-time line charts of OBD sensor data.
+ * Migrated from AChartEngine to MPAndroidChart for modern Android compatibility.
  */
-public class ChartActivity extends AppCompatActivity
-{
+public class ChartActivity extends AppCompatActivity {
 
-	/**
-	 * minimum time between screen updates
-	 */
-	public static final long MIN_UPDATE_TIME = 1000;
+    public static final long MIN_UPDATE_TIME = 1000;
+    public static final String POSITIONS = "POSITIONS";
 
-	/**
-	 * For passing the index number of the <code>Sensor</code> in its
-	 * <code>SensorManager</code>
-	 */
-	public static final String POSITIONS = "POSITIONS";
+    /** Line style patterns */
+    private static final int STYLE_SOLID = 0;
+    private static final int STYLE_DASHED = 1;
+    private static final int STYLE_DOTTED = 2;
 
-	/** Map to uniquely collect PID numbers */
-	private final TreeSet<Integer> pidNumbers = new TreeSet<>();
+    private final TreeSet<Integer> pidNumbers = new TreeSet<>();
+    private LineChart chart;
+    private AutoHider toolBarHider;
+    private static WakeLock wakeLock;
+    private static ListAdapter mAdapter = null;
+    private final List<ChartSeriesData> seriesDataList = new ArrayList<>();
 
-	/**
-	 * list of colors to be used for series
-	 */
-	private static final BasicStroke[] stroke =
-		{
-			BasicStroke.SOLID,
-			BasicStroke.DASHED,
-			BasicStroke.DOTTED,
-		};
+    private long startTime;
 
-	/**
-	 * The displaying component
-	 */
-	private GraphicalView chartView;
+    /**
+     * Holder for chart series data with associated PID info
+     */
+    private static class ChartSeriesData {
+        EcuDataPv pv;
+        List<Entry> entries;
+        int color;
+        int lineStyle;
+        String label;
 
-	/**
-	 * Dataset of the graphing component
-	 */
-	private XYMultipleSeriesDataset sensorData;
+        ChartSeriesData(EcuDataPv pv, int color, int lineStyle) {
+            this.pv = pv;
+            this.entries = new ArrayList<>();
+            this.color = color;
+            this.lineStyle = lineStyle;
+            this.label = pv.get(EcuDataPv.FID_NAME) + " (" + pv.get(EcuDataPv.FID_UNITS) + ")";
+        }
+    }
 
-	/**
-	 * Renderer for actually drawing the graph
-	 */
-	private XYMultipleSeriesRenderer renderer;
-	/** automatic hiding toolbar */
-	private AutoHider toolBarHider;
+    public static ListAdapter getAdapter() {
+        return mAdapter;
+    }
 
-	/**
-	 * the wake lock to keep app communication alive
-	 */
-	private static WakeLock wakeLock;
+    public static void setAdapter(ListAdapter adapter) {
+        mAdapter = adapter;
+    }
 
-	private static ListAdapter mAdapter = null;
+    private static int getLineStyle(int id) {
+        int[] styles = {STYLE_SOLID, STYLE_DASHED, STYLE_DOTTED};
+        return styles[(id / ColorAdapter.colors.length) % styles.length];
+    }
 
-	/** data adapter as source of display data */
-	public static ListAdapter getAdapter()
-	{
-		return mAdapter;
-	}
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.chart, menu);
+        return true;
+    }
 
-	public static void setAdapter(ListAdapter mAdapter)
-	{
-		ChartActivity.mAdapter = mAdapter;
-	}
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setTheme(R.style.AppTheme);
 
-	/**
-	 * get stroke for an ID number preferrably unique pid number
-	 * this is to get persistent coloring/lining for each id
-	 * @param id id to get color for
-	 * @return color for given ID
-	 */
-	private static BasicStroke getStroke(int id)
-	{
-		return stroke[(id / ColorAdapter.colors.length) % stroke.length];
-	}
+        // Set status bar and navigation bar colors
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(Color.parseColor("#212121"));
+            getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+        }
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu)
-	{
-		getMenuInflater().inflate(R.menu.chart, menu);
-		return true;
-	}
+        // Apply fullscreen based on preference
+        if (MainActivity.prefs.getBoolean(MainActivity.PREF_FULLSCREEN, false)) {
+            WindowInsetsControllerCompat windowInsetsController =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (windowInsetsController != null) {
+                windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+                windowInsetsController.setSystemBarsBehavior(
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+            }
+        }
 
-	@Override
-	public void onCreate(Bundle savedInstanceState)
-	{
-		super.onCreate(savedInstanceState);
-		setTheme(R.style.AppTheme);
+        // Keep screen on for vehicle diagnostics
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-		// Set status bar and navigation bar colors to match our theme
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			getWindow().setStatusBarColor(Color.parseColor("#212121"));
-			getWindow().setNavigationBarColor(Color.parseColor("#212121"));
-		}
+        // Prevent activity from falling asleep
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = Objects.requireNonNull(powerManager).newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK, getString(R.string.app_name));
+        wakeLock.acquire();
 
-		// Apply full screen based on preference using modern WindowInsetsController
-		if(MainActivity.prefs.getBoolean(MainActivity.PREF_FULLSCREEN, false))
-		{
-			WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-			if (windowInsetsController != null) {
-				windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
-				windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-			}
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-				getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-			}
-		}
+        // Hide action bar
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.hide();
+        }
 
-		// Always keep main display on for vehicle diagnostics
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setTitle(R.string.chart);
+        setContentView(R.layout.activity_chart);
 
-		// prevent activity from falling asleep
-		PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-		wakeLock = Objects.requireNonNull(powerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
-			getString(R.string.app_name));
-		wakeLock.acquire();
+        chart = findViewById(R.id.chart);
+        startTime = System.currentTimeMillis();
 
-		// Hide the action bar completely
-		ActionBar actionBar = getSupportActionBar();
-		if (actionBar != null)
-		{
-			actionBar.hide();
-		}
+        // Get PIDs to be shown
+        int[] positions = getIntent().getIntArrayExtra(POSITIONS);
+        if (positions != null) {
+            setupChart();
+            setupChartData(positions);
+            MainActivity.setFixedPids(pidNumbers);
+        }
 
-		setTitle(R.string.chart);
+        // Setup auto-hide toolbar if enabled
+        if (MainActivity.prefs.getBoolean(MainActivity.PREF_AUTOHIDE, false)) {
+            int timeout = Integer.parseInt(
+                MainActivity.prefs.getString(MainActivity.PREF_AUTOHIDE_DELAY, "15"));
+            toolBarHider = new AutoHider(this, mHandler, timeout * 1000L);
+            toolBarHider.start(1000);
+            chart.setOnTouchListener(toolBarHider);
+        }
+    }
 
-		/* get PIDs to be shown */
-		int[] positions = getIntent().getIntArrayExtra(POSITIONS);
+    /**
+     * Configure chart appearance and behavior
+     */
+    private void setupChart() {
+        chart.getDescription().setEnabled(false);
+        chart.setTouchEnabled(true);
+        chart.setDragEnabled(true);
+        chart.setScaleEnabled(true);
+        chart.setPinchZoom(true);
+        chart.setDrawGridBackground(false);
+        chart.setBackgroundColor(Color.parseColor("#212121"));
 
-		// set up overall chart properties
-		sensorData = new XYMultipleSeriesDataset();
-		renderer = new XYMultipleSeriesRenderer(positions.length);
-		chartView = ChartFactory.getTimeChartView(this, sensorData, renderer, "H:mm:ss");
-		// set up global renderer
-		float textSize = new EditText(this).getTextSize();
-		renderer.setLabelsTextSize(textSize/2);
-		renderer.setXTitle(getString(R.string.time));
-		renderer.setXLabels(5);
-		renderer.setYLabels(5);
-		renderer.setGridColor(Color.DKGRAY);
-		renderer.setShowGrid(true);
-		renderer.setFitLegend(true);
-		renderer.setClickEnabled(false);
-		// set up chart data
-		setUpChartData(positions);
-		// make chart visible
-		setContentView(chartView);
-		// limit selected PIDs to selection
-		MainActivity.setFixedPids(pidNumbers);
-		// if auto hiding selected ...
-		if(MainActivity.prefs.getBoolean(MainActivity.PREF_AUTOHIDE,false))
-		{
-			// get autohide timeout [s]
-			int timeout = Integer.parseInt(
-				MainActivity.prefs.getString(MainActivity.PREF_AUTOHIDE_DELAY,"15") );
-			// auto hide toolbar
-			toolBarHider = new AutoHider( this,
-			                              mHandler,
-			                              timeout * 1000L);
-			toolBarHider.start(1000);
-			// wake up on touch
-			chartView.setOnTouchListener(toolBarHider);
-		}
-	}
+        // X-Axis (Time)
+        XAxis xAxis = chart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setTextColor(Color.WHITE);
+        xAxis.setDrawGridLines(true);
+        xAxis.setGridColor(Color.DKGRAY);
+        xAxis.setValueFormatter(new ValueFormatter() {
+            private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.US);
+            @Override
+            public String getFormattedValue(float value) {
+                return sdf.format(new Date((long) value));
+            }
+        });
 
-	/**
-	 * Handle message requests
-	 */
-	private transient final Handler mHandler = new Handler(Looper.getMainLooper())
-	{
-		@Override
-		public void handleMessage(Message msg)
-		{
+        // Y-Axis (Left)
+        YAxis leftAxis = chart.getAxisLeft();
+        leftAxis.setTextColor(Color.WHITE);
+        leftAxis.setDrawGridLines(true);
+        leftAxis.setGridColor(Color.DKGRAY);
 
-			switch (msg.what)
-			{
-				case MainActivity.MESSAGE_UPDATE_VIEW:
-					/* update chart */
-					chartView.invalidate();
-					break;
+        // Y-Axis (Right)
+        YAxis rightAxis = chart.getAxisRight();
+        rightAxis.setTextColor(Color.WHITE);
+        rightAxis.setDrawGridLines(false);
 
-				// set toolbar visibility
-				case MainActivity.MESSAGE_TOOLBAR_VISIBLE:
-					// Always keep action bar hidden
-					ActionBar ab = getSupportActionBar();
-					if(ab != null)
-					{
-						ab.hide();
-					}
-					break;
-			}
-		}
-	};
+        // Legend
+        Legend legend = chart.getLegend();
+        legend.setTextColor(Color.WHITE);
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+        legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+        legend.setDrawInside(false);
+        legend.setWordWrapEnabled(true);
+    }
 
-	/**
-	 * Handle menu selections
-	 *
-	 * @param item selected menu item
-	 * @return result of super call
-	 */
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item)
-	{
-		switch (item.getItemId())
-		{
-			case R.id.share:
-				new ExportTask(this).execute(sensorData);
-				break;
+    /**
+     * Set up chart data series for selected PIDs
+     */
+    private void setupChartData(int[] positions) {
+        pidNumbers.clear();
+        seriesDataList.clear();
 
-			// case R.id.snapshot:
-			// 	Screenshot.takeScreenShot(this, getWindow().peekDecorView());
-			// 	break;
-		}
-		return super.onOptionsItemSelected(item);
-	}
+        for (int position : positions) {
+            EcuDataPv currPv = (EcuDataPv) mAdapter.getItem(position);
+            if (currPv == null) continue;
 
-	/**
-	 * Handle destroy of the Activity
-	 */
-	@Override
-	protected void onDestroy()
-	{
-		if(toolBarHider != null)
-		{
-			// cancel hiding thread
-			toolBarHider.cancel();
-			// forget about it
-			toolBarHider = null;
-		}
-		ObdProt.resetFixedPid();
-		// allow sleeping again
-		wakeLock.release();
-		super.onDestroy();
-	}
+            int pid = currPv.getAsInt(EcuDataPv.FID_PID);
+            pidNumbers.add(pid);
 
-	private final Timer refreshTimer = new Timer();
+            int color = ColorAdapter.getItemColor(currPv);
+            int lineStyle = getLineStyle(pid != 0 ? pid : position);
 
-	/**
-	 * Timer Task to cyclically update data screen
-	 */
-	private final TimerTask updateTask = new TimerTask()
-	{
-		@Override
-		public void run()
-		{
-			/* forward message to update the view */
-			Message msg = mHandler.obtainMessage(MainActivity.MESSAGE_UPDATE_VIEW);
-			mHandler.sendMessage(msg);
-		}
-	};
+            ChartSeriesData seriesData = new ChartSeriesData(currPv, color, lineStyle);
 
+            // Add initial data point
+            float initialValue = Float.parseFloat(currPv.get(EcuDataPv.FID_VALUE).toString());
+            seriesData.entries.add(new Entry(startTime, initialValue));
 
-	/* (non-Javadoc)
-	 * @see android.app.Activity#onStart()
-	 */
-	@Override
-	protected void onStart()
-	{
-		super.onStart();
-		// start display update task
-		try
-		{
-			refreshTimer.schedule(updateTask, 0, 1000);
-		} catch (Exception e)
-		{
-			// exception ignored here ...
-		}
-	}
+            seriesDataList.add(seriesData);
+        }
 
-	/* (non-Javadoc)
-	 * @see android.app.Activity#onStop()
-	 */
-	@Override
-	protected void onStop()
-	{
-		refreshTimer.purge();
-		super.onStop();
-	}
+        updateChartDisplay();
+    }
 
-	/**
-	 * Set up all the charting data series
-	 *
-	 * @param positions Positions of PIDs withn adapter
-	 */
-	private void setUpChartData(int[] positions)
-	{
-		long startTime = System.currentTimeMillis();
-		int i = 0;
-		EcuDataPv currPv;
-		XYSeries currSeries;
+    /**
+     * Update chart display with current data
+     */
+    private void updateChartDisplay() {
+        List<LineDataSet> dataSets = new ArrayList<>();
 
-		pidNumbers.clear();
+        for (ChartSeriesData seriesData : seriesDataList) {
+            LineDataSet dataSet = new LineDataSet(seriesData.entries, seriesData.label);
+            dataSet.setColor(seriesData.color);
+            dataSet.setCircleColor(seriesData.color);
+            dataSet.setLineWidth(2f);
+            dataSet.setCircleRadius(3f);
+            dataSet.setDrawCircles(false);  // Don't draw circles for performance
+            dataSet.setDrawValues(false);
+            dataSet.setMode(LineDataSet.Mode.LINEAR);
 
-		// loop through all PIDs
-		for (int position : positions)
-		{
-			// get corresponding Process variable
-			currPv = (EcuDataPv) mAdapter.getItem(position);
-			if (currPv == null) continue;
-			int pid = currPv.getAsInt(EcuDataPv.FID_PID);
-			// add PID to unique list of PIDs
-			pidNumbers.add(pid);
+            // Apply line style
+            switch (seriesData.lineStyle) {
+                case STYLE_DASHED:
+                    dataSet.enableDashedLine(10f, 5f, 0f);
+                    break;
+                case STYLE_DOTTED:
+                    dataSet.enableDashedLine(2f, 5f, 0f);
+                    break;
+                case STYLE_SOLID:
+                default:
+                    dataSet.disableDashedLine();
+                    break;
+            }
 
-			// Get display color ...
-			int pidColor = ColorAdapter.getItemColor(currPv);
+            dataSets.add(dataSet);
+        }
 
-			// get contained data series
-			currSeries = (XYSeries) currPv.get(ObdItemAdapter.FID_DATA_SERIES);
-			if (currSeries == null) continue;
-			// add initial measurement to series data to ensure
-			// at least one measurement is available
-			if (currSeries.getItemCount() < 1)
-				currSeries.add(startTime, Float.parseFloat(currPv.get(EcuDataPv.FID_VALUE).toString()));
+        LineData lineData = new LineData(dataSets.toArray(new LineDataSet[0]));
+        chart.setData(lineData);
+        chart.notifyDataSetChanged();
+        chart.invalidate();
+    }
 
-			// set scale to display series
-			currSeries.setScaleNumber(i);
-			// register series to graph
-			sensorData.addSeries(i, currSeries);
-			/* set up series visual parameters */
-			renderer.setYTitle(String.valueOf(currPv.get(EcuDataPv.FID_UNITS)), i);
-			renderer.setYAxisAlign(((i % 2) == 0) ? Align.LEFT : Align.RIGHT, i);
-			renderer.setYLabelsAlign(((i % 2) == 0) ? Align.LEFT : Align.RIGHT, i);
-			renderer.setYLabelsColor(i, pidColor);
-			/* set up new line renderer */
-			XYSeriesRenderer r = new XYSeriesRenderer();
-			r.setColor(pidColor);
-			r.setStroke(getStroke(pid!=0?pid:position));
-			// register line renderer
-			renderer.addSeriesRenderer(i, r);
-			i++;
-		}
-	}
+    /**
+     * Update data points from current PV values
+     */
+    private void updateDataPoints() {
+        long currentTime = System.currentTimeMillis();
+        boolean dataChanged = false;
+
+        for (ChartSeriesData seriesData : seriesDataList) {
+            try {
+                float value = Float.parseFloat(seriesData.pv.get(EcuDataPv.FID_VALUE).toString());
+                seriesData.entries.add(new Entry(currentTime, value));
+
+                // Limit to last 300 points (5 minutes at 1Hz)
+                if (seriesData.entries.size() > 300) {
+                    seriesData.entries.remove(0);
+                }
+
+                dataChanged = true;
+            } catch (Exception e) {
+                // Skip invalid values
+            }
+        }
+
+        if (dataChanged) {
+            updateChartDisplay();
+        }
+    }
+
+    private final Handler mHandler = new Handler(Looper.getMainLooper()) {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MainActivity.MESSAGE_UPDATE_VIEW:
+                    updateDataPoints();
+                    break;
+
+                case MainActivity.MESSAGE_TOOLBAR_VISIBLE:
+                    ActionBar ab = getSupportActionBar();
+                    if (ab != null) {
+                        ab.hide();
+                    }
+                    break;
+            }
+        }
+    };
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.share) {
+            new ExportTask(this).execute(seriesDataList);
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (toolBarHider != null) {
+            toolBarHider.cancel();
+            toolBarHider = null;
+        }
+        ObdProt.resetFixedPid();
+        wakeLock.release();
+        super.onDestroy();
+    }
+
+    private final Timer refreshTimer = new Timer();
+
+    private final TimerTask updateTask = new TimerTask() {
+        @Override
+        public void run() {
+            Message msg = mHandler.obtainMessage(MainActivity.MESSAGE_UPDATE_VIEW);
+            mHandler.sendMessage(msg);
+        }
+    };
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        try {
+            refreshTimer.schedule(updateTask, 0, 1000);
+        } catch (Exception e) {
+            // Exception ignored
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        refreshTimer.purge();
+        super.onStop();
+    }
 }
