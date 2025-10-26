@@ -12,20 +12,41 @@ public class VehicleData {
     public String modelYear;
     public String bodyClass;
     public String vehicleType;
+    public String trim;
+    public String series;
 
     // Additional fields
     public String manufacturer;
     public String plantCountry;
+    public String plantCity;
+    public String plantState;
     public String driveType;
     public String fuelType;
     public String engineConfiguration;
     public String transmission;
+    public String transmissionStyle;
+    public String transmissionSpeeds;
     public String bodyStyle;
+    public String doors;
+    public String wheelBase;
+
+    // Engine specifications
+    public String displacementL;        // Engine displacement in liters
+    public String displacementCC;       // Engine displacement in cubic centimeters
+    public String engineCylinders;      // Number of cylinders
+    public String engineModel;          // Engine model name
+    public String fuelTypePrimary;      // Primary fuel type
+    public String electrificationLevel; // Hybrid/EV level
+
+    // Weight specifications
+    public String gvwr;                 // Gross Vehicle Weight Rating
+    public String curbWeight;           // Curb weight
 
     // Metadata
-    private String vin;
+    public String vin;
     private boolean valid;
     private String errorMessage;
+    private String message;  // Decode message (e.g., "Decoded offline")
 
     public VehicleData() {
         this.valid = false;
@@ -78,6 +99,42 @@ public class VehicleData {
 
     public boolean isValid() {
         return valid;
+    }
+
+    /**
+     * Get display name (e.g., "2003 Honda Accord")
+     */
+    public String getDisplayName() {
+        StringBuilder sb = new StringBuilder();
+        if (modelYear != null) {
+            sb.append(modelYear).append(" ");
+        }
+        if (make != null) {
+            sb.append(make);
+        }
+        if (model != null) {
+            sb.append(" ").append(model);
+        }
+        return sb.toString().trim();
+    }
+
+    /**
+     * Get engine description combining available engine data
+     */
+    public String getEngineDescription() {
+        StringBuilder sb = new StringBuilder();
+        if (displacementL != null) {
+            sb.append(displacementL).append("L");
+        }
+        if (engineCylinders != null) {
+            if (sb.length() > 0) sb.append(" ");
+            sb.append(engineCylinders).append("-cyl");
+        }
+        if (engineConfiguration != null) {
+            if (sb.length() > 0) sb.append(" ");
+            sb.append(engineConfiguration);
+        }
+        return sb.length() > 0 ? sb.toString() : null;
     }
 
     public String getErrorMessage() {
@@ -145,6 +202,14 @@ public class VehicleData {
         this.vin = vin;
     }
 
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
     /**
      * Create VehicleData from Corgi decoder result
      */
@@ -161,8 +226,11 @@ public class VehicleData {
         data.plantCountry = info.plantCountry;
         data.driveType = info.driveType;
         data.fuelType = info.fuelType;
+        data.fuelTypePrimary = info.fuelTypePrimary;
         data.engineConfiguration = info.engineConfiguration;
         data.transmission = info.transmission;
+        data.displacementL = info.displacementL;
+        data.engineCylinders = info.engineCylinders;
         data.valid = info.valid;
         data.errorMessage = info.errorMessage;
         return data;

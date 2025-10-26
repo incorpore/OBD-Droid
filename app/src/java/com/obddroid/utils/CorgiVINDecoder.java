@@ -41,11 +41,14 @@ public class CorgiVINDecoder {
         public String bodyStyle;
         public String driveType;
         public String fuelType;
+        public String fuelTypePrimary;
         public String engineConfiguration;
         public String transmission;
         public String vehicleType;
         public String manufacturer;
         public String plantCountry;
+        public String displacementL;
+        public String engineCylinders;
         public boolean valid;
         public String errorMessage;
 
@@ -237,13 +240,18 @@ public class CorgiVINDecoder {
      * Query pattern attributes for body class, drivetrain, etc.
      */
     private void queryPatternAttributes(int schemaId, String vin, VehicleInfo info) {
-        // Query for body class
+        // Query for body and drivetrain
         queryAttribute(schemaId, vin, "BodyStyle", s -> info.bodyStyle = s);
         queryAttribute(schemaId, vin, "DriveType", s -> info.driveType = s);
-        queryAttribute(schemaId, vin, "FuelType", s -> info.fuelType = s);
-        queryAttribute(schemaId, vin, "EngineConfiguration", s -> info.engineConfiguration = s);
-        queryAttribute(schemaId, vin, "Transmission", s -> info.transmission = s);
         queryAttribute(schemaId, vin, "VehicleType", s -> info.vehicleType = s);
+        queryAttribute(schemaId, vin, "Transmission", s -> info.transmission = s);
+
+        // Query for engine attributes
+        queryAttribute(schemaId, vin, "FuelType", s -> info.fuelType = s);
+        queryAttributeByElementId(schemaId, vin, 24, s -> info.fuelTypePrimary = s); // Element 24 = FuelTypePrimary
+        queryAttribute(schemaId, vin, "EngineConfiguration", s -> info.engineConfiguration = s);
+        queryAttributeByElementId(schemaId, vin, 13, s -> info.displacementL = s); // Element 13 = DisplacementL
+        queryAttributeByElementId(schemaId, vin, 9, s -> info.engineCylinders = s); // Element 9 = EngineCylinders
     }
 
     /**
@@ -264,6 +272,32 @@ public class CorgiVINDecoder {
 
         for (String pos : positions) {
             try (Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(schemaId), pos})) {
+                if (cursor.moveToFirst()) {
+                    setter.set(cursor.getString(0));
+                    return; // Found it
+                }
+            } catch (Exception e) {
+                // Continue trying other positions
+            }
+        }
+    }
+
+    /**
+     * Query attribute by Element ID (for elements that don't have lookup tables)
+     */
+    private void queryAttributeByElementId(int schemaId, String vin, int elementId, AttributeSetter setter) {
+        String query = "SELECT p.AttributeId " +
+                      "FROM Pattern p " +
+                      "WHERE p.VinSchemaId = ? " +
+                      "AND p.ElementId = ? " +
+                      "AND p.Keys = ? " +
+                      "LIMIT 1";
+
+        String[] positions = extractVinPositions(vin);
+
+        for (String pos : positions) {
+            try (Cursor cursor = database.rawQuery(query,
+                    new String[]{String.valueOf(schemaId), String.valueOf(elementId), pos})) {
                 if (cursor.moveToFirst()) {
                     setter.set(cursor.getString(0));
                     return; // Found it

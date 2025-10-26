@@ -545,7 +545,7 @@ public final class DiscoveryManager implements EcuManager.EcuManagerListener,
     }
 
     @Override
-    public void onVehicleDecoded(io.github.vindecoder.nhtsa.VehicleData vehicleData) {
+    public void onVehicleDecoded(com.obddroid.utils.VehicleData vehicleData) {
         if (!sessionActive.get()) {
             return;
         }
