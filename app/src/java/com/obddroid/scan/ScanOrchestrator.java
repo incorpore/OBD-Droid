@@ -114,7 +114,13 @@ public class ScanOrchestrator extends Service {
                 notifyFailed(e);
             } finally {
                 isScanning = false;
-                stopForeground(true);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    stopForeground(Service.STOP_FOREGROUND_REMOVE);
+                } else {
+                    @SuppressWarnings("deprecation")
+                    boolean removeNotification = true;
+                    stopForeground(removeNotification);
+                }
                 stopSelf();
             }
         });
