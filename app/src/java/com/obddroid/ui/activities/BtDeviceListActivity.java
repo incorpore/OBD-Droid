@@ -39,7 +39,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
-import com.obddroid.ui.adapters.ModernDeviceAdapter;
+import com.obddroid.ui.adapters.DeviceAdapter;
 import com.obddroid.R;
 import com.obddroid.utils.PermissionManager;
 import com.obddroid.utils.SnackbarHelper;
@@ -69,7 +69,7 @@ public class BtDeviceListActivity extends AppCompatActivity
 	private BluetoothAdapter mBtAdapter;
 	// Map to store device names and their MAC addresses
 	private final Map<String, String> deviceAddressMap = new HashMap<>();
-	private ModernDeviceAdapter modernAdapter;
+	private DeviceAdapter modernAdapter;
 	private LinearLayout emptyState;
 
 	@Override
@@ -130,7 +130,7 @@ public class BtDeviceListActivity extends AppCompatActivity
 		}
 
 		// Initialize modern adapter
-		modernAdapter = new ModernDeviceAdapter(this);
+		modernAdapter = new DeviceAdapter(this);
 
 		// Find and set up the ListView for paired devices
 		ListView pairedListView = findViewById(R.id.paired_devices);
@@ -247,11 +247,13 @@ public class BtDeviceListActivity extends AppCompatActivity
 		public void onItemClick(AdapterView<?> av, View v, int position, long id)
 		{
 			// Get the device from the adapter
-			final BluetoothDevice device = modernAdapter.getItem(position);
+			DeviceAdapter.DeviceInfo deviceInfo = modernAdapter.getItem(position);
 
-			if (device == null) {
+			if (deviceInfo == null || deviceInfo.bluetoothDevice == null) {
 				return;
 			}
+
+			final BluetoothDevice device = deviceInfo.bluetoothDevice;
 
 			// Get device info
 			String deviceName = device.getName();
@@ -412,9 +414,10 @@ public class BtDeviceListActivity extends AppCompatActivity
 		public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
 		{
 			// Get the device from the adapter
-			BluetoothDevice device = modernAdapter.getItem(position);
+			DeviceAdapter.DeviceInfo deviceInfo = modernAdapter.getItem(position);
 
-			if (device != null) {
+			if (deviceInfo != null && deviceInfo.bluetoothDevice != null) {
+				BluetoothDevice device = deviceInfo.bluetoothDevice;
 				String address = device.getAddress();
 				String name = device.getName() != null ? device.getName() : "Unknown Device";
 

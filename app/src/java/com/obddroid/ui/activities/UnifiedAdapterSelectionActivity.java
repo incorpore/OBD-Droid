@@ -49,8 +49,7 @@ import com.hoho.android.usbserial.driver.UsbSerialProber;
 import com.obddroid.R;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.services.CommService;
-import com.obddroid.ui.adapters.ModernDeviceAdapter;
-import com.obddroid.ui.adapters.ModernUsbDeviceAdapter;
+import com.obddroid.ui.adapters.DeviceAdapter;
 import com.obddroid.utils.PermissionManager;
 import com.obddroid.utils.SnackbarHelper;
 
@@ -88,11 +87,11 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
 
     private BluetoothAdapter mBtAdapter;
     private UsbManager mUsbManager;
-    private ModernDeviceAdapter btAdapter;
-    private ModernUsbDeviceAdapter usbAdapter;
+    private DeviceAdapter btAdapter;
+    private DeviceAdapter usbAdapter;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    private final List<ModernUsbDeviceAdapter.UsbDeviceInfo> usbEntries = new ArrayList<>();
+    private final List<DeviceAdapter.DeviceInfo> usbEntries = new ArrayList<>();
     private final Map<String, String> deviceAddressMap = new HashMap<>();
 
     private View bluetoothContent;
@@ -210,14 +209,14 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
         mBtAdapter = bluetoothManager != null ? bluetoothManager.getAdapter() : null;
         mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
 
-        btAdapter = new ModernDeviceAdapter(this);
+        btAdapter = new DeviceAdapter(this);
         ListView pairedListView = findViewById(R.id.paired_devices);
         pairedListView.setAdapter(btAdapter);
         pairedListView.setOnItemClickListener(mBtDeviceClickListener);
         pairedListView.setOnItemLongClickListener(mBtDeviceLongClickListener);
 
         ListView usbListView = findViewById(R.id.usb_devices);
-        usbAdapter = new ModernUsbDeviceAdapter(this, usbEntries);
+        usbAdapter = new DeviceAdapter(this, usbEntries);
         usbListView.setAdapter(usbAdapter);
         usbListView.setOnItemClickListener(mUsbDeviceClickListener);
 
@@ -672,7 +671,7 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
     private void refreshUsbDeviceList() {
         executorService.execute(() -> {
             log.info("Refreshing USB device list...");
-            List<ModernUsbDeviceAdapter.UsbDeviceInfo> result = new ArrayList<>();
+            List<DeviceAdapter.DeviceInfo> result = new ArrayList<>();
 
             if (mUsbManager != null) {
                 HashMap<String, UsbDevice> deviceList = mUsbManager.getDeviceList();
@@ -695,7 +694,7 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
 
                     UsbSerialPort port = compatibleDevices.get(device.getDeviceName());
                     boolean isCompatible = port != null;
-                    result.add(new ModernUsbDeviceAdapter.UsbDeviceInfo(device, port, isCompatible));
+                    result.add(new DeviceAdapter.DeviceInfo(device, port, isCompatible));
                 }
             }
 
@@ -703,8 +702,8 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
                 usbEntries.clear();
                 usbEntries.addAll(result);
                 int compatibleCount = 0;
-                for (ModernUsbDeviceAdapter.UsbDeviceInfo info : result) {
-                    if (info.isCompatible) compatibleCount++;
+                for (DeviceAdapter.DeviceInfo info : result) {
+                    if (info.isUsbCompatible) compatibleCount++;
                 }
                 usbDeviceCount.setText(String.format("%d USB device(s) found (%d compatible)",
                         result.size(), compatibleCount));
@@ -739,8 +738,9 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
 
     private final AdapterView.OnItemClickListener mBtDeviceClickListener = new AdapterView.OnItemClickListener() {
         public void onItemClick(AdapterView<?> av, View v, int position, long id) {
-            final BluetoothDevice device = btAdapter.getItem(position);
-            if (device == null) return;
+            DeviceAdapter.DeviceInfo deviceInfo = btAdapter.getItem(position);
+            if (deviceInfo == null || deviceInfo.bluetoothDevice == null) return;
+            final BluetoothDevice device = deviceInfo.bluetoothDevice;
 
             String deviceName = device.getName();
             if (deviceName == null || deviceName.isEmpty()) {
@@ -877,9 +877,10 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
 
     private final AdapterView.OnItemLongClickListener mBtDeviceLongClickListener = new AdapterView.OnItemLongClickListener() {
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-            BluetoothDevice device = btAdapter.getItem(position);
+            DeviceAdapter.DeviceInfo deviceInfo = btAdapter.getItem(position);
 
-            if (device != null) {
+            if (deviceInfo != null && deviceInfo.bluetoothDevice != null) {
+                BluetoothDevice device = deviceInfo.bluetoothDevice;
                 String address = device.getAddress();
                 String name = device.getName() != null ? device.getName() : "Unknown Device";
 
@@ -900,15 +901,15 @@ public class UnifiedAdapterSelectionActivity extends AppCompatActivity {
                 return;
             }
 
-            ModernUsbDeviceAdapter.UsbDeviceInfo deviceInfo = usbEntries.get(position);
+            DeviceAdapter.DeviceInfo deviceInfo = usbEntries.get(position);
 
-            if (!deviceInfo.isCompatible || deviceInfo.port == null) {
+            if (!deviceInfo.isUsbCompatible || deviceInfo.usbPort == null) {
                 SnackbarHelper.showWarning(UnifiedAdapterSelectionActivity.this,
                         "This device is not a compatible USB serial adapter", SnackbarHelper.Duration.SHORT);
                 return;
             }
 
-            selectedUsbPort = deviceInfo.port;
+            selectedUsbPort = deviceInfo.usbPort;
 
             Intent intent = new Intent();
             intent.putExtra(EXTRA_ADAPTER_TYPE, CommService.MEDIUM.USB.name());
