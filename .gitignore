@@ -39,6 +39,12 @@ captures/
 # Version control IDE settings
 vcs.xml
 
+# Claude Code AI assistant
+.claude/
+
+# ADB debugging files
+.adb/
+
 #==============================================================================
 # External Build Tools
 #==============================================================================
