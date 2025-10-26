@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,6 +42,8 @@ import java.util.Map;
 import com.obddroid.features.copilot.ui.CoPilotActivity;
 
 public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.ScanProgressListener {
+
+    private static final String TAG = "ScanActivity";
 
     private TextView vehicleName;
     private TextView vehicleDetails;
@@ -265,6 +268,9 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
 
             // Store scan results for CoPilot access
             ScanResultsManager.getInstance(this).storeScanReport(report);
+
+            // Upload scan JSON to CoPilot for retrieval (async)
+            uploadScanToCoPilot(report);
 
             progressBar.setProgress(totalStages);
             progressPercentage.setText("100%");
@@ -552,6 +558,41 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
+    }
+
+    /**
+     * Upload scan JSON to CoPilot for retrieval in future conversations.
+     * Enables queries like "Compare this scan to my last scan" or "When was P0420 first detected?"
+     */
+    private void uploadScanToCoPilot(ScanReport report) {
+        new Thread(() -> {
+            try {
+                ReportArtifacts artifacts = report.getArtifacts();
+                if (artifacts == null || artifacts.getJsonFile() == null) {
+                    Log.w(TAG, "No JSON file to upload for scan " + report.getScanId());
+                    return;
+                }
+
+                java.io.File jsonFile = artifacts.getJsonFile();
+                if (!jsonFile.exists()) {
+                    Log.w(TAG, "JSON file doesn't exist: " + jsonFile.getPath());
+                    return;
+                }
+
+                // Upload file to OpenAI
+                com.obddroid.features.copilot.agent.AgentApiClient apiClient =
+                    new com.obddroid.features.copilot.agent.AgentApiClient(this);
+
+                String fileId = apiClient.uploadFile(jsonFile, "assistants");
+                Log.i(TAG, "Uploaded scan to CoPilot: file_id=" + fileId + ", scan_id=" + report.getScanId());
+
+                // TODO: Store file_id mapping to scan_id for future reference
+
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to upload scan to CoPilot", e);
+                // Don't show error to user - this is a background enhancement
+            }
+        }).start();
     }
 
     @Override

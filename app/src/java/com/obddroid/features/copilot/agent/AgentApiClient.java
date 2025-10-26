@@ -32,6 +32,7 @@ public class AgentApiClient {
     private static final String BASE_URL = "https://api.openai.com/v1";
     private static final String ASSISTANTS_ENDPOINT = BASE_URL + "/assistants";
     private static final String THREADS_ENDPOINT = BASE_URL + "/threads";
+    private static final String FILES_ENDPOINT = BASE_URL + "/files";
 
     private static final int TIMEOUT_MS = 30000;
     private static final String OPENAI_BETA_HEADER = "assistants=v2";
@@ -300,6 +301,138 @@ public class AgentApiClient {
             }
         }
         return sb.toString();
+    }
+
+    // ========== FILE MANAGEMENT ==========
+
+    /**
+     * Upload a file to OpenAI for use with Assistants.
+     * @param file File to upload
+     * @param purpose Purpose of the file (e.g., "assistants")
+     * @return File ID
+     */
+    public String uploadFile(java.io.File file, String purpose) throws Exception {
+        String apiKey = getApiKey();
+        String boundary = "----WebKitFormBoundary" + System.currentTimeMillis();
+
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(FILES_ENDPOINT);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Authorization", "Bearer " + apiKey);
+            connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+            connection.setConnectTimeout(TIMEOUT_MS);
+            connection.setReadTimeout(TIMEOUT_MS);
+            connection.setDoOutput(true);
+
+            // Build multipart request
+            try (OutputStream os = connection.getOutputStream()) {
+                // Write purpose field
+                os.write(("--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+                os.write(("Content-Disposition: form-data; name=\"purpose\"\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+                os.write((purpose + "\r\n").getBytes(StandardCharsets.UTF_8));
+
+                // Write file field
+                os.write(("--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+                os.write(("Content-Disposition: form-data; name=\"file\"; filename=\"" + file.getName() + "\"\r\n").getBytes(StandardCharsets.UTF_8));
+                os.write(("Content-Type: application/json\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+
+                // Write file contents
+                java.io.FileInputStream fis = new java.io.FileInputStream(file);
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    os.write(buffer, 0, bytesRead);
+                }
+                fis.close();
+
+                // End boundary
+                os.write(("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
+                os.flush();
+            }
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode != 200) {
+                String errorBody = readStream(connection.getErrorStream());
+                throw new Exception("File upload failed (HTTP " + responseCode + "): " + errorBody);
+            }
+
+            String response = readStream(connection.getInputStream());
+            JSONObject jsonResponse = new JSONObject(response);
+            return jsonResponse.getString("id");
+
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    /**
+     * Attach a file to an Assistant for retrieval.
+     */
+    public void attachFileToAssistant(String assistantId, String fileId) throws Exception {
+        String apiKey = getApiKey();
+        String url = ASSISTANTS_ENDPOINT + "/" + assistantId;
+
+        // Update assistant to include file_search tool and file
+        JSONObject requestBody = new JSONObject();
+
+        // Add file_search tool
+        JSONArray tools = new JSONArray();
+        tools.put(new JSONObject().put("type", "file_search"));
+        requestBody.put("tools", tools);
+
+        // Add file to tool_resources
+        JSONObject toolResources = new JSONObject();
+        JSONObject fileSearch = new JSONObject();
+        JSONArray vectorStores = new JSONArray();
+        JSONObject vectorStore = new JSONObject();
+        JSONArray fileIds = new JSONArray();
+        fileIds.put(fileId);
+        vectorStore.put("file_ids", fileIds);
+        vectorStores.put(vectorStore);
+        fileSearch.put("vector_stores", vectorStores);
+        toolResources.put("file_search", fileSearch);
+        requestBody.put("tool_resources", toolResources);
+
+        JSONObject response = patch(url, apiKey, requestBody);
+        Log.i(TAG, "Attached file " + fileId + " to assistant " + assistantId);
+    }
+
+    private JSONObject patch(String urlString, String apiKey, JSONObject requestBody) throws Exception {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(urlString);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");  // Android doesn't support PATCH, use POST with X-HTTP-Method-Override
+            connection.setRequestProperty("X-HTTP-Method-Override", "PATCH");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Authorization", "Bearer " + apiKey);
+            connection.setRequestProperty("OpenAI-Beta", OPENAI_BETA_HEADER);
+            connection.setConnectTimeout(TIMEOUT_MS);
+            connection.setReadTimeout(TIMEOUT_MS);
+            connection.setDoOutput(true);
+
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = requestBody.toString().getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode != 200) {
+                String errorBody = readStream(connection.getErrorStream());
+                throw new Exception("PATCH failed (HTTP " + responseCode + "): " + errorBody);
+            }
+
+            return readResponse(connection);
+
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 
     private String getApiKey() throws Exception {

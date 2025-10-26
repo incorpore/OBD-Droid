@@ -139,6 +139,9 @@ public class AgentToolExecutor {
         List<AgentApiClient.Tool> toolList = new ArrayList<>();
 
         try {
+            // file_search - Enable retrieval of uploaded scan reports
+            toolList.add(new AgentApiClient.Tool("file_search", null));
+
             // run_full_scan
             JSONObject runFullScanFunc = new JSONObject();
             runFullScanFunc.put("name", "run_full_scan");
