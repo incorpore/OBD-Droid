@@ -192,20 +192,12 @@
             android:layout="@layout/preference_indented"
             app:dependency="copilot_enabled" />
 
-        <SwitchPreferenceCompat
-            android:key="copilot_agent_api"
-            android:title="@string/copilot_agent_api_title"
-            android:summary="@string/copilot_agent_api_summary"
-            android:defaultValue="false"
-            android:layout="@layout/preference_indented"
-            app:dependency="copilot_enabled" />
-
         <Preference
             android:key="copilot_delete_all_conversations"
             android:title="Delete All Conversations"
-            android:summary="Permanently delete all stored CoPilot conversation threads (Agent API only)"
+            android:summary="Permanently delete all stored CoPilot conversation threads from OpenAI"
             android:layout="@layout/preference_indented"
-            app:dependency="copilot_agent_api" />
+            app:dependency="copilot_enabled" />
 
         <SwitchPreferenceCompat
             android:key="copilot_tts_enabled"

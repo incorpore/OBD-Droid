@@ -10,6 +10,7 @@ import com.obddroid.core.common.ProcessVariables.PvChangeEvent;
 import com.obddroid.core.common.ProcessVariables.PvChangeListener;
 import com.obddroid.core.common.ProcessVariables.PvList;
 import com.obddroid.core.common.ProcessVariables.TypedPvList;
+import com.obddroid.core.interfaces.IDataManager;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.core.ecu.EcuDataPv;
 

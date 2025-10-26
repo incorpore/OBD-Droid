@@ -9,7 +9,6 @@ final class CoPilotSettings {
 
     private static final String PREF_COPILOT_ENABLED = "copilot_enabled";
     private static final String PREF_WAKE_WORD_ENABLED = "copilot_wake_word";
-    private static final String PREF_AGENT_API_ENABLED = "copilot_agent_api";
 
     private CoPilotSettings() {
     }
@@ -20,10 +19,6 @@ final class CoPilotSettings {
 
     static boolean isWakeWordEnabled(Context context) {
         return prefs(context).getBoolean(PREF_WAKE_WORD_ENABLED, false);
-    }
-
-    static boolean isAgentApiEnabled(Context context) {
-        return prefs(context).getBoolean(PREF_AGENT_API_ENABLED, false);
     }
 
     private static SharedPreferences prefs(Context context) {
