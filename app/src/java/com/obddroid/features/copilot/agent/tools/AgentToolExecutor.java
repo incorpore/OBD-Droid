@@ -3,6 +3,8 @@ package com.obddroid.features.copilot.agent.tools;
 import android.content.Context;
 import android.util.Log;
 
+import com.obddroid.features.copilot.agent.AgentApiClient;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -127,6 +129,105 @@ public class AgentToolExecutor {
 
     private void registerTool(AgentTool tool) {
         tools.put(tool.getName(), tool);
+    }
+
+    /**
+     * Get tool schemas for Assistant registration.
+     * Returns list of Tool objects with JSON schemas for the Agent API.
+     */
+    public List<AgentApiClient.Tool> getToolSchemas() {
+        List<AgentApiClient.Tool> toolList = new ArrayList<>();
+
+        try {
+            // run_full_scan
+            JSONObject runFullScanFunc = new JSONObject();
+            runFullScanFunc.put("name", "run_full_scan");
+            runFullScanFunc.put("description", "Execute comprehensive OBD diagnostic scan including DTCs, live data, freeze frames, and monitors");
+            runFullScanFunc.put("parameters", new JSONObject()
+                .put("type", "object")
+                .put("properties", new JSONObject())
+                .put("required", new JSONArray())
+            );
+            toolList.add(new AgentApiClient.Tool("function", runFullScanFunc));
+
+            // get_scan_results
+            JSONObject getScanResultsFunc = new JSONObject();
+            getScanResultsFunc.put("name", "get_scan_results");
+            getScanResultsFunc.put("description", "Retrieve latest scan results or specific scan by ID");
+            getScanResultsFunc.put("parameters", new JSONObject()
+                .put("type", "object")
+                .put("properties", new JSONObject())
+                .put("required", new JSONArray())
+            );
+            toolList.add(new AgentApiClient.Tool("function", getScanResultsFunc));
+
+            // clear_fault_codes
+            JSONObject clearFaultCodesFunc = new JSONObject();
+            clearFaultCodesFunc.put("name", "clear_fault_codes");
+            clearFaultCodesFunc.put("description", "Clear diagnostic trouble codes (requires user confirmation)");
+            JSONObject clearParams = new JSONObject();
+            clearParams.put("type", "object");
+            clearParams.put("properties", new JSONObject().put("confirm", new JSONObject()
+                .put("type", "boolean")
+                .put("description", "User must confirm destructive action")
+            ));
+            clearParams.put("required", new JSONArray().put("confirm"));
+            clearFaultCodesFunc.put("parameters", clearParams);
+            toolList.add(new AgentApiClient.Tool("function", clearFaultCodesFunc));
+
+            // analyze_dtcs
+            JSONObject analyzeDtcsFunc = new JSONObject();
+            analyzeDtcsFunc.put("name", "analyze_dtcs");
+            analyzeDtcsFunc.put("description", "Perform AI diagnostic analysis on fault codes with detailed repair recommendations");
+            analyzeDtcsFunc.put("parameters", new JSONObject()
+                .put("type", "object")
+                .put("properties", new JSONObject())
+                .put("required", new JSONArray())
+            );
+            toolList.add(new AgentApiClient.Tool("function", analyzeDtcsFunc));
+
+            // export_report
+            JSONObject exportReportFunc = new JSONObject();
+            exportReportFunc.put("name", "export_report");
+            exportReportFunc.put("description", "Generate and share scan report in various formats");
+            JSONObject exportParams = new JSONObject();
+            exportParams.put("type", "object");
+            exportParams.put("properties", new JSONObject()
+                .put("format", new JSONObject()
+                    .put("type", "string")
+                    .put("enum", new JSONArray().put("markdown").put("json").put("zip"))
+                    .put("description", "Report format"))
+            );
+            exportParams.put("required", new JSONArray());
+            exportReportFunc.put("parameters", exportParams);
+            toolList.add(new AgentApiClient.Tool("function", exportReportFunc));
+
+            // open_screen
+            JSONObject openScreenFunc = new JSONObject();
+            openScreenFunc.put("name", "open_screen");
+            openScreenFunc.put("description", "Navigate to specific app screens");
+            JSONObject openScreenParams = new JSONObject();
+            openScreenParams.put("type", "object");
+            openScreenParams.put("properties", new JSONObject()
+                .put("screen", new JSONObject()
+                    .put("type", "string")
+                    .put("enum", new JSONArray()
+                        .put("main")
+                        .put("scan")
+                        .put("fault_codes")
+                        .put("live_data")
+                        .put("settings"))
+                    .put("description", "Screen to open"))
+            );
+            openScreenParams.put("required", new JSONArray().put("screen"));
+            openScreenFunc.put("parameters", openScreenParams);
+            toolList.add(new AgentApiClient.Tool("function", openScreenFunc));
+
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to build tool schemas", e);
+        }
+
+        return toolList;
     }
 
     /**

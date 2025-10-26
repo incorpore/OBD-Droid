@@ -225,7 +225,7 @@ public class AgentCoPilotController {
             }
 
             // Create new assistant
-            List<AgentApiClient.Tool> tools = AgentToolRegistry.getAllTools();
+            List<AgentApiClient.Tool> tools = toolExecutor.getToolSchemas();
             AgentApiClient.Assistant assistant = apiClient.createAssistant(
                 ASSISTANT_NAME,
                 ASSISTANT_INSTRUCTIONS,

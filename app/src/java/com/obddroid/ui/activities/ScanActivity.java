@@ -409,10 +409,12 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         analyzeButton.setEnabled(true);
         analyzeButton.setText("Open CoPilot");
 
-        // Update button to open CoPilot
+        // Update button to open CoPilot with scan analysis request
         analyzeButton.setOnClickListener(v -> {
-            // TODO: Navigate to CoPilot activity
-            Toast.makeText(this, "Opening CoPilot...", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, com.obddroid.features.copilot.ui.CoPilotActivity.class);
+            intent.putExtra(com.obddroid.features.copilot.ui.CoPilotActivity.EXTRA_INITIAL_MESSAGE,
+                "Analyze my latest scan results and tell me what's wrong. What should I fix first?");
+            startActivity(intent);
         });
     }
 
