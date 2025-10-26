@@ -78,13 +78,6 @@ public final class PidDefinition {
         return conversions;
     }
 
-    /**
-     * Returns adapters for each configured conversion entry.
-     */
-    public List<LegacyConversionAdapter> getConversionAdapters() {
-        return LegacyConversionAdapter.wrapAll(conversions);
-    }
-
     public static Builder builder() {
         return new Builder();
     }

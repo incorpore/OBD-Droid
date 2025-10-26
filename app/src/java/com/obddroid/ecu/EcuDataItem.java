@@ -255,11 +255,6 @@ public class EcuDataItem
 		return currErrorCount;
 	}
 
-	public java.util.List<LegacyConversionAdapter> getConversionAdapters()
-	{
-		return LegacyConversionAdapter.wrapAll(cnv);
-	}
-
 	/**
 	 * Return physically minimum value
 	 * - Value is calculated from bit width and data conversion

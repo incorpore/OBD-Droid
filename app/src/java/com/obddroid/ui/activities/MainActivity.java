@@ -63,9 +63,11 @@ import com.obddroid.telemetry.GpsTelemetryManager;
 import com.obddroid.ui.coordinators.RemoteTelemetryUiCoordinator;
 import com.obddroid.telemetry.SensorTelemetryManager;
 import com.obddroid.features.vehiclehistory.ui.AutoCheckActivity;
+import com.obddroid.features.recalls.ui.RecallActivity;
 
 import com.obddroid.ecu.DtcCatalog;
 import com.obddroid.ecu.DtcCatalogProvider;
+import com.obddroid.ecu.EcuCodeItem;
 import com.obddroid.ecu.EcuConversions;
 import com.obddroid.ecu.EcuDataItem;
 import com.obddroid.ecu.EcuDataItems;
@@ -3357,9 +3359,9 @@ public class MainActivity extends AppCompatActivity
                                     // Check if remaining codes are permanent
                                     int permanentCount = 0;
                                     for (Object item : ObdProt.tCodes.values()) {
-                                        if (item instanceof com.obddroid.core.ecu.EcuCodeItem) {
-                                            com.obddroid.core.ecu.EcuCodeItem code = (com.obddroid.core.ecu.EcuCodeItem) item;
-                                            Integer status = (Integer) code.get(com.obddroid.core.ecu.EcuCodeItem.FID_STATUS);
+                                        if (item instanceof EcuCodeItem) {
+                                            EcuCodeItem code = (EcuCodeItem) item;
+                                            Integer status = (Integer) code.get(EcuCodeItem.FID_STATUS);
                                             if (status != null && status == ObdProt.OBD_SVC_PERMACODES) {
                                                 permanentCount++;
                                             }

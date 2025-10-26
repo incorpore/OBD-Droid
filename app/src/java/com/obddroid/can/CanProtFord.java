@@ -13,7 +13,6 @@ import com.obddroid.ecu.Conversions;
  * vary across different Ford models and years. Validation recommended before
  * production use.
  *
- * @author Wal33D <aquataze@yahoo.com>
  */
 public class CanProtFord extends CanProt
 {
