@@ -2,6 +2,8 @@
 
 Welcome to the OBD-Droid documentation center. This index provides quick access to all planning documents, roadmaps, case studies, and reference materials.
 
+> **Note:** All AI/Intelligence documentation has been consolidated into a single comprehensive plan ([vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md)) for easier maintenance and reference.
+
 ---
 
 ## 📚 Documentation Map
@@ -43,15 +45,15 @@ Professional-grade diagnostic tools and multi-ECU support:
 
 ### Vehicle Intelligence & AI
 
-AI-powered diagnostic assistance and intelligent scanning:
+**Single source of truth for all AI-powered features:**
 
-- **[vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md)** – Complete unified plan (64% implemented) including:
-  - Implementation status and roadmap
-  - Agents API architecture (core AI strategy)
-  - CoPilot world-class UI/UX (Lottie, Markwon, Material 3, voice input)
-  - Full Vehicle Scan Orchestrator design
-  - AI Diagnostic Analyzer integration
-  - Phased rollout plan with priorities
+- **[vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md)** – Complete unified plan (64% complete)
+  - **Implementation status** – Track progress across all AI components
+  - **Agents API architecture** – OpenAI Assistants API as core AI layer (persistent conversations, tool calling, file uploads)
+  - **CoPilot** – World-class conversational UI with Lottie animations, Markwon markdown, Material Design 3, voice input (80% complete)
+  - **Full Vehicle Scan Orchestrator** – Automated multi-stage OBD scans with report generation (55% complete)
+  - **AI Diagnostic Analyzer** – GPT-4o powered scan interpretation and repair recommendations (50% complete)
+  - **Phased roadmap** – Clear next steps without timelines or cost concerns
 
 ---
 
@@ -78,8 +80,8 @@ Play Store launch planning and go-to-market strategy:
 **Planning next sprint?**
 → [obd-unified-plan.md](./obd-unified-plan.md)
 
-**Need CoPilot or AI integration specs?**
-→ [vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md)
+**Need AI/CoPilot integration details?**
+→ [vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md) (Agents API, scan orchestration, AI analyzer, full specs)
 
 **Preparing for launch?**
 → [launch-plan.md](./launch-plan.md)
