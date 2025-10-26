@@ -1,4 +1,4 @@
-package com.obddroid.features.copilot.agent;
+package com.obddroid.features.copilot.data;
 
 import android.os.Handler;
 import android.os.Looper;

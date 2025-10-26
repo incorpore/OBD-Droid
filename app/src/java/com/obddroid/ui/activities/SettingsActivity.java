@@ -587,8 +587,8 @@ public class SettingsActivity
 				.setPositiveButton("Delete All", (dialog, which) ->
 				{
 					// Import AgentCoPilotController at top of file
-					com.obddroid.features.copilot.agent.AgentCoPilotController agentController =
-						com.obddroid.features.copilot.agent.AgentCoPilotController.getInstance();
+					com.obddroid.features.copilot.data.AgentCoPilotController agentController =
+						com.obddroid.features.copilot.data.AgentCoPilotController.getInstance();
 					agentController.deleteAllConversations();
 					SnackbarHelper.showSuccess(getActivity(), "All conversation threads deleted");
 				})

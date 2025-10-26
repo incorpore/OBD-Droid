@@ -580,8 +580,8 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
                 }
 
                 // Upload file to OpenAI
-                com.obddroid.features.copilot.agent.AgentApiClient apiClient =
-                    new com.obddroid.features.copilot.agent.AgentApiClient(this);
+                com.obddroid.features.copilot.data.AgentApiClient apiClient =
+                    new com.obddroid.features.copilot.data.AgentApiClient(this);
 
                 String fileId = apiClient.uploadFile(jsonFile, "assistants");
                 Log.i(TAG, "Uploaded scan to CoPilot: file_id=" + fileId + ", scan_id=" + report.getScanId());

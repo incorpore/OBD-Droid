@@ -1,9 +1,9 @@
-package com.obddroid.features.copilot.agent;
+package com.obddroid.features.copilot.data;
 
 import android.content.Context;
 import android.util.Log;
 
-import com.obddroid.features.copilot.agent.tools.AgentToolExecutor;
+import com.obddroid.features.copilot.data.tools.AgentToolExecutor;
 import com.obddroid.features.copilot.data.CoPilotCallback;
 
 import org.json.JSONArray;
