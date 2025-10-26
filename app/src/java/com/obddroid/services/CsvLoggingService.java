@@ -1,21 +1,25 @@
-package com.obddroid.services.logging;
+package com.obddroid.services;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import com.obddroid.R;
@@ -28,17 +32,36 @@ import com.obddroid.core.pvs.ProcessVariables.PvChangeType;
 import com.obddroid.core.pvs.ProcessVariables.TypedPvChangeListener;
 import com.obddroid.ui.activities.MainActivity;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Foreground service that records live PID updates into CSV files.
+ *
+ * This consolidated class includes all CSV logging functionality:
+ * - CsvLoggingService: Main foreground service
+ * - CsvData: In-memory CSV data structure
+ * - CsvLoggingState: Shared state container
+ * - CsvWriterThread: Background writer thread
+ * - CsvLoggingController: Public API for starting/stopping
  */
 public class CsvLoggingService extends Service implements TypedPvChangeListener {
 
@@ -467,5 +490,408 @@ public class CsvLoggingService extends Service implements TypedPvChangeListener 
             broadcast.putExtra(EXTRA_FILE_NAME, fileName);
         }
         sendBroadcast(broadcast);
+    }
+
+    // ========== NESTED CLASSES ==========
+
+    /**
+     * Append-only in-memory table that aggregates the most recent snapshot of PID data.
+     * Rows are flushed to disk by {@link CsvWriterThread}.
+     */
+    static final class CsvData {
+
+        private List<String> columns;
+        private Map<String, String> columnInstances;
+        private Map<String, String> latestValues;
+        private Map<Long, Map<String, String>> rows;
+        private boolean hasNewColumns;
+        private boolean hasPendingData;
+
+        CsvData() {
+            this.columns = new ArrayList<>();
+            this.columnInstances = new HashMap<>();
+            this.latestValues = new HashMap<>();
+            this.rows = new HashMap<>();
+            this.hasNewColumns = false;
+            this.hasPendingData = false;
+        }
+
+        CsvData(List<String> columns) {
+            this();
+            setColumns(columns);
+        }
+
+        CsvData(CsvData previous) {
+            this.columns = new ArrayList<>(previous.columns);
+            this.columnInstances = new HashMap<>(previous.columnInstances);
+            this.latestValues = new HashMap<>(previous.latestValues);
+            this.rows = new HashMap<>();
+            this.hasNewColumns = false;
+            this.hasPendingData = false;
+        }
+
+        void setColumns(List<String> columns) {
+            this.columns = new ArrayList<>(columns);
+            this.columnInstances = new HashMap<>(this.columns.size());
+            for (String key : this.columns) {
+                this.columnInstances.put(key, key);
+            }
+            this.hasNewColumns = false;
+        }
+
+        void setData(String key, String value) {
+            if (key == null) {
+                return;
+            }
+            String resolvedKey = columnInstances.get(key);
+            if (resolvedKey == null) {
+                columns.add(key);
+                columnInstances.put(key, key);
+                resolvedKey = key;
+                hasNewColumns = true;
+            }
+            latestValues.put(resolvedKey, value);
+            hasPendingData = true;
+        }
+
+        void saveRow() {
+            if (!hasPendingData) {
+                return;
+            }
+            long timestamp = System.currentTimeMillis();
+            Map<String, String> row = new HashMap<>(latestValues);
+            rows.put(timestamp, row);
+            hasPendingData = false;
+        }
+
+        long getStartTime() {
+            if (rows.isEmpty()) {
+                return System.currentTimeMillis();
+            }
+            Long[] timestamps = rows.keySet().toArray(new Long[0]);
+            Arrays.sort(timestamps);
+            return timestamps[0];
+        }
+
+        long getEndTime() {
+            if (rows.isEmpty()) {
+                return System.currentTimeMillis();
+            }
+            Long[] timestamps = rows.keySet().toArray(new Long[0]);
+            Arrays.sort(timestamps);
+            return timestamps[timestamps.length - 1];
+        }
+
+        int size() {
+            return rows.size();
+        }
+
+        boolean hasNewColumns() {
+            return hasNewColumns;
+        }
+
+        boolean hasPendingData() {
+            return hasPendingData;
+        }
+
+        void writeOutput(OutputStreamWriter writer, boolean includeHeader) throws IOException {
+            if (includeHeader) {
+                StringBuilder header = new StringBuilder();
+                header.append("timestamp");
+                for (String column : columns) {
+                    header.append(',');
+                    header.append(quoteCell(column));
+                }
+                header.append("\r\n");
+                writer.write(header.toString());
+            }
+
+            Long[] timestamps = rows.keySet().toArray(new Long[0]);
+            Arrays.sort(timestamps);
+            for (Long timestamp : timestamps) {
+                Map<String, String> row = rows.get(timestamp);
+                if (row == null) {
+                    continue;
+                }
+                StringBuilder dataRow = new StringBuilder();
+                dataRow.append(timestamp);
+                for (String column : columns) {
+                    dataRow.append(',');
+                    dataRow.append(quoteCell(row.get(column)));
+                }
+                dataRow.append("\r\n");
+                writer.write(dataRow.toString());
+            }
+        }
+
+        private static String quoteCell(String value) {
+            if (value == null) {
+                return "";
+            }
+            boolean needsQuote = value.contains(",") || value.contains("\"") || value.contains("\n");
+            String escaped = value.replace("\"", "\"\"");
+            if (needsQuote) {
+                return "\"" + escaped + "\"";
+            }
+            return escaped;
+        }
+    }
+
+    /**
+     * In-memory state container for the CSV logging feature.
+     * Provides quick access for UI components without needing to bind to the service.
+     */
+    public static final class CsvLoggingState {
+
+        private static final AtomicBoolean recording = new AtomicBoolean(false);
+        private static final AtomicInteger dataPoints = new AtomicInteger();
+        private static final AtomicInteger dataRows = new AtomicInteger();
+        private static final AtomicReference<String> lastFileName = new AtomicReference<>();
+
+        private CsvLoggingState() {
+            // utility holder
+        }
+
+        public static boolean isRecording() {
+            return recording.get();
+        }
+
+        static void setRecording(boolean active) {
+            recording.set(active);
+        }
+
+        public static int getDataPoints() {
+            return dataPoints.get();
+        }
+
+        public static int getDataRows() {
+            return dataRows.get();
+        }
+
+        static void resetCounters() {
+            dataPoints.set(0);
+            dataRows.set(0);
+        }
+
+        static void incrementDataPoint() {
+            dataPoints.incrementAndGet();
+        }
+
+        static void incrementDataRow() {
+            dataRows.incrementAndGet();
+        }
+
+        public static String getLastFileName() {
+            return lastFileName.get();
+        }
+
+        static void setLastFileName(String fileName) {
+            lastFileName.set(fileName);
+        }
+    }
+
+    /**
+     * Serialises {@link CsvData} segments to disk on a background thread.
+     */
+    static final class CsvWriterThread extends HandlerThread {
+
+        private static final String TAG = "CsvWriterThread";
+
+        private final List<CsvData> queue;
+        private Handler handler;
+        private final File path;
+        private File outputFile;
+        private final SimpleDateFormat timestampFormatter;
+        private OutputStreamWriter writer;
+        private boolean alreadyLoggedError;
+
+        CsvWriterThread(File path) {
+            super("CsvWriterThread");
+            this.queue = new ArrayList<>();
+            this.path = path;
+            this.timestampFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HHmmss'Z'", Locale.US);
+            this.alreadyLoggedError = false;
+            testWrite();
+        }
+
+        private void testWrite() {
+            if (path == null) {
+                Log.e(TAG, "External files directory unavailable");
+                return;
+            }
+            try {
+                File destination = new File(path, "test.txt");
+                OutputStreamWriter test = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(destination)));
+                test.write("Test write\n");
+                test.close();
+                //noinspection ResultOfMethodCallIgnored
+                destination.delete();
+            } catch (IOException e) {
+                Log.e(TAG, "Error confirming write permission", e);
+            }
+        }
+
+        @Override
+        protected void onLooperPrepared() {
+            super.onLooperPrepared();
+            handler = new Handler(getLooper());
+        }
+
+        void write(CsvData data) {
+            synchronized (queue) {
+                queue.add(data);
+            }
+            if (handler != null) {
+                handler.post(this::writeOut);
+            }
+        }
+
+        private OutputStreamWriter openWriter(CsvData segment) throws IOException {
+            if (path == null) {
+                throw new IOException("No storage directory available");
+            }
+            Date timestamp = new Date(segment.getStartTime());
+            String filename = "obddroid_" + timestampFormatter.format(timestamp) + ".csv";
+            File destination = new File(path, filename);
+            this.outputFile = destination;
+            return new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(destination)));
+        }
+
+        String getFilename() {
+            return outputFile != null ? outputFile.getName() : null;
+        }
+
+        File getOutputFile() {
+            return outputFile;
+        }
+
+        boolean isOpen() {
+            return writer != null;
+        }
+
+        private void writeOut() {
+            CsvData segment;
+            synchronized (queue) {
+                if (queue.isEmpty()) {
+                    return;
+                }
+                segment = queue.remove(0);
+            }
+
+            if (segment != null && segment.size() > 0) {
+                writeOut(segment);
+
+                synchronized (queue) {
+                    if (!queue.isEmpty() && handler != null) {
+                        handler.removeCallbacks(this::writeOut);
+                        handler.post(this::writeOut);
+                    }
+                }
+            }
+        }
+
+        private void writeOut(CsvData segment) {
+            try {
+                if (writer != null && segment.hasNewColumns()) {
+                    writer.close();
+                    writer = null;
+                }
+
+                if (writer == null) {
+                    writer = openWriter(segment);
+                    segment.writeOutput(writer, true);
+                } else {
+                    segment.writeOutput(writer, false);
+                }
+                writer.flush();
+            } catch (IOException e) {
+                if (!alreadyLoggedError) {
+                    Log.w(TAG, "Error while outputting csv data", e);
+                } else {
+                    Log.w(TAG, "Error while outputting csv data: " + e.getMessage());
+                }
+                alreadyLoggedError = true;
+            }
+        }
+
+        void closeAsync() {
+            if (handler != null) {
+                handler.post(this::attemptClose);
+            }
+        }
+
+        private void attemptClose() {
+            boolean isEmpty;
+            synchronized (queue) {
+                isEmpty = queue.isEmpty();
+            }
+            if (isEmpty) {
+                closeNow();
+            } else if (handler != null) {
+                handler.post(this::attemptClose);
+            }
+        }
+
+        private void closeNow() {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException e) {
+                    Log.w(TAG, "Error while finishing writing csv data", e);
+                }
+                writer = null;
+                outputFile = null;
+            }
+        }
+
+        @Override
+        public boolean quitSafely() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                return super.quitSafely();
+            } else {
+                if (handler != null) {
+                    handler.post(this::quit);
+                }
+                return true;
+            }
+        }
+    }
+
+    /**
+     * Entry-point helpers for starting or stopping the CSV logging foreground service.
+     */
+    public static final class CsvLoggingController {
+
+        private CsvLoggingController() {
+            // utility holder
+        }
+
+        public static void toggleLogging(Context context) {
+            if (CsvLoggingState.isRecording()) {
+                stopLogging(context);
+            } else {
+                startLogging(context);
+            }
+        }
+
+        public static void startLogging(Context context) {
+            Intent intent = new Intent(context, CsvLoggingService.class);
+            intent.setAction(CsvLoggingService.ACTION_START);
+            startService(context, intent);
+        }
+
+        public static void stopLogging(Context context) {
+            Intent intent = new Intent(context, CsvLoggingService.class);
+            intent.setAction(CsvLoggingService.ACTION_STOP);
+            startService(context, intent);
+        }
+
+        private static void startService(Context context, Intent intent) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ContextCompat.startForegroundService(context, intent);
+            } else {
+                context.startService(intent);
+            }
+        }
     }
 }

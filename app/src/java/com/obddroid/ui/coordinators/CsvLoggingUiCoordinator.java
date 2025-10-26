@@ -9,7 +9,7 @@ import androidx.core.content.ContextCompat;
 
 import com.obddroid.R;
 import com.obddroid.features.common.FeatureToggleNotifier;
-import com.obddroid.services.logging.CsvLoggingService;
+import com.obddroid.services.CsvLoggingService;
 import com.obddroid.utils.SnackbarHelper;
 
 import java.util.Objects;

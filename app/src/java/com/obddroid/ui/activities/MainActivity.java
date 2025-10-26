@@ -57,7 +57,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
-import com.obddroid.services.logging.CsvLoggingController;
+import com.obddroid.services.CsvLoggingService.CsvLoggingController;
 import com.obddroid.ui.coordinators.CsvLoggingUiCoordinator;
 import com.obddroid.core.telemetry.GpsTelemetryManager;
 import com.obddroid.ui.coordinators.RemoteTelemetryUiCoordinator;
