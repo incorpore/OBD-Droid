@@ -2,79 +2,48 @@
 <resources>
     <!--  OBDroid -->
     <string name="app_name" translatable="false">OBDroid</string>
-    <string name="copyright_obddroid" translatable="false">© 2025-2026 obddroid</string>
     <string name="app_description">OBD vehicle diagnostics app for ELM327 Bluetooth adapter</string>
-    <string name="translation_credits">English (Default)</string>
-    <string name="copied_to_clipboard">Copied to clipboard</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="title_connecting">Connecting…</string>
     <string name="title_connected_to">Connected %s</string>
-    <string name="status_connected">Connected</string>
     <string name="status_connect_device">Connect a Device</string>
     <string name="status_online">Select Device</string>
     <string name="status_demo_mode">Demo Mode</string>
     <string name="status_viewing_saved">Viewing Saved Data</string>
-    <string name="status_selecting_ecu">Selecting ECU</string>
-    <string name="ecu_list_header">Select ECU Module</string>
-    <string name="ecu_scan_button">Scan for ECUs</string>
-    <string name="ecu_currently_selected">Currently Selected</string>
-    <string name="ecu_detected_modules">Detected ECU Modules</string>
-    <string name="ecu_active">Active</string>
-    <string name="ecu_protocol">Protocol: %1$s</string>
-    <string name="ecu_address_type">Address: %1$s</string>
-    <string name="ecu_supported_pids">%1$d PIDs supported</string>
-    <string name="ecu_tap_to_select">Tap to select this ECU</string>
-    <string name="logo">Logo</string>
     <string name="back_again_to_exit">Press back again to close this app</string>
     <string name="safety_recalls">Safety Recalls</string>
     <string name="vin_hint">Enter 17-character VIN</string>
     <string name="search_recalls">Search Recalls</string>
-    <string name="recalls_vin_hint">Enter VIN</string>
-    <string name="recalls_search_button">Visit NHTSA Website</string>
-    <string name="recalls_intro">Enter a 17-character VIN to search the NHTSA recall database.</string>
-    <string name="recalls_loading">Checking NHTSA recall database…</string>
-    <string name="recalls_empty_state">No open recalls reported for this vehicle.</string>
-    <string name="recalls_error_generic">Unable to load recall information. Please try again.</string>
-    <string name="recalls_invalid_vin">Please enter a 17-character VIN.</string>
-    <string name="recalls_component_label">Component: %1$s</string>
-    <string name="recalls_campaign_label">Campaign %1$s</string>
-    <string name="recalls_report_date">Report date: %1$s</string>
     <string name="recalls_open_in_browser">Tap to view details on NHTSA.gov</string>
     <string name="recalls_summary_heading">Summary</string>
     <string name="recalls_remedy_heading">Remedy</string>
-    <string name="recalls_not_available">Not available</string>
     <string name="menu_more">More</string>
     <string name="menu_more_description">More options</string>
     <string name="value_placeholder">--</string>
     <!-- menu  -->
     <string name="action_connect">Connect</string>
     <string name="obd_none">NO service</string>
-    <string name="obd_services">Services</string>
-    <string name="obd_veh_info">Vehicle Info</string>
     <string name="obd_data">Live Data</string>
-    <string name="service_freezeframes">Freeze Frames</string>
     <string name="service_testcontrol">Test Suite</string>
     <string name="obd_codes">Fault Codes</string>
-    <string name="obd_permanentcodes">Fault Codes (Permanent)</string>
-    <string name="obd_pendingcodes">Fault Codes (Pending)</string>
     <string name="obd_clearcodes">Clear Codes</string>
     <string name="obd_clear_info">
-This will reset the MIL and clear all emission-related diagnostic\n
-information, including:\n
- - Diagnostic trouble codes\n
- - Freeze frame data\n
- - Oxygen sensor test data\n
- - Status of system monitoring tests\n
- - On-board monitoring tests results\n
- - Distance travelled while MIL activated\n
- - Number of warm-ups since DTCs cleared\n
- - Distance travelled since DTCs cleared\n
- - Engine run time while MIL activated\n
- - Time since DTCs cleared\n\n
-Other manufacturer specific clearing/resetting actions may occur.\n
-The loss of data may cause the vehicle to run poorly for a short \n
-period of time while the ECU recalibrates itself.
+    This will reset the MIL and clear all emission-related diagnostic\n
+    information, including:\n
+    - Diagnostic trouble codes\n
+    - Freeze frame data\n
+    - Oxygen sensor test data\n
+    - Status of system monitoring tests\n
+    - On-board monitoring tests results\n
+    - Distance travelled while MIL activated\n
+    - Number of warm-ups since DTCs cleared\n
+    - Distance travelled since DTCs cleared\n
+    - Engine run time while MIL activated\n
+    - Time since DTCs cleared\n\n
+    Other manufacturer specific clearing/resetting actions may occur.\n
+    The loss of data may cause the vehicle to run poorly for a short \n
+    period of time while the ECU recalibrates itself.
     </string>
     <string name="fault_codes_title">Fault Codes</string>
     <string name="fault_codes_empty_title">Ready to scan</string>
@@ -92,7 +61,6 @@ period of time while the ECU recalibrates itself.
     <string name="fault_codes_status_confirmed">STORED</string>
     <string name="fault_codes_status_pending">PENDING</string>
     <string name="fault_codes_status_permanent">PERMANENT</string>
-    <string name="fault_codes_item_clicked">Selected %1$s</string>
     <string name="fault_codes_info_title">About Fault Codes</string>
     <string name="fault_codes_info_ack">Got it</string>
     <string name="fault_codes_info_message">Diagnostic Trouble Codes (DTCs)\n\nPERMANENT CODES (Red)\nEmissions-related codes that cannot be cleared with a scan tool. These clear automatically when the vehicle detects the issue is resolved.\n\nSTORED CODES (Orange)\nActive faults that triggered the Check Engine Light. These indicate current issues that need attention.\n\nPENDING CODES (Yellow)\nIntermittent issues detected but not yet confirmed. The ECU is monitoring these conditions.\n\nCODE PREFIXES:\nP - Powertrain (Engine, Transmission)\nC - Chassis (ABS, Suspension)\nB - Body (Airbags, Climate Control)\nU - Network or Communication\n\nHow It Works:\nThis page scans your vehicle using OBD-II Mode 03 (stored codes), Mode 07 (pending codes), and Mode 0A (permanent codes). Tap any code to inspect details, clear codes, or research fixes.</string>
@@ -108,7 +76,6 @@ period of time while the ECU recalibrates itself.
     <string name="fault_codes_freeze_not_available">No freeze frame available</string>
     <string name="fault_codes_nonda_watch_guide">Watch nonda\'s step-by-step guide</string>
     <string name="fault_codes_nonda_search_channel">Search nonda\'s channel for this code</string>
-    <string name="fault_codes_ai_configure_key">Configure API key in settings first</string>
     <string name="fault_codes_web_search_failed">Unable to search web</string>
     <string name="fault_codes_nonda_not_found">Could not open YouTube for this code</string>
     <string name="fault_codes_nonda_searching">Opening nonda search results for %1$s</string>
@@ -116,21 +83,19 @@ period of time while the ECU recalibrates itself.
     <string name="fault_codes_copied">Copied: %1$s</string>
     <string name="fault_codes_copy_failed">Unable to copy to clipboard</string>
     <string name="obd_test_progress">OBD test control in progress.\n
-        Please check vehicle reaction.</string>
+    Please check vehicle reaction.</string>
     <string name="obd_test_confirm">OBD test control requested.\n\n
-        The requested OBD test control may generate:\n
-        - Vehicle motion\n
-        - Exhaust smoke\n
-        - High exhaust temperature\n
-        - Loud engine noise\n
-        - Fuel vapor\n
-        - etc.\n\n
-        Please confirm to perform this test control on your own risk in a safe test environment only!
+    The requested OBD test control may generate:\n
+    - Vehicle motion\n
+    - Exhaust smoke\n
+    - High exhaust temperature\n
+    - Loud engine noise\n
+    - Fuel vapor\n
+    - etc.\n\n
+    Please confirm to perform this test control on your own risk in a safe test environment only!
     </string>
     <!--  BtDeviceListActivity -->
     <string name="select_device">Select adapter</string>
-    <string name="none_paired">No Devices Paired</string>
-    <string name="none_found">No Devices Found</string>
     <string name="title_paired_devices">Paired Devices</string>
     <!-- ExportTask -->
     <string name="send_to">Send to</string>
@@ -138,8 +103,6 @@ period of time while the ECU recalibrates itself.
     <string name="time">Time [s]</string>
     <string name="chart">Chart</string>
     <string name="demo_stopped">Device connection was lost</string>
-    <string name="demo_started">Connected to Demo Adapter</string>
-    <string name="demo_mode">Demo Mode</string>
     <string name="snapshot">snapshot</string>
     <string name="save">Save Data</string>
     <string name="load">Load Data</string>
@@ -155,7 +118,6 @@ period of time while the ECU recalibrates itself.
     <string name="filter">Filter selected</string>
     <!-- Settings -->
     <string name="settings">Settings</string>
-    <string name="common_settings">General Settings</string>
     <string name="measure_system_description">Controls units for speed, temperature, pressure, distance, and air flow</string>
     <string name="measure_system">Measurement Units</string>
     <string name="metric">Metric (km/h, °C, kPa, km)</string>
@@ -171,7 +133,6 @@ period of time while the ECU recalibrates itself.
     <string name="items_for_display">Data Items to Display</string>
     <string name="items_for_display_descr">Select which vehicle data to monitor</string>
     <string-array name="empty" translatable="false"/>
-    <string name="debugging">Debugging</string>
     <string name="logging_level">Logging Level</string>
     <string name="logging_level_description">Amount of detail to record in debug logs</string>
     <string-array name="logging_options" translatable="false">
@@ -189,67 +150,23 @@ period of time while the ECU recalibrates itself.
     * key values for restore options
     * - must align with enum MainActivity.PRESELECT
     -->
-    <string-array name="restore_keys" translatable="false">
-        <item>LAST_DEV_ADDRESS</item>
-        <item>LAST_ECU_ADDRESS</item>
-        <item>LAST_SERVICE</item>
-        <item>LAST_ITEMS</item>
-        <item>LAST_VIEW_MODE</item>
-    </string-array>
     <!--
     * display values for restore options
     * - must align with enum MainActivity.PRESELECT
     -->
-    <string-array name="restore_options" translatable="false">
-        <item>@string/last_elm</item>
-        <item>@string/last_ecu</item>
-        <item>@string/last_service</item>
-        <item>@string/last_data_items</item>
-        <item>@string/last_view_mode</item>
-    </string-array>
-    <string name="last_elm">re-connect last ELM-adapter</string>
-    <string name="last_ecu">re-connect last ECU</string>
-    <string name="last_service">last OBD service</string>
-    <string name="last_data_items">last selected data items</string>
-    <string name="last_view_mode">last data view mode</string>
-    <string name="keep_screen_on">Keep main screen on</string>
-    <string name="keep_screen_on_description">Do not turn OFF screen if main/data screen is on display</string>
-    <string name="development_options">Development options</string>
-    <string name="dev_opt_description">Advanced debugging options</string>
-    <string name="extension_files">Protocol customization files (CSV)</string>
-    <string name="conversions">Data Conversions</string>
-    <string name="data_items">Data items</string>
-    <string name="select_extension">Select .csv extension file …</string>
-    <string name="extension_loading">customization loading</string>
-    <string name="check_cust_settings">Please check your customization settings\n</string>
-    <string name="obd_options">OBD Options</string>
-    <string name="obd_opt_description">Configure vehicle communication settings</string>
-    <string name="select_protocol">Preferred OBD Protocol</string>
-    <string name="plugin_manager">Plugin manager</string>
-    <string name="configure">Configure</string>
     <string name="select_fault_code">Select fault code …</string>
-    <string name="select_medium">Connection Type</string>
     <string name="devices_found">%d USB device(s) found</string>
-    <string name="min_elm_timeout">Min. ELM timeout [ms]</string>
     <string name="unabletoconnect">Unable to connect device</string>
     <string name="connectionlost">Device connection was lost</string>
-    <string name="elm_timeout_descr">Minimum timeout in [ms] to wait for ELM responses</string>
     <string name="disable_elm_cmds">Disabled Adapter Commands</string>
     <string name="disable_elm_cmds_descr">Advanced: Disable specific adapter commands if causing issues</string>
     <string name="elm_adaptive_timing">Adaptive Timing</string>
     <string name="elm_adaptive_timing_descr">Allow adapter to automatically adjust communication timing</string>
     <string name="elm_reset_on_nrc">Reset Adapter on Errors</string>
     <string name="elm_reset_on_nrc_descr">Automatically reset the adapter when communication errors occur</string>
-    <string name="select_ecu_addr">Select ECU address …</string>
     <string name="disconnect">Disconnect</string>
     <string name="disconnect_confirm_title">Confirm Disconnect</string>
     <string name="disconnect_confirm_message">Are you sure you want to disconnect from the adapter?</string>
-    <string name="reset_preselections">Reset Preferences</string>
-    <string name="use_last_settings_description">Remember adapter, ECU, and display settings between sessions</string>
-    <string name="use_last_settings">Remember Last Settings</string>
-    <string name="common_settings_description">Basic application preferences</string>
-    <string name="secure_connect">Secure Connection</string>
-    <string name="secure_connect_description">Use encrypted Bluetooth connection for enhanced security</string>
     <string name="elm_options">Adapter Options</string>
     <string name="elm_custom_init">Custom Initialization</string>
     <string name="elm_custom_init_descr">Advanced: Custom commands sent to adapter at startup</string>
@@ -269,17 +186,8 @@ period of time while the ECU recalibrates itself.
     <string name="DATAERROR">DATA error</string>
     <string name="RXERROR">RX error</string>
     <string name="ERROR">Error</string>
-    <string name="obd_error">OBD protocol error</string>
-    <string name="device_address_description">IP address of network-connected adapter</string>
-    <string name="device_address">IP Address</string>
-    <string name="device_port_description">Port number for network connection</string>
-    <string name="device_port">Port Number</string>
     <string name="data_disable_max">Error Tolerance</string>
     <string name="data_disable_max_description">Number of errors before temporarily disabling a sensor</string>
-    <string name="autohide_toolbar">Hide toolbar</string>
-    <string name="autohide_toolbar_description">Automatically hide toolbar after delay w/o activity</string>
-    <string name="autohide_delay">Hide toolbar delay [s]</string>
-    <string name="autohide_delay_description">Delay in seconds w/o activity, before Toolbar is hidden</string>
     <!-- the string array corresponding to state enum -->
     <string-array name="elmcomm_states" translatable="false">
         <item>@string/UNDEFINED</item>
@@ -300,7 +208,6 @@ period of time while the ECU recalibrates itself.
     </string-array>
     <!-- CSV export options -->
     <string name="csv_export_options">CSV Export Options</string>
-    <string name="csv_export_description">Configure CSV file export format</string>
     <string name="csv_field_delimiter">Field Delimiter</string>
     <string name="csv_field_delimiter_description">Character used to separate data fields</string>
     <string name="csv_rec_delimiter">Record Delimiter</string>
@@ -312,39 +219,6 @@ period of time while the ECU recalibrates itself.
     <string name="semicolon">SEMICOLON</string>
     <string name="send_after_export">Share After Export</string>
     <string name="send_after_export_descr">Prompt to share file immediately after exporting</string>
-    <string name="toolbar_overlay">Show as overlay</string>
-    <string name="toolbar_overlay_sum">Show toolbar overlapping main screen</string>
-    <string name="license">Licensing …</string>
-    <string name="donation">Support project …</string>
-    <string name="libraries">Libraries …</string>
-    <string name="libraries_sum">Libraries used in project …</string>
-    <string name="release_history">Release history …</string>
-    <string name="app_license_sum" translatable="false">
-        Connect to your car\'s OBD system\n
-        * GNU General Public License v3.0
-    </string>
-    <string name="url_app_license" translatable="false">https://github.com/obddroid/OBDroid/blob/master/LICENSE</string>
-    <string name="url_app_mainpage" translatable="false">https://github.com/obddroid/OBDroid/</string>
-    <string name="url_app_releases" translatable="false">https://github.com/obddroid/OBDroid/releases/</string>
-    <string name="url_app_translation" translatable="false">https://hosted.weblate.org/projects/androbd/strings/</string>
-    <string name="lib_usb_serial" translatable="false">usb-serial-for-android</string>
-    <string name="lib_usb_serial_sum" translatable="false">
-        Library for USB serial connections\n
-        * GNU Lesser General Public License v2.1
-    </string>
-    <string name="lib_achart" translatable="false">AChartEngine</string>
-    <string name="lib_achart_sum" translatable="false">
-        Charting library for Android\n
-        * Apache 2.0 license
-    </string>
-    <string name="lib_speedview" translatable="false">SpeedView</string>
-    <string name="lib_speedview_sum" translatable="false">
-        Beautiful gauges for Android\n
-        * Apache 2.0 license
-    </string>
-    <string name="graphic_design">Graphic design</string>
-    <string name="design_credits" translatable="false">2018 by @anaufalm</string>
-    <string name="long_press_dfc_hint">Long press DFC for online search …</string>
     <string-array name="csv_field_delim_options" translatable="false">
         <item>@string/tab</item>
         <item>@string/comma</item>
@@ -395,8 +269,6 @@ period of time while the ECU recalibrates itself.
         <item>30</item>
         <item>60</item>
     </string-array>
-    <string name="comm_baudrate">Baud Rate</string>
-    <string name="comm_baudrate_description">USB serial communication speed (bits per second)</string>
     <string name="full_screen_display">Immersive Mode</string>
     <string name="full_screen_display_description">Hide system bars for ultra-dark immersive experience</string>
     <string name="display_color">Display color</string>
@@ -404,27 +276,8 @@ period of time while the ECU recalibrates itself.
     <string name="display_range">Display range</string>
     <string name="reset_default">Default</string>
     <string name="update_period_s">Update period [s]</string>
-    <string-array name="baud_rates" translatable="false">
-        <item>2400</item>
-        <item>9600</item>
-        <item>19200</item>
-        <item>38400</item>
-        <item>57600</item>
-        <item>115200</item>
-    </string-array>
     <!-- ECU List Activity -->
     <string name="ecu_list_title">ECU Modules</string>
-    <string name="ecu_scan_instructions">Tap \"Scan for ECUs\" to discover vehicle control modules</string>
-    <string name="ecu_not_connected">Not connected to adapter. Please connect first.</string>
-    <string name="ecu_scanning">Scanning for ECU modules…</string>
-    <string name="ecu_none_found">No ECU modules detected. Ensure vehicle is running.</string>
-    <string name="ecu_scan_error">ECU scan failed. Please try again.</string>
-    <string name="ecu_name_unknown">Unknown Module</string>
-    <string name="ecu_pids_unknown">Unknown</string>
-    <string name="ecu_currently_active">Currently active ECU</string>
-    <string name="ecu_already_selected">This ECU is already selected</string>
-    <string name="ecu_selected_success">ECU selected successfully</string>
-    <string name="ecu_select_error">Failed to select ECU. Please try again.</string>
     <!-- CSV logging -->
     <string name="csv_logging_title">CSV Data Logging</string>
     <string name="csv_logging_channel_description">Record live OBD measurements to CSV files</string>
@@ -485,7 +338,6 @@ period of time while the ECU recalibrates itself.
     <string name="remote_telemetry_publisher_stop">Disable Remote Telemetry</string>
     <string name="remote_telemetry_publisher_started">Remote telemetry enabled</string>
     <string name="remote_telemetry_publisher_stopped">Remote telemetry disabled</string>
-    <string name="remote_telemetry_publisher_config_error">Remote Telemetry configuration incomplete. Please verify server settings.</string>
     <string name="remote_telemetry_status_title">Remote Telemetry Status</string>
     <string name="remote_telemetry_status_never">No remote telemetry attempts yet</string>
     <string name="remote_telemetry_status_waiting_for_data">Remote telemetry initialized, waiting for new data</string>
@@ -510,9 +362,6 @@ period of time while the ECU recalibrates itself.
     <string name="copilot_enable_summary">Knight Rider–style AI companion that can explain diagnostics and assist with workflows.</string>
     <string name="copilot_wake_word_title">Use wake word</string>
     <string name="copilot_wake_word_summary">Listen for "OBD Droid" before activating voice mode. Disable for noisy bays or privacy-sensitive environments.</string>
-    <string name="copilot_agent_api_title">Use Agent API memory</string>
-    <string name="copilot_agent_api_summary">Store conversations with OpenAI\'s Agent/Conversations API so CoPilot remembers context across sessions.</string>
-
     <!-- CoPilot TTS voice options -->
     <string-array name="copilot_voice_options" translatable="false">
         <item>Alloy (Neutral)</item>

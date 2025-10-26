@@ -124,15 +124,19 @@ public class CorgiVINDecoder {
         VehicleInfo info = new VehicleInfo();
         info.vin = vin;
 
+        Log.d(TAG, "=== Decoding VIN: " + vin + " ===");
+
         // Validate VIN format
         if (!validateVIN(vin)) {
             info.valid = false;
             info.errorMessage = "Invalid VIN format";
+            Log.w(TAG, "✗ Invalid VIN format: " + vin);
             return info;
         }
 
         synchronized (databaseLock) {
             if (database == null || !database.isOpen()) {
+                Log.d(TAG, "Database not open, initializing...");
                 initDatabase();
             }
 
@@ -141,9 +145,16 @@ public class CorgiVINDecoder {
             String wmi = vin.substring(0, 3);
             char yearChar = vin.charAt(9);
             Integer year = decodeYear(yearChar, vin.charAt(6));
+            Log.d(TAG, "Extracted - WMI: " + wmi + ", Year: " + year);
 
             // Query database for make/manufacturer
             queryMakeAndManufacturer(wmi, info);
+
+            // If Make is null but we have a manufacturer, try to extract make from manufacturer name
+            if (info.make == null && info.manufacturer != null) {
+                info.make = extractMakeFromManufacturer(info.manufacturer);
+                Log.d(TAG, "Extracted make from manufacturer: " + info.make);
+            }
 
             // Set model year
             if (year != null) {
@@ -155,7 +166,8 @@ public class CorgiVINDecoder {
                 queryVinSchemaDetails(vin, wmi, year, info);
             }
 
-            info.valid = info.make != null;
+            // Valid if we have either make or manufacturer
+            info.valid = (info.make != null || info.manufacturer != null);
             if (!info.valid) {
                 info.errorMessage = "WMI not found in database";
             }
@@ -181,14 +193,18 @@ public class CorgiVINDecoder {
                       "LEFT JOIN Country c ON w.CountryId = c.Id " +
                       "WHERE w.Wmi = ? LIMIT 1";
 
+        Log.d(TAG, "Querying database for WMI: " + wmi);
         try (Cursor cursor = database.rawQuery(query, new String[]{wmi})) {
             if (cursor.moveToFirst()) {
                 info.make = cursor.getString(0);
                 info.manufacturer = cursor.getString(1);
                 info.plantCountry = cursor.getString(2);
+                Log.d(TAG, "✓ Found: Make=" + info.make + ", Mfr=" + info.manufacturer + ", Country=" + info.plantCountry);
+            } else {
+                Log.w(TAG, "✗ WMI '" + wmi + "' not found in database");
             }
         } catch (Exception e) {
-            Log.w(TAG, "Error querying make: " + e.getMessage());
+            Log.e(TAG, "Error querying make for WMI '" + wmi + "': " + e.getMessage(), e);
         }
     }
 
@@ -370,6 +386,156 @@ public class CorgiVINDecoder {
         }
 
         return baseYear;
+    }
+
+    /**
+     * Extract make name from manufacturer string
+     * Examples:
+     *   "MERCEDES-BENZ OF NORTH AMERICA, INC." -> "Mercedes-Benz"
+     *   "AMERICAN HONDA MOTOR CO., INC." -> "Honda"
+     */
+    private String extractMakeFromManufacturer(String manufacturer) {
+        if (manufacturer == null) return null;
+
+        String lower = manufacturer.toLowerCase();
+
+        // Common patterns
+        if (lower.contains("mercedes") || lower.contains("benz")) {
+            return "Mercedes-Benz";
+        }
+        if (lower.contains("honda")) {
+            return "Honda";
+        }
+        if (lower.contains("toyota")) {
+            return "Toyota";
+        }
+        if (lower.contains("ford")) {
+            return "Ford";
+        }
+        if (lower.contains("chevrolet") || lower.contains("chevy")) {
+            return "Chevrolet";
+        }
+        if (lower.contains("nissan")) {
+            return "Nissan";
+        }
+        if (lower.contains("bmw")) {
+            return "BMW";
+        }
+        if (lower.contains("volkswagen") || lower.contains("vw")) {
+            return "Volkswagen";
+        }
+        if (lower.contains("audi")) {
+            return "Audi";
+        }
+        if (lower.contains("porsche")) {
+            return "Porsche";
+        }
+        if (lower.contains("hyundai")) {
+            return "Hyundai";
+        }
+        if (lower.contains("kia")) {
+            return "Kia";
+        }
+        if (lower.contains("mazda")) {
+            return "Mazda";
+        }
+        if (lower.contains("subaru")) {
+            return "Subaru";
+        }
+        if (lower.contains("lexus")) {
+            return "Lexus";
+        }
+        if (lower.contains("acura")) {
+            return "Acura";
+        }
+        if (lower.contains("infiniti")) {
+            return "Infiniti";
+        }
+        if (lower.contains("jeep")) {
+            return "Jeep";
+        }
+        if (lower.contains("dodge")) {
+            return "Dodge";
+        }
+        if (lower.contains("ram")) {
+            return "Ram";
+        }
+        if (lower.contains("chrysler")) {
+            return "Chrysler";
+        }
+        if (lower.contains("tesla")) {
+            return "Tesla";
+        }
+        if (lower.contains("volvo")) {
+            return "Volvo";
+        }
+        if (lower.contains("jaguar")) {
+            return "Jaguar";
+        }
+        if (lower.contains("land rover")) {
+            return "Land Rover";
+        }
+        if (lower.contains("mini")) {
+            return "Mini";
+        }
+        if (lower.contains("fiat")) {
+            return "Fiat";
+        }
+        if (lower.contains("alfa romeo")) {
+            return "Alfa Romeo";
+        }
+        if (lower.contains("maserati")) {
+            return "Maserati";
+        }
+        if (lower.contains("ferrari")) {
+            return "Ferrari";
+        }
+        if (lower.contains("lamborghini")) {
+            return "Lamborghini";
+        }
+        if (lower.contains("buick")) {
+            return "Buick";
+        }
+        if (lower.contains("cadillac")) {
+            return "Cadillac";
+        }
+        if (lower.contains("gmc")) {
+            return "GMC";
+        }
+        if (lower.contains("lincoln")) {
+            return "Lincoln";
+        }
+        if (lower.contains("genesis")) {
+            return "Genesis";
+        }
+
+        // If no match, try to extract first word before "MOTOR", "AUTOMOBILE", "OF", "CORP", etc.
+        String[] stopWords = {" motor", " automobile", " of ", " corp", " inc", " llc", " ltd", " co."};
+        String result = manufacturer;
+        for (String stop : stopWords) {
+            int idx = lower.indexOf(stop);
+            if (idx > 0) {
+                result = manufacturer.substring(0, idx).trim();
+                break;
+            }
+        }
+
+        // Capitalize properly
+        if (result.equals(manufacturer.toUpperCase()) || result.equals(manufacturer.toLowerCase())) {
+            // Convert "MERCEDES-BENZ" or "mercedes-benz" to "Mercedes-Benz"
+            String[] words = result.split("[\\s-]");
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < words.length; i++) {
+                if (words[i].length() > 0) {
+                    if (i > 0) sb.append(result.contains("-") ? "-" : " ");
+                    sb.append(Character.toUpperCase(words[i].charAt(0)));
+                    sb.append(words[i].substring(1).toLowerCase());
+                }
+            }
+            result = sb.toString();
+        }
+
+        return result;
     }
 
     /**
