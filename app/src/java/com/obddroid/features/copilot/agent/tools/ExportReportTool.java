@@ -84,8 +84,7 @@ public class ExportReportTool implements AgentTool {
 
         return "Scan report (" + format + " format) is ready to share. " +
             "Android share sheet opened. You can share via email, messaging, cloud storage, etc. " +
-            "File: " + fileToShare.getName() +
-            (includeAiAnalysis && report.hasAiAnalysis() ? " (includes AI analysis)" : "");
+            "File: " + fileToShare.getName();
     }
 
     @Override

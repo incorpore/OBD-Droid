@@ -196,43 +196,7 @@ public class ScanOrchestrator extends Service {
             Log.e(TAG, "Failed to generate report artifacts for scan " + scanId, e);
         }
 
-        // Trigger AI analysis if enabled
-        if (isAiAnalysisEnabled()) {
-            updateNotification("Running AI analysis...");
-            try {
-                DiagnosticAnalyzer analyzer = new DiagnosticAnalyzer(this);
-                DiagnosticAnalyzer.DiagnosticAnalysis analysis = analyzer.analyzeScan(report).get();
-                report.attachAiAnalysis(analysis);
-
-                // Regenerate report with AI section
-                try {
-                    ReportBuilder builder = new ReportBuilder(this);
-                    ReportArtifacts artifacts = builder.build(report);
-                    report.attachArtifacts(artifacts);
-                } catch (Exception e) {
-                    Log.e(TAG, "Failed to regenerate report with AI analysis for scan " + scanId, e);
-                }
-
-                Log.i(TAG, "AI analysis completed for scan " + scanId);
-            } catch (Exception e) {
-                Log.w(TAG, "AI analysis failed for scan " + scanId + ", continuing without it", e);
-                // Don't fail the whole scan if AI fails
-            }
-        }
-
         notifyProgress(listener -> listener.onScanCompleted(report));
-    }
-
-    private boolean isAiAnalysisEnabled() {
-        try {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            boolean enabled = prefs.getBoolean("ai_diagnostic_analysis_enabled", false);
-            String apiKey = prefs.getString("openai_api_key", "");
-            return enabled && !apiKey.isEmpty();
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to check AI analysis settings", e);
-            return false;
-        }
     }
 
     private List<ScanStage> buildStageList() {

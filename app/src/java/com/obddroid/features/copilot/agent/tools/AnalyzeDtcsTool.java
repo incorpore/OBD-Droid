@@ -10,7 +10,8 @@ import org.json.JSONObject;
 
 /**
  * Tool handler for analyze_dtcs.
- * Runs AI diagnostic analysis on the latest scan results.
+ * Builds a comprehensive diagnostic prompt from the latest scan results.
+ * The Agent API will analyze this data within the conversation context.
  */
 public class AnalyzeDtcsTool implements AgentTool {
 
@@ -21,32 +22,18 @@ public class AnalyzeDtcsTool implements AgentTool {
 
     @Override
     public String execute(Context context, JSONObject parameters) throws Exception {
-        String detailLevel = parameters.optString("detail_level", "detailed");
-
         ScanResultsManager resultsManager = ScanResultsManager.getInstance(context);
         ScanReport report = resultsManager.getLatestScan();
 
         if (report == null) {
-            return "No scan results available to analyze. Please run a full vehicle scan first.";
+            return "No scan results available to analyze. Please run a full vehicle scan first using the run_full_scan tool.";
         }
 
-        // Check if AI analysis already exists
-        if (report.hasAiAnalysis()) {
-            return "AI Diagnostic Analysis (from previous scan):\n\n" +
-                report.getAiAnalysis().getAnalysisText();
-        }
+        // Build comprehensive diagnostic prompt for the agent to analyze
+        String diagnosticPrompt = DiagnosticAnalyzer.buildDiagnosticPrompt(report);
 
-        // Run new AI analysis
-        DiagnosticAnalyzer analyzer = new DiagnosticAnalyzer(context);
-        DiagnosticAnalyzer.DiagnosticAnalysis analysis = analyzer.analyzeScan(report).get();
-
-        if (analysis.isSuccess()) {
-            // Cache the analysis for future use
-            report.attachAiAnalysis(analysis);
-            return "AI Diagnostic Analysis:\n\n" + analysis.getAnalysisText();
-        } else {
-            throw new Exception("AI analysis failed. Please check your OpenAI API key in settings.");
-        }
+        // Return the prompt - the Agent API will analyze it within the conversation
+        return diagnosticPrompt;
     }
 
     @Override

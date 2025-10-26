@@ -1,66 +1,20 @@
 package com.obddroid.scan;
 
-import android.content.Context;
-import android.util.Log;
-
-import com.obddroid.utils.OpenAiService;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
 /**
- * AI-powered diagnostic analyzer that interprets full vehicle scan results
- * and provides structured recommendations.
+ * Diagnostic analyzer that builds structured prompts for AI analysis of scan results.
+ * Works with Agent API - prompts are sent to the conversational agent for analysis.
  */
 public class DiagnosticAnalyzer {
 
-    private static final String TAG = "DiagnosticAnalyzer";
-
-    private final OpenAiService openAiService;
-
-    public DiagnosticAnalyzer(Context context) {
-        this.openAiService = new OpenAiService(context);
-    }
-
     /**
-     * Analyze a scan report and generate AI-powered diagnosis.
-     * Returns a CompletableFuture that completes with the analysis result.
+     * Build a comprehensive diagnostic analysis prompt for a scan report.
+     * This prompt can be sent to the Agent API for analysis within a conversation.
      */
-    public CompletableFuture<DiagnosticAnalysis> analyzeScan(ScanReport report) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                // Build comprehensive diagnostic prompt
-                List<OpenAiService.ChatMessage> messages = buildDiagnosticPrompt(report);
-
-                // Call OpenAI with higher token limit for detailed analysis
-                String response = openAiService.completeChat(messages, 1500, 0.7);
-
-                // Parse response into structured analysis
-                return parseDiagnosticResponse(response, report);
-
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to analyze scan", e);
-                throw new RuntimeException("AI analysis failed: " + e.getMessage(), e);
-            }
-        });
-    }
-
-    private List<OpenAiService.ChatMessage> buildDiagnosticPrompt(ScanReport report) {
-        List<OpenAiService.ChatMessage> messages = new ArrayList<>();
-
-        // System message with role definition
-        String systemPrompt = "You are an expert automotive diagnostic AI analyzing OBD scan data. " +
-            "Provide clear, actionable diagnostic insights focusing on root causes and repair priorities. " +
-            "Your response should help technicians quickly identify issues and plan repairs.";
-
-        messages.add(new OpenAiService.ChatMessage("system", systemPrompt));
-
-        // User message with scan data
+    public static String buildDiagnosticPrompt(ScanReport report) {
         StringBuilder userPrompt = new StringBuilder();
         userPrompt.append("Analyze this comprehensive vehicle diagnostic scan:\n\n");
 
@@ -112,12 +66,10 @@ public class DiagnosticAnalyzer {
         userPrompt.append("4. VERIFICATION STEPS: How to confirm repairs were successful\n");
         userPrompt.append("5. ADDITIONAL NOTES: Any warnings, related issues, or follow-up scans needed\n");
 
-        messages.add(new OpenAiService.ChatMessage("user", userPrompt.toString()));
-
-        return messages;
+        return userPrompt.toString();
     }
 
-    private String formatStageData(ScanOrchestrator.StageExecutionRecord record) {
+    private static String formatStageData(ScanOrchestrator.StageExecutionRecord record) {
         try {
             JSONObject data = record.result.getData();
 
@@ -180,60 +132,4 @@ public class DiagnosticAnalyzer {
         }
     }
 
-    private DiagnosticAnalysis parseDiagnosticResponse(String response, ScanReport report) {
-        // For now, return the raw text response
-        // In the future, we could parse structured JSON responses
-        return new DiagnosticAnalysis(
-            report.getScanId(),
-            response,
-            System.currentTimeMillis(),
-            true
-        );
-    }
-
-    /**
-     * Result of AI diagnostic analysis
-     */
-    public static class DiagnosticAnalysis {
-        private final String scanId;
-        private final String analysisText;
-        private final long timestamp;
-        private final boolean success;
-
-        public DiagnosticAnalysis(String scanId, String analysisText, long timestamp, boolean success) {
-            this.scanId = scanId;
-            this.analysisText = analysisText;
-            this.timestamp = timestamp;
-            this.success = success;
-        }
-
-        public String getScanId() {
-            return scanId;
-        }
-
-        public String getAnalysisText() {
-            return analysisText;
-        }
-
-        public long getTimestamp() {
-            return timestamp;
-        }
-
-        public boolean isSuccess() {
-            return success;
-        }
-
-        public JSONObject toJson() {
-            try {
-                JSONObject obj = new JSONObject();
-                obj.put("scanId", scanId);
-                obj.put("analysisText", analysisText);
-                obj.put("timestamp", timestamp);
-                obj.put("success", success);
-                return obj;
-            } catch (JSONException e) {
-                return new JSONObject();
-            }
-        }
-    }
 }

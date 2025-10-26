@@ -396,34 +396,24 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             return;
         }
 
-        // Show analysis card and progress
+        // AI diagnostic analysis is now integrated with CoPilot
+        // Show message directing users to use CoPilot for analysis
         aiAnalysisCard.setVisibility(View.VISIBLE);
-        aiAnalysisProgress.setVisibility(View.VISIBLE);
-        aiAnalysisText.setText("Analyzing scan data with AI...");
-        analyzeButton.setEnabled(false);
+        aiAnalysisProgress.setVisibility(View.GONE);
+        aiAnalysisText.setText("AI diagnostic analysis is now integrated with CoPilot!\n\n" +
+            "Open CoPilot and ask:\n" +
+            "• \"Analyze my scan results\"\n" +
+            "• \"What do these fault codes mean?\"\n" +
+            "• \"What should I fix first?\"\n\n" +
+            "CoPilot can run scans, analyze results, and provide detailed repair recommendations - all in one conversation!");
+        analyzeButton.setEnabled(true);
+        analyzeButton.setText("Open CoPilot");
 
-        // Run analysis
-        DiagnosticAnalyzer analyzer = new DiagnosticAnalyzer(this);
-        analyzer.analyzeScan(lastReport)
-            .thenAccept(analysis -> runOnUiThread(() -> {
-                aiAnalysisProgress.setVisibility(View.GONE);
-                aiAnalysisText.setText(analysis.getAnalysisText());
-                analyzeButton.setEnabled(true);
-                analyzeButton.setText("Re-analyze");
-
-                Toast.makeText(this, "AI analysis complete!", Toast.LENGTH_SHORT).show();
-            }))
-            .exceptionally(error -> {
-                runOnUiThread(() -> {
-                    aiAnalysisProgress.setVisibility(View.GONE);
-                    aiAnalysisText.setText("Analysis failed: " + error.getMessage());
-                    analyzeButton.setEnabled(true);
-
-                    Toast.makeText(this, "AI analysis failed: " + error.getMessage(),
-                        Toast.LENGTH_LONG).show();
-                });
-                return null;
-            });
+        // Update button to open CoPilot
+        analyzeButton.setOnClickListener(v -> {
+            // TODO: Navigate to CoPilot activity
+            Toast.makeText(this, "Opening CoPilot...", Toast.LENGTH_SHORT).show();
+        });
     }
 
     @Override

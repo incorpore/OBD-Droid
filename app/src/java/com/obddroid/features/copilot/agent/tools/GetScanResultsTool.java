@@ -60,14 +60,7 @@ public class GetScanResultsTool implements AgentTool {
         // Add summary note (detailed stage results in full report)
         summary.append("Stages Completed: ").append(report.getStageResults().size()).append("\n");
         summary.append("See full scan report for detailed stage results.\n");
-
-        // Add AI analysis if available
-        if (report.hasAiAnalysis()) {
-            summary.append("\nAI Diagnostic Analysis Available: Yes\n");
-            summary.append("Analysis: ").append(report.getAiAnalysis().getAnalysisText().substring(0,
-                Math.min(500, report.getAiAnalysis().getAnalysisText().length())))
-                .append("...\n");
-        }
+        summary.append("\nTip: Use the analyze_dtcs tool to get AI-powered diagnostic analysis of this scan.\n");
 
         return summary.toString();
     }

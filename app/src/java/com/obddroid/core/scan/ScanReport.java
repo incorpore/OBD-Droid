@@ -21,7 +21,6 @@ public final class ScanReport {
     private final long totalDurationMs;
     private final boolean success;
     private volatile ReportArtifacts artifacts;
-    private volatile DiagnosticAnalyzer.DiagnosticAnalysis aiAnalysis;
 
     public ScanReport(String scanId,
                      ScanContext context,
@@ -85,18 +84,6 @@ public final class ScanReport {
 
     public ReportArtifacts getArtifacts() {
         return artifacts;
-    }
-
-    public void attachAiAnalysis(DiagnosticAnalyzer.DiagnosticAnalysis analysis) {
-        this.aiAnalysis = analysis;
-    }
-
-    public DiagnosticAnalyzer.DiagnosticAnalysis getAiAnalysis() {
-        return aiAnalysis;
-    }
-
-    public boolean hasAiAnalysis() {
-        return aiAnalysis != null && aiAnalysis.isSuccess();
     }
 
     /**
