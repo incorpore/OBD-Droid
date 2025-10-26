@@ -154,10 +154,10 @@ repair pathways.
   - Freeze frame values per DTC.
   - Live data anomalies (e.g., trims, sensor readings outside norms).
   - Monitor readiness status.
-- Invoke GPT-5 (or GPT-4 Turbo / GPT-4o) requesting JSON output describing:
+- Invoke GPT-4o requesting JSON output describing:
   - Root-cause hypotheses + confidence.
   - Supporting evidence.
-  - Tiered repair options (time, parts, cost, success rate).
+  - Tiered repair options (time, parts, success rate).
   - Post-repair verification checklist.
 - Parse JSON into `DiagnosticReport` and write both Markdown section and
   machine-readable `ai-diagnosis.json`.
@@ -181,7 +181,7 @@ repair pathways.
 - [x] `OpenAiService.analyzeFullScan()` & prompt builder - ✅ **Implemented as `DiagnosticAnalyzer.analyzeScan()`**
 - [x] `GptDiagnosticAnalyzer` parser with error handling - ⚠️ **Partial: Parser exists, basic error handling**
 - [ ] Markdown/JSON writers integrated into ReportBuilder - **Not integrated** (analyzer not called post-scan)
-- [ ] Settings UI for AI toggles, model choice, cost estimate, usage log - **Not implemented**
+- [ ] Settings UI for AI toggles - **Not implemented**
 - [ ] Unit tests covering representative DTC scenarios (misfire, EVAP leak, etc.) - **Not implemented**
 - [ ] UX flow for retries / failures (e.g., network errors, API quota) - **Not implemented**
 
@@ -208,7 +208,7 @@ and even launch commands.
   optional confirmation dialogue.
 - **Logs & Telemetry Visibility:** Ability to reference discovery logs, scan
   transcripts, AI results, and show excerpts on request.
-- **Voice & Text Interaction:** Stream responses via GPT-5/4o; TTS playback and
+- **Voice & Text Interaction:** Stream responses via GPT-4o; TTS playback and
   live subtitle display.
 
 ### Architecture Components
@@ -444,7 +444,6 @@ Display Response with Streaming (optional)
     "parameters": {
       "type": "object",
       "properties": {
-        "include_cost_estimate": {"type": "boolean"},
         "detail_level": {"type": "string", "enum": ["quick", "detailed", "comprehensive"]}
       }
     }
@@ -603,8 +602,7 @@ CoPilotLogger.java                   // Log tool calls + run events
 ### Realtime Voice Architecture Plan
 
 - **Primary Model:** `gpt-4o-realtime-preview` for low-latency speech-to-speech
-  (S2S) conversations; retain chained fallback (`gpt-4o-transcribe` → `gpt-4.1`
-  → `gpt-4o-mini-tts`) for transcript-centric use cases.
+  (S2S) conversations.
 - **Transport Selection:**
   - **WebRTC** for on-device interactions (fast peer-to-peer audio, easier lip
     sync with the animated avatar).
@@ -659,25 +657,21 @@ CoPilotLogger.java                   // Log tool calls + run events
    - From main screen: start full scan → watch progress → receive AI report →
      ask CoPilot “What’s the plan?” → optionally run recommended actions.
 
-## Privacy, Cost & Compliance Snapshot
+## Privacy & Compliance Snapshot
 
 - **Data Handling:** All AI calls go straight from device to OpenAI (user key).
   Provide clear disclosure before enabling; no data is routed through
   OBD-Droid servers. Offer settings to redact VIN or purge stored conversations.
-- **Cost Controls:** Use GPT-3.5 by default; allow GPT-4/5 as premium option.
-  Show per-scan estimate and usage log. Warn when hitting custom spend
-  ceilings.
 - **Voice Consent:** Wake-word toggle off by default; highlight mic usage with
   on-screen indicator. Store wake-word activation events locally only and allow
-  quick “sleep” or push-to-talk modes.
+  quick "sleep" or push-to-talk modes.
 - **Logging Footprint:** Document retention policy for discovery/copilot logs;
-  add “export + purge” option post-session.
+  add "export + purge" option post-session.
 
 ## Risks & Mitigations
 
 | Risk | Mitigation |
 |------|------------|
-| GPT latency or cost spikes | Model fallback (GPT-3.5), offline caching for common diagnoses, upfront cost estimate. |
 | Wake-word false positives / noisy bays | Tunable sensitivity, push-to-talk fallback, visual confirmations |
 | Tool misuse via Agent API | Strict JSON schema validation, confirmation dialogs, rate limiting, audit logs. |
 | Token bloat in conversations | Conversations API summaries, periodic pruning, user-adjustable verbosity. |
@@ -700,16 +694,11 @@ CoPilotLogger.java                   // Log tool calls + run events
    - Append AI results to markdown report
 4. **Test on 3+ vehicles** for platform verification
 
-### Phase 2: AI Analyzer Settings & Cost Controls
+### Phase 2: AI Analyzer Settings
 1. **Build Settings UI:**
    - AI toggle (default OFF)
-   - Model picker (GPT-3.5 / GPT-4 / GPT-4o)
-   - Cost estimate before analysis
-2. **Implement usage tracking screen:**
-   - Spend/token counts
-   - Per-scan cost breakdown
-3. **Add privacy warning UI** before enabling AI
-4. **Write unit tests** for common DTC scenarios (misfire, EVAP, O2 sensor)
+2. **Add privacy warning UI** before enabling AI
+3. **Write unit tests** for common DTC scenarios (misfire, EVAP, O2 sensor)
 
 ### Phase 3: Agents API Migration - **CRITICAL**
 1. **Build AgentApiClient infrastructure:**
