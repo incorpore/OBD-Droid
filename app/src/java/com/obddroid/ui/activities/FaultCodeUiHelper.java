@@ -30,7 +30,7 @@ import com.obddroid.ui.adapters.ObdItemAdapter;
 import com.obddroid.utils.SnackbarHelper;
 import com.obddroid.services.VehicleManager;
 import com.obddroid.features.copilot.ui.CoPilotActivity;
-import io.github.vindecoder.nhtsa.VehicleData;
+import com.obddroid.utils.VehicleData;
 
 import java.util.Collections;
 import java.util.HashMap;

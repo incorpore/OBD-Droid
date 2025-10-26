@@ -79,12 +79,7 @@ dependencies {
 
     testImplementation 'junit:junit:4.13.2'
 
-    // NHTSA VIN Decoder - Android wrapper with built-in threading
-    implementation project(':nhtsa-vin-decoder-android')
-
-    // NHTSA VIN Decoder API dependencies
-    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    // Gson for JSON serialization (used by AutoCheck and other features)
     implementation 'com.google.code.gson:gson:2.10.1'
 
     // Automotive Logo Library

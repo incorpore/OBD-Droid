@@ -7,7 +7,7 @@ import androidx.annotation.Nullable;
 import com.obddroid.features.copilot.data.AgentCoPilotController;
 import com.obddroid.services.VehicleManager;
 
-import io.github.vindecoder.nhtsa.VehicleData;
+import com.obddroid.utils.VehicleData;
 
 import org.json.JSONException;
 import org.json.JSONObject;

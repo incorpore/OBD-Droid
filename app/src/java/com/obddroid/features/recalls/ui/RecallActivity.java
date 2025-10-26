@@ -38,7 +38,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import io.github.recalllookup.core.RecallRecord;
-import io.github.vindecoder.nhtsa.VehicleData;
+import com.obddroid.utils.VehicleData;
 
 /**
  * Screen for searching and displaying NHTSA safety recalls.

@@ -75,7 +75,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                 }
 
                 @Override
-                public void onVehicleDecoded(io.github.vindecoder.nhtsa.VehicleData vehicleData) {
+                public void onVehicleDecoded(com.obddroid.utils.VehicleData vehicleData) {
                     runOnUiThread(() -> {
                         clearTankCapacityCache();
                         checkAndPromptForTankCapacity();
@@ -681,7 +681,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private float getDisplacementFactor() {
         com.obddroid.services.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
 
-        io.github.vindecoder.nhtsa.VehicleData vehicleData =
+        com.obddroid.utils.VehicleData vehicleData =
                 vehicleManagerRef != null ? vehicleManagerRef.getCurrentVehicleData() : null;
 
         if (vehicleData != null && vehicleData.displacementL != null &&
@@ -740,7 +740,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         }
 
         // Estimate from vehicle data
-        io.github.vindecoder.nhtsa.VehicleData vehicleData =
+        com.obddroid.utils.VehicleData vehicleData =
                 vehicleManagerRef != null ? vehicleManagerRef.getCurrentVehicleData() : null;
 
         if (vehicleData != null) {
@@ -764,7 +764,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         com.obddroid.services.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
 
         String vin = vehicleManagerRef != null ? vehicleManagerRef.getCurrentVIN() : null;
-        io.github.vindecoder.nhtsa.VehicleData vehicleData =
+        com.obddroid.utils.VehicleData vehicleData =
                 vehicleManagerRef != null ? vehicleManagerRef.getCurrentVehicleData() : null;
 
         // Only prompt if we have vehicle data and haven't prompted before
@@ -791,7 +791,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
      */
     private void showTankCapacityDialog(final float estimatedGallons,
                                        final String vin,
-                                       final io.github.vindecoder.nhtsa.VehicleData vehicleData) {
+                                       final com.obddroid.utils.VehicleData vehicleData) {
 
         // Create custom dialog layout
         android.view.LayoutInflater inflater = getLayoutInflater();
@@ -1415,7 +1415,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         try {
             com.obddroid.services.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
 
-            io.github.vindecoder.nhtsa.VehicleData vehicleData =
+            com.obddroid.utils.VehicleData vehicleData =
                     vehicleManagerRef != null ? vehicleManagerRef.getCurrentVehicleData() : null;
 
             if (vehicleData != null && vehicleData.displacementL != null &&

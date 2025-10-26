@@ -10,8 +10,8 @@ import java.util.List;
 
 import io.github.recalllookup.android.RecallLookupAndroid;
 import io.github.recalllookup.core.RecallRecord;
-import io.github.vindecoder.android.VINDecoderAndroid;
-import io.github.vindecoder.nhtsa.VehicleData;
+import com.obddroid.utils.EnhancedVINDecoder;
+import com.obddroid.utils.VehicleData;
 
 /**
  * Service for performing recall searches using NHTSA APIs.
@@ -26,7 +26,7 @@ public class RecallService {
 
     private static final String TAG = "RecallService";
 
-    private final VINDecoderAndroid vinDecoder;
+    private final EnhancedVINDecoder vinDecoder;
     private final RecallLookupAndroid recallLookup;
 
     /**
@@ -40,7 +40,7 @@ public class RecallService {
     }
 
     public RecallService(Context context) {
-        this.vinDecoder = new VINDecoderAndroid(context);
+        this.vinDecoder = new EnhancedVINDecoder(context);
         this.recallLookup = new RecallLookupAndroid(context);
         Log.d(TAG, "RecallService initialized");
     }
@@ -77,7 +77,7 @@ public class RecallService {
 
         // Step 1: Decode VIN to get vehicle data
         Log.d(TAG, "Step 1: Decoding VIN to get vehicle data");
-        vinDecoder.decodeAsync(vin, new VINDecoderAndroid.DecodeCallback() {
+        vinDecoder.decodeAsync(vin, new EnhancedVINDecoder.DecodeCallback() {
             @Override
             public void onSuccess(VehicleData vehicleData) {
                 Log.d(TAG, "VIN decode success");

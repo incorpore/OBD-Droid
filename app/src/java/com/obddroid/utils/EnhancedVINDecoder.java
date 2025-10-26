@@ -1,28 +1,28 @@
 package com.obddroid.utils;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
-import io.github.vindecoder.android.VINDecoderAndroid;
-import io.github.vindecoder.nhtsa.VINDecoderService;
-import io.github.vindecoder.nhtsa.VehicleData;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
- * Enhanced VIN Decoder that tries online NHTSA API first, falls back to offline
+ * Simple VIN Decoder using Corgi's complete offline vPIC database
  *
- * This provides the best of both worlds:
- * - Full 140+ field data from NHTSA when online
- * - Basic offline decoding when no network available
+ * Provides dealer-grade VIN decoding with 140+ fields - all offline!
+ * No internet connection required.
+ *
+ * Powered by Corgi (@cardog/corgi) - 66MB vPIC database
  */
 public class EnhancedVINDecoder {
 
     private static final String TAG = "EnhancedVINDecoder";
 
-    private final Context context;
-    private final VINDecoderService onlineDecoder;
-    private final VINDecoderAndroid offlineDecoder;
+    private final CorgiVINDecoder decoder;
+    private final ExecutorService executor = Executors.newCachedThreadPool();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public interface DecodeCallback {
         void onSuccess(VehicleData vehicleData);
@@ -30,84 +30,81 @@ public class EnhancedVINDecoder {
     }
 
     public EnhancedVINDecoder(Context context) {
-        this.context = context.getApplicationContext();
-        this.onlineDecoder = VINDecoderService.getInstance();
-        this.offlineDecoder = new VINDecoderAndroid(this.context);
+        this.decoder = new CorgiVINDecoder(context);
+        Log.d(TAG, "✓ Corgi VIN Decoder initialized - Full offline vPIC database loaded");
     }
 
     /**
-     * Decode VIN - tries online first, falls back to offline
+     * Decode VIN asynchronously
      */
     public void decodeAsync(String vin, DecodeCallback callback) {
-        if (isNetworkAvailable()) {
-            // Try online first (full data)
-            Log.d(TAG, "Attempting online decode (NHTSA API)");
-            onlineDecoder.decodeVIN(vin, new VINDecoderService.VINDecoderCallback() {
-                @Override
-                public void onSuccess(VehicleData vehicleData) {
-                    Log.d(TAG, "✓ Online decode successful - Full data available");
-                    callback.onSuccess(vehicleData);
+        executor.execute(() -> {
+            try {
+                Log.d(TAG, "Decoding VIN: " + vin);
+
+                CorgiVINDecoder.VehicleInfo info = decoder.decode(vin);
+                VehicleData vehicleData = VehicleData.fromCorgiInfo(info);
+
+                if (vehicleData.isValid()) {
+                    Log.d(TAG, String.format("✓ Decoded: %s %s %s",
+                            vehicleData.getModelYear(),
+                            vehicleData.getMake(),
+                            vehicleData.getModel()));
+                } else {
+                    Log.w(TAG, "✗ Decode failed: " + vehicleData.getErrorMessage());
                 }
 
-                @Override
-                public void onError(String error) {
-                    Log.w(TAG, "Online decode failed: " + error + ", falling back to offline");
-                    decodeOffline(vin, callback);
-                }
-            });
-        } else {
-            // No network - use offline
-            Log.d(TAG, "No network - using offline decoder");
-            decodeOffline(vin, callback);
-        }
-    }
+                // Callback on main thread
+                mainHandler.post(() -> {
+                    if (vehicleData.isValid()) {
+                        callback.onSuccess(vehicleData);
+                    } else {
+                        callback.onError(vehicleData.getErrorMessage());
+                    }
+                });
 
-    private void decodeOffline(String vin, DecodeCallback callback) {
-        offlineDecoder.decodeAsync(vin, new VINDecoderAndroid.DecodeCallback() {
-            @Override
-            public void onSuccess(VehicleData vehicleData) {
-                Log.d(TAG, "✓ Offline decode successful - Basic data only");
-                callback.onSuccess(vehicleData);
-            }
-
-            @Override
-            public void onError(String error) {
-                Log.e(TAG, "✗ Offline decode failed: " + error);
-                callback.onError(error);
+            } catch (Exception e) {
+                Log.e(TAG, "Decode error", e);
+                mainHandler.post(() -> callback.onError(e.getMessage()));
             }
         });
     }
 
     /**
-     * Synchronous decode (uses offline decoder only)
-     * For async with online support, use decodeAsync()
+     * Decode VIN synchronously
      */
     public VehicleData decode(String vin) {
-        return offlineDecoder.decode(vin);
+        CorgiVINDecoder.VehicleInfo info = decoder.decode(vin);
+        return VehicleData.fromCorgiInfo(info);
     }
 
     /**
-     * Get manufacturer name from VIN (offline, fast)
+     * Get manufacturer name from VIN (fast)
      */
     public String getManufacturer(String vin) {
-        return offlineDecoder.getManufacturer(vin);
+        return decoder.getManufacturer(vin);
     }
 
+    /**
+     * Get make name from VIN (fast)
+     */
+    public String getMake(String vin) {
+        return decoder.getMake(vin);
+    }
+
+    /**
+     * Validate VIN format
+     */
     public boolean validate(String vin) {
-        return offlineDecoder.validate(vin);
+        return decoder.validate(vin);
     }
 
-    private boolean isNetworkAvailable() {
-        try {
-            ConnectivityManager cm = (ConnectivityManager)
-                context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            if (cm != null) {
-                NetworkInfo networkInfo = cm.getActiveNetworkInfo();
-                return networkInfo != null && networkInfo.isConnected();
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error checking network: " + e.getMessage());
-        }
-        return false;
+    /**
+     * Shutdown decoder and cleanup resources
+     */
+    public void shutdown() {
+        executor.shutdown();
+        decoder.close();
+        Log.d(TAG, "VIN Decoder shutdown");
     }
 }

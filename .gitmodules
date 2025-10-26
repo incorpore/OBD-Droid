@@ -1,6 +1,3 @@
-[submodule "modules/nhtsa-vin-decoder"]
-	path = modules/nhtsa-vin-decoder
-	url = https://github.com/Wal33D/nhtsa-vin-decoder.git
 [submodule "modules/automotive-logo-library"]
 	path = modules/automotive-logo-library
 	url = ../automotive-logo-library

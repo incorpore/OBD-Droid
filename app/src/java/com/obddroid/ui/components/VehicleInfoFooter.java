@@ -18,7 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import io.github.vindecoder.nhtsa.VehicleData;
+import com.obddroid.utils.VehicleData;
 import com.obddroid.obd.ElmProt;
 import com.automotivelogolibrary.AutomotiveLogoLibraryAndroid;
 import com.obddroid.services.VehicleManager;

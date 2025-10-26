@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.recalllookup.core.RecallRecord;
-import io.github.vindecoder.nhtsa.VehicleData;
+import com.obddroid.utils.VehicleData;
 
 /**
  * Model representing the result of a recall search.
