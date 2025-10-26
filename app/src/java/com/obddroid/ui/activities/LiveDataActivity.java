@@ -22,8 +22,10 @@ import android.preference.PreferenceManager;
 
 import com.obddroid.R;
 import com.obddroid.core.obd.ObdProt;
+import com.obddroid.core.pvs.ProcessVariables.ProcessVar;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
+import com.obddroid.core.pvs.ProcessVariables.TypedPvList;
 import com.obddroid.features.gps.data.GpsTelemetryManager;
 import com.obddroid.features.sensors.data.SensorTelemetryManager;
 import com.obddroid.services.CommService;
@@ -56,6 +58,8 @@ public class LiveDataActivity extends AppCompatActivity
     private GpsTelemetryManager gpsTelemetryManager;
     private SensorTelemetryManager sensorTelemetryManager;
 
+    private TypedPvList<Object, ProcessVar> pidStore;
+
     // Update handler
     private Handler updateHandler = new Handler(Looper.getMainLooper());
     private static final long UPDATE_INTERVAL = 500; // Update every 500ms
@@ -63,9 +67,9 @@ public class LiveDataActivity extends AppCompatActivity
     private final Runnable updateRunnable = new Runnable() {
         @Override
         public void run() {
-            if (adapter != null && !ObdProt.PidPvs.isEmpty()) {
+            if (adapter != null && pidStore != null && !pidStore.isEmpty()) {
                 // Refresh the adapter's data source to pick up new PIDs from vehicle
-                adapter.setPvList(ObdProt.PidPvs);
+                adapter.setPvList(pidStore);
                 adapter.notifyDataSetChanged();
             }
             updateHandler.postDelayed(this, UPDATE_INTERVAL);
@@ -94,8 +98,9 @@ public class LiveDataActivity extends AppCompatActivity
         listView = findViewById(android.R.id.list);
         snackbarAnchor = findViewById(R.id.snackbar_anchor);
 
-        // Create adapter with current PidPvs
-        adapter = new ObdItemAdapter(this, R.layout.obd_item, ObdProt.PidPvs);
+        // Create adapter with current PID store
+        pidStore = getPidStore();
+        adapter = new ObdItemAdapter(this, R.layout.obd_item, pidStore);
         listView.setAdapter(adapter);
 
         // Enable multi-select mode with contextual action bar
@@ -118,7 +123,9 @@ public class LiveDataActivity extends AppCompatActivity
         super.onResume();
 
         // Register PV change listeners for OBD data
-        ObdProt.PidPvs.addPvChangeListener(this, PvChangeEvent.PV_ADDED | PvChangeEvent.PV_MODIFIED);
+        if (pidStore != null) {
+            pidStore.addPvChangeListener(this, PvChangeEvent.PV_ADDED | PvChangeEvent.PV_MODIFIED);
+        }
 
         // Set OBD service to live data mode
         CommService.elm.setService(ObdProt.OBD_SVC_DATA);
@@ -136,7 +143,9 @@ public class LiveDataActivity extends AppCompatActivity
         super.onPause();
 
         // Unregister PV change listeners
-        ObdProt.PidPvs.removePvChangeListener(this);
+        if (pidStore != null) {
+            pidStore.removePvChangeListener(this);
+        }
 
         // Stop updates
         updateHandler.removeCallbacks(updateRunnable);
@@ -222,8 +231,8 @@ public class LiveDataActivity extends AppCompatActivity
         }
 
         // Refresh adapter to show new fields
-        if (adapter != null && !ObdProt.PidPvs.isEmpty()) {
-            adapter.setPvList(ObdProt.PidPvs);
+        if (adapter != null && pidStore != null && !pidStore.isEmpty()) {
+            adapter.setPvList(pidStore);
             adapter.notifyDataSetChanged();
         }
 
@@ -251,8 +260,8 @@ public class LiveDataActivity extends AppCompatActivity
         }
 
         // Refresh adapter to show new fields
-        if (adapter != null && !ObdProt.PidPvs.isEmpty()) {
-            adapter.setPvList(ObdProt.PidPvs);
+        if (adapter != null && pidStore != null && !pidStore.isEmpty()) {
+            adapter.setPvList(pidStore);
             adapter.notifyDataSetChanged();
         }
 
@@ -282,10 +291,16 @@ public class LiveDataActivity extends AppCompatActivity
         }
 
         // Refresh adapter after auto-start
-        if (adapter != null && !ObdProt.PidPvs.isEmpty()) {
-            adapter.setPvList(ObdProt.PidPvs);
+        if (adapter != null && pidStore != null && !pidStore.isEmpty()) {
+            adapter.setPvList(pidStore);
             adapter.notifyDataSetChanged();
         }
+    }
+
+    private TypedPvList<Object, ProcessVar> getPidStore() {
+        TypedPvList<Object, ProcessVar> store =
+            ObdProt.getDataService().getTypedStoreForService(ObdProt.OBD_SVC_DATA);
+        return store != null ? store : new TypedPvList<>();
     }
 
     // ========== MultiChoiceModeListener Implementation ==========

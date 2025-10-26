@@ -1,4 +1,4 @@
-package com.obddroid.ui.components;
+package com.obddroid.features.fueleconomy.ui;
 
 import android.content.Context;
 import android.graphics.Canvas;

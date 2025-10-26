@@ -24,6 +24,8 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.StrictMode;
 import androidx.preference.PreferenceManager;
+
+import com.obddroid.features.copilot.ui.CoPilotActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseBooleanArray;
@@ -113,6 +115,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+import com.obddroid.features.fueleconomy.ui.FuelEconomyActivity;
 
 /**
  * Main Activity for AndrOBD app

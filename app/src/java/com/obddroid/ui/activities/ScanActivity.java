@@ -38,6 +38,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.obddroid.features.copilot.ui.CoPilotActivity;
+
 public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.ScanProgressListener {
 
     private TextView vehicleName;

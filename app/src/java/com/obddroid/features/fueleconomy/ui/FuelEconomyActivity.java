@@ -1,4 +1,4 @@
-package com.obddroid.ui.activities;
+package com.obddroid.features.fueleconomy.ui;
 
 import android.graphics.Color;
 import android.os.Build;
@@ -15,8 +15,8 @@ import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
-import com.obddroid.ui.components.FuelEconomyChart;
-import com.obddroid.ui.components.FuelFlowGauge;
+import com.obddroid.features.fueleconomy.ui.FuelEconomyChart;
+import com.obddroid.features.fueleconomy.ui.FuelFlowGauge;
 import com.obddroid.ui.components.VehicleInfoFooter;
 
 import java.util.ArrayList;
