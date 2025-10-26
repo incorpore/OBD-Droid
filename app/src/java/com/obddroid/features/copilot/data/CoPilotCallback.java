@@ -1,4 +1,4 @@
-package com.obddroid.features.copilot;
+package com.obddroid.features.copilot.data;
 
 /**
  * Callback interface for CoPilot responses.

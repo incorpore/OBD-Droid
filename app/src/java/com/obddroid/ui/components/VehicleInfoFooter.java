@@ -64,7 +64,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
     private View expandIndicator;
     private View statusDot;
     private View overlayView;
-    private TypedPvList<Integer, ProcessVar> vehicleInfoStore;
+    private TypedPvList<Object, ProcessVar> vehicleInfoStore;
 
     public VehicleInfoFooter(Context context)
     {
@@ -903,9 +903,9 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         categorizedData.put("Other Information", new java.util.ArrayList<>());
 
         // Process all Mode 9 items
-        java.util.List<Map.Entry<Integer, ProcessVar>> entries =
+        java.util.List<Map.Entry<Object, ProcessVar>> entries =
             new java.util.ArrayList<>(vehicleInfoStore.entrySetTyped());
-        for (Map.Entry<Integer, ProcessVar> entry : entries) {
+        for (Map.Entry<Object, ProcessVar> entry : entries) {
             ProcessVar storeItem = entry.getValue();
             if (!(storeItem instanceof EcuDataPv)) {
                 continue;

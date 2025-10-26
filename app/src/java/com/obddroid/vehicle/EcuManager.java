@@ -38,7 +38,7 @@ public class EcuManager {
     private final PvChangeListener mode9Listener = this::onMode9DataChange;
 
     private boolean isListening = false;
-    private final TypedPvList<Integer, ProcessVar> vehicleInfoStore =
+    private final TypedPvList<Object, ProcessVar> vehicleInfoStore =
         ObdProt.getDataService().getTypedStoreForService(ObdProt.OBD_SVC_VEH_INFO);
 
     /**
@@ -92,9 +92,9 @@ public class EcuManager {
             if (vehicleInfoStore != null && !vehicleInfoStore.isEmpty()) {
                 log.info("EcuManager: Loading existing Mode 9 data, store size: " + vehicleInfoStore.size());
 
-                java.util.List<Map.Entry<Integer, ProcessVar>> mode9Entries =
+                java.util.List<Map.Entry<Object, ProcessVar>> mode9Entries =
                     new java.util.ArrayList<>(vehicleInfoStore.entrySetTyped());
-                for (Map.Entry<Integer, ProcessVar> entry : mode9Entries) {
+                for (Map.Entry<Object, ProcessVar> entry : mode9Entries) {
                     ProcessVar value = entry.getValue();
                     if (value instanceof EcuDataPv) {
                         processMode9Data((EcuDataPv) value);

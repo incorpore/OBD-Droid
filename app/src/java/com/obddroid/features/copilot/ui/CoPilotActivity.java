@@ -32,10 +32,10 @@ import android.content.SharedPreferences;
 import androidx.preference.PreferenceManager;
 
 import com.obddroid.R;
-import com.obddroid.features.copilot.ChatMessage;
-import com.obddroid.features.copilot.CoPilotCallback;
-import com.obddroid.features.copilot.CoPilotController;
-import com.obddroid.features.copilot.CoPilotTtsManager;
+import com.obddroid.features.copilot.data.ChatMessage;
+import com.obddroid.features.copilot.data.CoPilotCallback;
+import com.obddroid.features.copilot.data.CoPilotController;
+import com.obddroid.features.copilot.data.CoPilotTtsManager;
 import com.obddroid.features.copilot.ui.ChatMessageAdapter;
 
 import java.util.ArrayList;

@@ -90,7 +90,7 @@ import com.obddroid.utils.ExportTask;
 import com.obddroid.utils.FileHelper;
 import com.obddroid.utils.PermissionManager;
 import com.obddroid.utils.SnackbarHelper;
-import com.obddroid.features.copilot.CoPilotController;
+import com.obddroid.features.copilot.data.CoPilotController;
 import com.obddroid.vehicle.VehicleManager;
 import com.obddroid.vehicle.discovery.DiscoveryManager;
 import com.obddroid.R;

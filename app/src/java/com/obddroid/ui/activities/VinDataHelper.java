@@ -172,7 +172,7 @@ final class VinDataHelper
 
         // Check if Mode 9 data is present (even if VIN is cached)
         // This handles reconnection scenarios where VIN is cached but Mode 9 data is stale
-        TypedPvList<Integer, ProcessVar> vehicleInfoStore =
+        TypedPvList<Object, ProcessVar> vehicleInfoStore =
             ObdProt.getDataService().getTypedStoreForService(ObdProt.OBD_SVC_VEH_INFO);
         boolean hasMode9Data = vehicleInfoStore != null && !vehicleInfoStore.isEmpty();
 
