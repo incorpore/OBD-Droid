@@ -9,8 +9,6 @@ Professional-grade diagnostic tools and multi-ECU support:
 #### Planning & Roadmaps
 - **[dealer-diagnostics-roadmap.md](./dealer-diagnostics-roadmap.md)** – Dealer-grade diagnostics roadmap and feature backlog
 - **[multi-ecu-discovery-plan.md](./multi-ecu-discovery-plan.md)** – Discovery and addressing plan for multi-ECU vehicles
-- **[ecu-module-refactor.md](./ecu-module-refactor.md)** – ECU abstraction strategy and architecture
-- **[ecu-conversion-abstractions.md](./ecu-conversion-abstractions.md)** – ECU data conversion and unit handling
 
 #### Diagnostic Reports & Case Studies
 - **[dealer-diag-reports/](./dealer-diag-reports/)** – In-house dealer shop diagnostic reports
@@ -34,12 +32,20 @@ Professional-grade diagnostic tools and multi-ECU support:
 
 ---
 
+### Data & Telemetry
+
+Backend services and analytics:
+
+- **[telemetry-and-history.md](./telemetry-and-history.md)** – Telemetry system architecture and vehicle history tracking
+
+---
+
 ### Launch, Growth & Store Assets
 
 Play Store launch planning and go-to-market strategy:
 
 - **[launch-plan.md](./launch-plan.md)** – Play Store launch workflow and go-to-market checklist
-- **[store-assets-checklist.md](./store-assets-checklist.md)** – Asset production checklist (copy, visuals, screenshots, ASO)
+- **[play-store-requirments.md](./play-store-requirments.md)** – Play Store submission requirements and checklist
 
 ---
 
@@ -57,6 +63,9 @@ Play Store launch planning and go-to-market strategy:
 **Preparing for launch?**
 → [launch-plan.md](./launch-plan.md)
 
+**Setting up telemetry/backend?**
+→ [telemetry-and-history.md](./telemetry-and-history.md)
+
 ---
 
 ## 📁 Directory Structure
@@ -68,8 +77,6 @@ docs/
 ├── Dealer Diagnostics & ECU
 │   ├── dealer-diagnostics-roadmap.md
 │   ├── multi-ecu-discovery-plan.md
-│   ├── ecu-module-refactor.md
-│   ├── ecu-conversion-abstractions.md
 │   ├── dealer-diag-reports/
 │   │   ├── README.md
 │   │   ├── 2022_GMC_Canyon_P0302_Cylinder2_Misfire.md
@@ -82,7 +89,10 @@ docs/
 ├── AI & Intelligence
 │   └── vehicle-intelligence-suite-plan.md
 │
+├── Data & Telemetry
+│   └── telemetry-and-history.md
+│
 └── Launch & Growth
     ├── launch-plan.md
-    └── store-assets-checklist.md
+    └── play-store-requirments.md
 ```
