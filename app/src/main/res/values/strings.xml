@@ -2,8 +2,8 @@
 <resources>
     <!--  OBDroid -->
     <string name="app_name" translatable="false">OBDroid</string>
-    <string name="copyright_obddroid" translatable="false">© 2015-2025 obddroid</string>
-    <string name="app_description">Android OBD vehicle diagnostics app for ELM327 Bluetooth adapter</string>
+    <string name="copyright_obddroid" translatable="false">© 2025-2026 obddroid</string>
+    <string name="app_description">OBD vehicle diagnostics app for ELM327 Bluetooth adapter</string>
     <string name="translation_credits">English (Default)</string>
     <string name="copied_to_clipboard">Copied to clipboard</string>
     <string name="yes">Yes</string>

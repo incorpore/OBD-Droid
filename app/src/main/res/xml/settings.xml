@@ -291,18 +291,34 @@
         android:title="AI Features"
         android:layout="@layout/preference_category">
 
+        <SwitchPreferenceCompat
+            android:key="ai_diagnostic_analysis_enabled"
+            android:title="AI Diagnostic Analysis"
+            android:summary="Automatically analyze scan results using GPT-4 for diagnosis and repair recommendations"
+            android:defaultValue="false"
+            android:layout="@layout/preference_indented" />
+
         <EditTextPreference
             android:key="openai_api_key"
             android:title="OpenAI API Key"
             android:summary="Configure your OpenAI API key for AI analysis"
             android:inputType="textPassword"
-            android:layout="@layout/preference_indented" />
+            android:layout="@layout/preference_indented"
+            app:dependency="ai_diagnostic_analysis_enabled" />
 
         <Preference
             android:key="openai_api_info"
             android:title="How to get an API key"
             android:summary="Tap to learn how to obtain an OpenAI API key"
             android:layout="@layout/preference_indented" />
+
+        <Preference
+            android:key="ai_privacy_notice"
+            android:title="Privacy Notice"
+            android:summary="AI analysis sends scan data (including VIN) to OpenAI. Your API key is required. No data is routed through OBD-Droid servers."
+            android:selectable="false"
+            android:layout="@layout/preference_indented"
+            app:iconSpaceReserved="false" />
 
     </PreferenceCategory>
 

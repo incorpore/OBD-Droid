@@ -272,6 +272,20 @@ public final class ReportBuilder {
 
         md.append("\n");
 
+        // Add AI Diagnostic Analysis section if available
+        if (report.hasAiAnalysis()) {
+            DiagnosticAnalyzer.DiagnosticAnalysis aiAnalysis = report.getAiAnalysis();
+            md.append("## AI Diagnostic Analysis\n\n");
+            md.append("_Powered by OpenAI GPT-4 • Analyzed at ")
+                .append(formatDate(aiAnalysis.getTimestamp())).append("_\n\n");
+            md.append("---\n\n");
+            md.append(aiAnalysis.getAnalysisText()).append("\n\n");
+            md.append("---\n\n");
+            md.append("**Disclaimer:** This AI analysis is provided for informational purposes only. ")
+                .append("Always verify diagnoses with qualified technicians and appropriate diagnostic equipment. ")
+                .append("OBD-Droid and OpenAI are not responsible for repair decisions based on this analysis.\n\n");
+        }
+
         md.append("## Stage Details\n\n");
         for (int i = 0; i < stages.size(); i++) {
             ScanOrchestrator.StageExecutionRecord record = stages.get(i);
