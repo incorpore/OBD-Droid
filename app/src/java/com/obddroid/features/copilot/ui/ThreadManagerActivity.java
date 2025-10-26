@@ -33,6 +33,9 @@ import java.util.Map;
  */
 public class ThreadManagerActivity extends AppCompatActivity {
 
+    private static final String PREFS_PRIVACY = "copilot_privacy";
+    private static final String KEY_PRIVACY_ACK = "thread_manager_privacy_ack";
+
     private RecyclerView threadsRecyclerView;
     private TextView threadCountText;
     private View emptyState;
@@ -50,6 +53,7 @@ public class ThreadManagerActivity extends AppCompatActivity {
         threadManager = new AgentThreadManager(this);
 
         setupToolbar();
+        maybeShowPrivacyDialog();
         initializeViews();
         setupRecyclerView();
         setupDeleteAllButton();
@@ -80,6 +84,33 @@ public class ThreadManagerActivity extends AppCompatActivity {
 
     private void setupDeleteAllButton() {
         deleteAllFab.setOnClickListener(v -> showDeleteAllConfirmation());
+    }
+
+    private void maybeShowPrivacyDialog() {
+        boolean acknowledged = getSharedPreferences(PREFS_PRIVACY, MODE_PRIVATE)
+            .getBoolean(KEY_PRIVACY_ACK, false);
+        if (acknowledged) {
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+            .setTitle("CoPilot Conversations & Privacy")
+            .setMessage("CoPilot stores your conversation history (including uploaded scan reports) on your device and with OpenAI so sessions can resume seamlessly.\n\n" +
+                "You can delete any conversation at any time, or wipe all data using the button below. " +
+                "Export conversations before deleting if you want to keep a record.")
+            .setCancelable(false)
+            .setPositiveButton("I Understand", (dialog, which) -> {
+                getSharedPreferences(PREFS_PRIVACY, MODE_PRIVATE)
+                    .edit()
+                    .putBoolean(KEY_PRIVACY_ACK, true)
+                    .apply();
+                dialog.dismiss();
+            })
+            .setNegativeButton("Close Screen", (dialog, which) -> {
+                dialog.dismiss();
+                finish();
+            })
+            .show();
     }
 
     private void loadThreads() {

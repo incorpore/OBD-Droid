@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.obddroid.features.copilot.data.AgentCoPilotController;
 import com.obddroid.features.copilot.ui.CoPilotActivity;
 
 public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.ScanProgressListener {
@@ -586,7 +587,10 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
                 String fileId = apiClient.uploadFile(jsonFile, "assistants");
                 Log.i(TAG, "Uploaded scan to CoPilot: file_id=" + fileId + ", scan_id=" + report.getScanId());
 
-                // TODO: Store file_id mapping to scan_id for future reference
+                com.obddroid.scan.ScanResultsManager.getInstance(getApplicationContext())
+                    .recordUploadedFile(report.getScanId(), fileId);
+
+                AgentCoPilotController.getInstance().refreshFileSearchIndex();
 
             } catch (Exception e) {
                 Log.e(TAG, "Failed to upload scan to CoPilot", e);

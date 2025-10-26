@@ -1,6 +1,7 @@
 package com.obddroid.scan;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -52,6 +53,72 @@ public final class ScanReport {
         } catch (Exception e) {
             // Ignore metadata errors
         }
+    }
+
+    private ScanReport(String scanId,
+                      JSONObject metadata,
+                      List<ScanOrchestrator.StageExecutionRecord> stageResults,
+                      File outputDirectory,
+                      long totalDurationMs,
+                      boolean success) {
+        this.scanId = scanId;
+        this.metadata = metadata != null ? metadata : new JSONObject();
+        this.stageResults = stageResults;
+        this.outputDirectory = outputDirectory;
+        this.totalDurationMs = totalDurationMs;
+        this.success = success;
+    }
+
+    static ScanReport fromStoredData(String scanId,
+                                     JSONObject metadata,
+                                     File outputDirectory,
+                                     List<ScanOrchestrator.StageExecutionRecord> stageResults) {
+        long calculatedDuration = 0;
+        boolean allSuccessOrSkipped = true;
+        if (stageResults != null) {
+            for (ScanOrchestrator.StageExecutionRecord record : stageResults) {
+                calculatedDuration += record.durationMs;
+                StageResult.Status status = record.result.getStatus();
+                if (status == StageResult.Status.FAILED || status == StageResult.Status.FATAL_ERROR) {
+                    allSuccessOrSkipped = false;
+                }
+            }
+        }
+
+        long totalDurationMs = calculatedDuration;
+        boolean success = allSuccessOrSkipped;
+        JSONObject metadataCopy;
+        if (metadata != null) {
+            try {
+                metadataCopy = new JSONObject(metadata.toString());
+            } catch (JSONException e) {
+                metadataCopy = new JSONObject();
+            }
+        } else {
+            metadataCopy = new JSONObject();
+        }
+
+        try {
+            totalDurationMs = metadataCopy.optLong("totalDurationMs", calculatedDuration);
+            success = metadataCopy.has("success")
+                ? metadataCopy.optBoolean("success", allSuccessOrSkipped)
+                : allSuccessOrSkipped;
+
+            metadataCopy.put("scanId", scanId);
+            if (!metadataCopy.has("totalDurationMs")) {
+                metadataCopy.put("totalDurationMs", calculatedDuration);
+            }
+            if (!metadataCopy.has("success")) {
+                metadataCopy.put("success", allSuccessOrSkipped);
+            }
+            if (!metadataCopy.has("stageCount") && stageResults != null) {
+                metadataCopy.put("stageCount", stageResults.size());
+            }
+        } catch (JSONException e) {
+            // Ignore metadata copy issues
+        }
+
+        return new ScanReport(scanId, metadataCopy, stageResults, outputDirectory, totalDurationMs, success);
     }
 
     public String getScanId() {

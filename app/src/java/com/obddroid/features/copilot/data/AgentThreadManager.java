@@ -7,8 +7,15 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+
+import com.obddroid.scan.ScanResultsManager;
 
 /**
  * Manages persistent storage of Agent API threads.
@@ -27,12 +34,14 @@ public class AgentThreadManager {
     private static final String KEY_THREAD_PREFIX = "thread_";
     private static final String KEY_METADATA_PREFIX = "metadata_";
 
+    private final Context appContext;
     private final SharedPreferences prefs;
     private final AgentApiClient apiClient;
 
     public AgentThreadManager(Context context) {
-        this.prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        this.apiClient = new AgentApiClient(context);
+        this.appContext = context.getApplicationContext();
+        this.prefs = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        this.apiClient = new AgentApiClient(appContext);
     }
 
     /**
@@ -165,6 +174,35 @@ public class AgentThreadManager {
         return prefs.getString(KEY_ASSISTANT_ID, null);
     }
 
+    /**
+     * Build thread overviews including recent scan history for UI consumption.
+     * @return Ordered list suitable for ThreadManager UI.
+     */
+    public List<ThreadOverview> getThreadOverviews() {
+        return getThreadOverviews(3);
+    }
+
+    public List<ThreadOverview> getThreadOverviews(int scanHistoryLimit) {
+        Map<String, String> mappings = getAllThreadMappings();
+        if (mappings.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        ScanResultsManager scanResultsManager = ScanResultsManager.getInstance(appContext);
+        List<ThreadOverview> overviews = new ArrayList<>(mappings.size());
+
+        for (Map.Entry<String, String> entry : mappings.entrySet()) {
+            String vin = entry.getKey();
+            String threadId = entry.getValue();
+            JSONObject metadata = getThreadMetadata(vin);
+            List<ScanResultsManager.ScanSummary> history =
+                scanResultsManager.getRecentScanSummariesForVin(vin, Math.max(1, scanHistoryLimit));
+            overviews.add(new ThreadOverview(vin, threadId, metadata, history));
+        }
+
+        return overviews;
+    }
+
     // ========== PRIVATE HELPERS ==========
 
     private void saveThreadMapping(String vin, String threadId, JSONObject metadata) {
@@ -176,5 +214,70 @@ public class AgentThreadManager {
         }
 
         editor.apply();
+    }
+
+    /**
+     * Container for per-thread diagnostics + scan history.
+     * Provides convenience helpers for the upcoming Thread Manager UI.
+     */
+    public static final class ThreadOverview {
+        private static final SimpleDateFormat DATE_FORMAT =
+            new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US);
+
+        public final String vin;
+        public final String threadId;
+        public final JSONObject metadata;
+        public final List<ScanResultsManager.ScanSummary> scanHistory;
+
+        ThreadOverview(String vin,
+                       String threadId,
+                       JSONObject metadata,
+                       List<ScanResultsManager.ScanSummary> scanHistory) {
+            this.vin = vin;
+            this.threadId = threadId;
+            this.metadata = metadata;
+            this.scanHistory = scanHistory != null ? scanHistory : new ArrayList<>();
+        }
+
+        public boolean hasScanHistory() {
+            return !scanHistory.isEmpty();
+        }
+
+        public ScanResultsManager.ScanSummary latestScan() {
+            return hasScanHistory() ? scanHistory.get(0) : null;
+        }
+
+        public ScanResultsManager.ScanSummary previousScan() {
+            return scanHistory.size() > 1 ? scanHistory.get(1) : null;
+        }
+
+        public String latestScanLabel() {
+            ScanResultsManager.ScanSummary latest = latestScan();
+            if (latest == null) {
+                return "No scans yet";
+            }
+            return formatScanLabel(latest);
+        }
+
+        public String buildComparePrompt() {
+            ScanResultsManager.ScanSummary latest = latestScan();
+            ScanResultsManager.ScanSummary previous = previousScan();
+            if (latest == null || previous == null) {
+                return null;
+            }
+            return "Compare scan " + latest.scanId + " from " + formatDate(latest.timestamp) +
+                " with scan " + previous.scanId + " from " + formatDate(previous.timestamp) +
+                " for VIN " + vin + ". Highlight new or cleared fault codes, monitor state changes, " +
+                "and any significant live data differences.";
+        }
+
+        private String formatScanLabel(ScanResultsManager.ScanSummary summary) {
+            return summary.scanId + " • " + formatDate(summary.timestamp) +
+                " • " + (summary.success ? "Success" : "Issues");
+        }
+
+        private String formatDate(long timestamp) {
+            return DATE_FORMAT.format(new Date(timestamp));
+        }
     }
 }

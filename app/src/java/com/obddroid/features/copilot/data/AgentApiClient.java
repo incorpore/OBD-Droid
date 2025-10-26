@@ -376,19 +376,14 @@ public class AgentApiClient {
         String apiKey = getApiKey();
         String url = ASSISTANTS_ENDPOINT + "/" + assistantId;
 
-        // Update assistant to include file_search tool and file
+        // Patch assistant tool resources with new file
         JSONObject requestBody = new JSONObject();
 
-        // Add file_search tool
-        JSONArray tools = new JSONArray();
-        tools.put(new JSONObject().put("type", "file_search"));
-        requestBody.put("tools", tools);
-
-        // Add file to tool_resources
         JSONObject toolResources = new JSONObject();
         JSONObject fileSearch = new JSONObject();
         JSONArray vectorStores = new JSONArray();
         JSONObject vectorStore = new JSONObject();
+
         JSONArray fileIds = new JSONArray();
         fileIds.put(fileId);
         vectorStore.put("file_ids", fileIds);

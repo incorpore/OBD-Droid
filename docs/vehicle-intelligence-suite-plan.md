@@ -707,6 +707,9 @@ CoPilotLogger.java                   // Log tool calls + run events
 
 #### ✅ **Quick Win #3: File Upload Integration**
 - `AgentApiClient` exposes `uploadFile()` and the scan completion flow builds report artifacts before asynchronously uploading the JSON to OpenAI (file_search enabled).
+- `ScanResultsManager` now persists scan history + OpenAI file ids so CoPilot tools can reload reports and reference previous uploads.
+- `AgentCoPilotController` automatically syncs newly uploaded scan files into the assistant’s file_search vector store.
+- `AgentThreadManager` surfaces per-VIN scan history (with “compare to last scan” prompts) for the upcoming Thread Manager UI.
 
 #### **Medium Priority: Thread Management UI** (1-2 days)
 Create `ThreadManagerActivity`:

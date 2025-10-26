@@ -1,10 +1,12 @@
 package com.obddroid.features.copilot.data;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.Log;
 
-import com.obddroid.features.copilot.data.tools.AgentToolExecutor;
 import com.obddroid.features.copilot.data.CoPilotCallback;
+import com.obddroid.features.copilot.data.tools.AgentToolExecutor;
+import com.obddroid.scan.ScanResultsManager;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -218,6 +220,7 @@ public class AgentCoPilotController {
                 try {
                     apiClient.retrieveAssistant(assistantId);
                     Log.i(TAG, "Using existing assistant: " + assistantId);
+                    attachLatestScanFileIfAvailable();
                     return;
                 } catch (Exception e) {
                     Log.w(TAG, "Saved assistant not found, creating new", e);
@@ -236,9 +239,38 @@ public class AgentCoPilotController {
             threadManager.saveAssistantId(assistantId);
 
             Log.i(TAG, "Created new assistant: " + assistantId);
+            attachLatestScanFileIfAvailable();
 
         } catch (Exception e) {
             Log.e(TAG, "Failed to create assistant", e);
+        }
+    }
+
+    /**
+     * Sync the assistant's file_search resources with the most recent uploaded scan.
+     * Safe to call multiple times; new uploads reset the attachment flag.
+     */
+    public void refreshFileSearchIndex() {
+        executor.execute(this::attachLatestScanFileIfAvailable);
+    }
+
+    private void attachLatestScanFileIfAvailable() {
+        if (appContext == null || assistantId == null) {
+            return;
+        }
+
+        try {
+            ScanResultsManager manager = ScanResultsManager.getInstance(appContext);
+            ScanResultsManager.ScanSummary pending = manager.getLatestUploadedScanPendingAttachment();
+            if (pending == null || TextUtils.isEmpty(pending.fileId)) {
+                return;
+            }
+
+            apiClient.attachFileToAssistant(assistantId, pending.fileId);
+            manager.markFileAttached(pending.scanId);
+            Log.i(TAG, "Attached scan file to assistant: " + pending.fileId);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to attach latest scan file to assistant", e);
         }
     }
 
