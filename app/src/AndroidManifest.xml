@@ -159,6 +159,12 @@
             android:parentActivityName="com.obddroid.ui.activities.MainActivity"
             android:exported="false" />
         <activity
+            android:name="com.obddroid.features.copilot.ui.ThreadManagerActivity"
+            android:label="Conversation History"
+            android:configChanges="touchscreen|orientation|screenSize"
+            android:parentActivityName="com.obddroid.ui.activities.MainActivity"
+            android:exported="false" />
+        <activity
             android:name="com.obddroid.ui.activities.ScanActivity"
             android:label="Full Vehicle Scan"
             android:configChanges="touchscreen|orientation|screenSize"

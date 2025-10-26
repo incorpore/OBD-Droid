@@ -21,7 +21,7 @@
         <ImageView
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:src="@drawable/ic_vehicle_outline"
+            android:src="@drawable/ic_dashboard_vehicle_history"
             android:contentDescription="Vehicle"
             app:tint="@color/primary" />
 
