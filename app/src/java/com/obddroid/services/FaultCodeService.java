@@ -2,9 +2,9 @@ package com.obddroid.services;
 
 import android.os.SystemClock;
 
-import com.obddroid.core.ecu.EcuCodeItem;
-import com.obddroid.core.ecu.ObdCodeList;
-import com.obddroid.core.interfaces.RawTelegramListener;
+import com.obddroid.ecu.EcuCodeItem;
+import com.obddroid.ecu.ObdCodeList;
+import com.obddroid.interfaces.RawTelegramListener;
 
 import java.util.ArrayList;
 import java.util.Comparator;

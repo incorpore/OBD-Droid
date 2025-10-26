@@ -1,4 +1,4 @@
-package com.obddroid.core.interfaces;
+package com.obddroid.interfaces;
 
 /**
  * Listener for RAW telegram data BEFORE protocol header processing.

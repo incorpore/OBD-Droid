@@ -8,10 +8,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.obddroid.core.ecu.EcuCodeItem;
-import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.common.ProcessVariables.IndexedProcessVar;
-import com.obddroid.core.common.ProcessVariables.PvList;
+import com.obddroid.ecu.EcuCodeItem;
+import com.obddroid.obd.ObdProt;
+import com.obddroid.common.ProcessVariables.IndexedProcessVar;
+import com.obddroid.common.ProcessVariables.PvList;
 
 import java.util.Collection;
 import java.util.Objects;

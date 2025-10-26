@@ -23,13 +23,13 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import com.obddroid.R;
-import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.common.ProcessVariables.PvChange;
-import com.obddroid.core.common.ProcessVariables.PvChangeEvent;
-import com.obddroid.core.common.ProcessVariables.PvChangeListener;
-import com.obddroid.core.common.ProcessVariables.PvChangeType;
-import com.obddroid.core.common.ProcessVariables.TypedPvChangeListener;
+import com.obddroid.ecu.EcuDataPv;
+import com.obddroid.obd.ObdProt;
+import com.obddroid.common.ProcessVariables.PvChange;
+import com.obddroid.common.ProcessVariables.PvChangeEvent;
+import com.obddroid.common.ProcessVariables.PvChangeListener;
+import com.obddroid.common.ProcessVariables.PvChangeType;
+import com.obddroid.common.ProcessVariables.TypedPvChangeListener;
 import com.obddroid.ui.activities.MainActivity;
 
 import java.io.BufferedOutputStream;

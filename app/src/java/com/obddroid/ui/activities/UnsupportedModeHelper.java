@@ -2,8 +2,8 @@ package com.obddroid.ui.activities;
 
 import androidx.appcompat.app.AlertDialog;
 
-import com.obddroid.core.obd.ElmProt;
-import com.obddroid.core.obd.ObdProt;
+import com.obddroid.obd.ElmProt;
+import com.obddroid.obd.ObdProt;
 import com.obddroid.services.CommService;
 
 import java.util.logging.Logger;

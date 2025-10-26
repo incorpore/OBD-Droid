@@ -1,7 +1,7 @@
-package com.obddroid.core.interfaces;
+package com.obddroid.interfaces;
 
-import com.obddroid.core.common.ProcessVariables.PvChangeEvent;
-import com.obddroid.core.common.ProcessVariables.PvList;
+import com.obddroid.common.ProcessVariables.PvChangeEvent;
+import com.obddroid.common.ProcessVariables.PvList;
 
 /**
  * Interface for managing OBD data independently of protocol implementation

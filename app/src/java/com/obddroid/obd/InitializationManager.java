@@ -1,4 +1,4 @@
-package com.obddroid.core.obd;
+package com.obddroid.obd;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;

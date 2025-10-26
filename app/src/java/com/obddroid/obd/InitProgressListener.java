@@ -1,4 +1,4 @@
-package com.obddroid.core.obd;
+package com.obddroid.obd;
 
 /**
  * Listener interface for comprehensive initialization progress

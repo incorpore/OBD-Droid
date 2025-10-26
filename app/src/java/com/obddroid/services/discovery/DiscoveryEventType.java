@@ -1,4 +1,4 @@
-package com.obddroid.vehicle.discovery;
+package com.obddroid.services.discovery;
 
 /**
  * Types of discovery events emitted while scanning for vehicle ECUs.

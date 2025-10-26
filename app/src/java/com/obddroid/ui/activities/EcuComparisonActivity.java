@@ -21,9 +21,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.snackbar.Snackbar;
 import com.obddroid.R;
 import com.obddroid.ui.components.VehicleInfoFooter;
-import com.obddroid.vehicle.EcuInfo;
-import com.obddroid.vehicle.EcuScan;
-import com.obddroid.vehicle.VehicleManager;
+import com.obddroid.ecu.EcuInfo;
+import com.obddroid.ecu.EcuScan;
+import com.obddroid.services.VehicleManager;
 
 import java.io.File;
 import java.io.FileWriter;

@@ -1,7 +1,7 @@
 package com.obddroid.core.ecu.parser;
 
-import com.obddroid.core.ecu.Conversion;
-import com.obddroid.core.ecu.PidDefinition;
+import com.obddroid.ecu.Conversion;
+import com.obddroid.ecu.PidDefinition;
 
 import java.io.BufferedReader;
 import java.io.IOException;

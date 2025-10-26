@@ -5,14 +5,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
-import com.obddroid.core.common.ProcessVariables.ProcessVar;
-import com.obddroid.core.common.ProcessVariables.PvChangeEvent;
-import com.obddroid.core.common.ProcessVariables.PvChangeListener;
-import com.obddroid.core.common.ProcessVariables.PvList;
-import com.obddroid.core.common.ProcessVariables.TypedPvList;
-import com.obddroid.core.interfaces.IDataManager;
-import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.ecu.EcuDataPv;
+import com.obddroid.common.ProcessVariables.ProcessVar;
+import com.obddroid.common.ProcessVariables.PvChangeEvent;
+import com.obddroid.common.ProcessVariables.PvChangeListener;
+import com.obddroid.common.ProcessVariables.PvList;
+import com.obddroid.common.ProcessVariables.TypedPvList;
+import com.obddroid.interfaces.IDataManager;
+import com.obddroid.obd.ObdProt;
+import com.obddroid.ecu.EcuDataPv;
 
 /**
  * Service layer for managing OBD data independently of protocol state

@@ -30,7 +30,7 @@ import com.google.gson.Gson;
 import com.obddroid.R;
 import com.obddroid.features.vehiclehistory.data.AutoCheckService;
 import com.obddroid.features.vehiclehistory.model.AutoCheckReport;
-import com.obddroid.vehicle.VehicleManager;
+import com.obddroid.services.VehicleManager;
 import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.utils.SnackbarHelper;
 

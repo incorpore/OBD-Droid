@@ -1,10 +1,10 @@
-package com.obddroid.core.obd;
+package com.obddroid.obd;
 
-import com.obddroid.core.can.CanProtFord;
-import com.obddroid.core.ecu.ObdCodeItem;
-import com.obddroid.core.interfaces.RawTelegramListener;
-import com.obddroid.core.interfaces.TelegramListener;
-import com.obddroid.core.interfaces.TelegramWriter;
+import com.obddroid.can.CanProtFord;
+import com.obddroid.ecu.ObdCodeItem;
+import com.obddroid.interfaces.RawTelegramListener;
+import com.obddroid.interfaces.TelegramListener;
+import com.obddroid.interfaces.TelegramWriter;
 
 import java.beans.PropertyChangeEvent;
 import java.util.Arrays;

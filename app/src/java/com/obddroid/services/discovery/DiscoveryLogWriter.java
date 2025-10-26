@@ -1,4 +1,4 @@
-package com.obddroid.vehicle.discovery;
+package com.obddroid.services.discovery;
 
 import android.content.Context;
 

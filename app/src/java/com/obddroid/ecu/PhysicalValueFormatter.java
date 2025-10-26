@@ -1,4 +1,4 @@
-package com.obddroid.core.ecu;
+package com.obddroid.ecu;
 
 /**
  * Formatting contract for presenting raw or physical values.

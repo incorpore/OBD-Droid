@@ -28,9 +28,9 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
-import com.obddroid.core.ecu.EcuDataItem;
-import com.obddroid.core.obd.ElmProt;
-import com.obddroid.core.obd.ObdProt;
+import com.obddroid.ecu.EcuDataItem;
+import com.obddroid.obd.ElmProt;
+import com.obddroid.obd.ObdProt;
 import com.obddroid.services.telemetry.RemoteTelemetryManager;
 import com.obddroid.services.CommService;
 import com.obddroid.R;

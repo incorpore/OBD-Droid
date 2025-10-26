@@ -1,4 +1,4 @@
-package com.obddroid.vehicle;
+package com.obddroid.ecu;
 
 import androidx.annotation.NonNull;
 import java.io.Serializable;

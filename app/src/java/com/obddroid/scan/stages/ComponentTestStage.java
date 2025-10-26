@@ -1,7 +1,7 @@
 package com.obddroid.scan.stages;
 
-import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.obd.ObdProt;
+import com.obddroid.ecu.EcuDataPv;
+import com.obddroid.obd.ObdProt;
 import com.obddroid.scan.ScanContext;
 import com.obddroid.scan.ScanStage;
 import com.obddroid.scan.StageResult;

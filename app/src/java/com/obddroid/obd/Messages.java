@@ -1,4 +1,4 @@
-package com.obddroid.core.obd;
+package com.obddroid.obd;
 
 import java.io.BufferedReader;
 import java.io.IOException;

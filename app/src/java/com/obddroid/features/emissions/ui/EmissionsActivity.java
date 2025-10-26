@@ -26,10 +26,10 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.obddroid.R;
-import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.common.ProcessVariables.PvChangeEvent;
-import com.obddroid.core.common.ProcessVariables.PvChangeListener;
+import com.obddroid.ecu.EcuDataPv;
+import com.obddroid.obd.ObdProt;
+import com.obddroid.common.ProcessVariables.PvChangeEvent;
+import com.obddroid.common.ProcessVariables.PvChangeListener;
 import com.obddroid.features.emissions.data.EmissionsCalculator;
 import com.obddroid.features.emissions.data.EmissionsDataManager;
 import com.obddroid.features.emissions.data.EmissionsReportGenerator;

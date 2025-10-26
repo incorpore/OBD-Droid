@@ -1,4 +1,4 @@
-package com.obddroid.core.obd;
+package com.obddroid.obd;
 
 /**
  * Protocol utility tool box

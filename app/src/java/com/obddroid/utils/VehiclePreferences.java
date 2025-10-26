@@ -1,4 +1,4 @@
-package com.obddroid.vehicle;
+package com.obddroid.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;

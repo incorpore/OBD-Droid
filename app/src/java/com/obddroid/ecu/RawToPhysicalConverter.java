@@ -1,4 +1,4 @@
-package com.obddroid.core.ecu;
+package com.obddroid.ecu;
 
 /**
  * Minimal abstraction for converting between raw ECU payload values

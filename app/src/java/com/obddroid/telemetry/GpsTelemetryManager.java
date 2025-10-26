@@ -1,4 +1,4 @@
-package com.obddroid.core.telemetry;
+package com.obddroid.telemetry;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -18,12 +18,12 @@ import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 
 import com.obddroid.R;
-import com.obddroid.core.ecu.Conversion;
-import com.obddroid.core.ecu.EcuDataItem;
-import com.obddroid.core.ecu.EcuDataItems;
-import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.ecu.LinearConversion;
-import com.obddroid.core.obd.ObdProt;
+import com.obddroid.ecu.Conversion;
+import com.obddroid.ecu.EcuDataItem;
+import com.obddroid.ecu.EcuDataItems;
+import com.obddroid.ecu.EcuDataPv;
+import com.obddroid.ecu.LinearConversion;
+import com.obddroid.obd.ObdProt;
 import com.obddroid.ui.activities.SettingsActivity;
 
 import java.util.EnumMap;

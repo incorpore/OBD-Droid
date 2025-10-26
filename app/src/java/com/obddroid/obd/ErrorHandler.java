@@ -1,4 +1,4 @@
-package com.obddroid.core.obd;
+package com.obddroid.obd;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;

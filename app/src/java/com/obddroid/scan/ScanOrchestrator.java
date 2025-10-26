@@ -17,7 +17,7 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 
 import com.obddroid.R;
-import com.obddroid.core.obd.ElmProt;
+import com.obddroid.obd.ElmProt;
 import com.obddroid.scan.stages.ComponentTestStage;
 import com.obddroid.scan.stages.DiscoverySnapshotStage;
 import com.obddroid.scan.stages.FaultCodeStage;

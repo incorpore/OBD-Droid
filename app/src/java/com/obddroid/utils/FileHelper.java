@@ -8,13 +8,13 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.obd.ElmProt;
-import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.common.ProcessVariables.ProcessVar;
-import com.obddroid.core.common.ProcessVariables.PvChangeEvent;
-import com.obddroid.core.common.ProcessVariables.PvList;
-import com.obddroid.core.common.ProcessVariables.TypedPvList;
+import com.obddroid.ecu.EcuDataPv;
+import com.obddroid.obd.ElmProt;
+import com.obddroid.obd.ObdProt;
+import com.obddroid.common.ProcessVariables.ProcessVar;
+import com.obddroid.common.ProcessVariables.PvChangeEvent;
+import com.obddroid.common.ProcessVariables.PvList;
+import com.obddroid.common.ProcessVariables.TypedPvList;
 
 import java.io.File;
 import java.io.FileOutputStream;

@@ -1,6 +1,6 @@
-package com.obddroid.core.can;
+package com.obddroid.can;
 
-import com.obddroid.core.ecu.Conversions;
+import com.obddroid.ecu.Conversions;
 
 /**
  * GM-specific CAN protocol implementation for monitoring vehicle telemetry.

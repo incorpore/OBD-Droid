@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.obddroid.R;
-import com.obddroid.vehicle.EcuInfo;
+import com.obddroid.ecu.EcuInfo;
 
 import java.util.ArrayList;
 import java.util.List;

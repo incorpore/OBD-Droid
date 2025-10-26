@@ -1,4 +1,4 @@
-package com.obddroid.core.ecu;
+package com.obddroid.ecu;
 
 import java.io.BufferedReader;
 import java.io.IOException;

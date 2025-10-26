@@ -1,7 +1,7 @@
-package com.obddroid.core.ecu;
+package com.obddroid.ecu;
 
-import com.obddroid.core.common.UTF8Bundle;
-import com.obddroid.core.obd.Messages;
+import com.obddroid.common.UTF8Bundle;
+import com.obddroid.obd.Messages;
 
 import java.util.HashSet;
 import java.util.MissingResourceException;

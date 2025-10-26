@@ -10,7 +10,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.ParcelUuid;
 
-import com.obddroid.core.obd.StreamHandler;
+import com.obddroid.obd.StreamHandler;
 import com.obddroid.utils.PermissionManager;
 
 import java.io.IOException;

@@ -1,25 +1,25 @@
 
-package com.obddroid.core.obd;
+package com.obddroid.obd;
 
 import android.util.Log;
-import com.obddroid.core.ecu.Conversion;
-import com.obddroid.core.ecu.EcuCodeItem;
-import com.obddroid.core.ecu.EcuCodeList;
-import com.obddroid.core.ecu.EcuConversions;
-import com.obddroid.core.ecu.EcuDataItem;
-import com.obddroid.core.ecu.EcuDataItems;
-import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.ecu.ObdCodeItem;
-import com.obddroid.core.ecu.ObdPid;
-import com.obddroid.core.common.ProtoHeader;
-import com.obddroid.core.interfaces.TelegramListener;
-import com.obddroid.core.interfaces.TelegramWriter;
-import com.obddroid.core.common.ProcessVariables.ProcessVar;
-import com.obddroid.core.common.ProcessVariables.PvChangeEvent;
-import com.obddroid.core.common.ProcessVariables.PvList;
-import com.obddroid.core.common.ProcessVariables.TypedPvList;
+import com.obddroid.ecu.Conversion;
+import com.obddroid.ecu.EcuCodeItem;
+import com.obddroid.ecu.EcuCodeList;
+import com.obddroid.ecu.EcuConversions;
+import com.obddroid.ecu.EcuDataItem;
+import com.obddroid.ecu.EcuDataItems;
+import com.obddroid.ecu.EcuDataPv;
+import com.obddroid.ecu.ObdCodeItem;
+import com.obddroid.ecu.ObdPid;
+import com.obddroid.common.ProtoHeader;
+import com.obddroid.interfaces.TelegramListener;
+import com.obddroid.interfaces.TelegramWriter;
+import com.obddroid.common.ProcessVariables.ProcessVar;
+import com.obddroid.common.ProcessVariables.PvChangeEvent;
+import com.obddroid.common.ProcessVariables.PvList;
+import com.obddroid.common.ProcessVariables.TypedPvList;
 import com.obddroid.services.ObdDataService;
-import com.obddroid.core.interfaces.IDataManager;
+import com.obddroid.interfaces.IDataManager;
 
 import java.beans.PropertyChangeEvent;
 import java.util.Arrays;

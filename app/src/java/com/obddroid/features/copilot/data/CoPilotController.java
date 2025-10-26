@@ -5,7 +5,7 @@ import android.content.Context;
 import androidx.annotation.Nullable;
 
 import com.obddroid.features.copilot.agent.AgentCoPilotController;
-import com.obddroid.vehicle.VehicleManager;
+import com.obddroid.services.VehicleManager;
 
 import io.github.vindecoder.nhtsa.VehicleData;
 

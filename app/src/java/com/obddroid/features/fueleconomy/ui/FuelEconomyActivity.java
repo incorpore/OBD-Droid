@@ -11,10 +11,10 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.obddroid.R;
-import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.common.ProcessVariables.PvChangeEvent;
-import com.obddroid.core.common.ProcessVariables.PvChangeListener;
+import com.obddroid.ecu.EcuDataPv;
+import com.obddroid.obd.ObdProt;
+import com.obddroid.common.ProcessVariables.PvChangeEvent;
+import com.obddroid.common.ProcessVariables.PvChangeListener;
 import com.obddroid.features.fueleconomy.data.FuelEconomyCalculator;
 import com.obddroid.features.fueleconomy.data.FuelEconomyDataManager;
 import com.obddroid.features.fueleconomy.data.FuelEconomyPreferences;
@@ -62,10 +62,10 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private static final long UPDATE_INTERVAL = 1000; // Update every second
 
     // Tank capacity management
-    private com.obddroid.vehicle.VehiclePreferences vehiclePreferences;  // Legacy - still used by calculator
-    private com.obddroid.vehicle.VehicleManager vehicleManager;
-    private final com.obddroid.vehicle.VehicleManager.VehicleChangeListener vehicleChangeListener =
-            new com.obddroid.vehicle.VehicleManager.SimpleVehicleChangeListener() {
+    private com.obddroid.utils.VehiclePreferences vehiclePreferences;  // Legacy - still used by calculator
+    private com.obddroid.services.VehicleManager vehicleManager;
+    private final com.obddroid.services.VehicleManager.VehicleChangeListener vehicleChangeListener =
+            new com.obddroid.services.VehicleManager.SimpleVehicleChangeListener() {
                 @Override
                 public void onVINChanged(String vin) {
                     runOnUiThread(() -> {
@@ -148,11 +148,11 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         setupFooterOverlay();
 
         // Initialize vehicle manager and preferences
-        vehicleManager = com.obddroid.vehicle.VehicleManager.getInstance(this);
+        vehicleManager = com.obddroid.services.VehicleManager.getInstance(this);
         if (vehicleManager != null) {
             vehicleManager.addListener(vehicleChangeListener);
         }
-        vehiclePreferences = new com.obddroid.vehicle.VehiclePreferences(this);
+        vehiclePreferences = new com.obddroid.utils.VehiclePreferences(this);
 
         // Initialize data layer components
         dataManager = new FuelEconomyDataManager();
@@ -428,7 +428,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         btnApply.setOnClickListener(v -> {
             try {
                 // Get current VIN
-                com.obddroid.vehicle.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
+                com.obddroid.services.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
                 String vin = vehicleManagerRef != null ? vehicleManagerRef.getCurrentVIN() : null;
 
                 if (vin == null || vin.isEmpty()) {
@@ -679,7 +679,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
      * @return Displacement factor (normalized around 2.5L baseline)
      */
     private float getDisplacementFactor() {
-        com.obddroid.vehicle.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
+        com.obddroid.services.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
 
         io.github.vindecoder.nhtsa.VehicleData vehicleData =
                 vehicleManagerRef != null ? vehicleManagerRef.getCurrentVehicleData() : null;
@@ -725,7 +725,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             return cachedTankCapacity;
         }
 
-        com.obddroid.vehicle.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
+        com.obddroid.services.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
 
         String vin = vehicleManagerRef != null ? vehicleManagerRef.getCurrentVIN() : null;
 
@@ -761,7 +761,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
      * Called once when activity starts
      */
     private void checkAndPromptForTankCapacity() {
-        com.obddroid.vehicle.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
+        com.obddroid.services.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
 
         String vin = vehicleManagerRef != null ? vehicleManagerRef.getCurrentVIN() : null;
         io.github.vindecoder.nhtsa.VehicleData vehicleData =
@@ -883,9 +883,9 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         log.fine("Cleared tank capacity cache");
     }
 
-    private com.obddroid.vehicle.VehicleManager getVehicleManagerInstance() {
+    private com.obddroid.services.VehicleManager getVehicleManagerInstance() {
         if (vehicleManager == null) {
-            vehicleManager = com.obddroid.vehicle.VehicleManager.getInstance(this);
+            vehicleManager = com.obddroid.services.VehicleManager.getInstance(this);
         }
         return vehicleManager;
     }
@@ -1168,7 +1168,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private Float getCalibratedVE() {
         try {
             // Get current VIN from VehicleManager
-            com.obddroid.vehicle.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
+            com.obddroid.services.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
 
             String vin = vehicleManagerRef != null ? vehicleManagerRef.getCurrentVIN() : null;
             if (vin == null || vin.isEmpty()) {
@@ -1413,7 +1413,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
      */
     private float getEngineDisplacement() {
         try {
-            com.obddroid.vehicle.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
+            com.obddroid.services.VehicleManager vehicleManagerRef = getVehicleManagerInstance();
 
             io.github.vindecoder.nhtsa.VehicleData vehicleData =
                     vehicleManagerRef != null ? vehicleManagerRef.getCurrentVehicleData() : null;

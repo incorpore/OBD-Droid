@@ -1,4 +1,4 @@
-package com.obddroid.core.common;
+package com.obddroid.common;
 
 import java.util.ResourceBundle;
 

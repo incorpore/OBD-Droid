@@ -1,9 +1,10 @@
-package com.obddroid.vehicle;
+package com.obddroid.services;
 
 import android.content.Context;
 import android.util.Log;
 import io.github.vindecoder.nhtsa.VehicleData;
-import com.obddroid.core.obd.ElmProt;
+import com.obddroid.obd.ElmProt;
+import com.obddroid.utils.EnhancedVINDecoder;
 import java.util.ArrayList;
 import java.util.List;
 

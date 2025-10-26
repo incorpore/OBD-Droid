@@ -1,6 +1,6 @@
-package com.obddroid.core.ecu;
+package com.obddroid.ecu;
 
-import com.obddroid.core.obd.Messages;
+import com.obddroid.obd.Messages;
 
 import java.util.Map;
 import java.util.TreeMap;

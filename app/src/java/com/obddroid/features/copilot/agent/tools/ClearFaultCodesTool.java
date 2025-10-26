@@ -2,7 +2,7 @@ package com.obddroid.features.copilot.agent.tools;
 
 import android.content.Context;
 
-import com.obddroid.core.obd.ObdProt;
+import com.obddroid.obd.ObdProt;
 import com.obddroid.services.CommService;
 
 import org.json.JSONObject;

@@ -1,8 +1,8 @@
-package com.obddroid.core.obd;
+package com.obddroid.obd;
 
-import com.obddroid.core.ecu.EcuCodeItem;
-import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.common.ProcessVariables.PvList;
+import com.obddroid.ecu.EcuCodeItem;
+import com.obddroid.ecu.EcuDataPv;
+import com.obddroid.common.ProcessVariables.PvList;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;

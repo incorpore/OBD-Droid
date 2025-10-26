@@ -47,7 +47,7 @@ import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
 import com.obddroid.R;
-import com.obddroid.core.obd.ElmProt;
+import com.obddroid.obd.ElmProt;
 import com.obddroid.services.CommService;
 import com.obddroid.ui.adapters.DeviceAdapter;
 import com.obddroid.utils.PermissionManager;

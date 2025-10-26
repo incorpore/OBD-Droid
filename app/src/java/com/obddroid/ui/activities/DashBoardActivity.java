@@ -24,12 +24,12 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ListAdapter;
 
-import com.obddroid.core.ecu.EcuDataItem;
-import com.obddroid.core.ecu.EcuDataItems;
-import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.common.ProcessVariables.PvChangeEvent;
-import com.obddroid.core.common.ProcessVariables.PvChangeListener;
+import com.obddroid.ecu.EcuDataItem;
+import com.obddroid.ecu.EcuDataItems;
+import com.obddroid.ecu.EcuDataPv;
+import com.obddroid.obd.ObdProt;
+import com.obddroid.common.ProcessVariables.PvChangeEvent;
+import com.obddroid.common.ProcessVariables.PvChangeListener;
 import com.github.anastr.speedviewlib.Gauge;
 
 import com.obddroid.ui.adapters.ObdGaugeAdapter;

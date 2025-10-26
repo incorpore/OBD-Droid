@@ -1,4 +1,4 @@
-package com.obddroid.core.ecu;
+package com.obddroid.ecu;
 
 /**
  * Transitional facade that exposes the new PID abstractions while

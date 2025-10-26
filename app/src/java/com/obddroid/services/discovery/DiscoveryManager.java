@@ -1,4 +1,4 @@
-package com.obddroid.vehicle.discovery;
+package com.obddroid.services.discovery;
 
 import android.content.Context;
 import android.os.Build;
@@ -7,11 +7,11 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import com.obddroid.core.obd.ElmProt;
+import com.obddroid.obd.ElmProt;
 import com.obddroid.services.CommService;
-import com.obddroid.vehicle.EcuInfo;
-import com.obddroid.vehicle.EcuManager;
-import com.obddroid.vehicle.VehicleManager;
+import com.obddroid.ecu.EcuInfo;
+import com.obddroid.ecu.EcuManager;
+import com.obddroid.services.VehicleManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;

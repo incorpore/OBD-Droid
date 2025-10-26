@@ -17,9 +17,9 @@ import androidx.cardview.widget.CardView;
 
 import com.obddroid.R;
 import com.obddroid.ui.components.VehicleInfoFooter;
-import com.obddroid.vehicle.EcuScan;
-import com.obddroid.vehicle.EcuScanHistoryManager;
-import com.obddroid.vehicle.VehicleManager;
+import com.obddroid.ecu.EcuScan;
+import com.obddroid.ecu.EcuScanHistoryManager;
+import com.obddroid.services.VehicleManager;
 
 import java.text.SimpleDateFormat;
 import java.util.List;

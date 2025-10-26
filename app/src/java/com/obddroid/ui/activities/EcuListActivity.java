@@ -20,18 +20,18 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.obddroid.R;
-import com.obddroid.core.obd.ElmProt;
-import com.obddroid.core.obd.ObdProt;
+import com.obddroid.obd.ElmProt;
+import com.obddroid.obd.ObdProt;
 import com.obddroid.services.CommService;
 import com.obddroid.services.EcuDiscoveryService;
 import com.obddroid.ui.adapters.EcuAdapter;
 import com.obddroid.ui.components.VehicleInfoFooter;
-import com.obddroid.vehicle.EcuCacheManager;
-import com.obddroid.vehicle.EcuInfo;
-import com.obddroid.vehicle.EcuManager;
-import com.obddroid.vehicle.EcuScan;
-import com.obddroid.vehicle.EcuScanHistoryManager;
-import com.obddroid.vehicle.VehicleManager;
+import com.obddroid.ecu.EcuCacheManager;
+import com.obddroid.ecu.EcuInfo;
+import com.obddroid.ecu.EcuManager;
+import com.obddroid.ecu.EcuScan;
+import com.obddroid.ecu.EcuScanHistoryManager;
+import com.obddroid.services.VehicleManager;
 
 import android.content.ContentValues;
 import android.content.Intent;

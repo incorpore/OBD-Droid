@@ -10,7 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 
-import com.obddroid.core.obd.ElmProt;
+import com.obddroid.obd.ElmProt;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

@@ -1,7 +1,7 @@
 package com.obddroid.features.emissions.data;
 
-import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.obd.ObdProt;
+import com.obddroid.ecu.EcuDataPv;
+import com.obddroid.obd.ObdProt;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

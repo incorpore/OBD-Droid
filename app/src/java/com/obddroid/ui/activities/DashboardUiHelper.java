@@ -12,8 +12,8 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 
 import com.obddroid.R;
-import com.obddroid.core.obd.ElmProt;
-import com.obddroid.core.obd.ObdProt;
+import com.obddroid.obd.ElmProt;
+import com.obddroid.obd.ObdProt;
 import com.obddroid.utils.SnackbarHelper;
 
 import java.util.logging.Logger;

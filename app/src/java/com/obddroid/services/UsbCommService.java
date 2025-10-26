@@ -13,8 +13,8 @@ import android.hardware.usb.UsbManager;
 import android.os.Handler;
 import androidx.preference.PreferenceManager;
 
-import com.obddroid.core.obd.ProtUtils;
-import com.obddroid.core.interfaces.TelegramWriter;
+import com.obddroid.obd.ProtUtils;
+import com.obddroid.interfaces.TelegramWriter;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.util.SerialInputOutputManager;
 

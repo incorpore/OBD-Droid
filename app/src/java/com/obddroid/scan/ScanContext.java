@@ -2,9 +2,9 @@ package com.obddroid.scan;
 
 import android.content.Context;
 
-import com.obddroid.core.obd.ElmProt;
-import com.obddroid.vehicle.VehicleManager;
-import com.obddroid.vehicle.discovery.DiscoveryManager;
+import com.obddroid.obd.ElmProt;
+import com.obddroid.services.VehicleManager;
+import com.obddroid.services.discovery.DiscoveryManager;
 
 import org.json.JSONObject;
 

@@ -1,4 +1,4 @@
-package com.obddroid.vehicle;
+package com.obddroid.ecu;
 
 import java.io.Serializable;
 import java.util.ArrayList;

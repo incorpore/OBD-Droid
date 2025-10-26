@@ -28,7 +28,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.obddroid.R;
 import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.utils.SnackbarHelper;
-import com.obddroid.vehicle.VehicleManager;
+import com.obddroid.services.VehicleManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;

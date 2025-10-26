@@ -19,7 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.obddroid.R;
-import com.obddroid.core.obd.ElmProt;
+import com.obddroid.obd.ElmProt;
 import com.obddroid.services.CommService;
 import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.utils.OpenAiService;

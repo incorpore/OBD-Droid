@@ -1,7 +1,7 @@
 package com.obddroid.features.fueleconomy.data;
 
 import android.content.Context;
-import com.obddroid.vehicle.VehiclePreferences;
+import com.obddroid.utils.VehiclePreferences;
 
 /**
  * Fuel Economy-specific preferences wrapper

@@ -1,8 +1,8 @@
-package com.obddroid.core.ecu;
+package com.obddroid.ecu;
 
 import android.content.Context;
 import com.dtcdatabase.DTCDatabase;
-import com.obddroid.core.obd.Messages;
+import com.obddroid.obd.Messages;
 
 import java.util.HashSet;
 import java.util.Set;

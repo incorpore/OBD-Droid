@@ -30,7 +30,7 @@ import com.obddroid.scan.ScanOrchestrator;
 import com.obddroid.scan.ScanReport;
 import com.obddroid.scan.ScanResultsManager;
 import com.obddroid.scan.StageResult;
-import com.obddroid.vehicle.VehicleManager;
+import com.obddroid.services.VehicleManager;
 
 import java.io.File;
 import java.io.FileWriter;

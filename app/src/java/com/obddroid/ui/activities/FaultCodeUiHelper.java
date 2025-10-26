@@ -18,18 +18,18 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.obddroid.R;
-import com.obddroid.core.ecu.EcuCodeItem;
-import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.obd.FreezeFrameManager;
-import com.obddroid.core.obd.ElmProt;
-import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.common.ProcessVariables.PvList;
+import com.obddroid.ecu.EcuCodeItem;
+import com.obddroid.ecu.EcuDataPv;
+import com.obddroid.obd.FreezeFrameManager;
+import com.obddroid.obd.ElmProt;
+import com.obddroid.obd.ObdProt;
+import com.obddroid.common.ProcessVariables.PvList;
 import com.obddroid.services.CommService;
 import com.obddroid.services.FaultCodeService;
 import com.obddroid.ui.adapters.ObdItemAdapter;
 import com.obddroid.utils.OpenAiService;
 import com.obddroid.utils.SnackbarHelper;
-import com.obddroid.vehicle.VehicleManager;
+import com.obddroid.services.VehicleManager;
 import io.github.vindecoder.nhtsa.VehicleData;
 
 import java.util.Collections;

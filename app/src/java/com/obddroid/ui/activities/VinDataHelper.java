@@ -3,13 +3,13 @@ package com.obddroid.ui.activities;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.common.ProcessVariables.PvChange;
-import com.obddroid.core.common.ProcessVariables.ProcessVar;
-import com.obddroid.core.common.ProcessVariables.TypedPvList;
+import com.obddroid.ecu.EcuDataPv;
+import com.obddroid.obd.ObdProt;
+import com.obddroid.common.ProcessVariables.PvChange;
+import com.obddroid.common.ProcessVariables.ProcessVar;
+import com.obddroid.common.ProcessVariables.TypedPvList;
 import com.obddroid.services.CommService;
-import com.obddroid.vehicle.VehicleManager;
+import com.obddroid.services.VehicleManager;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
