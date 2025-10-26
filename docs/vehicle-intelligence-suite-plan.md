@@ -85,7 +85,7 @@ results conversationally (hands-free if desired).
 ### Flow
 
 1. User picks **Full Vehicle Scan** from main screen overflow.
-2. Confirmation dialog highlights runtime (≈2–4 min) and vehicle power needs.
+2. Confirmation dialog highlights runtime and vehicle power needs.
 3. Foreground service (`ScanOrchestrator`) launches, binding progress sheet.
 4. Discovery snapshot recorded (adapter, VIN, ECU list, addresses).
 5. Sequential stages execute (see table); each stage logs metadata, raw frames,
@@ -161,13 +161,6 @@ repair pathways.
   - Post-repair verification checklist.
 - Parse JSON into `DiagnosticReport` and write both Markdown section and
   machine-readable `ai-diagnosis.json`.
-
-### Settings & Cost Controls
-
-- Toggle: “Enable AI Assistant” (default OFF).
-- Model picker: GPT-3.5 Turbo (cheap) vs GPT-4 Turbo / GPT-4o (accurate).
-- Estimated cost banner before analysis (use token predictions).
-- Usage tracking screen showing monthly spend/token counts.
 
 ### UX Integration
 
@@ -347,11 +340,11 @@ implementation 'io.noties.markwon:syntax-highlight:4.6.2'     // Code blocks
 
 #### Why Agents API?
 
-✅ **Persistent Conversations**: Server-side threads survive app restarts, perfect for multi-day diagnostics
+✅ **Persistent Conversations**: Server-side threads survive app restarts, perfect for extended diagnostics
 ✅ **Built-in Tool Calling**: Native function execution with JSON schemas (no manual parsing)
 ✅ **File Attachments**: Upload complete scan reports (JSON/Markdown) for contextual analysis
 ✅ **Automatic Context Management**: No manual token trimming or summarization needed
-✅ **Multi-Scan Analysis**: "Compare this scan to last week" with retrieval
+✅ **Multi-Scan Analysis**: "Compare this scan to previous scans" with retrieval
 ✅ **Dealer/Shop Mode**: Shared threads by VIN for collaborative diagnosis
 
 #### Architecture Flow
@@ -495,7 +488,7 @@ Display Response with Streaming (optional)
 - **Thread Lifecycle**:
   - Create when CoPilot first accessed for a vehicle
   - Resume when reconnecting to same VIN
-  - Archive after 30 days of inactivity
+  - Archive after period of inactivity
   - Delete on user request (privacy)
 
 #### File Upload Strategy
@@ -554,37 +547,13 @@ assistant.setTools([
 11. Display: "Found 2 codes: P0420 (catalyst efficiency) and P0171 (lean mixture)..."
 ```
 
-#### Cost Analysis (Agents API)
-
-**Typical 10-message conversation:**
-- Input tokens: ~3K (less context needed with threads)
-- Output tokens: ~2K
-- Tool calls: 2-3 per conversation
-- Thread storage: ~10KB @ $0.10/GB/day = $0.001/day
-- **Total: ~$0.15 + $0.03/month storage**
-
-**vs. Chat Completions (current):**
-- Input tokens: ~5K (must include full context each time)
-- Output tokens: ~2K
-- No persistence (lost on restart)
-- **Total: ~$0.21 per conversation**
-
-**Verdict:** Agents API is cheaper for long conversations + adds persistence value.
-
 #### Privacy & Compliance
-
-⚠️ **User Consent Required:**
-- Conversations stored on OpenAI servers (not just during active chat)
-- Clear disclosure in privacy policy
-- Opt-in consent dialog on first use
-- "What data is sent?" explanation
 
 ✅ **Privacy Controls:**
 - View all stored threads
 - Delete specific conversations
 - Export thread data (GDPR compliance)
 - "Delete All My Data" option
-- VIN redaction option (use session_id instead)
 
 #### Implementation Components
 
@@ -696,7 +665,7 @@ CoPilotLogger.java                   // Log tool calls + run events
   Provide clear disclosure before enabling; no data is routed through
   OBD-Droid servers. Offer settings to redact VIN or purge stored conversations.
 - **Cost Controls:** Use GPT-3.5 by default; allow GPT-4/5 as premium option.
-  Show per-scan estimate and monthly usage log. Warn when hitting custom spend
+  Show per-scan estimate and usage log. Warn when hitting custom spend
   ceilings.
 - **Voice Consent:** Wake-word toggle off by default; highlight mic usage with
   on-screen indicator. Store wake-word activation events locally only and allow
@@ -717,7 +686,7 @@ CoPilotLogger.java                   // Log tool calls + run events
 
 ## 🚀 Recommended Next Steps
 
-### Phase 1: Complete Scan Orchestrator (1-2 weeks)
+### Phase 1: Complete Scan Orchestrator
 1. **Add missing OBD stages:**
    - `FreezeFrameStage` (Mode 02)
    - `PendingDtcStage` (Mode 07)
@@ -731,18 +700,18 @@ CoPilotLogger.java                   // Log tool calls + run events
    - Append AI results to markdown report
 4. **Test on 3+ vehicles** for platform verification
 
-### Phase 2: AI Analyzer Settings & Cost Controls (1-2 weeks)
+### Phase 2: AI Analyzer Settings & Cost Controls
 1. **Build Settings UI:**
    - AI toggle (default OFF)
    - Model picker (GPT-3.5 / GPT-4 / GPT-4o)
    - Cost estimate before analysis
 2. **Implement usage tracking screen:**
-   - Monthly spend/token counts
+   - Spend/token counts
    - Per-scan cost breakdown
 3. **Add privacy warning UI** before enabling AI
 4. **Write unit tests** for common DTC scenarios (misfire, EVAP, O2 sensor)
 
-### Phase 3: Agents API Migration (2-3 weeks) - **CRITICAL**
+### Phase 3: Agents API Migration - **CRITICAL**
 1. **Build AgentApiClient infrastructure:**
    - Create/load Assistant on app init
    - Thread creation and management
@@ -769,35 +738,9 @@ CoPilotLogger.java                   // Log tool calls + run events
    - Keep OpenAiService for non-conversational AI (DiagnosticAnalyzer)
    - Handle async run polling gracefully
 
-### Phase 4: Voice Pilot (Optional, 3-4 weeks)
+### Phase 4: Voice Pilot (Optional)
 1. Implement wake word detection ("OBD Droid")
 2. Add push-to-talk functionality
 3. Prototype WebRTC + GPT-4o realtime integration
 4. Lip sync with animated avatar using prosody markers
 
----
-
-## 📊 Priority Matrix
-
-### 🔴 HIGH PRIORITY (Blocking MVP)
-1. **Agents API Migration** - Switch CoPilot to Assistants API (2-3 weeks)
-   - AgentApiClient + Thread management
-   - Tool registration and execution
-   - File upload for scan reports
-   - Privacy controls
-2. Add missing stages: Mode 02/07/0A
-3. UI for viewing/sharing scan reports
-4. Integrate AI analysis post-scan
-5. AI settings UI with cost controls
-
-### 🟡 MEDIUM PRIORITY (Post-MVP)
-1. Modes 05/06 (O2/Monitor tests)
-2. Mode 08 (Component tests)
-3. Unit tests for AI analyzer
-4. Advanced tool features (chain commands, multi-scan analysis)
-
-### 🟢 LOW PRIORITY (Future Enhancements)
-1. Wake word detection
-2. WebRTC voice integration
-3. Extended UDS / OEM-specific modes
-4. Resume functionality for cancelled scans
