@@ -11,7 +11,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.obddroid.R;
-import com.obddroid.copilot.ChatMessage;
+import com.obddroid.features.copilot.ChatMessage;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

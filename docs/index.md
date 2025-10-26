@@ -31,12 +31,6 @@ Professional-grade diagnostic tools and multi-ECU support:
 **Single source of truth for all AI-powered features:**
 
 - **[vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md)** – Complete unified plan (64% complete)
-  - **Implementation status** – Track progress across all AI components
-  - **Agents API architecture** – OpenAI Assistants API as core AI layer (persistent conversations, tool calling, file uploads)
-  - **CoPilot** – World-class conversational UI with Lottie animations, Markwon markdown, Material Design 3, voice input (80% complete)
-  - **Full Vehicle Scan Orchestrator** – Automated multi-stage OBD scans with report generation (55% complete)
-  - **AI Diagnostic Analyzer** – GPT-4o powered scan interpretation and repair recommendations (50% complete)
-  - **Phased roadmap** – Clear next steps without timelines or cost concerns
 
 ---
 

@@ -1,4 +1,4 @@
-package com.obddroid.copilot;
+package com.obddroid.features.copilot;
 
 import android.content.Context;
 import android.media.AudioAttributes;

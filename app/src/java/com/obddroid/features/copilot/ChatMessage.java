@@ -1,4 +1,4 @@
-package com.obddroid.copilot;
+package com.obddroid.features.copilot;
 
 /**
  * Represents a UI message in the CoPilot chat interface.

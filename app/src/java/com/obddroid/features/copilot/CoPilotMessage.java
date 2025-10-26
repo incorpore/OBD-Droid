@@ -1,4 +1,4 @@
-package com.obddroid.copilot;
+package com.obddroid.features.copilot;
 
 import com.obddroid.utils.OpenAiService;
 

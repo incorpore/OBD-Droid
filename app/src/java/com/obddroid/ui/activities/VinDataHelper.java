@@ -6,6 +6,8 @@ import android.os.Looper;
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.core.pvs.ProcessVariables.PvChange;
+import com.obddroid.core.pvs.ProcessVariables.ProcessVar;
+import com.obddroid.core.pvs.ProcessVariables.TypedPvList;
 import com.obddroid.services.CommService;
 import com.obddroid.vehicle.VehicleManager;
 
@@ -170,7 +172,9 @@ final class VinDataHelper
 
         // Check if Mode 9 data is present (even if VIN is cached)
         // This handles reconnection scenarios where VIN is cached but Mode 9 data is stale
-        boolean hasMode9Data = ObdProt.VidPvs != null && !ObdProt.VidPvs.isEmpty();
+        TypedPvList<Integer, ProcessVar> vehicleInfoStore =
+            ObdProt.getDataService().getTypedStoreForService(ObdProt.OBD_SVC_VEH_INFO);
+        boolean hasMode9Data = vehicleInfoStore != null && !vehicleInfoStore.isEmpty();
 
         // Query if: no VIN, OR VIN exists but Mode 9 data is missing/stale
         if ((currentVin == null || currentVin.isEmpty()) || !hasMode9Data)
@@ -207,7 +211,9 @@ final class VinDataHelper
             new Handler(Looper.getMainLooper()).postDelayed(() ->
             {
                 log.info("Clearing stale vehicle info cache before Mode 9 request");
-                ObdProt.VidPvs.clear();
+                if (vehicleInfoStore != null) {
+                    vehicleInfoStore.clear();
+                }
                 CommService.elm.getCachedVehicleInfo().clear();
 
                 log.info("Requesting Mode 9 data (full scan - VIN + all vehicle info)");

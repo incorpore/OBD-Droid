@@ -27,6 +27,8 @@ import com.obddroid.core.obd.ObdProt;
 import com.obddroid.core.obd.Messages;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
+import com.obddroid.core.pvs.ProcessVariables.ProcessVar;
+import com.obddroid.core.pvs.ProcessVariables.TypedPvList;
 import java.beans.PropertyChangeEvent;
 import java.util.Locale;
 import java.util.Map;
@@ -62,6 +64,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
     private View expandIndicator;
     private View statusDot;
     private View overlayView;
+    private TypedPvList<Integer, ProcessVar> vehicleInfoStore;
 
     public VehicleInfoFooter(Context context)
     {
@@ -470,8 +473,11 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         // Register as listener with VehicleManager
         VehicleManager.getInstance().addListener(vehicleListener);
 
+        vehicleInfoStore = ObdProt.getDataService().getTypedStoreForService(ObdProt.OBD_SVC_VEH_INFO);
         // Register for Mode 9 data updates
-        ObdProt.VidPvs.addPvChangeListener(this);
+        if (vehicleInfoStore != null) {
+            vehicleInfoStore.addPvChangeListener(this);
+        }
 
         // Start with disconnected state - will be updated when ECU connects
         isEcuConnected = false;
@@ -554,7 +560,9 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             VehicleManager.getInstance().addListener(vehicleListener);
         }
         // Re-register for Mode 9 updates
-        ObdProt.VidPvs.addPvChangeListener(this);
+        if (vehicleInfoStore != null) {
+            vehicleInfoStore.addPvChangeListener(this);
+        }
 
         // Get current state (will update if actually connected)
         updateVehicleInfo();
@@ -569,7 +577,9 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             VehicleManager.getInstance().removeListener(vehicleListener);
         }
         // Unregister from Mode 9 updates
-        ObdProt.VidPvs.removePvChangeListener(this);
+        if (vehicleInfoStore != null) {
+            vehicleInfoStore.removePvChangeListener(this);
+        }
     }
 
 
@@ -876,12 +886,9 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
     /**
      * Add Mode 9 OBD vehicle information to the expanded view with better formatting
      */
-    @SuppressWarnings("deprecation")
     private void addMode9Section() {
         // Get Mode 9 data from VidPvs
-        com.obddroid.core.pvs.ProcessVariables.TypedPvList<Integer, EcuDataPv> vidPvs = ObdProt.VidPvs;
-
-        if (vidPvs == null || vidPvs.isEmpty()) {
+        if (vehicleInfoStore == null || vehicleInfoStore.isEmpty()) {
             // No Mode 9 data available
             addEmptyStateMessage("No OBD Mode 9 data available", "Mode 9 data will appear here once retrieved from the vehicle");
             return;
@@ -896,10 +903,14 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         categorizedData.put("Other Information", new java.util.ArrayList<>());
 
         // Process all Mode 9 items
-        java.util.List<Map.Entry<Integer, EcuDataPv>> entries =
-            new java.util.ArrayList<>(vidPvs.entrySetTyped());
-        for (Map.Entry<Integer, EcuDataPv> entry : entries) {
-            EcuDataPv pv = entry.getValue();
+        java.util.List<Map.Entry<Integer, ProcessVar>> entries =
+            new java.util.ArrayList<>(vehicleInfoStore.entrySetTyped());
+        for (Map.Entry<Integer, ProcessVar> entry : entries) {
+            ProcessVar storeItem = entry.getValue();
+            if (!(storeItem instanceof EcuDataPv)) {
+                continue;
+            }
+            EcuDataPv pv = (EcuDataPv) storeItem;
             if (pv != null) {
                 String description = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
                 Object dataValue = pv.get(EcuDataPv.FID_VALUE);
