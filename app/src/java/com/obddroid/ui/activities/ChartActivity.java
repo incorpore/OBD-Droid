@@ -85,7 +85,7 @@ public class ChartActivity extends AppCompatActivity {
             this.entries = new ArrayList<>();
             this.color = color;
             this.lineStyle = lineStyle;
-            this.label = pv.get(EcuDataPv.FID_NAME) + " (" + pv.get(EcuDataPv.FID_UNITS) + ")";
+            this.label = pv.get(EcuDataPv.FID_DESCRIPT) + " (" + pv.get(EcuDataPv.FID_UNITS) + ")";
         }
     }
 
