@@ -1381,6 +1381,11 @@ public class MainActivity extends AppCompatActivity
                 startActivity(copilotIntent);
                 return true;
 
+            case R.id.thread_manager:
+                // Launch the Thread Manager Activity
+                Intent threadManagerIntent = new Intent(this, com.obddroid.features.copilot.ui.ThreadManagerActivity.class);
+                startActivity(threadManagerIntent);
+                return true;
 
             case R.id.service_home:
                 // Always return to dashboard/home screen

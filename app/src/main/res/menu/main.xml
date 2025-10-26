@@ -28,6 +28,13 @@
         android:title="CoPilot"
         android:visible="true"/>
     <item
+        android:id="@+id/thread_manager"
+        android:icon="@android:drawable/ic_menu_recent_history"
+        android:enabled="true"
+        app:showAsAction="never"
+        android:title="Conversation History"
+        android:visible="true"/>
+    <item
         android:id="@+id/settings"
         android:icon="@drawable/ic_settings_24"
         android:enabled="true"
