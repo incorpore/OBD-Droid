@@ -45,8 +45,13 @@ Professional-grade diagnostic tools and multi-ECU support:
 
 AI-powered diagnostic assistance and intelligent scanning:
 
-- **[vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md)** – Unified plan with implementation status, Agents API architecture, and roadmap
-- **[copilot-redesign-summary.md](./copilot-redesign-summary.md)** – World-class CoPilot UX redesign and implementation summary
+- **[vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md)** – Complete unified plan (64% implemented) including:
+  - Implementation status and roadmap
+  - Agents API architecture (core AI strategy)
+  - CoPilot world-class UI/UX (Lottie, Markwon, Material 3, voice input)
+  - Full Vehicle Scan Orchestrator design
+  - AI Diagnostic Analyzer integration
+  - Phased rollout plan with priorities
 
 ---
 
@@ -73,8 +78,8 @@ Play Store launch planning and go-to-market strategy:
 **Planning next sprint?**
 → [obd-unified-plan.md](./obd-unified-plan.md)
 
-**Need CoPilot design specs?**
-→ [copilot-redesign-summary.md](./copilot-redesign-summary.md)
+**Need CoPilot or AI integration specs?**
+→ [vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md)
 
 **Preparing for launch?**
 → [launch-plan.md](./launch-plan.md)
@@ -108,8 +113,7 @@ docs/
 │       └── 2022_GMC_Canyon_VIN107528.md
 │
 ├── AI & Intelligence
-│   ├── vehicle-intelligence-suite-plan.md
-│   └── copilot-redesign-summary.md
+│   └── vehicle-intelligence-suite-plan.md
 │
 └── Launch & Growth
     ├── launch-plan.md
