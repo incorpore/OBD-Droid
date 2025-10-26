@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.Gravity;
@@ -18,9 +19,12 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.core.content.FileProvider;
 
 import com.obddroid.R;
 import com.obddroid.scan.DiagnosticAnalyzer;
+import com.obddroid.scan.ReportArtifacts;
+import com.obddroid.scan.ReportBuilder;
 import com.obddroid.scan.ScanConfiguration;
 import com.obddroid.scan.ScanOrchestrator;
 import com.obddroid.scan.ScanReport;
@@ -28,6 +32,9 @@ import com.obddroid.scan.ScanResultsManager;
 import com.obddroid.scan.StageResult;
 import com.obddroid.vehicle.VehicleManager;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,6 +56,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
     private Button cancelButton;
     private Button analyzeButton;
     private Button viewCopilotButton;
+    private Button shareButton;
 
     private ScanOrchestrator scanService;
     private boolean serviceBound = false;
@@ -115,6 +123,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         cancelButton = findViewById(R.id.cancel_button);
         analyzeButton = findViewById(R.id.analyze_button);
         viewCopilotButton = findViewById(R.id.view_copilot_button);
+        shareButton = findViewById(R.id.share_button);
     }
 
     private void setupListeners() {
@@ -122,6 +131,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         cancelButton.setOnClickListener(v -> cancelScan());
         analyzeButton.setOnClickListener(v -> runAIAnalysis());
         viewCopilotButton.setOnClickListener(v -> openCoPilot());
+        shareButton.setOnClickListener(v -> shareScanReport());
     }
 
     private void loadVehicleInfo() {
@@ -162,6 +172,8 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         startButton.setVisibility(View.GONE);
         cancelButton.setVisibility(View.VISIBLE);
         viewCopilotButton.setVisibility(View.GONE);
+        analyzeButton.setVisibility(View.GONE);
+        shareButton.setVisibility(View.GONE);
 
         // Start scan with default configuration
         ScanConfiguration config = ScanConfiguration.getDefault();
@@ -183,6 +195,9 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         startButton.setVisibility(View.GONE);
         cancelButton.setVisibility(View.VISIBLE);
         progressText.setText("Scan in progress...");
+        analyzeButton.setVisibility(View.GONE);
+        shareButton.setVisibility(View.GONE);
+        viewCopilotButton.setVisibility(View.GONE);
     }
 
     @Override
@@ -198,6 +213,9 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             currentStageText.setText(totalStages + " stages to complete");
 
             vehicleDetails.setText("Scanning in progress - please wait");
+            analyzeButton.setVisibility(View.GONE);
+            shareButton.setVisibility(View.GONE);
+            viewCopilotButton.setVisibility(View.GONE);
         });
     }
 
@@ -264,9 +282,110 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             analyzeButton.setVisibility(View.VISIBLE);
             viewCopilotButton.setVisibility(View.VISIBLE);
 
+            ReportArtifacts artifacts = ensureReportArtifacts(report);
+            if (artifacts != null) {
+                shareButton.setVisibility(View.VISIBLE);
+            } else {
+                shareButton.setVisibility(View.GONE);
+            }
+
             Toast.makeText(this, "Scan complete! " + report.getStageResults().size() + " stages finished",
                 Toast.LENGTH_LONG).show();
         });
+    }
+
+    private ReportArtifacts ensureReportArtifacts(ScanReport report) {
+        if (report == null) {
+            return null;
+        }
+
+        ReportArtifacts artifacts = report.getArtifacts();
+        if (artifacts != null && artifactExists(artifacts)) {
+            return artifacts;
+        }
+
+        try {
+            ReportBuilder builder = new ReportBuilder(this);
+            artifacts = builder.build(report);
+            report.attachArtifacts(artifacts);
+            return artifacts;
+        } catch (IOException e) {
+            Toast.makeText(this, "Unable to prepare report artifacts: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            return null;
+        }
+    }
+
+    private boolean artifactExists(ReportArtifacts artifacts) {
+        if (artifacts == null) return false;
+        return (artifacts.getArchiveFile() != null && artifacts.getArchiveFile().exists()) ||
+               (artifacts.getMarkdownFile() != null && artifacts.getMarkdownFile().exists()) ||
+               (artifacts.getJsonFile() != null && artifacts.getJsonFile().exists());
+    }
+
+    private void shareScanReport() {
+        if (lastReport == null) {
+            Toast.makeText(this, "Run a scan before sharing", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        ReportArtifacts artifacts = ensureReportArtifacts(lastReport);
+        if (artifacts == null) {
+            return;
+        }
+
+        File shareFile = null;
+        String mimeType = "application/zip";
+
+        if (artifacts.getArchiveFile() != null && artifacts.getArchiveFile().exists()) {
+            shareFile = artifacts.getArchiveFile();
+            mimeType = "application/zip";
+        } else if (artifacts.getMarkdownFile() != null && artifacts.getMarkdownFile().exists()) {
+            shareFile = artifacts.getMarkdownFile();
+            mimeType = "text/markdown";
+        } else if (artifacts.getJsonFile() != null && artifacts.getJsonFile().exists()) {
+            shareFile = artifacts.getJsonFile();
+            mimeType = "application/json";
+        } else {
+            shareFile = writeSummaryToCache(lastReport);
+            mimeType = "text/plain";
+        }
+
+        if (shareFile == null || !shareFile.exists()) {
+            Toast.makeText(this, "No report file available to share", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".provider", shareFile);
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType(mimeType);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "OBD-Droid Scan Report " + lastReport.getScanId());
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        try {
+            startActivity(Intent.createChooser(shareIntent, "Share Scan Report"));
+        } catch (Exception e) {
+            Toast.makeText(this, "Unable to share report: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private File writeSummaryToCache(ScanReport report) {
+        try {
+            File cacheDir = new File(getCacheDir(), "scan_reports");
+            if (!cacheDir.exists() && !cacheDir.mkdirs()) {
+                return null;
+            }
+
+            File summaryFile = new File(cacheDir, report.getScanId() + "_summary.txt");
+            try (FileWriter writer = new FileWriter(summaryFile, false)) {
+                writer.write(report.getSummary());
+            }
+            return summaryFile;
+        } catch (IOException e) {
+            Toast.makeText(this, "Unable to create summary file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            return null;
+        }
     }
 
     private void runAIAnalysis() {
@@ -315,6 +434,9 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             cancelButton.setVisibility(View.GONE);
             startButton.setText("Start New Scan");
             startButton.setVisibility(View.VISIBLE);
+            analyzeButton.setVisibility(View.GONE);
+            shareButton.setVisibility(View.GONE);
+            viewCopilotButton.setVisibility(View.GONE);
 
             Toast.makeText(this, "Scan cancelled", Toast.LENGTH_SHORT).show();
         });
@@ -330,6 +452,9 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             cancelButton.setVisibility(View.GONE);
             startButton.setText("Retry Scan");
             startButton.setVisibility(View.VISIBLE);
+            analyzeButton.setVisibility(View.GONE);
+            shareButton.setVisibility(View.GONE);
+            viewCopilotButton.setVisibility(View.GONE);
 
             Toast.makeText(this, "Scan failed: " + error.getMessage(), Toast.LENGTH_LONG).show();
         });

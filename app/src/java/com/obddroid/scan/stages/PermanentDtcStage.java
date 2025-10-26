@@ -6,6 +6,7 @@ import com.obddroid.scan.StageResult;
 import com.obddroid.services.FaultCodeService;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -46,27 +47,31 @@ public final class PermanentDtcStage implements ScanStage {
             permanentCodes = new ArrayList<>();
         }
 
-        JSONArray codesArray = new JSONArray();
-        for (FaultCodeService.FaultCodeInfo code : permanentCodes) {
-            JSONObject codeObj = new JSONObject();
-            codeObj.put("code", code.code);
-            codeObj.put("description", code.description);
-            codeObj.put("dtcNumber", code.dtcNumber);
-            codesArray.put(codeObj);
+        try {
+            JSONArray codesArray = new JSONArray();
+            for (FaultCodeService.FaultCodeInfo code : permanentCodes) {
+                JSONObject codeObj = new JSONObject();
+                codeObj.put("code", code.code);
+                codeObj.put("description", code.description);
+                codeObj.put("dtcNumber", code.dtcNumber);
+                codesArray.put(codeObj);
+            }
+
+            JSONObject data = new JSONObject();
+            data.put("permanentCount", permanentCodes.size());
+            data.put("codes", codesArray);
+
+            String message;
+            if (permanentCodes.isEmpty()) {
+                message = "No permanent (Mode 0A) codes detected";
+            } else {
+                message = String.format(Locale.US, "Captured %d permanent DTC(s)", permanentCodes.size());
+            }
+
+            return StageResult.success(message, data);
+        } catch (JSONException e) {
+            return StageResult.failed("Failed to serialize permanent DTCs: " + e.getMessage(), e);
         }
-
-        JSONObject data = new JSONObject();
-        data.put("permanentCount", permanentCodes.size());
-        data.put("codes", codesArray);
-
-        String message;
-        if (permanentCodes.isEmpty()) {
-            message = "No permanent (Mode 0A) codes detected";
-        } else {
-            message = String.format(Locale.US, "Captured %d permanent DTC(s)", permanentCodes.size());
-        }
-
-        return StageResult.success(message, data);
     }
 
     @Override

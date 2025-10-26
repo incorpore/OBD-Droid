@@ -6,12 +6,12 @@ _Last updated: October 25, 2025_
 
 | Component | Status | Completion |
 |-----------|--------|------------|
-| **Full Vehicle Scan Orchestrator** | 🟡 Partial | 55% |
+| **Full Vehicle Scan Orchestrator** | 🟡 Partial | 70% |
 | **AI Diagnostic Analyzer** | 🟡 Partial | 50% |
 | **CoPilot Conversational UI** | 🟢 Mostly Done | 80% |
 | **Shared Foundations** | 🟢 Mostly Done | 70% |
 
-**Overall Suite Completion: 64%**
+**Overall Suite Completion: 68%**
 
 ## Purpose
 
@@ -99,18 +99,18 @@ results conversationally (hands-free if desired).
 |---|-------|---------|--------|-------|
 | 1 | Discovery Snapshot | — | ✅ Done | `DiscoverySnapshotStage.java` implemented |
 | 2 | Live Data Baseline | Mode 01 | ✅ Done | `LiveDataStage.java` implemented |
-| 3 | Freeze Frame | Mode 02 | ❌ Missing | Needs implementation |
+| 3 | Freeze Frame | Mode 02 | ✅ Done | `FreezeFrameStage.java` captures Mode 02 frames |
 | 4 | Confirmed DTCs | Mode 03 | ✅ Done | `FaultCodeStage.java` implemented |
-| 5 | Pending DTCs | Mode 07 | ❌ Missing | Needs implementation |
-| 6 | Permanent DTCs | Mode 0A | ❌ Missing | Needs implementation |
+| 5 | Pending DTCs | Mode 07 | ✅ Done | `PendingDtcStage.java` surfaces Mode 07 results |
+| 6 | Permanent DTCs | Mode 0A | ✅ Done | `PermanentDtcStage.java` surfaces Mode 0A results |
 | 7 | MIL Reset (optional) | Mode 04 | ❌ Missing | User confirmation required |
-| 8 | O2/Monitor Tests | Modes 05/06 | ❌ Missing | Summaries vs thresholds |
-| 9 | Component Tests | Mode 08 | ❌ Missing | Only if vehicle supports |
+| 8 | O2/Monitor Tests | Modes 05/06 | ✅ Done | `MonitorTestStage.java` aggregates readiness + IUMPR |
+| 9 | Component Tests | Mode 08 | ✅ Done | `ComponentTestStage.java` captures Mode 08 TIDs |
 |10 | Vehicle Info | Mode 09 | ✅ Done | `VehicleInfoStage.java` implemented |
 |11 | Extended UDS | Custom | ❌ Missing | OEM-specific (future packs) |
 |12 | AI Analysis Trigger | — | ⚠️ Partial | Analyzer exists but not called post-scan |
 
-**Implemented: 4 of 12 stages (33%)**
+**Implemented: 9 of 12 stages (75%)**
 
 ### Key Components
 
@@ -123,17 +123,20 @@ results conversationally (hands-free if desired).
 - Progress notification with cancel support
 - Individual stage JSON files in `stage_data/` directory
 
+✅ **Newly Added:**
+- Share sheet integration on scan completion (`ScanActivity` share button)
+- Quick access to AI analysis and CoPilot actions after scan
+
 ❌ **Missing:**
-- UI for viewing/sharing generated reports
-- Share sheet integration
-- Quick link to AI explanation
+- Optional MIL reset stage with confirmation
+- Extended UDS / manufacturer-specific packs
 
 ### Deliverables Checklist
 
-- [x] Stage engine + MVP stages (01/03/07/0A/09) - **Partial: 01/03/09 done, 07/0A missing**
+- [x] Stage engine + MVP stages (01/03/07/0A/09) - ✅ **COMPLETE (plus Mode 02/05/06/08 coverage)**
 - [x] Cancellation + recovery (resume vs restart behavior) - **Partial: Cancel works, no resume**
 - [x] Report writer (Markdown + JSON + zipped artifacts) - ✅ **COMPLETE**
-- [ ] Share sheet & quick link to AI explanation once finished - **Not implemented**
+- [x] Share sheet & quick link to AI explanation once finished - ✅ **Share button + Analyze with AI**
 - [ ] Verified on ≥3 vehicle platforms pre-pilot - **Not done**
 
 ## 2. AI Diagnostic Analyzer
@@ -732,4 +735,3 @@ CoPilotLogger.java                   // Log tool calls + run events
 2. Add push-to-talk functionality
 3. Prototype WebRTC + GPT-4o realtime integration
 4. Lip sync with animated avatar using prosody markers
-

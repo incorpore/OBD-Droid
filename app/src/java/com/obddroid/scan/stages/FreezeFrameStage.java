@@ -9,6 +9,7 @@ import com.obddroid.scan.StageResult;
 import com.obddroid.services.CommService;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -75,21 +76,25 @@ public final class FreezeFrameStage implements ScanStage {
             requestFrame(frameId, manager, context);
         }
 
-        JSONObject data = new JSONObject();
-        JSONArray framesArray = buildFramesArray(manager);
+        try {
+            JSONObject data = new JSONObject();
+            JSONArray framesArray = buildFramesArray(manager);
 
-        data.put("frameCount", framesArray.length());
-        data.put("frames", framesArray);
+            data.put("frameCount", framesArray.length());
+            data.put("frames", framesArray);
 
-        String message;
-        if (framesArray.length() == 0) {
-            message = "No freeze frame snapshots returned";
-        } else {
-            message = String.format(Locale.US, "Captured %d freeze frame snapshot(s)", framesArray.length());
+            String message;
+            if (framesArray.length() == 0) {
+                message = "No freeze frame snapshots returned";
+            } else {
+                message = String.format(Locale.US, "Captured %d freeze frame snapshot(s)", framesArray.length());
+            }
+
+            context.putSharedData("freezeFrameCount", framesArray.length());
+            return StageResult.success(message, data);
+        } catch (JSONException e) {
+            return StageResult.failed("Failed to serialize freeze frame data: " + e.getMessage(), e);
         }
-
-        context.putSharedData("freezeFrameCount", framesArray.length());
-        return StageResult.success(message, data);
     }
 
     private void requestFrame(int frameId,
@@ -109,7 +114,7 @@ public final class FreezeFrameStage implements ScanStage {
         }
     }
 
-    private JSONArray buildFramesArray(FreezeFrameManager manager) {
+    private JSONArray buildFramesArray(FreezeFrameManager manager) throws JSONException {
         JSONArray framesArray = new JSONArray();
         Map<Integer, FreezeFrameManager.FreezeFrameData> frames = manager.getAllFreezeFrames();
 
@@ -149,7 +154,7 @@ public final class FreezeFrameStage implements ScanStage {
         return framesArray;
     }
 
-    private JSONObject convertEcuDataPv(EcuDataPv pv) {
+    private JSONObject convertEcuDataPv(EcuDataPv pv) throws JSONException {
         JSONObject obj = new JSONObject();
         obj.put("pid", pv.get(EcuDataPv.FID_PID));
         obj.put("description", pv.get(EcuDataPv.FID_DESCRIPT));
@@ -158,7 +163,7 @@ public final class FreezeFrameStage implements ScanStage {
         return obj;
     }
 
-    private JSONObject convertProcessVar(ProcessVar pv) {
+    private JSONObject convertProcessVar(ProcessVar pv) throws JSONException {
         JSONObject obj = new JSONObject();
         obj.put("key", pv.getKeyValue());
         JSONObject values = new JSONObject();

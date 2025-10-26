@@ -6,6 +6,7 @@ import com.obddroid.scan.StageResult;
 import com.obddroid.services.FaultCodeService;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -47,28 +48,32 @@ public final class PendingDtcStage implements ScanStage {
             pendingCodes = new ArrayList<>();
         }
 
-        JSONArray codesArray = new JSONArray();
-        for (FaultCodeService.FaultCodeInfo code : pendingCodes) {
-            JSONObject codeObj = new JSONObject();
-            codeObj.put("code", code.code);
-            codeObj.put("description", code.description);
-            codeObj.put("dtcNumber", code.dtcNumber);
-            codeObj.put("hasFreeze", code.hasFreeze);
-            codesArray.put(codeObj);
+        try {
+            JSONArray codesArray = new JSONArray();
+            for (FaultCodeService.FaultCodeInfo code : pendingCodes) {
+                JSONObject codeObj = new JSONObject();
+                codeObj.put("code", code.code);
+                codeObj.put("description", code.description);
+                codeObj.put("dtcNumber", code.dtcNumber);
+                codeObj.put("hasFreeze", code.hasFreeze);
+                codesArray.put(codeObj);
+            }
+
+            JSONObject data = new JSONObject();
+            data.put("pendingCount", pendingCodes.size());
+            data.put("codes", codesArray);
+
+            String message;
+            if (pendingCodes.isEmpty()) {
+                message = "No pending (Mode 07) codes detected";
+            } else {
+                message = String.format(Locale.US, "Captured %d pending DTC(s)", pendingCodes.size());
+            }
+
+            return StageResult.success(message, data);
+        } catch (JSONException e) {
+            return StageResult.failed("Failed to serialize pending DTCs: " + e.getMessage(), e);
         }
-
-        JSONObject data = new JSONObject();
-        data.put("pendingCount", pendingCodes.size());
-        data.put("codes", codesArray);
-
-        String message;
-        if (pendingCodes.isEmpty()) {
-            message = "No pending (Mode 07) codes detected";
-        } else {
-            message = String.format(Locale.US, "Captured %d pending DTC(s)", pendingCodes.size());
-        }
-
-        return StageResult.success(message, data);
     }
 
     @Override
