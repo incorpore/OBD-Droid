@@ -530,4 +530,14 @@ period of time while the ECU recalibrates itself.
         <item>nova</item>
         <item>shimmer</item>
     </string-array>
+    <string-array name="openai_model_options" translatable="false">
+        <item>GPT-4o (Recommended - Most Accurate)</item>
+        <item>GPT-4o Mini (Faster, Lower Cost)</item>
+        <item>GPT-4 Turbo (Legacy)</item>
+    </string-array>
+    <string-array name="openai_model_values" translatable="false">
+        <item>gpt-4o</item>
+        <item>gpt-4o-mini</item>
+        <item>gpt-4-turbo</item>
+    </string-array>
 </resources>

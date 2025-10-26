@@ -305,6 +305,24 @@
             android:layout="@layout/preference_indented"
             app:dependency="ai_diagnostic_analysis_enabled" />
 
+        <ListPreference
+            android:key="openai_model"
+            android:title="AI Model"
+            android:entries="@array/openai_model_options"
+            android:entryValues="@array/openai_model_values"
+            android:defaultValue="gpt-4o"
+            android:summary="Choose which OpenAI model to use (GPT-4o is recommended for best accuracy)"
+            android:layout="@layout/preference_indented"
+            app:dependency="ai_diagnostic_analysis_enabled" />
+
+        <SwitchPreferenceCompat
+            android:key="ai_upload_scans_to_threads"
+            android:title="Upload Scans to CoPilot"
+            android:summary="Automatically attach scan reports to CoPilot conversations for contextual analysis"
+            android:defaultValue="true"
+            android:layout="@layout/preference_indented"
+            app:dependency="ai_diagnostic_analysis_enabled" />
+
         <Preference
             android:key="openai_api_info"
             android:title="How to get an API key"
