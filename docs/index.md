@@ -1,23 +1,6 @@
 # OBD-Droid Documentation Hub
 
-Welcome to the OBD-Droid documentation center. This index provides quick access to all planning documents, roadmaps, case studies, and reference materials.
-
-> **Note:** All AI/Intelligence documentation has been consolidated into a single comprehensive plan ([vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md)) for easier maintenance and reference.
-
----
-
 ## 📚 Documentation Map
-
-### Core Plans & Engineering Backlogs
-
-Central planning documents for the OBD-Droid platform:
-
-- **[docs-master-todo.md](./docs-master-todo.md)** – Master engineering backlog across all features (diagnostics, telemetry, gauges, AI, dealer tools)
-- **[obd-unified-plan.md](./obd-unified-plan.md)** – Focused sequencing of near-term ship goals and stretch items
-- **[platform-enhancement.md](./platform-enhancement.md)** – Cross-team platform upgrades, build system, and release coordination
-- **[telemetry-and-history.md](./telemetry-and-history.md)** – Process-variable refactor and Vehicle History roadmap
-
----
 
 ### Dealer Diagnostics & ECU Expansion
 
@@ -74,12 +57,6 @@ Play Store launch planning and go-to-market strategy:
 **Creating a vehicle baseline?**
 → [vehicle-profiles/README.md](./vehicle-profiles/README.md)
 
-**Looking for the master task list?**
-→ [docs-master-todo.md](./docs-master-todo.md)
-
-**Planning next sprint?**
-→ [obd-unified-plan.md](./obd-unified-plan.md)
-
 **Need AI/CoPilot integration details?**
 → [vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md) (Agents API, scan orchestration, AI analyzer, full specs)
 
@@ -93,12 +70,6 @@ Play Store launch planning and go-to-market strategy:
 ```
 docs/
 ├── index.md                              ← You are here
-│
-├── Core Planning
-│   ├── docs-master-todo.md
-│   ├── obd-unified-plan.md
-│   ├── platform-enhancement.md
-│   └── telemetry-and-history.md
 │
 ├── Dealer Diagnostics & ECU
 │   ├── dealer-diagnostics-roadmap.md
@@ -121,18 +92,3 @@ docs/
     ├── launch-plan.md
     └── store-assets-checklist.md
 ```
-
----
-
-## 🔄 Document Status Legend
-
-- **Roadmap** – Strategic planning document
-- **Backlog** – Active task list / engineering queue
-- **Case Study** – Real-world diagnostic example
-- **Baseline** – Vehicle health snapshot
-- **Template** – Copy and customize for new work
-- **Archive** – Historical reference (not actively maintained)
-
----
-
-*For build instructions, codebase navigation, and contributor guidelines, see [CLAUDE.md](../CLAUDE.md) and the main project README.*
