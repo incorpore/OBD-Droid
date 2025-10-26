@@ -117,7 +117,7 @@
             android:configChanges="touchscreen|orientation|screenSize"
             android:exported="false" />
         <activity
-            android:name="com.obddroid.ui.activities.EmissionsActivity"
+            android:name="com.obddroid.features.emissions.ui.EmissionsActivity"
             android:label="Emissions Diagnostics"
             android:configChanges="touchscreen|orientation|screenSize"
             android:exported="false" />
@@ -186,7 +186,7 @@
                 android:resource="@xml/provider_paths"/>
         </provider>
         <service
-            android:name="com.obddroid.features.csvlogging.data.CsvLoggingService"
+            android:name="com.obddroid.services.CsvLoggingService"
             android:exported="false"
             android:foregroundServiceType="dataSync"/>
         <service
