@@ -9,10 +9,10 @@ Based on analysis of the codebase against [vehicle-intelligence-suite-plan.md](.
 
 | Component | Status | Completion | Priority |
 |-----------|--------|------------|----------|
-| **Full Vehicle Scan Orchestrator** | 🟡 Partial | 40% | HIGH |
+| **Full Vehicle Scan Orchestrator** | 🟡 Partial | 55% | HIGH |
 | **AI Diagnostic Analyzer** | 🟡 Partial | 50% | MEDIUM |
 | **CoPilot Conversational UI** | 🟢 Mostly Done | 75% | LOW |
-| **Shared Foundations** | 🟡 Partial | 45% | HIGH |
+| **Shared Foundations** | 🟢 Mostly Done | 70% | MEDIUM |
 
 ---
 
@@ -20,7 +20,7 @@ Based on analysis of the codebase against [vehicle-intelligence-suite-plan.md](.
 
 ### ✅ IMPLEMENTED
 
-**Core Infrastructure (40% complete)**
+**Core Infrastructure (55% complete)**
 - ✅ `ScanOrchestrator.java` – Foreground service with stage execution engine
 - ✅ `ScanContext.java` – Session context with ELM protocol access
 - ✅ `ScanConfiguration.java` – User-configurable scan options
@@ -34,6 +34,16 @@ Based on analysis of the codebase against [vehicle-intelligence-suite-plan.md](.
 - ✅ `VehicleInfoStage` – Mode 09 (VIN, calibration IDs, etc.)
 - ✅ `FaultCodeStage` – Mode 03 (confirmed DTCs)
 - ✅ `LiveDataStage` – Mode 01 (snapshot of PIDs)
+
+**Report Generation (COMPLETE!)**
+- ✅ `ReportBuilder.java` – Full-featured report generator
+- ✅ `ReportArtifacts.java` – Data model for generated files
+- ✅ Markdown output (`scan_report.md`) with vehicle info, stage table, detailed results
+- ✅ JSON output (`scan_report.json`) for machine-readable data
+- ✅ Summary text file (`scan_summary.txt`)
+- ✅ Individual stage JSON files in `stage_data/` directory
+- ✅ ZIP bundle (`scan_bundle.zip`) containing all artifacts
+- ✅ Integration with ScanOrchestrator (called after stages complete)
 
 **UI Integration**
 - ✅ `ScanActivity.java` – UI for initiating and monitoring scans
@@ -53,25 +63,19 @@ Based on analysis of the codebase against [vehicle-intelligence-suite-plan.md](.
 | 11 | Extended UDS | Custom | ❌ Not implemented |
 | 12 | AI Analysis Trigger | — | ❌ Not implemented |
 
-**Report Generation**
-- ❌ `ReportBuilder` class – No structured report writer
-- ❌ Markdown output generation
-- ❌ JSON metadata export
-- ❌ Zip bundling (report + raw stage JSON + attachments)
-
 **UX Completion**
 - ❌ Share sheet on completion
 - ❌ Quick link to AI explanation
-- ❌ Export/save functionality
+- ⚠️ Export/save functionality – **Reports are generated and saved, but UI for accessing/sharing is missing**
 
 **Verification**
 - ❌ Testing on ≥3 vehicle platforms
 
 ### 🔧 Deliverables Checklist (from plan)
 
-- [ ] Stage engine + MVP stages (01/03/07/0A/09) – **Partial: 01/03/09 done, 07/0A missing**
-- [ ] Cancellation + recovery (resume vs restart behavior) – **Partial: Cancel works, no resume**
-- [ ] Report writer (Markdown + JSON + zipped artifacts) – **Not implemented**
+- [x] Stage engine + MVP stages (01/03/07/0A/09) – **Partial: 01/03/09 done, 07/0A missing**
+- [x] Cancellation + recovery (resume vs restart behavior) – **Partial: Cancel works, no resume**
+- [x] Report writer (Markdown + JSON + zipped artifacts) – ✅ **COMPLETE!**
 - [ ] Share sheet & quick link to AI explanation once finished – **Not implemented**
 - [ ] Verified on ≥3 vehicle platforms pre-pilot – **Not done**
 
@@ -225,12 +229,13 @@ Based on analysis of the codebase against [vehicle-intelligence-suite-plan.md](.
 - ✅ Log directory structure (`logs/discovery/`, `logs/copilot/`)
 - ✅ Basic telemetry data access (vehicle info, DTCs)
 
-### ❌ NOT IMPLEMENTED
-
 **Report & Artifact Management**
-- ❌ `ReportBuilder` class – Consolidated report generation
-- ❌ Predictable report layout: `reports/<VIN>/<timestamp>/…`
-- ❌ Artifact bundling (logs + reports + attachments)
+- ✅ `ReportBuilder` class – Consolidated report generation (Markdown + JSON + zip)
+- ✅ `ReportArtifacts` – Data model for generated files
+- ✅ Artifact bundling (reports + individual stage JSONs + archive)
+- ⚠️ Predictable report layout – **Reports saved to scan-specific directories, but not yet organized by VIN**
+
+### ❌ NOT IMPLEMENTED
 
 **Command & Tool Registry**
 - ❌ `CommandBridge` – Centralized privileged action registry
@@ -258,22 +263,22 @@ Based on analysis of the codebase against [vehicle-intelligence-suite-plan.md](.
 ### 🔴 HIGH PRIORITY (Blocking MVP)
 
 **Full Vehicle Scan Orchestrator**
-1. ❌ Implement `ReportBuilder` (Markdown + JSON + zip export)
-2. ❌ Add missing stages:
+1. ❌ Add missing stages:
    - Mode 02 (Freeze Frame)
    - Mode 07 (Pending DTCs)
    - Mode 0A (Permanent DTCs)
-3. ❌ Integrate AI analysis trigger post-scan
-4. ❌ Share sheet on completion
+2. ❌ Integrate AI analysis trigger post-scan
+3. ❌ Share sheet on completion with access to report files
+4. ❌ UI for viewing/exporting scan reports
 
 **AI Diagnostic Analyzer**
 1. ❌ Settings UI: AI toggle, model choice, cost estimate
-2. ❌ Markdown/JSON report writers
+2. ❌ Integrate AI analysis into report output (markdown section)
 3. ❌ Usage tracking & cost controls
 
 **Shared Foundations**
-1. ❌ `ReportBuilder` implementation
-2. ❌ Command registry for safe action execution
+1. ❌ Command registry for safe action execution
+2. ⚠️ Organize report output by VIN (currently by scan ID only)
 
 ### 🟡 MEDIUM PRIORITY (Post-MVP)
 
@@ -306,18 +311,17 @@ Based on analysis of the codebase against [vehicle-intelligence-suite-plan.md](.
 
 ## 🚀 Recommended Next Steps
 
-### Phase 1: Complete Scan Orchestrator (2-3 weeks)
-1. Implement `ReportBuilder`
-   - Markdown output with sections for each stage
-   - JSON metadata export
-   - Zip bundling (report + raw JSON + logs)
-2. Add missing OBD modes:
+### Phase 1: Complete Scan Orchestrator (1-2 weeks)
+1. Add missing OBD modes:
    - `FreezeFrameStage` (Mode 02)
    - `PendingDtcStage` (Mode 07)
    - `PermanentDtcStage` (Mode 0A)
-3. Integrate AI analysis trigger
-4. Add share sheet and export functionality
-5. Test on 3+ vehicles
+2. Build UI for viewing/sharing scan reports:
+   - List of completed scans
+   - View markdown report
+   - Share zip bundle via Android share sheet
+3. Integrate AI analysis trigger (call DiagnosticAnalyzer after scan)
+4. Test on 3+ vehicles
 
 ### Phase 2: AI Analyzer Settings & Cost Controls (1-2 weeks)
 1. Build Settings UI:
@@ -346,23 +350,22 @@ Based on analysis of the codebase against [vehicle-intelligence-suite-plan.md](.
 
 ### New Files Needed
 ```
-app/src/java/com/obddroid/scan/
-├── ReportBuilder.java                    ← Markdown/JSON/zip generation
-├── stages/
-│   ├── FreezeFrameStage.java            ← Mode 02
-│   ├── PendingDtcStage.java             ← Mode 07
-│   ├── PermanentDtcStage.java           ← Mode 0A
-│   ├── MonitorTestStage.java            ← Modes 05/06
-│   └── ComponentTestStage.java          ← Mode 08
-
-app/src/java/com/obddroid/copilot/
-└── VoiceService.java                     ← Wake word + mic capture
+app/src/java/com/obddroid/scan/stages/
+├── FreezeFrameStage.java                ← Mode 02
+├── PendingDtcStage.java                 ← Mode 07
+├── PermanentDtcStage.java               ← Mode 0A
+├── MonitorTestStage.java                ← Modes 05/06
+└── ComponentTestStage.java              ← Mode 08
 
 app/src/java/com/obddroid/ui/activities/
-└── AiSettingsActivity.java               ← AI config UI
+├── ScanReportsActivity.java             ← View/manage scan reports
+└── AiSettingsActivity.java              ← AI config UI
+
+app/src/java/com/obddroid/copilot/
+└── VoiceService.java                    ← Wake word + mic capture
 
 app/src/java/com/obddroid/utils/
-└── ConversationManager.java              ← Agent API integration
+└── ConversationManager.java             ← Agent API integration
 ```
 
 ### Files to Modify
@@ -377,12 +380,12 @@ CoPilotSettings.java                      ← Add AI settings
 
 ## 🎯 Completion Metrics
 
-**Overall Vehicle Intelligence Suite: 52% Complete**
+**Overall Vehicle Intelligence Suite: 62% Complete**
 
-- Full Vehicle Scan Orchestrator: 40% ✅✅✅✅⬜⬜⬜⬜⬜⬜
+- Full Vehicle Scan Orchestrator: 55% ✅✅✅✅✅⬜⬜⬜⬜⬜
 - AI Diagnostic Analyzer: 50% ✅✅✅✅✅⬜⬜⬜⬜⬜
 - CoPilot Conversational UI: 75% ✅✅✅✅✅✅✅✅⬜⬜
-- Shared Foundations: 45% ✅✅✅✅⬜⬜⬜⬜⬜⬜
+- Shared Foundations: 70% ✅✅✅✅✅✅✅⬜⬜⬜
 
 ---
 
