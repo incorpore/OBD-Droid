@@ -1,7 +1,10 @@
 package com.obddroid.features.copilot.ui;
 
 import android.app.AlertDialog;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
@@ -9,18 +12,31 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.obddroid.R;
+import com.obddroid.features.copilot.data.AgentApiClient;
+import com.obddroid.features.copilot.data.AgentCoPilotController;
 import com.obddroid.features.copilot.data.AgentThreadManager;
+import com.obddroid.features.copilot.data.AgentThreadManager.ThreadOverview;
+import com.obddroid.scan.ScanResultsManager;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 
 /**
  * Activity for managing CoPilot conversation threads.
@@ -35,6 +51,8 @@ public class ThreadManagerActivity extends AppCompatActivity {
 
     private static final String PREFS_PRIVACY = "copilot_privacy";
     private static final String KEY_PRIVACY_ACK = "thread_manager_privacy_ack";
+    private static final SimpleDateFormat SCAN_DATE_FORMAT =
+        new SimpleDateFormat("MMM d, yyyy h:mm a", Locale.US);
 
     private RecyclerView threadsRecyclerView;
     private TextView threadCountText;
@@ -77,7 +95,13 @@ public class ThreadManagerActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView() {
-        adapter = new ThreadListAdapter(threads, this::onThreadClicked, this::onDeleteThread);
+        adapter = new ThreadListAdapter(
+            threads,
+            this::onThreadClicked,
+            this::onDeleteThread,
+            this::onCompareScans,
+            this::onExportThread
+        );
         threadsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         threadsRecyclerView.setAdapter(adapter);
     }
@@ -116,27 +140,11 @@ public class ThreadManagerActivity extends AppCompatActivity {
     private void loadThreads() {
         new Thread(() -> {
             try {
-                Map<String, String> mappings = threadManager.getAllThreadMappings();
                 List<ThreadItem> loadedThreads = new ArrayList<>();
 
-                for (Map.Entry<String, String> entry : mappings.entrySet()) {
-                    String vin = entry.getKey();
-                    String threadId = entry.getValue();
-
-                    // Get metadata
-                    JSONObject metadata = threadManager.getThreadMetadata(vin);
-
-                    ThreadItem item = new ThreadItem();
-                    item.vin = vin;
-                    item.threadId = threadId;
-
-                    if (metadata != null) {
-                        item.year = metadata.optString("year", "");
-                        item.make = metadata.optString("make", "");
-                        item.model = metadata.optString("model", "");
-                    }
-
-                    loadedThreads.add(item);
+                List<ThreadOverview> overviews = threadManager.getThreadOverviews(5);
+                for (ThreadOverview overview : overviews) {
+                    loadedThreads.add(ThreadItem.fromOverview(overview));
                 }
 
                 runOnUiThread(() -> {
@@ -180,9 +188,7 @@ public class ThreadManagerActivity extends AppCompatActivity {
     }
 
     private void onThreadClicked(ThreadItem thread) {
-        // TODO: Open thread details or resume conversation in CoPilot
-        Toast.makeText(this, "Opening conversation for " + thread.getDisplayName(),
-            Toast.LENGTH_SHORT).show();
+        startCopilotForThread(thread, null);
     }
 
     private void onDeleteThread(ThreadItem thread) {
@@ -229,6 +235,30 @@ public class ThreadManagerActivity extends AppCompatActivity {
             .show();
     }
 
+    private void onCompareScans(ThreadItem thread) {
+        if (TextUtils.isEmpty(thread.comparePrompt)) {
+            Toast.makeText(this, "Need at least two scans to compare", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        startCopilotForThread(thread, thread.comparePrompt);
+    }
+
+    private void onExportThread(ThreadItem thread) {
+        performExportThread(thread);
+    }
+
+    private void startCopilotForThread(ThreadItem thread, String initialMessage) {
+        AgentCoPilotController controller = AgentCoPilotController.getInstance();
+        controller.initialize(getApplicationContext());
+        controller.startSession(thread.vin, thread.getMetadataCopy());
+
+        Intent intent = new Intent(this, CoPilotActivity.class);
+        if (!TextUtils.isEmpty(initialMessage)) {
+            intent.putExtra(CoPilotActivity.EXTRA_INITIAL_MESSAGE, initialMessage);
+        }
+        startActivity(intent);
+    }
+
     private void performDeleteAll() {
         new Thread(() -> {
             try {
@@ -250,6 +280,99 @@ public class ThreadManagerActivity extends AppCompatActivity {
         }).start();
     }
 
+    private void performExportThread(ThreadItem thread) {
+        if (TextUtils.isEmpty(thread.threadId)) {
+            Toast.makeText(this, "Unable to export: conversation missing thread id", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                AgentThreadManager.ThreadOverview overview = thread.overview;
+                AgentCoPilotController controller = AgentCoPilotController.getInstance();
+                controller.initialize(getApplicationContext());
+                AgentApiClient apiClient = new AgentApiClient(getApplicationContext());
+
+                AgentApiClient.Thread threadInfo = apiClient.retrieveThread(thread.threadId);
+                List<AgentApiClient.Message> messages = apiClient.listMessages(thread.threadId, 100);
+                if (messages == null) {
+                    messages = Collections.emptyList();
+                }
+
+                JSONObject export = new JSONObject();
+                export.put("threadId", thread.threadId);
+                export.put("vin", thread.vin);
+                export.put("displayName", thread.getDisplayName());
+                export.put("metadata", thread.getMetadataCopy());
+                export.put("createdAt", threadInfo != null ? threadInfo.createdAt : 0);
+
+                JSONArray scansArray = new JSONArray();
+                if (overview.scanHistory != null) {
+                    for (ScanResultsManager.ScanSummary summary : overview.scanHistory) {
+                        JSONObject scanJson = new JSONObject();
+                        scanJson.put("scanId", summary.scanId);
+                        scanJson.put("timestamp", summary.timestamp);
+                        scanJson.put("success", summary.success);
+                        scanJson.put("stageCount", summary.stageCount);
+                        scanJson.put("fileId", summary.fileId);
+                        scanJson.put("fileAttached", summary.fileAttached);
+                        scansArray.put(scanJson);
+                    }
+                }
+                export.put("recentScans", scansArray);
+
+                JSONArray messageArray = new JSONArray();
+                // listMessages returns newest-first, reverse for chronological order
+                for (int i = messages.size() - 1; i >= 0; i--) {
+                    AgentApiClient.Message message = messages.get(i);
+                    JSONObject messageJson = new JSONObject();
+                    messageJson.put("id", message.id);
+                    messageJson.put("role", message.role);
+                    messageJson.put("content", message.content);
+                    messageJson.put("createdAt", message.createdAt);
+                    messageArray.put(messageJson);
+                }
+                export.put("messages", messageArray);
+
+                File exportDir = new File(getCacheDir(), "copilot_exports");
+                if (!exportDir.exists() && !exportDir.mkdirs()) {
+                    throw new IOException("Unable to create export directory");
+                }
+
+                String safeId = thread.threadId != null
+                    ? thread.threadId.replaceAll("[^A-Za-z0-9_-]", "")
+                    : "thread";
+                File exportFile = new File(exportDir, safeId + "_conversation.json");
+
+                try (FileWriter writer = new FileWriter(exportFile, false)) {
+                    writer.write(export.toString(2));
+                }
+
+                Uri uri = FileProvider.getUriForFile(
+                    this,
+                    getPackageName() + ".provider",
+                    exportFile
+                );
+
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("application/json");
+                shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, "CoPilot conversation export");
+                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Conversation export ready", Toast.LENGTH_SHORT).show();
+                    startActivity(Intent.createChooser(shareIntent, "Share CoPilot conversation"));
+                });
+
+            } catch (Exception e) {
+                runOnUiThread(() ->
+                    Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                );
+            }
+        }).start();
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
@@ -263,19 +386,156 @@ public class ThreadManagerActivity extends AppCompatActivity {
      * Data class representing a thread list item.
      */
     public static class ThreadItem {
-        public String vin;
-        public String threadId;
-        public String year;
-        public String make;
-        public String model;
+        private final ThreadOverview overview;
+        public final String vin;
+        public final String threadId;
+        private final String displayName;
+        private final JSONObject metadata;
+        public final ScanResultsManager.ScanSummary latestScan;
+        public final ScanResultsManager.ScanSummary previousScan;
+        public final String lastScanSummary;
+        public final String fileStatusText;
+        public final String comparePrompt;
+        public final boolean canExport;
+
+        private ThreadItem(ThreadOverview overview,
+                           String vin,
+                           String threadId,
+                           String displayName,
+                           JSONObject metadata,
+                           ScanResultsManager.ScanSummary latestScan,
+                           ScanResultsManager.ScanSummary previousScan,
+                           String lastScanSummary,
+                           String fileStatusText,
+                           String comparePrompt,
+                           boolean canExport) {
+            this.overview = overview;
+            this.vin = vin;
+            this.threadId = threadId;
+            this.displayName = displayName;
+            this.metadata = metadata;
+            this.latestScan = latestScan;
+            this.previousScan = previousScan;
+            this.lastScanSummary = lastScanSummary;
+            this.fileStatusText = fileStatusText;
+            this.comparePrompt = comparePrompt;
+            this.canExport = canExport;
+        }
+
+        static ThreadItem fromOverview(ThreadOverview overview) {
+            JSONObject metadataCopy = cloneJson(overview.metadata);
+
+            String label = buildVehicleLabel(metadataCopy);
+            if (TextUtils.isEmpty(label) && overview.latestScan() != null &&
+                !TextUtils.isEmpty(overview.latestScan().vehicleLabel)) {
+                label = overview.latestScan().vehicleLabel;
+            }
+            if (TextUtils.isEmpty(label) && overview.scanHistory != null && !overview.scanHistory.isEmpty()) {
+                ScanResultsManager.ScanSummary first = overview.scanHistory.get(0);
+                if (first != null && !TextUtils.isEmpty(first.vehicleLabel)) {
+                    label = first.vehicleLabel;
+                }
+            }
+            if (TextUtils.isEmpty(label)) {
+                label = !TextUtils.isEmpty(overview.vin) ? overview.vin : "Unknown Vehicle";
+            }
+
+            ScanResultsManager.ScanSummary latest = overview.latestScan();
+            ScanResultsManager.ScanSummary previous = overview.previousScan();
+
+            String lastScanSummary = null;
+            String fileStatus = null;
+            boolean canExport = !TextUtils.isEmpty(overview.threadId);
+
+            if (latest != null) {
+                lastScanSummary = "Latest scan: " + formatScan(latest);
+                if (!TextUtils.isEmpty(latest.fileId)) {
+                    fileStatus = latest.fileAttached ? "Synced to CoPilot ✓"
+                        : "Upload pending—syncing to CoPilot";
+                } else {
+                    fileStatus = "No scan upload yet";
+                }
+                canExport = true;
+            }
+
+            String comparePrompt = overview.buildComparePrompt();
+
+            return new ThreadItem(
+                overview,
+                overview.vin,
+                overview.threadId,
+                label,
+                metadataCopy,
+                latest,
+                previous,
+                lastScanSummary,
+                fileStatus,
+                comparePrompt,
+                canExport
+            );
+        }
 
         public String getDisplayName() {
-            if (year != null && !year.isEmpty() && make != null && !make.isEmpty() && model != null && !model.isEmpty()) {
-                return year + " " + make + " " + model;
-            } else if (vin != null && !vin.isEmpty()) {
-                return "VIN: " + vin;
-            } else {
-                return "Unknown Vehicle";
+            return displayName;
+        }
+
+        public JSONObject getMetadataCopy() {
+            return cloneJson(metadata);
+        }
+
+        private static String buildVehicleLabel(JSONObject metadata) {
+            if (metadata == null) {
+                return null;
+            }
+
+            String year = metadata.optString("year", "");
+            String make = metadata.optString("make", "");
+            String model = metadata.optString("model", "");
+            String vehicleLabel = metadata.optString("vehicleLabel", "");
+
+            StringBuilder sb = new StringBuilder();
+            if (!TextUtils.isEmpty(year)) {
+                sb.append(year).append(" ");
+            }
+            if (!TextUtils.isEmpty(make)) {
+                sb.append(make);
+            }
+            if (!TextUtils.isEmpty(model)) {
+                if (sb.length() > 0) {
+                    sb.append(" ");
+                }
+                sb.append(model);
+            }
+
+            String label = sb.toString().trim();
+            if (TextUtils.isEmpty(label)) {
+                label = vehicleLabel;
+            }
+            return TextUtils.isEmpty(label) ? null : label;
+        }
+
+        private static String formatScan(ScanResultsManager.ScanSummary summary) {
+            Date date = summary.timestamp > 0 ? new Date(summary.timestamp) : new Date();
+            StringBuilder sb = new StringBuilder();
+            synchronized (SCAN_DATE_FORMAT) {
+                sb.append(SCAN_DATE_FORMAT.format(date));
+            }
+            sb.append(" • ");
+            sb.append(summary.success ? "Success" : "Issues");
+            if (summary.stageCount > 0) {
+                sb.append(" • ").append(summary.stageCount).append(" stages");
+            }
+            return sb.toString();
+        }
+
+        private static JSONObject cloneJson(JSONObject json) {
+            if (json == null) {
+                return null;
+            }
+            try {
+                return new JSONObject(json.toString());
+            } catch (JSONException e) {
+                return null;
             }
         }
     }
