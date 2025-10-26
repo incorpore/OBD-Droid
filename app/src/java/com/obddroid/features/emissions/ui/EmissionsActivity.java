@@ -1,4 +1,4 @@
-package com.obddroid.ui.activities;
+package com.obddroid.features.emissions.ui;
 
 import android.app.Dialog;
 import android.content.ContentValues;

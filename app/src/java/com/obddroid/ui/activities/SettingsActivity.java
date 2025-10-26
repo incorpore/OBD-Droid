@@ -31,7 +31,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import com.obddroid.core.ecu.EcuDataItem;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
-import com.obddroid.features.remotetelemetry.data.RemoteTelemetryManager;
+import com.obddroid.services.telemetry.RemoteTelemetryManager;
 import com.obddroid.services.CommService;
 import com.obddroid.R;
 import com.obddroid.utils.SecurePreferences;

@@ -1,4 +1,4 @@
-package com.obddroid.features.csvlogging.ui;
+package com.obddroid.ui.coordinators;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -9,7 +9,7 @@ import androidx.core.content.ContextCompat;
 
 import com.obddroid.R;
 import com.obddroid.features.common.FeatureToggleNotifier;
-import com.obddroid.features.csvlogging.data.CsvLoggingService;
+import com.obddroid.services.logging.CsvLoggingService;
 import com.obddroid.utils.SnackbarHelper;
 
 import java.util.Objects;

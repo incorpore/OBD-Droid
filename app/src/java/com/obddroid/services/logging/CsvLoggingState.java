@@ -1,4 +1,4 @@
-package com.obddroid.features.csvlogging.data;
+package com.obddroid.services.logging;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;

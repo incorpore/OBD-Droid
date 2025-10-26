@@ -1,4 +1,4 @@
-package com.obddroid.features.csvlogging.data;
+package com.obddroid.services.logging;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;

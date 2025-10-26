@@ -1,4 +1,4 @@
-package com.obddroid.features.sensors.data;
+package com.obddroid.core.telemetry;
 
 import android.content.Context;
 import android.content.SharedPreferences;

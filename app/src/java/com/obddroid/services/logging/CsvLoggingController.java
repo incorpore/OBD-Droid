@@ -1,13 +1,10 @@
-package com.obddroid.features.csvlogging.ui;
+package com.obddroid.services.logging;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
 import androidx.core.content.ContextCompat;
-
-import com.obddroid.features.csvlogging.data.CsvLoggingService;
-import com.obddroid.features.csvlogging.data.CsvLoggingState;
 
 /**
  * Entry-point helpers for starting or stopping the CSV logging foreground service.

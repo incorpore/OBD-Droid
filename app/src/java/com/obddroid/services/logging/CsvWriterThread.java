@@ -1,4 +1,4 @@
-package com.obddroid.features.csvlogging.data;
+package com.obddroid.services.logging;
 
 import android.os.Build;
 import android.os.Handler;

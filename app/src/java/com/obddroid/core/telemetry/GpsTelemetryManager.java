@@ -1,4 +1,4 @@
-package com.obddroid.features.gps.data;
+package com.obddroid.core.telemetry;
 
 import android.Manifest;
 import android.annotation.SuppressLint;

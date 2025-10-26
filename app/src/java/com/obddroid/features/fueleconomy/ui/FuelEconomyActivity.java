@@ -15,6 +15,9 @@ import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
+import com.obddroid.features.fueleconomy.data.FuelEconomyCalculator;
+import com.obddroid.features.fueleconomy.data.FuelEconomyDataManager;
+import com.obddroid.features.fueleconomy.data.FuelEconomyPreferences;
 import com.obddroid.features.fueleconomy.ui.FuelEconomyChart;
 import com.obddroid.features.fueleconomy.ui.FuelFlowGauge;
 import com.obddroid.ui.components.VehicleInfoFooter;
@@ -50,17 +53,16 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private VehicleInfoFooter vehicleInfoFooter;
     private View snackbarAnchor;  // Anchor view for snackbars
 
-    // Data tracking
-    private Queue<Float> recentMpgData = new LinkedList<>();     // Last 5 values (0-5 min)
-    private Queue<Float> mediumMpgData = new LinkedList<>();     // Last 6 values (0-30 min)
-    private float longTermMpgAverage = 0f;                        // Overall average (0-3 hours)
-    private int dataPointCount = 0;
+    // Data layer components
+    private FuelEconomyDataManager dataManager;
+    private FuelEconomyCalculator calculator;
+    private FuelEconomyPreferences fuelEconomyPreferences;
 
     private Handler updateHandler;
     private static final long UPDATE_INTERVAL = 1000; // Update every second
 
     // Tank capacity management
-    private com.obddroid.vehicle.VehiclePreferences vehiclePreferences;
+    private com.obddroid.vehicle.VehiclePreferences vehiclePreferences;  // Legacy - still used by calculator
     private com.obddroid.vehicle.VehicleManager vehicleManager;
     private final com.obddroid.vehicle.VehicleManager.VehicleChangeListener vehicleChangeListener =
             new com.obddroid.vehicle.VehicleManager.SimpleVehicleChangeListener() {
@@ -151,6 +153,11 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             vehicleManager.addListener(vehicleChangeListener);
         }
         vehiclePreferences = new com.obddroid.vehicle.VehiclePreferences(this);
+
+        // Initialize data layer components
+        dataManager = new FuelEconomyDataManager();
+        calculator = new FuelEconomyCalculator();
+        fuelEconomyPreferences = new FuelEconomyPreferences(this);
 
         // Check if we need to prompt for tank capacity
         checkAndPromptForTankCapacity();
@@ -373,7 +380,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                 float actualMPG = milesDriven / gallonsAdded;
 
                 // Get app's average MPG (use long-term average)
-                float appMPG = longTermMpgAverage;
+                float appMPG = dataManager.getLongTermAverage();
                 if (appMPG <= 0) {
                     // Fall back to current average if long-term not available
                     String avgText = averageMpgValue.getText().toString();
@@ -432,7 +439,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
                 }
 
                 // Save new VE to preferences
-                boolean success = vehiclePreferences.setVolumetricEfficiency(vin, calculatedNewVE[0]);
+                boolean success = fuelEconomyPreferences.setCalibratedVE(vin, calculatedNewVE[0]);
 
                 if (success) {
                     log.info("Calibration saved successfully: VE=" + calculatedNewVE[0] + "%");
@@ -464,17 +471,11 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
     private void initializeDemoData() {
         // Initialize with sample data for demonstration
-        float[] recentSample = {20f, 23f, 12f, 18f, 45f};
-        float[] mediumSample = {15f, 35f, 30f, 25f, 20f, 25f};
-        float[] longSample = {22f};
+        float[] sampleData = {20f, 23f, 12f, 18f, 45f, 15f, 35f, 30f, 25f, 20f, 25f, 22f};
 
-        for (float value : recentSample) {
-            recentMpgData.add(value);
+        for (float value : sampleData) {
+            dataManager.addDataPoint(value);
         }
-        for (float value : mediumSample) {
-            mediumMpgData.add(value);
-        }
-        longTermMpgAverage = longSample[0];
 
         updateChart();
     }
@@ -551,7 +552,11 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             return;
         }
 
-        // Calculate fuel consumption using best available method
+        // Get current VIN for calibration lookup
+        String vin = getVehicleManagerInstance() != null ?
+                    getVehicleManagerInstance().getCurrentVIN() : null;
+
+        // Calculate fuel consumption using calculator
         // Priority 1: MAP-based Speed-Density (88% accuracy uncalibrated, 95%+ calibrated)
         // Priority 2: RPM/Load estimation (65% accuracy - fallback)
         float estimatedFuelRateGalH = calculateFuelRate(rpm, engineLoad, speed);
@@ -570,27 +575,14 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             // Update instant MPG display
             instantMpgValue.setText(String.format("%.1f", instantMpg));
 
-            // Add to recent data queue (keep last 5 values for 0-5 min period)
-            recentMpgData.add(instantMpg);
-            if (recentMpgData.size() > 5) {
-                recentMpgData.poll();
-            }
+            // Add data point to data manager
+            dataManager.addDataPoint(instantMpg);
 
-            // Every 5 data points, add average to medium term queue
-            dataPointCount++;
-            if (dataPointCount % 5 == 0) {
-                float recentAvg = calculateAverage(new ArrayList<>(recentMpgData));
-                mediumMpgData.add(recentAvg);
-                if (mediumMpgData.size() > 6) {
-                    mediumMpgData.poll();
-                }
-            }
+            // Get historical averages from data manager
+            FuelEconomyDataManager.HistoricalData historical = dataManager.getHistoricalData();
+            float avgMpg = historical.mediumAverage;
 
-            // Calculate overall average
-            ArrayList<Float> allData = new ArrayList<>(mediumMpgData);
-            float avgMpg = calculateAverage(allData);
             if (avgMpg > 0) {
-                longTermMpgAverage = avgMpg;
                 // Update average MPG display
                 averageMpgValue.setText(String.format("%.1f", avgMpg));
             }
@@ -927,9 +919,13 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     }
 
     private void updateChart() {
-        float[] recentArray = listToArray(new ArrayList<>(recentMpgData));
-        float[] mediumArray = listToArray(new ArrayList<>(mediumMpgData));
-        float[] longArray = {longTermMpgAverage};
+        // Get historical data from data manager
+        FuelEconomyDataManager.HistoricalData historical = dataManager.getHistoricalData();
+
+        // Convert to arrays for chart (chart expects arrays, but we just pass the averages)
+        float[] recentArray = {historical.recentAverage};
+        float[] mediumArray = {historical.mediumAverage};
+        float[] longArray = {historical.longTermAverage};
 
         fuelEconomyChart.setData(recentArray, mediumArray, longArray);
     }

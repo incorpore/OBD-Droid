@@ -26,6 +26,7 @@ import android.os.StrictMode;
 import androidx.preference.PreferenceManager;
 
 import com.obddroid.features.copilot.ui.CoPilotActivity;
+import com.obddroid.features.emissions.ui.EmissionsActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseBooleanArray;
@@ -56,11 +57,11 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
-import com.obddroid.features.csvlogging.ui.CsvLoggingController;
-import com.obddroid.features.csvlogging.ui.CsvLoggingUiCoordinator;
-import com.obddroid.features.gps.data.GpsTelemetryManager;
-import com.obddroid.features.remotetelemetry.ui.RemoteTelemetryUiCoordinator;
-import com.obddroid.features.sensors.data.SensorTelemetryManager;
+import com.obddroid.services.logging.CsvLoggingController;
+import com.obddroid.ui.coordinators.CsvLoggingUiCoordinator;
+import com.obddroid.core.telemetry.GpsTelemetryManager;
+import com.obddroid.ui.coordinators.RemoteTelemetryUiCoordinator;
+import com.obddroid.core.telemetry.SensorTelemetryManager;
 import com.obddroid.features.vehiclehistory.ui.AutoCheckActivity;
 
 import com.obddroid.core.ecu.DtcCatalog;

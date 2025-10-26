@@ -1,4 +1,4 @@
-package com.obddroid.features.csvlogging.data;
+package com.obddroid.services.logging;
 
 import android.app.Notification;
 import android.app.NotificationChannel;

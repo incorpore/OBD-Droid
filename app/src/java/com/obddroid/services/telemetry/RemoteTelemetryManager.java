@@ -1,4 +1,4 @@
-package com.obddroid.features.remotetelemetry.data;
+package com.obddroid.services.telemetry;
 
 import android.content.Context;
 import android.content.SharedPreferences;

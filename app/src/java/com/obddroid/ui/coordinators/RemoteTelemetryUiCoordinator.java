@@ -1,4 +1,4 @@
-package com.obddroid.features.remotetelemetry.ui;
+package com.obddroid.ui.coordinators;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -8,7 +8,7 @@ import androidx.preference.PreferenceManager;
 
 import com.obddroid.R;
 import com.obddroid.features.common.FeatureToggleNotifier;
-import com.obddroid.features.remotetelemetry.data.RemoteTelemetryManager;
+import com.obddroid.services.telemetry.RemoteTelemetryManager;
 import com.obddroid.utils.SnackbarHelper;
 
 /**
