@@ -20,6 +20,7 @@ public final class ScanReport {
     private final File outputDirectory;
     private final long totalDurationMs;
     private final boolean success;
+    private volatile ReportArtifacts artifacts;
 
     public ScanReport(String scanId,
                      ScanContext context,
@@ -75,6 +76,14 @@ public final class ScanReport {
 
     public boolean isSuccess() {
         return success;
+    }
+
+    public void attachArtifacts(ReportArtifacts artifacts) {
+        this.artifacts = artifacts;
+    }
+
+    public ReportArtifacts getArtifacts() {
+        return artifacts;
     }
 
     /**

@@ -8,6 +8,7 @@ import com.obddroid.services.FaultCodeService;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +57,9 @@ public final class FaultCodeStage implements ScanStage {
             int confirmedCount = 0;
             int pendingCount = 0;
             int permanentCount = 0;
+            List<FaultCodeService.FaultCodeInfo> confirmedCodes = new ArrayList<>();
+            List<FaultCodeService.FaultCodeInfo> pendingCodes = new ArrayList<>();
+            List<FaultCodeService.FaultCodeInfo> permanentCodes = new ArrayList<>();
 
             for (FaultCodeService.FaultCodeInfo code : codes) {
                 JSONObject codeObj = new JSONObject();
@@ -70,12 +74,15 @@ public final class FaultCodeStage implements ScanStage {
                 switch (code.type) {
                     case CONFIRMED:
                         confirmedCount++;
+                        confirmedCodes.add(code);
                         break;
                     case PENDING:
                         pendingCount++;
+                        pendingCodes.add(code);
                         break;
                     case PERMANENT:
                         permanentCount++;
+                        permanentCodes.add(code);
                         break;
                 }
             }
@@ -89,6 +96,12 @@ public final class FaultCodeStage implements ScanStage {
             // Store for other stages to use
             context.putSharedData("dtcCount", codes.size());
             context.putSharedData("hasDtcs", !codes.isEmpty());
+            context.putSharedData("faultCodesAll", new ArrayList<>(codes));
+            context.putSharedData("faultCodesConfirmed", confirmedCodes);
+            context.putSharedData("faultCodesPending", pendingCodes);
+            context.putSharedData("faultCodesPermanent", permanentCodes);
+            context.putSharedData("hasFreezeFrameCandidates",
+                confirmedCodes.stream().anyMatch(info -> info.hasFreeze));
 
             String message;
             if (codes.isEmpty()) {

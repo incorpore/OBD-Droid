@@ -174,6 +174,15 @@ public class ScanOrchestrator extends Service {
 
         // Build final report
         ScanReport report = new ScanReport(scanId, scanContext, results);
+
+        try {
+            ReportBuilder builder = new ReportBuilder(this);
+            ReportArtifacts artifacts = builder.build(report);
+            report.attachArtifacts(artifacts);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to generate report artifacts for scan " + scanId, e);
+        }
+
         notifyProgress(listener -> listener.onScanCompleted(report));
     }
 

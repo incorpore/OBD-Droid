@@ -182,17 +182,40 @@ public final class ScanResultsManager {
     }
 
     private void writeReportToDisk(ScanReport report) {
-        try {
-            File reportFile = new File(report.getOutputDirectory(), "scan_report.json");
-            try (FileWriter writer = new FileWriter(reportFile)) {
-                writer.write(report.toJson().toString(2));
-            }
-            Log.i(TAG, "Wrote report to: " + reportFile.getAbsolutePath());
+        ReportArtifacts artifacts = report.getArtifacts();
 
-            // Also write human-readable summary
-            File summaryFile = new File(report.getOutputDirectory(), "scan_summary.txt");
-            try (FileWriter writer = new FileWriter(summaryFile)) {
-                writer.write(report.getSummary());
+        File jsonFile = artifacts != null && artifacts.getJsonFile() != null
+            ? artifacts.getJsonFile()
+            : new File(report.getOutputDirectory(), "scan_report.json");
+
+        File summaryFile = artifacts != null && artifacts.getSummaryFile() != null
+            ? artifacts.getSummaryFile()
+            : new File(report.getOutputDirectory(), "scan_summary.txt");
+
+        if (jsonFile.exists() && summaryFile.exists()) {
+            Log.i(TAG, "Report artifacts already present on disk for " + report.getScanId());
+            return;
+        }
+
+        try {
+            if (!jsonFile.getParentFile().exists() && !jsonFile.getParentFile().mkdirs()) {
+                Log.w(TAG, "Failed to create directory for report JSON: " + jsonFile.getParent());
+            }
+            if (!jsonFile.exists()) {
+                try (FileWriter writer = new FileWriter(jsonFile)) {
+                    writer.write(report.toJson().toString(2));
+                }
+                Log.i(TAG, "Wrote report JSON to: " + jsonFile.getAbsolutePath());
+            }
+
+            if (!summaryFile.getParentFile().exists() && !summaryFile.getParentFile().mkdirs()) {
+                Log.w(TAG, "Failed to create directory for report summary: " + summaryFile.getParent());
+            }
+            if (!summaryFile.exists()) {
+                try (FileWriter writer = new FileWriter(summaryFile)) {
+                    writer.write(report.getSummary());
+                }
+                Log.i(TAG, "Wrote report summary to: " + summaryFile.getAbsolutePath());
             }
 
         } catch (IOException | JSONException e) {
