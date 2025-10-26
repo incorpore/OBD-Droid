@@ -30,6 +30,10 @@ import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
 import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
+import com.obddroid.features.emissions.data.EmissionsCalculator;
+import com.obddroid.features.emissions.data.EmissionsDataManager;
+import com.obddroid.features.emissions.data.EmissionsReportGenerator;
+import com.obddroid.features.emissions.data.MonitorData;
 import com.obddroid.services.CommService;
 import com.obddroid.ui.components.VehicleInfoFooter;
 
@@ -69,8 +73,8 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
     private VehicleInfoFooter vehicleInfoFooter;
     private View snackbarAnchor;  // Anchor view for snackbars
 
-    // Monitor tracking
-    private Map<String, MonitorData> monitorDataMap = new java.util.LinkedHashMap<>();
+    // Data layer components
+    private EmissionsDataManager dataManager;
 
     // Update handler
     private Handler updateHandler = new Handler(Looper.getMainLooper());
@@ -86,84 +90,6 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
     private static final int COLOR_ERROR = Color.parseColor("#F44336");       // Red
     private static final int COLOR_UNKNOWN = Color.parseColor("#9E9E9E");    // Gray
 
-    /**
-     * Data structure to hold monitor information
-     */
-    private static class MonitorData {
-        String name;
-        boolean isReady;
-        boolean isAvailable;
-        int conditions;
-        int completions;
-
-        MonitorData(String name) {
-            this.name = name;
-            this.isReady = false;
-            this.isAvailable = false;  // Default to NOT available - only mark available when we find data
-            this.conditions = 0;
-            this.completions = 0;
-        }
-
-        float getRatio() {
-            if (conditions == 0) return 0f;
-            return (float) completions / conditions;
-        }
-
-        int getPercentage() {
-            return Math.round(getRatio() * 100);
-        }
-
-        String getPercentageDisplay() {
-            int percentage = getPercentage();
-            if (percentage > 100) {
-                return "100%+";
-            }
-            return String.valueOf(percentage) + "%";
-        }
-
-        /**
-         * Get IUMPR quality indicator for regulatory compliance
-         * NOTE: This is DIFFERENT from emissions readiness!
-         * - Emissions Ready: Needs ≥1 completion
-         * - IUMPR Quality: Measures how frequently the monitor runs
-         */
-        String getIUMPRQuality() {
-            if (completions == 0) {
-                return null;  // No quality indicator if never completed
-            }
-
-            float ratio = getRatio();
-
-            // EVAP has stricter CARB requirement (52%)
-            if (name.contains("EVAP")) {
-                if (ratio >= 0.52f) return "🟢 Excellent";  // Meets CARB 52% minimum
-                if (ratio >= 0.10f) return "🟡 Good";       // Meets basic 10% minimum
-                return "🟠 Low Frequency";                    // Below minimums but still ready
-            }
-
-            // Other monitors use 10% threshold
-            if (ratio >= 0.10f) return "🟢 Excellent";      // Meets minimum
-            return "🟠 Low Frequency";                        // Below minimum but still ready
-        }
-
-        /**
-         * Get explanation of IUMPR quality (for tooltip/help)
-         */
-        String getIUMPRQualityExplanation() {
-            if (completions == 0) return null;
-
-            String quality = getIUMPRQuality();
-            if (quality == null) return null;
-
-            if (quality.contains("Excellent")) {
-                return "Monitor runs frequently - exceeds regulatory minimums";
-            } else if (quality.contains("Good")) {
-                return "Monitor runs regularly - meets regulatory minimums";
-            } else {
-                return "Monitor runs infrequently but has completed successfully";
-            }
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -186,8 +112,8 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         // Initialize views
         initializeViews();
 
-        // Initialize monitor data
-        initializeMonitors();
+        // Initialize data layer
+        dataManager = new EmissionsDataManager();
 
         // Start periodic updates
         startPeriodicUpdates();
@@ -217,22 +143,6 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         snackbar.show();
     }
 
-    private void initializeMonitors() {
-        // Continuous monitors (always must be ready)
-        monitorDataMap.put("MISFIRE", new MonitorData("Misfire Detection"));
-        monitorDataMap.put("FUEL", new MonitorData("Fuel System Monitor"));
-        monitorDataMap.put("CCM", new MonitorData("Comprehensive Component (CCM)"));
-
-        // Non-continuous monitors
-        monitorDataMap.put("CATALYST", new MonitorData("Catalyst Efficiency"));
-        monitorDataMap.put("EVAP", new MonitorData("EVAP System"));
-        monitorDataMap.put("O2SENSOR", new MonitorData("O2 Sensor Monitor"));
-        monitorDataMap.put("O2HEATER", new MonitorData("O2 Sensor Heater"));
-        monitorDataMap.put("EGR", new MonitorData("EGR System"));
-        monitorDataMap.put("AIR", new MonitorData("Secondary Air System"));
-
-        log.info("Monitor data structures initialized");
-    }
 
     @Override
     protected void onResume() {
@@ -385,7 +295,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
     }
 
     private boolean hasExportableData() {
-        for (MonitorData monitor : monitorDataMap.values()) {
+        for (MonitorData monitor : dataManager.getMonitorDataMap().values()) {
             if (monitor.isAvailable || monitor.conditions > 0 || monitor.completions > 0) {
                 return true;
             }
@@ -395,15 +305,15 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
 
     private java.util.List<MonitorData> getOrderedMonitorList() {
         java.util.List<MonitorData> ordered = new java.util.ArrayList<>();
-        ordered.add(monitorDataMap.get("MISFIRE"));
-        ordered.add(monitorDataMap.get("FUEL"));
-        ordered.add(monitorDataMap.get("CCM"));
-        ordered.add(monitorDataMap.get("CATALYST"));
-        ordered.add(monitorDataMap.get("EVAP"));
-        ordered.add(monitorDataMap.get("O2SENSOR"));
-        ordered.add(monitorDataMap.get("O2HEATER"));
-        ordered.add(monitorDataMap.get("EGR"));
-        ordered.add(monitorDataMap.get("AIR"));
+        ordered.add(dataManager.getMonitorDataMap().get("MISFIRE"));
+        ordered.add(dataManager.getMonitorDataMap().get("FUEL"));
+        ordered.add(dataManager.getMonitorDataMap().get("CCM"));
+        ordered.add(dataManager.getMonitorDataMap().get("CATALYST"));
+        ordered.add(dataManager.getMonitorDataMap().get("EVAP"));
+        ordered.add(dataManager.getMonitorDataMap().get("O2SENSOR"));
+        ordered.add(dataManager.getMonitorDataMap().get("O2HEATER"));
+        ordered.add(dataManager.getMonitorDataMap().get("EGR"));
+        ordered.add(dataManager.getMonitorDataMap().get("AIR"));
         return ordered;
     }
 
@@ -455,7 +365,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
             // Compute summary stats
             int availableCount = 0;
             int readyCount = 0;
-            for (MonitorData monitor : monitorDataMap.values()) {
+            for (MonitorData monitor : dataManager.getMonitorDataMap().values()) {
                 if (monitor.isAvailable) {
                     availableCount++;
                     if (monitor.isReady) {
@@ -593,7 +503,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
             // Compute summary stats
             int availableCount = 0;
             int readyCount = 0;
-            for (MonitorData monitor : monitorDataMap.values()) {
+            for (MonitorData monitor : dataManager.getMonitorDataMap().values()) {
                 if (monitor.isAvailable) {
                     availableCount++;
                     if (monitor.isReady) {
@@ -744,7 +654,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
             // Compute summary stats
             int availableCount = 0;
             int readyCount = 0;
-            for (MonitorData monitor : monitorDataMap.values()) {
+            for (MonitorData monitor : dataManager.getMonitorDataMap().values()) {
                 if (monitor.isAvailable) {
                     availableCount++;
                     if (monitor.isReady) {
@@ -850,15 +760,12 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         log.info("  PidPvs: " + (ObdProt.PidPvs != null ? ObdProt.PidPvs.size() + " items" : "null"));
         log.info("  VidPvs: " + (ObdProt.VidPvs != null ? ObdProt.VidPvs.size() + " items" : "null"));
 
-        // Update monitor readiness from PID 0x01
-        updateMonitorReadiness();
-
-        // Update IUMPR data from Mode 9 PID 0x08
-        updateIUMPRData();
+        // Update all monitor data using data manager
+        dataManager.updateAllData();
 
         // Count how many monitors have data
         int monitorsWithData = 0;
-        for (MonitorData monitor : monitorDataMap.values()) {
+        for (MonitorData monitor : dataManager.getMonitorDataMap().values()) {
             if (monitor.conditions > 0 || monitor.isAvailable) {
                 monitorsWithData++;
             }
@@ -918,7 +825,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
                 }
 
                 if (monitorKey != null) {
-                    MonitorData monitor = monitorDataMap.get(monitorKey);
+                    MonitorData monitor = dataManager.getMonitorDataMap().get(monitorKey);
                     if (monitor != null) {
                         applyMonitorStatusFromPid(monitorKey, monitor, formattedVal, description);
                         foundCount++;
@@ -1160,7 +1067,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
     }
 
     private void updateContinuousMonitor(String monitorKey, int conditions) {
-        MonitorData monitor = monitorDataMap.get(monitorKey);
+        MonitorData monitor = dataManager.getMonitorDataMap().get(monitorKey);
         if (monitor == null) return;
 
         // Continuous monitors are always running when engine is on
@@ -1177,7 +1084,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
     }
 
     private void updateMonitorPerformance(String monitorKey, int completions, int conditions) {
-        MonitorData monitor = monitorDataMap.get(monitorKey);
+        MonitorData monitor = dataManager.getMonitorDataMap().get(monitorKey);
         if (monitor == null) return;
 
         // Update IUMPR data (Mode 09) - for display/informational purposes
@@ -1204,59 +1111,30 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
     }
 
     private void updateOverallStatus() {
-        int availableCount = 0;
-        int readyCount = 0;
-
-        // Count available and ready monitors
-        for (MonitorData monitor : monitorDataMap.values()) {
-            if (monitor.isAvailable) {
-                availableCount++;
-                if (monitor.isReady) {
-                    readyCount++;
-                }
-            }
-        }
-
-        int notReadyCount = availableCount - readyCount;
+        // Calculate readiness using calculator
+        EmissionsCalculator.ReadinessStatus status =
+            EmissionsCalculator.calculateReadiness(dataManager.getMonitorDataMap());
 
         log.info("=== Overall Status Calculation ===");
-        log.info("  Available monitors: " + availableCount);
-        log.info("  Ready monitors: " + readyCount);
-        log.info("  Not ready monitors: " + notReadyCount);
+        log.info("  Available monitors: " + status.availableCount);
+        log.info("  Ready monitors: " + status.readyCount);
+        log.info("  Not ready monitors: " + status.notReadyCount);
+        log.info("  hasData: " + status.hasData + ", isReady: " + status.isReady);
 
-        // Determine overall status
-        // EPA standard: For 2001+ vehicles, 1 monitor may be not ready
-        // Vehicle is ready if: (1) at least some monitors are available, AND
-        //                      (2) no more than 1 monitor is not ready
-        boolean hasData = availableCount > 0;
-        boolean isReady = hasData && (notReadyCount <= 1);
-
-        log.info("  hasData: " + hasData + ", isReady: " + isReady);
-
-        if (isReady) {
+        if (status.isReady) {
             log.info("  Setting status: READY (green)");
-
             overallStatusCard.setCardBackgroundColor(COLOR_READY);
-            overallStatusText.setText("✓ READY FOR EMISSIONS TEST");
-            overallStatusSubtext.setText(String.format(
-                "%d of %d monitors complete • Passes EPA standards",
-                readyCount, availableCount
-            ));
-        } else if (!hasData) {
-            // No data available yet
+        } else if (!status.hasData) {
             log.info("  Setting status: WAITING FOR DATA (gray)");
             overallStatusCard.setCardBackgroundColor(COLOR_UNKNOWN);
-            overallStatusText.setText("⚠ WAITING FOR DATA");
-            overallStatusSubtext.setText("Connect to vehicle to retrieve emissions monitor status");
         } else {
             log.info("  Setting status: NOT READY (yellow)");
             overallStatusCard.setCardBackgroundColor(COLOR_NOT_READY);
-            overallStatusText.setText("⚠ NOT READY FOR EMISSIONS TEST");
-            overallStatusSubtext.setText(String.format(
-                "%d of %d monitors complete • %d monitor(s) need drive cycle",
-                readyCount, availableCount, notReadyCount
-            ));
         }
+
+        // Update status text using calculator-provided strings
+        overallStatusText.setText(status.getStatusText());
+        overallStatusSubtext.setText(status.getSubtext());
 
         // Update timestamp
         updateTimestamp();
@@ -1275,21 +1153,21 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
 
         // Add continuous monitors section
         addSectionHeader("CONTINUOUS MONITORS", "(Always Running)");
-        addMonitorCard(monitorDataMap.get("MISFIRE"), true);
-        addMonitorCard(monitorDataMap.get("FUEL"), true);
-        addMonitorCard(monitorDataMap.get("CCM"), true);
+        addMonitorCard(dataManager.getMonitorDataMap().get("MISFIRE"), true);
+        addMonitorCard(dataManager.getMonitorDataMap().get("FUEL"), true);
+        addMonitorCard(dataManager.getMonitorDataMap().get("CCM"), true);
 
         // Add non-continuous monitors section (sorted: Ready → Not Ready → Not Equipped)
         addSectionHeader("NON-CONTINUOUS MONITORS", "(Requires Specific Conditions)");
 
         // Collect and sort non-continuous monitors
         java.util.List<MonitorData> nonContinuousMonitors = new java.util.ArrayList<>();
-        nonContinuousMonitors.add(monitorDataMap.get("CATALYST"));
-        nonContinuousMonitors.add(monitorDataMap.get("EVAP"));
-        nonContinuousMonitors.add(monitorDataMap.get("O2SENSOR"));
-        nonContinuousMonitors.add(monitorDataMap.get("O2HEATER"));
-        nonContinuousMonitors.add(monitorDataMap.get("EGR"));
-        nonContinuousMonitors.add(monitorDataMap.get("AIR"));
+        nonContinuousMonitors.add(dataManager.getMonitorDataMap().get("CATALYST"));
+        nonContinuousMonitors.add(dataManager.getMonitorDataMap().get("EVAP"));
+        nonContinuousMonitors.add(dataManager.getMonitorDataMap().get("O2SENSOR"));
+        nonContinuousMonitors.add(dataManager.getMonitorDataMap().get("O2HEATER"));
+        nonContinuousMonitors.add(dataManager.getMonitorDataMap().get("EGR"));
+        nonContinuousMonitors.add(dataManager.getMonitorDataMap().get("AIR"));
 
         // Sort: Ready monitors first, then Not Ready, then Not Equipped at bottom
         java.util.Collections.sort(nonContinuousMonitors, new java.util.Comparator<MonitorData>() {
