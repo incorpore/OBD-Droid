@@ -44,6 +44,7 @@ import io.noties.markwon.Markwon;
 
 public class CoPilotActivity extends AppCompatActivity {
 
+    public static final String EXTRA_INITIAL_MESSAGE = "extra_initial_message";
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
 
     private LottieAnimationView aiAvatar;
@@ -92,6 +93,13 @@ public class CoPilotActivity extends AppCompatActivity {
         setupSpeechRecognizer();
         updateStatus();
         showWelcomeMessage();
+
+        // Check for initial message from intent (e.g., fault code analysis)
+        String initialMessage = getIntent().getStringExtra(EXTRA_INITIAL_MESSAGE);
+        if (initialMessage != null && !initialMessage.isEmpty()) {
+            messageInput.setText(initialMessage);
+            sendMessage();
+        }
     }
 
     private void initializeViews() {

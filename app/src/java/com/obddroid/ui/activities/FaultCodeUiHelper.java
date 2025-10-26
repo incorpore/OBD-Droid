@@ -27,9 +27,9 @@ import com.obddroid.common.ProcessVariables.PvList;
 import com.obddroid.services.CommService;
 import com.obddroid.services.FaultCodeService;
 import com.obddroid.ui.adapters.ObdItemAdapter;
-import com.obddroid.utils.OpenAiService;
 import com.obddroid.utils.SnackbarHelper;
 import com.obddroid.services.VehicleManager;
+import com.obddroid.features.copilot.ui.CoPilotActivity;
 import io.github.vindecoder.nhtsa.VehicleData;
 
 import java.util.Collections;
@@ -103,7 +103,7 @@ final class FaultCodeUiHelper
         View freezeFrameOption = dialogView.findViewById(R.id.option_freeze_frame);
         View searchOption = dialogView.findViewById(R.id.option_search_web);
         View nondaOption = dialogView.findViewById(R.id.option_watch_nonda);
-        View askAiOption = dialogView.findViewById(R.id.option_ask_ai);
+        View askCopilotOption = dialogView.findViewById(R.id.option_ask_ai);
         View copyOption = dialogView.findViewById(R.id.option_copy_code);
         Button closeButton = dialogView.findViewById(R.id.btn_close);
 
@@ -160,28 +160,14 @@ final class FaultCodeUiHelper
             });
         }
 
-        if (askAiOption != null)
+        // Ask CoPilot - launches CoPilot with fault code context
+        if (askCopilotOption != null)
         {
-            OpenAiService aiService = new OpenAiService(activity);
-            TextView askAiStatus = dialogView.findViewById(R.id.ask_ai_status);
-
-            if (!aiService.isApiKeyConfigured())
+            askCopilotOption.setOnClickListener(v ->
             {
-                if (askAiStatus != null)
-                {
-                    askAiStatus.setText("Configure API key in settings first");
-                }
-                askAiOption.setAlpha(0.5f);
-                askAiOption.setEnabled(false);
-            }
-            else
-            {
-                askAiOption.setOnClickListener(v ->
-                {
-                    dialog.dismiss();
-                    showAiAnalysisDialog(activity, faultCode.code, faultCode.description);
-                });
-            }
+                dialog.dismiss();
+                launchCoPilotForFaultCode(activity, faultCode.code, faultCode.description);
+            });
         }
 
         copyOption.setOnClickListener(v ->
@@ -261,7 +247,7 @@ final class FaultCodeUiHelper
         View freezeFrameOption = dialogView.findViewById(R.id.option_freeze_frame);
         View searchOption = dialogView.findViewById(R.id.option_search_web);
         View nondaOption = dialogView.findViewById(R.id.option_watch_nonda);
-        View askAiOption = dialogView.findViewById(R.id.option_ask_ai);
+        View askCopilotOption = dialogView.findViewById(R.id.option_ask_ai);
         View copyOption = dialogView.findViewById(R.id.option_copy_code);
         Button closeButton = dialogView.findViewById(R.id.btn_close);
 
@@ -321,28 +307,14 @@ final class FaultCodeUiHelper
             });
         }
 
-        if (askAiOption != null)
+        // Ask CoPilot - launches CoPilot with fault code context
+        if (askCopilotOption != null)
         {
-            OpenAiService aiService = new OpenAiService(activity);
-            TextView askAiStatus = dialogView.findViewById(R.id.ask_ai_status);
-
-            if (!aiService.isApiKeyConfigured())
+            askCopilotOption.setOnClickListener(v ->
             {
-                if (askAiStatus != null)
-                {
-                    askAiStatus.setText("Configure API key in settings first");
-                }
-                askAiOption.setAlpha(0.5f);
-                askAiOption.setEnabled(false);
-            }
-            else
-            {
-                askAiOption.setOnClickListener(v ->
-                {
-                    dialog.dismiss();
-                    showAiAnalysisDialog(activity, code, description);
-                });
-            }
+                dialog.dismiss();
+                launchCoPilotForFaultCode(activity, code, description);
+            });
         }
 
         copyOption.setOnClickListener(v ->
@@ -897,26 +869,23 @@ final class FaultCodeUiHelper
         }
     }
 
-    static void showAiAnalysisDialog(AppCompatActivity activity, String code, String description)
+    /**
+     * Launch CoPilot with a pre-filled message about the fault code.
+     * This allows the Agent API to analyze the code with full conversation context and tool access.
+     */
+    static void launchCoPilotForFaultCode(AppCompatActivity activity, String code, String description)
     {
         try
         {
-            LayoutInflater inflater = activity.getLayoutInflater();
-            View dialogView = inflater.inflate(R.layout.dialog_ai_analysis, null);
+            // Build detailed fault code message with vehicle context if available
+            StringBuilder message = new StringBuilder();
+            message.append("I have a fault code: ").append(code);
+            if (description != null && !description.isEmpty())
+            {
+                message.append(" - ").append(description);
+            }
 
-            TextView faultCodeText = dialogView.findViewById(R.id.ai_fault_code);
-            TextView analysisContent = dialogView.findViewById(R.id.ai_analysis_content);
-            TextView errorMessage = dialogView.findViewById(R.id.ai_error_message);
-            View loadingContainer = dialogView.findViewById(R.id.ai_loading_container);
-            View contentContainer = dialogView.findViewById(R.id.ai_content_container);
-            View errorContainer = dialogView.findViewById(R.id.ai_error_container);
-            Button closeButton = dialogView.findViewById(R.id.btn_close);
-            Button retryButton = dialogView.findViewById(R.id.btn_retry);
-
-            // Build fault code info with vehicle context if available
-            StringBuilder codeInfo = new StringBuilder();
-            codeInfo.append(code).append(" - ").append(description);
-
+            // Add vehicle context if available
             try
             {
                 VehicleManager vehicleManager = VehicleManager.getInstance();
@@ -925,102 +894,26 @@ final class FaultCodeUiHelper
                     VehicleData vData = vehicleManager.getCurrentVehicleData();
                     if (vData != null && vData.getDisplayName() != null && !vData.getDisplayName().isEmpty())
                     {
-                        codeInfo.append("\n").append(vData.getDisplayName());
+                        message.append("\n\nVehicle: ").append(vData.getDisplayName());
                     }
                 }
             }
             catch (Exception e)
             {
-                // Ignore - just won't show vehicle info
+                // Continue without vehicle info
             }
 
-            faultCodeText.setText(codeInfo.toString());
+            message.append("\n\nCan you analyze this code and tell me what it means, what might be causing it, and what I should do?");
 
-            AlertDialog aiDialog = new AlertDialog.Builder(activity)
-                    .setView(dialogView)
-                    .setCancelable(true)
-                    .create();
-
-            // Set transparent background to prevent white corners
-            if (aiDialog.getWindow() != null)
-            {
-                aiDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-            }
-
-            Consumer<Boolean> performAnalysis = retry ->
-            {
-                activity.runOnUiThread(() ->
-                {
-                    loadingContainer.setVisibility(View.VISIBLE);
-                    contentContainer.setVisibility(View.GONE);
-                    errorContainer.setVisibility(View.GONE);
-                    retryButton.setVisibility(View.GONE);
-                });
-
-                try
-                {
-                    OpenAiService aiService = new OpenAiService(activity);
-
-                    // Get vehicle data from VehicleManager for better context
-                    VehicleData vehicleData = null;
-                    try
-                    {
-                        VehicleManager vehicleManager = VehicleManager.getInstance();
-                        if (vehicleManager.isVehicleConnected())
-                        {
-                            vehicleData = vehicleManager.getCurrentVehicleData();
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        log.log(Level.WARNING, "Could not get vehicle data for AI context", e);
-                    }
-
-                    String analysis = aiService.analyzeFaultCode(code, description, vehicleData);
-
-                    activity.runOnUiThread(() ->
-                    {
-                        analysisContent.setText(analysis);
-                        loadingContainer.setVisibility(View.GONE);
-                        contentContainer.setVisibility(View.VISIBLE);
-                    });
-                }
-                catch (Exception e)
-                {
-                    log.log(Level.SEVERE, "AI analysis failed", e);
-                    activity.runOnUiThread(() ->
-                    {
-                        String errorMsg = e.getMessage();
-                        if (errorMsg == null || errorMsg.isEmpty())
-                        {
-                            errorMsg = "Failed to get AI analysis. Please check your API key and internet connection.";
-                        }
-                        errorMessage.setText(errorMsg);
-                        loadingContainer.setVisibility(View.GONE);
-                        errorContainer.setVisibility(View.VISIBLE);
-                        retryButton.setVisibility(View.VISIBLE);
-                    });
-                }
-            };
-
-            retryButton.setOnClickListener(v -> new Thread(() -> performAnalysis.accept(true)).start());
-            closeButton.setOnClickListener(v -> aiDialog.dismiss());
-
-            aiDialog.show();
-            if (aiDialog.getWindow() != null)
-            {
-                aiDialog.getWindow().setLayout(
-                        (int) (activity.getResources().getDisplayMetrics().widthPixels * 0.9),
-                        (int) (activity.getResources().getDisplayMetrics().heightPixels * 0.7));
-            }
-
-            // Start analysis in background thread
-            new Thread(() -> performAnalysis.accept(false)).start();
+            // Launch CoPilot with the fault code message
+            Intent intent = new Intent(activity, CoPilotActivity.class);
+            intent.putExtra(CoPilotActivity.EXTRA_INITIAL_MESSAGE, message.toString());
+            activity.startActivity(intent);
         }
         catch (Exception e)
         {
-            log.log(Level.SEVERE, "Show AI analysis dialog", e);
-            SnackbarHelper.showError(activity, "Error showing AI analysis: " + e.getMessage());
+            log.log(Level.SEVERE, "Failed to launch CoPilot", e);
+            SnackbarHelper.showError(activity, "Error launching CoPilot: " + e.getMessage());
         }
     }
 }

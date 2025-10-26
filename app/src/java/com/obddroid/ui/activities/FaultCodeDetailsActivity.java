@@ -22,7 +22,6 @@ import com.obddroid.R;
 import com.obddroid.obd.ElmProt;
 import com.obddroid.services.CommService;
 import com.obddroid.ui.components.VehicleInfoFooter;
-import com.obddroid.utils.OpenAiService;
 import com.obddroid.utils.SnackbarHelper;
 
 import java.util.logging.Level;
@@ -158,16 +157,8 @@ public class FaultCodeDetailsActivity extends AppCompatActivity {
                 R.string.fault_codes_nonda_search_channel);
         nondaVideoOption.setOnClickListener(v -> openNondaVideo());
 
-        // Ask AI Option
-        OpenAiService aiService = new OpenAiService(this);
-        if (!aiService.isApiKeyConfigured()) {
-            askAiStatus.setText(R.string.fault_codes_ai_configure_key);
-            askAiOption.setAlpha(0.5f);
-            askAiOption.setEnabled(false);
-            askAiOption.setClickable(false);
-        } else {
-            askAiOption.setOnClickListener(v -> askAiAboutCode());
-        }
+        // Ask CoPilot Option - launches CoPilot with fault code context
+        askAiOption.setOnClickListener(v -> askCoPilotAboutCode());
 
         // Copy Code Option
         copyCodeOption.setOnClickListener(v -> copyCodeToClipboard());
@@ -224,8 +215,8 @@ public class FaultCodeDetailsActivity extends AppCompatActivity {
         }
     }
 
-    private void askAiAboutCode() {
-        FaultCodeUiHelper.showAiAnalysisDialog(this, faultCode, faultDescription);
+    private void askCoPilotAboutCode() {
+        FaultCodeUiHelper.launchCoPilotForFaultCode(this, faultCode, faultDescription);
     }
 
     private void copyCodeToClipboard() {
