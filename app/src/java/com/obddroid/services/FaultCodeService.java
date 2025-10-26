@@ -4,7 +4,7 @@ import android.os.SystemClock;
 
 import com.obddroid.core.ecu.EcuCodeItem;
 import com.obddroid.core.ecu.ObdCodeList;
-import com.obddroid.core.obd.RawTelegramListener;
+import com.obddroid.core.interfaces.RawTelegramListener;
 
 import java.util.ArrayList;
 import java.util.Comparator;

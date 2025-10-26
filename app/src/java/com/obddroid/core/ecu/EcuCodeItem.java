@@ -1,6 +1,6 @@
 package com.obddroid.core.ecu;
 
-import com.obddroid.core.pvs.ProcessVariables.IndexedProcessVar;
+import com.obddroid.core.common.ProcessVariables.IndexedProcessVar;
 
 /**
  * ECU fault code

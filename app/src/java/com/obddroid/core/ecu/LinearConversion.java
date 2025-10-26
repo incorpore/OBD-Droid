@@ -1,6 +1,6 @@
 package com.obddroid.core.ecu;
 
-import com.obddroid.core.pvs.ProcessVariables.PvLimits;
+import com.obddroid.core.common.ProcessVariables.PvLimits;
 
 /**
  * Definition of a single OBD data conversion

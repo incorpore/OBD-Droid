@@ -28,8 +28,8 @@ import com.obddroid.core.ecu.EcuDataItem;
 import com.obddroid.core.ecu.EcuDataItems;
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
-import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
+import com.obddroid.core.common.ProcessVariables.PvChangeEvent;
+import com.obddroid.core.common.ProcessVariables.PvChangeListener;
 import com.github.anastr.speedviewlib.Gauge;
 
 import com.obddroid.ui.adapters.ObdGaugeAdapter;

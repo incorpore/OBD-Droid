@@ -7,7 +7,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.pvs.ProcessVariables.PvList;
+import com.obddroid.core.common.ProcessVariables.PvList;
 
 import java.util.Collection;
 

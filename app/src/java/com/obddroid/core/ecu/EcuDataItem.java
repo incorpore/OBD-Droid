@@ -1,7 +1,7 @@
 package com.obddroid.core.ecu;
 
 import com.obddroid.core.obd.ProtUtils;
-import com.obddroid.core.obd.ProtoHeader;
+import com.obddroid.core.common.ProtoHeader;
 
 import java.util.logging.Logger;
 

@@ -1,9 +1,9 @@
-package com.obddroid.core.obd;
+package com.obddroid.core.can;
 
 import com.obddroid.core.ecu.Conversions;
 import com.obddroid.core.ecu.EcuDataPv;
-import com.obddroid.core.obd.ProtoHeader;
-import com.obddroid.core.pvs.ProcessVariables.PvList;
+import com.obddroid.core.common.ProtoHeader;
+import com.obddroid.core.common.ProcessVariables.PvList;
 
 import java.util.HashMap;
 import java.util.Iterator;

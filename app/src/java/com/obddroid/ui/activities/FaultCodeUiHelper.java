@@ -23,7 +23,7 @@ import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.FreezeFrameManager;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.pvs.ProcessVariables.PvList;
+import com.obddroid.core.common.ProcessVariables.PvList;
 import com.obddroid.services.CommService;
 import com.obddroid.services.FaultCodeService;
 import com.obddroid.ui.adapters.ObdItemAdapter;

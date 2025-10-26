@@ -16,11 +16,11 @@ import com.hivemq.client.mqtt.mqtt3.message.connect.Mqtt3ConnectBuilder;
 import com.obddroid.R;
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.pvs.ProcessVariables.PvChange;
-import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
-import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
-import com.obddroid.core.pvs.ProcessVariables.PvChangeType;
-import com.obddroid.core.pvs.ProcessVariables.TypedPvChangeListener;
+import com.obddroid.core.common.ProcessVariables.PvChange;
+import com.obddroid.core.common.ProcessVariables.PvChangeEvent;
+import com.obddroid.core.common.ProcessVariables.PvChangeListener;
+import com.obddroid.core.common.ProcessVariables.PvChangeType;
+import com.obddroid.core.common.ProcessVariables.TypedPvChangeListener;
 import com.obddroid.utils.SecurePreferences;
 
 import java.nio.charset.StandardCharsets;

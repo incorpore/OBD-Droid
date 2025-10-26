@@ -200,6 +200,13 @@
             android:layout="@layout/preference_indented"
             app:dependency="copilot_enabled" />
 
+        <Preference
+            android:key="copilot_delete_all_conversations"
+            android:title="Delete All Conversations"
+            android:summary="Permanently delete all stored CoPilot conversation threads (Agent API only)"
+            android:layout="@layout/preference_indented"
+            app:dependency="copilot_agent_api" />
+
         <SwitchPreferenceCompat
             android:key="copilot_tts_enabled"
             android:title="Voice Responses"

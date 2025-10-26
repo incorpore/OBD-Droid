@@ -2,7 +2,7 @@ package com.obddroid.scan.stages;
 
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.FreezeFrameManager;
-import com.obddroid.core.pvs.ProcessVariables.ProcessVar;
+import com.obddroid.core.common.ProcessVariables.ProcessVar;
 import com.obddroid.scan.ScanContext;
 import com.obddroid.scan.ScanStage;
 import com.obddroid.scan.StageResult;

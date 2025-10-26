@@ -4,8 +4,12 @@ import android.content.Context;
 
 import androidx.annotation.Nullable;
 
+import com.obddroid.features.copilot.agent.AgentCoPilotController;
 import com.obddroid.utils.OpenAiService;
+import com.obddroid.vehicle.VehicleManager;
 import com.obddroid.vehicle.discovery.DiscoveryManager;
+
+import io.github.vindecoder.nhtsa.VehicleData;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,6 +46,7 @@ public final class CoPilotController {
     private CoPilotPromptBuilder promptBuilder;
     private CoPilotSession session;
     private CoPilotLogger logger;
+    private AgentCoPilotController agentController;
 
     private CoPilotController() {
     }
@@ -54,6 +59,8 @@ public final class CoPilotController {
         openAiService = new OpenAiService(appContext);
         commandBridge = new CoPilotCommandBridge();
         promptBuilder = new CoPilotPromptBuilder(appContext, commandBridge);
+        agentController = AgentCoPilotController.getInstance();
+        agentController.initialize(appContext);
     }
 
     public synchronized void startSession(@Nullable String adapterName) {
@@ -67,24 +74,41 @@ public final class CoPilotController {
             endSession("restarted");
         }
 
-        String baseSessionId = DiscoveryManager.getInstance().getActiveSessionId();
-        String effectiveSessionId = baseSessionId != null ? baseSessionId : generateStandaloneSessionId();
+        // Check if Agent API mode is enabled
+        if (CoPilotSettings.isAgentApiEnabled(appContext)) {
+            // Agent API mode: Use VIN-based persistent threads
+            String vin = VehicleManager.getInstance().getCurrentVIN();
+            VehicleData vehicleData = VehicleManager.getInstance().getCurrentVehicleData();
 
-        JSONObject metadata = new JSONObject();
-        try {
-            metadata.put("adapter", adapterName);
-        } catch (JSONException ignored) {
-        }
+            JSONObject metadata = buildVehicleMetadata(vehicleData, adapterName);
+            agentController.startSession(vin, metadata);
+        } else {
+            // Chat Completions mode: Use stateless session with history
+            String baseSessionId = DiscoveryManager.getInstance().getActiveSessionId();
+            String effectiveSessionId = baseSessionId != null ? baseSessionId : generateStandaloneSessionId();
 
-        session = new CoPilotSession(appContext, effectiveSessionId, metadata);
-        try {
-            logger = CoPilotLogger.open(appContext, effectiveSessionId);
-            logger.logEvent("session_start", metadata);
-        } catch (IOException ignored) {
+            JSONObject metadata = new JSONObject();
+            try {
+                metadata.put("adapter", adapterName);
+            } catch (JSONException ignored) {
+            }
+
+            session = new CoPilotSession(appContext, effectiveSessionId, metadata);
+            try {
+                logger = CoPilotLogger.open(appContext, effectiveSessionId);
+                logger.logEvent("session_start", metadata);
+            } catch (IOException ignored) {
+            }
         }
     }
 
     public synchronized void endSession(String reason) {
+        // End Agent API session if active
+        if (agentController != null && CoPilotSettings.isAgentApiEnabled(appContext)) {
+            agentController.endSession();
+        }
+
+        // End Chat Completions session if active
         if (session == null) {
             return;
         }
@@ -102,6 +126,13 @@ public final class CoPilotController {
     }
 
     public void sendUserMessage(String message, CoPilotCallback callback) {
+        // Route to Agent API if enabled
+        if (CoPilotSettings.isAgentApiEnabled(appContext)) {
+            agentController.sendUserMessage(message, callback);
+            return;
+        }
+
+        // Chat Completions mode (original implementation)
         CoPilotSession activeSession;
         CoPilotLogger activeLogger;
         synchronized (this) {
@@ -153,5 +184,26 @@ public final class CoPilotController {
 
     private String generateStandaloneSessionId() {
         return "copilot_" + System.currentTimeMillis();
+    }
+
+    private JSONObject buildVehicleMetadata(@Nullable VehicleData vehicleData, @Nullable String adapterName) {
+        JSONObject metadata = new JSONObject();
+        try {
+            if (vehicleData != null) {
+                if (vehicleData.make != null) metadata.put("make", vehicleData.make);
+                if (vehicleData.model != null) metadata.put("model", vehicleData.model);
+                if (vehicleData.modelYear != null) metadata.put("year", vehicleData.modelYear);
+                if (vehicleData.bodyClass != null) metadata.put("bodyClass", vehicleData.bodyClass);
+                if (vehicleData.engineCylinders != null) metadata.put("cylinders", vehicleData.engineCylinders);
+                if (vehicleData.displacementL != null) metadata.put("displacement", vehicleData.displacementL);
+                if (vehicleData.fuelTypePrimary != null) metadata.put("fuelType", vehicleData.fuelTypePrimary);
+            }
+            if (adapterName != null) {
+                metadata.put("adapter", adapterName);
+            }
+        } catch (JSONException e) {
+            // Ignore metadata errors
+        }
+        return metadata;
     }
 }

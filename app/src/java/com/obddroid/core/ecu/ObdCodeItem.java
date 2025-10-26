@@ -1,6 +1,6 @@
 package com.obddroid.core.ecu;
 
-import com.obddroid.core.obd.ProtoHeader;
+import com.obddroid.core.common.ProtoHeader;
 
 /**
  * Definition of a single OBD failure code

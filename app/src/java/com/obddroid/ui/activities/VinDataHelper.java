@@ -5,9 +5,9 @@ import android.os.Looper;
 
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.pvs.ProcessVariables.PvChange;
-import com.obddroid.core.pvs.ProcessVariables.ProcessVar;
-import com.obddroid.core.pvs.ProcessVariables.TypedPvList;
+import com.obddroid.core.common.ProcessVariables.PvChange;
+import com.obddroid.core.common.ProcessVariables.ProcessVar;
+import com.obddroid.core.common.ProcessVariables.TypedPvList;
 import com.obddroid.services.CommService;
 import com.obddroid.vehicle.VehicleManager;
 

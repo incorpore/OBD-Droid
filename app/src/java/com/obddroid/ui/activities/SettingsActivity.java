@@ -205,6 +205,8 @@ public class SettingsActivity
             setupRemoteTelemetryPreferences();
             // set up AI features
             setupAiFeatures();
+            // set up CoPilot features
+            setupCoPilotFeatures();
 			// update network selection fields - REMOVED
 			// updateNetworkSelections(); // REMOVED - now in UnifiedAdapterSelectionActivity
 			// add handler for selection update
@@ -552,6 +554,45 @@ public class SettingsActivity
 					return true;
 				});
 			}
+		}
+
+		/**
+		 * Set up CoPilot features preferences
+		 */
+		void setupCoPilotFeatures()
+		{
+			// Delete all conversations preference
+			Preference deleteAllPref = findPreference("copilot_delete_all_conversations");
+			if (deleteAllPref != null)
+			{
+				deleteAllPref.setOnPreferenceClickListener(preference ->
+				{
+					showDeleteAllConversationsDialog();
+					return true;
+				});
+			}
+		}
+
+		/**
+		 * Shows confirmation dialog for deleting all conversations
+		 */
+		private void showDeleteAllConversationsDialog()
+		{
+			new AlertDialog.Builder(requireContext())
+				.setTitle("Delete All Conversations?")
+				.setMessage("This will permanently delete all stored CoPilot conversation threads from OpenAI's servers.\n\n" +
+						"This action cannot be undone.\n\n" +
+						"Are you sure you want to continue?")
+				.setNegativeButton("Cancel", null)
+				.setPositiveButton("Delete All", (dialog, which) ->
+				{
+					// Import AgentCoPilotController at top of file
+					com.obddroid.features.copilot.agent.AgentCoPilotController agentController =
+						com.obddroid.features.copilot.agent.AgentCoPilotController.getInstance();
+					agentController.deleteAllConversations();
+					SnackbarHelper.showSuccess(getActivity(), "All conversation threads deleted");
+				})
+				.show();
 		}
 
 		/**

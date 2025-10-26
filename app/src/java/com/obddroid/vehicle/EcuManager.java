@@ -3,10 +3,10 @@ package com.obddroid.vehicle;
 import com.obddroid.core.ecu.EcuDataPv;
 import com.obddroid.core.obd.ElmProt;
 import com.obddroid.core.obd.ObdProt;
-import com.obddroid.core.pvs.ProcessVariables.ProcessVar;
-import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
-import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
-import com.obddroid.core.pvs.ProcessVariables.TypedPvList;
+import com.obddroid.core.common.ProcessVariables.ProcessVar;
+import com.obddroid.core.common.ProcessVariables.PvChangeEvent;
+import com.obddroid.core.common.ProcessVariables.PvChangeListener;
+import com.obddroid.core.common.ProcessVariables.TypedPvList;
 import com.obddroid.services.CommService;
 
 import java.beans.PropertyChangeEvent;

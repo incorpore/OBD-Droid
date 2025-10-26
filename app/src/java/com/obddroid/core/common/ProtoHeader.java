@@ -1,4 +1,8 @@
-package com.obddroid.core.obd;
+package com.obddroid.core.common;
+
+import com.obddroid.core.obd.ProtUtils;
+import com.obddroid.core.interfaces.TelegramListener;
+import com.obddroid.core.interfaces.TelegramWriter;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -17,7 +21,6 @@ import java.util.logging.Logger;
  
  */
 public abstract class ProtoHeader
-	extends TelegramSender
 	implements TelegramListener, TelegramWriter
 {
 
@@ -26,6 +29,9 @@ public abstract class ProtoHeader
 	/** List of telegram listeners */
 	@SuppressWarnings("rawtypes")
 	private final Vector TelegramListeners = new Vector();
+	/** List of telegram writers (handlers for outgoing telegrams) */
+	@SuppressWarnings("rawtypes")
+	private final Vector telegramWriters = new Vector();
 	/** object to be used for parsing and formatting timestamps */
 	private static final SimpleDateFormat TimeStampFormat =
 		new SimpleDateFormat("yyyyMMddHHmmssSS");
@@ -997,6 +1003,29 @@ public abstract class ProtoHeader
 	}
 
 	/**
+	 * add a new Writer to be notified about new telegrams
+	 *
+	 * @param newWriter - TelegramWriter to be added
+	 * @return true if adding was OK, otherwise false
+	 */
+	@SuppressWarnings("unchecked")
+	public boolean addTelegramWriter(TelegramWriter newWriter)
+	{
+		return (telegramWriters.add(newWriter));
+	}
+
+	/**
+	 * remove a Writer to be notified about new telegrams
+	 *
+	 * @param remWriter - TelegramWriter to be removed
+	 * @return true if adding was OK, otherwise false
+	 */
+	public boolean removeTelegramWriter(TelegramWriter remWriter)
+	{
+		return (telegramWriters.remove(remWriter));
+	}
+
+	/**
 	 * Notify all telegram listeners about new telegram
 	 *
 	 * @param buffer - telegram buffer
@@ -1021,6 +1050,41 @@ public abstract class ProtoHeader
 				}
 			}
 		}
+	}
+
+	/**
+	 * Notify all telegram Writers about new telegram
+	 *
+	 * @param buffer - telegram buffer
+	 * @param type   telegram type (numeric ID)
+	 * @param id     unique telegram ID (Sequence number)
+	 */
+	@SuppressWarnings("rawtypes")
+	protected void sendTelegram(char[] buffer, int type, Object id)
+	{
+		Iterator it = telegramWriters.iterator();
+		Object currWriter;
+
+		log.finer(this.toString() + " TX:" + ProtUtils.hexDumpBuffer(buffer));
+
+		while (it.hasNext())
+		{
+			currWriter = it.next();
+			if (currWriter instanceof TelegramWriter)
+			{
+				((TelegramWriter) currWriter).writeTelegram(buffer, type, id);
+			}
+		}
+	}
+
+	/**
+	 * Notify all telegram Writers about new telegram
+	 *
+	 * @param buffer - telegram buffer
+	 */
+	public void sendTelegram(char[] buffer)
+	{
+		sendTelegram(buffer, 0, null);
 	}
 
 	/**

@@ -1,7 +1,7 @@
 package com.obddroid.services;
 
 import android.util.Log;
-import com.obddroid.core.obd.RawTelegramListener;
+import com.obddroid.core.interfaces.RawTelegramListener;
 
 import java.util.HashMap;
 import java.util.Map;

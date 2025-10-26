@@ -1,4 +1,4 @@
-package com.obddroid.core.obd;
+package com.obddroid.core.interfaces;
 
 import java.util.EventListener;
 

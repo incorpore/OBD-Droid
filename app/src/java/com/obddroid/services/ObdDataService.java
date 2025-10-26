@@ -5,11 +5,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
-import com.obddroid.core.pvs.ProcessVariables.ProcessVar;
-import com.obddroid.core.pvs.ProcessVariables.PvChangeEvent;
-import com.obddroid.core.pvs.ProcessVariables.PvChangeListener;
-import com.obddroid.core.pvs.ProcessVariables.PvList;
-import com.obddroid.core.pvs.ProcessVariables.TypedPvList;
+import com.obddroid.core.common.ProcessVariables.ProcessVar;
+import com.obddroid.core.common.ProcessVariables.PvChangeEvent;
+import com.obddroid.core.common.ProcessVariables.PvChangeListener;
+import com.obddroid.core.common.ProcessVariables.PvList;
+import com.obddroid.core.common.ProcessVariables.TypedPvList;
 import com.obddroid.core.obd.ObdProt;
 import com.obddroid.core.ecu.EcuDataPv;
 

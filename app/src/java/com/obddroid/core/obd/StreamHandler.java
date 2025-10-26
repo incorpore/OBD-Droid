@@ -1,5 +1,7 @@
 package com.obddroid.core.obd;
 
+import com.obddroid.core.interfaces.TelegramListener;
+import com.obddroid.core.interfaces.TelegramWriter;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
