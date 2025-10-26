@@ -1177,7 +1177,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             }
 
             // Get calibrated VE from preferences
-            Float calibratedVE = vehiclePreferences.getVolumetricEfficiency(vin);
+            Float calibratedVE = fuelEconomyPreferences.getCalibratedVE(vin);
             if (calibratedVE != null) {
                 log.info("Using calibrated VE for VIN: " + calibratedVE + "%");
                 return calibratedVE;
