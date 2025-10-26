@@ -699,28 +699,14 @@ CoPilotLogger.java                   // Log tool calls + run events
 
 ### Phase 1: Integration & UX Polish - **HIGH PRIORITY**
 
-#### **Quick Win #1: Wire Scan→CoPilot Button** (30 minutes)
-**File:** `ScanActivity.java:415`
-```java
-// Current TODO placeholder:
-analyzeButton.setOnClickListener(v -> {
-    Intent intent = new Intent(this, CoPilotActivity.class);
-    intent.putExtra(CoPilotActivity.EXTRA_INITIAL_MESSAGE,
-        "Analyze my latest scan results and tell me what's wrong");
-    startActivity(intent);
-});
-```
-**Impact:** Users can immediately access AI analysis after scan completion
+#### ✅ **Quick Win #1: Wire Scan→CoPilot Button**
+- `ScanActivity.java` now launches CoPilot immediately with the latest scan analysis prompt and keeps the button wired for future taps.
 
-#### **Quick Win #2: Delete Dead Code** (15 minutes)
-- Remove `AgentToolRegistry.java` (unused - tools registered in `AgentToolExecutor`)
-- Remove any other orphaned files
+#### ✅ **Quick Win #2: Delete Dead Code**
+- Legacy `AgentToolRegistry` class and references removed; `AgentToolExecutor` owns the active tool registry.
 
-#### **Quick Win #3: File Upload Integration** (2-3 hours)
-1. Add `uploadFile()` method to `AgentApiClient`
-2. Upload scan JSON after completion in `onScanCompleted()`
-3. Enable `file_search` tool in Assistant definition
-4. **Benefit:** "Compare this scan to my last scan" queries will work
+#### ✅ **Quick Win #3: File Upload Integration**
+- `AgentApiClient` exposes `uploadFile()` and the scan completion flow builds report artifacts before asynchronously uploading the JSON to OpenAI (file_search enabled).
 
 #### **Medium Priority: Thread Management UI** (1-2 days)
 Create `ThreadManagerActivity`:

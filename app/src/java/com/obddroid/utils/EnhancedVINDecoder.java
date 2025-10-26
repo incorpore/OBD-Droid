@@ -100,6 +100,14 @@ public class EnhancedVINDecoder {
     }
 
     /**
+     * Reload database (called after automatic update)
+     */
+    public void reloadDatabase() {
+        Log.d(TAG, "Reloading VIN database after update");
+        decoder.reloadDatabase();
+    }
+
+    /**
      * Shutdown decoder and cleanup resources
      */
     public void shutdown() {

@@ -269,9 +269,6 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             // Store scan results for CoPilot access
             ScanResultsManager.getInstance(this).storeScanReport(report);
 
-            // Upload scan JSON to CoPilot for retrieval (async)
-            uploadScanToCoPilot(report);
-
             progressBar.setProgress(totalStages);
             progressPercentage.setText("100%");
             progressText.setText("Scan Complete!");
@@ -293,6 +290,8 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             ReportArtifacts artifacts = ensureReportArtifacts(report);
             if (artifacts != null) {
                 shareButton.setVisibility(View.VISIBLE);
+                // Upload scan JSON to CoPilot for retrieval (async)
+                uploadScanToCoPilot(report, artifacts);
             } else {
                 shareButton.setVisibility(View.GONE);
             }
@@ -415,13 +414,11 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         analyzeButton.setEnabled(true);
         analyzeButton.setText("Open CoPilot");
 
-        // Update button to open CoPilot with scan analysis request
-        analyzeButton.setOnClickListener(v -> {
-            Intent intent = new Intent(this, com.obddroid.features.copilot.ui.CoPilotActivity.class);
-            intent.putExtra(com.obddroid.features.copilot.ui.CoPilotActivity.EXTRA_INITIAL_MESSAGE,
-                "Analyze my latest scan results and tell me what's wrong. What should I fix first?");
-            startActivity(intent);
-        });
+        // Ensure future taps jump straight into CoPilot
+        analyzeButton.setOnClickListener(v -> launchCoPilotAnalysis());
+
+        // Launch CoPilot immediately so the user flows straight into analysis
+        launchCoPilotAnalysis();
     }
 
     @Override
@@ -564,11 +561,14 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
      * Upload scan JSON to CoPilot for retrieval in future conversations.
      * Enables queries like "Compare this scan to my last scan" or "When was P0420 first detected?"
      */
-    private void uploadScanToCoPilot(ScanReport report) {
+    private void uploadScanToCoPilot(ScanReport report, ReportArtifacts artifacts) {
+        if (artifacts == null) {
+            return;
+        }
+
         new Thread(() -> {
             try {
-                ReportArtifacts artifacts = report.getArtifacts();
-                if (artifacts == null || artifacts.getJsonFile() == null) {
+                if (artifacts.getJsonFile() == null) {
                     Log.w(TAG, "No JSON file to upload for scan " + report.getScanId());
                     return;
                 }
@@ -581,7 +581,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
 
                 // Upload file to OpenAI
                 com.obddroid.features.copilot.data.AgentApiClient apiClient =
-                    new com.obddroid.features.copilot.data.AgentApiClient(this);
+                    new com.obddroid.features.copilot.data.AgentApiClient(getApplicationContext());
 
                 String fileId = apiClient.uploadFile(jsonFile, "assistants");
                 Log.i(TAG, "Uploaded scan to CoPilot: file_id=" + fileId + ", scan_id=" + report.getScanId());
@@ -593,6 +593,13 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
                 // Don't show error to user - this is a background enhancement
             }
         }).start();
+    }
+
+    private void launchCoPilotAnalysis() {
+        Intent intent = new Intent(this, CoPilotActivity.class);
+        intent.putExtra(CoPilotActivity.EXTRA_INITIAL_MESSAGE,
+            "Analyze my latest scan results and tell me what's wrong. What should I fix first?");
+        startActivity(intent);
     }
 
     @Override

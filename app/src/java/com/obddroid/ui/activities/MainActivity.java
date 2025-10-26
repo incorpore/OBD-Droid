@@ -228,6 +228,7 @@ public class MainActivity extends AppCompatActivity
     private GpsTelemetryManager gpsTelemetryManager;
     private SensorTelemetryManager sensorTelemetryManager;
     private RemoteTelemetryUiCoordinator remoteTelemetryUiCoordinator;
+    private DatabaseUpdateManager databaseUpdateManager;
     /**
      * Data list adapters
      */
@@ -994,9 +995,9 @@ public class MainActivity extends AppCompatActivity
      * Check for VIN database updates in background
      */
     private void checkForDatabaseUpdates() {
-        DatabaseUpdateManager updateManager = new DatabaseUpdateManager(this);
+        databaseUpdateManager = new DatabaseUpdateManager(this);
 
-        updateManager.checkForUpdates(new DatabaseUpdateManager.UpdateCallback() {
+        databaseUpdateManager.checkForUpdates(new DatabaseUpdateManager.UpdateCallback() {
             @Override
             public void onUpdateStarted() {
                 Log.d(TAG, "VIN database update started (background)");
@@ -1015,7 +1016,12 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onUpdateSuccess(String newVersion) {
                 Log.d(TAG, "✓ VIN database updated successfully to version: " + newVersion);
-                // Optionally show a subtle notification to user
+
+                // Reload the database in the VIN decoder
+                VehicleManager vehicleManager = VehicleManager.getInstance();
+                if (vehicleManager != null) {
+                    vehicleManager.reloadVinDatabase();
+                }
             }
 
             @Override
@@ -1026,7 +1032,7 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onUpdateNotNeeded() {
-                int daysSince = updateManager.getDaysSinceUpdate();
+                int daysSince = databaseUpdateManager.getDaysSinceUpdate();
                 if (daysSince >= 0) {
                     Log.d(TAG, String.format("VIN database is current (updated %d days ago)", daysSince));
                 } else {
@@ -1058,6 +1064,11 @@ public class MainActivity extends AppCompatActivity
         removeDataListeners();
         // don't listen to ELM property changes any more
         CommService.elm.removePropertyChangeListener(this);
+
+        // Shutdown database update manager
+        if (databaseUpdateManager != null) {
+            databaseUpdateManager.shutdown();
+        }
 
         // stop demo service if it was started
         setMode(MODE.OFFLINE);

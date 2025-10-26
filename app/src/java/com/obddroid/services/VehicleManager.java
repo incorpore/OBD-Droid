@@ -716,4 +716,15 @@ public class VehicleManager {
                make.contains("genesis") || make.contains("alfa romeo") ||
                make.contains("volvo");
     }
+
+    /**
+     * Reload VIN database after automatic update
+     * Called by DatabaseUpdateManager after successful update
+     */
+    public void reloadVinDatabase() {
+        if (vinDecoder != null) {
+            Log.d(TAG, "Reloading VIN database in VehicleManager");
+            vinDecoder.reloadDatabase();
+        }
+    }
 }
