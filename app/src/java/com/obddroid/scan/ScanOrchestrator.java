@@ -16,9 +16,14 @@ import androidx.core.app.NotificationCompat;
 
 import com.obddroid.R;
 import com.obddroid.core.obd.ElmProt;
+import com.obddroid.scan.stages.ComponentTestStage;
 import com.obddroid.scan.stages.DiscoverySnapshotStage;
 import com.obddroid.scan.stages.FaultCodeStage;
+import com.obddroid.scan.stages.FreezeFrameStage;
 import com.obddroid.scan.stages.LiveDataStage;
+import com.obddroid.scan.stages.MonitorTestStage;
+import com.obddroid.scan.stages.PendingDtcStage;
+import com.obddroid.scan.stages.PermanentDtcStage;
 import com.obddroid.scan.stages.VehicleInfoStage;
 import com.obddroid.services.CommService;
 import com.obddroid.ui.activities.MainActivity;
@@ -190,9 +195,13 @@ public class ScanOrchestrator extends Service {
         List<ScanStage> stages = new ArrayList<>();
         stages.add(new DiscoverySnapshotStage());
         stages.add(new VehicleInfoStage());
-        stages.add(new FaultCodeStage());
         stages.add(new LiveDataStage());
-        // Add more stages here as needed (freeze frame, monitors, etc.)
+        stages.add(new FaultCodeStage());
+        stages.add(new PendingDtcStage());
+        stages.add(new PermanentDtcStage());
+        stages.add(new FreezeFrameStage());
+        stages.add(new MonitorTestStage());
+        stages.add(new ComponentTestStage());
         return stages;
     }
 

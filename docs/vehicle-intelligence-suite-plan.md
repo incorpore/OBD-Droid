@@ -230,12 +230,19 @@ and even launch commands.
 7. `CoPilotTtsManager` – Text-to-speech integration
 8. `CoPilotSettings` – Preferences for CoPilot features
 
-❌ **Missing:**
-1. `VoiceService` – Wake word, mic capture, push-to-talk (not implemented)
-2. `ConversationStore` – Rolling history with summarization
-3. Agent API / Conversations API integration
-4. WebRTC for GPT-4o realtime voice
-5. Security layer for wake-word consent
+❌ **Missing (High Priority - Agents API Migration):**
+1. **`AgentApiClient`** – Core Assistants API integration (threads, runs, polling)
+2. **`AgentToolRegistry`** – Tool definitions with JSON schemas
+3. **`AgentThreadManager`** – Thread lifecycle + VIN-based persistence
+4. **`AgentRunPoller`** – Async run status polling with tool execution
+5. **Tool Handlers** – RunFullScanTool, ClearCodesTool, AnalyzeDtcsTool, etc.
+6. **Thread UI** – View/delete conversations, privacy controls
+7. **Migration Logic** – Transition from Chat Completions to Agents API
+
+❌ **Missing (Lower Priority - Voice Features):**
+1. `VoiceService` – Wake word, mic capture, push-to-talk
+2. WebRTC for GPT-4o realtime voice
+3. Security layer for wake-word consent
 
 ### Roadmap Snapshot
 
@@ -257,20 +264,295 @@ and even launch commands.
 - Provide disclaimers when summarising AI analysis to avoid overstating
   certainty.
 
-### Agent API & Conversation Memory Strategy
+### Agent API Architecture (Core AI Strategy)
 
-- Introduce OpenAI’s **Conversations API** for durable CoPilot threads. Store
-  the `conversation_id` alongside each discovery session so reconnecting to the
-  same VIN revives prior context automatically.
-- When Conversations API is unavailable, fall back to `previous_response_id`
-  threading but enforce summarisation to stay within model context windows.
-- Register CoPilot commands as structured tools (JSON schema) in the Agent API
-  so the model can call `runFullScan`, `openScreen`, `exportReport`, or escalate
-  to a human with explicit confirmation gates.
-- Capture tool invocations and responses in `logs/copilot/<session>.jsonl` for
-  auditing and evaluation.
-- Provide UI controls to purge, export, or transfer conversations for privacy
-  compliance.
+**Decision:** OBD-Droid uses OpenAI's **Assistants/Agents API** as the foundational AI layer for all intelligent features (CoPilot, Diagnostic Analyzer, scan interpretation).
+
+#### Why Agents API?
+
+✅ **Persistent Conversations**: Server-side threads survive app restarts, perfect for multi-day diagnostics
+✅ **Built-in Tool Calling**: Native function execution with JSON schemas (no manual parsing)
+✅ **File Attachments**: Upload complete scan reports (JSON/Markdown) for contextual analysis
+✅ **Automatic Context Management**: No manual token trimming or summarization needed
+✅ **Multi-Scan Analysis**: "Compare this scan to last week" with retrieval
+✅ **Dealer/Shop Mode**: Shared threads by VIN for collaborative diagnosis
+
+#### Architecture Flow
+
+```
+App Initialization
+    ↓
+Create OBD-Droid Assistant (one-time)
+    ├─ Define personality: "Expert automotive diagnostic AI"
+    ├─ Register tools: runFullScan, getCodes, clearCodes, analyzeScan, etc.
+    └─ Enable file_search for scan history retrieval
+    ↓
+User Connects to Vehicle (DiscoveryManager active)
+    ↓
+Create Thread (per VIN or session)
+    ├─ thread_id stored with discovery session
+    ├─ Attach latest scan report as file
+    └─ Thread metadata: {vin, make, model, session_id}
+    ↓
+User: "What's wrong with this truck?"
+    ↓
+Add Message to Thread
+    ↓
+Create Run with tool_choice: auto
+    ↓
+Poll Run Status
+    ├─ requires_action? → Execute tool(s) → Submit outputs
+    ├─ completed? → Retrieve assistant messages
+    ├─ failed? → Handle error, log, retry
+    └─ in_progress? → Continue polling
+    ↓
+Display Response with Streaming (optional)
+```
+
+#### Registered Tools (JSON Schemas)
+
+**1. run_full_scan**
+```json
+{
+  "type": "function",
+  "function": {
+    "name": "run_full_scan",
+    "description": "Execute comprehensive OBD diagnostic scan: DTCs, live data, freeze frames, monitors",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "include_live_data": {"type": "boolean", "description": "Capture Mode 01 PIDs"},
+        "include_freeze_frames": {"type": "boolean", "description": "Capture Mode 02 frames"}
+      }
+    }
+  }
+}
+```
+
+**2. get_scan_results**
+```json
+{
+  "type": "function",
+  "function": {
+    "name": "get_scan_results",
+    "description": "Retrieve latest scan results or specific scan by ID",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "scan_id": {"type": "string", "description": "Optional: specific scan ID"}
+      }
+    }
+  }
+}
+```
+
+**3. clear_fault_codes**
+```json
+{
+  "type": "function",
+  "function": {
+    "name": "clear_fault_codes",
+    "description": "Clear diagnostic trouble codes (requires user confirmation)",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "confirm": {"type": "boolean", "description": "User must confirm destructive action"}
+      },
+      "required": ["confirm"]
+    }
+  }
+}
+```
+
+**4. analyze_dtcs**
+```json
+{
+  "type": "function",
+  "function": {
+    "name": "analyze_dtcs",
+    "description": "Perform AI diagnostic analysis on fault codes with repair recommendations",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "include_cost_estimate": {"type": "boolean"},
+        "detail_level": {"type": "string", "enum": ["quick", "detailed", "comprehensive"]}
+      }
+    }
+  }
+}
+```
+
+**5. export_report**
+```json
+{
+  "type": "function",
+  "function": {
+    "name": "export_report",
+    "description": "Generate and share scan report (Markdown/JSON/ZIP)",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "format": {"type": "string", "enum": ["markdown", "json", "zip"]},
+        "include_ai_analysis": {"type": "boolean"}
+      }
+    }
+  }
+}
+```
+
+#### Thread Management
+
+- **Thread Creation**: One thread per vehicle session (keyed by VIN or session_id)
+- **Thread Persistence**: `thread_id` stored in `SharedPreferences` or SQLite
+- **Thread Metadata**:
+  ```json
+  {
+    "vin": "1N6AD0EV1HN778459",
+    "make": "NISSAN",
+    "model": "Frontier",
+    "year": 2017,
+    "session_id": "20251025_183245",
+    "scan_count": 3
+  }
+  ```
+- **Thread Lifecycle**:
+  - Create when CoPilot first accessed for a vehicle
+  - Resume when reconnecting to same VIN
+  - Archive after 30 days of inactivity
+  - Delete on user request (privacy)
+
+#### File Upload Strategy
+
+**Scan Reports as Files:**
+```java
+// After scan completes
+File scanJson = report.getArtifacts().getJsonFile();
+agentApiClient.uploadFileToThread(threadId, scanJson, "scan_report.json");
+
+// Enable retrieval
+assistant.setTools([
+  {type: "file_search"},  // Search uploaded files
+  {type: "function", ...} // Tool functions
+]);
+```
+
+**Benefits:**
+- Assistant can search scan history: "When was P0420 first detected?"
+- Compare scans: "Is the misfire count increasing?"
+- Reference freeze frames without bloating context
+
+#### Conversation Persistence
+
+- **Server-Side Storage**: Threads stored at OpenAI (persistent across devices)
+- **Local Cache**: Mirror thread messages locally for offline viewing
+- **Privacy Controls**:
+  - UI to list all active threads
+  - "Delete Conversation" button per thread
+  - "Delete All My Data" in settings
+  - Export thread as JSON for backup
+
+#### Tool Execution Flow
+
+```
+1. User: "Run a scan and tell me what's wrong"
+   ↓
+2. Assistant decides to call run_full_scan(include_live_data=true)
+   ↓
+3. Run.status = "requires_action"
+   ↓
+4. App receives tool_calls array
+   ↓
+5. CoPilotCommandBridge.execute("run_full_scan", params)
+   ↓
+6. ScanOrchestrator.startScan() executes
+   ↓
+7. Wait for completion (with progress updates)
+   ↓
+8. Submit tool_outputs: {scan_id, dtcs: [...], summary: "..."}
+   ↓
+9. Continue Run
+   ↓
+10. Assistant processes results, formulates response
+   ↓
+11. Display: "Found 2 codes: P0420 (catalyst efficiency) and P0171 (lean mixture)..."
+```
+
+#### Cost Analysis (Agents API)
+
+**Typical 10-message conversation:**
+- Input tokens: ~3K (less context needed with threads)
+- Output tokens: ~2K
+- Tool calls: 2-3 per conversation
+- Thread storage: ~10KB @ $0.10/GB/day = $0.001/day
+- **Total: ~$0.15 + $0.03/month storage**
+
+**vs. Chat Completions (current):**
+- Input tokens: ~5K (must include full context each time)
+- Output tokens: ~2K
+- No persistence (lost on restart)
+- **Total: ~$0.21 per conversation**
+
+**Verdict:** Agents API is cheaper for long conversations + adds persistence value.
+
+#### Privacy & Compliance
+
+⚠️ **User Consent Required:**
+- Conversations stored on OpenAI servers (not just during active chat)
+- Clear disclosure in privacy policy
+- Opt-in consent dialog on first use
+- "What data is sent?" explanation
+
+✅ **Privacy Controls:**
+- View all stored threads
+- Delete specific conversations
+- Export thread data (GDPR compliance)
+- "Delete All My Data" option
+- VIN redaction option (use session_id instead)
+
+#### Implementation Components
+
+**New Classes:**
+```java
+// Core Agent API client
+app/src/java/com/obddroid/copilot/
+├── AgentApiClient.java              // Assistant/Thread/Run management
+├── AgentToolRegistry.java           // Tool definitions + execution
+├── AgentThreadManager.java          // Thread lifecycle + persistence
+└── AgentRunPoller.java              // Async run status polling
+
+// Tool execution handlers
+app/src/java/com/obddroid/copilot/tools/
+├── RunFullScanTool.java
+├── GetScanResultsTool.java
+├── ClearCodesTool.java
+├── AnalyzeDtcsTool.java
+└── ExportReportTool.java
+```
+
+**Modified Classes:**
+```java
+CoPilotController.java               // Switch from Chat Completions to Agents
+CoPilotSettings.java                 // Add thread management settings
+CoPilotLogger.java                   // Log tool calls + run events
+```
+
+#### Migration from Chat Completions
+
+**Current State:**
+- Using `OpenAiService.completeChat()`
+- Manual context building with `CoPilotPromptBuilder`
+- Local conversation history in `CoPilotSession`
+
+**Migration Path:**
+1. Keep `OpenAiService` for one-off AI analysis (non-conversational)
+2. Switch `CoPilotController` to use `AgentApiClient`
+3. Migrate existing conversation history to first thread message
+4. Tool definitions replace `CoPilotCommandBridge` manual parsing
+
+**Backward Compatibility:**
+- Users without OpenAI API key: Disable CoPilot
+- Offline mode: Show cached thread messages (read-only)
+- API errors: Graceful fallback with error message
 
 ### Realtime Voice Architecture Plan
 
@@ -383,11 +665,32 @@ and even launch commands.
 3. **Add privacy warning UI** before enabling AI
 4. **Write unit tests** for common DTC scenarios (misfire, EVAP, O2 sensor)
 
-### Phase 3: Agent API Integration (1-2 weeks)
-1. Integrate OpenAI Conversations API for persistent CoPilot memory
-2. Persist `conversation_id` with discovery session
-3. Implement conversation summarization for token efficiency
-4. Build purge/export UI for conversation data
+### Phase 3: Agents API Migration (2-3 weeks) - **CRITICAL**
+1. **Build AgentApiClient infrastructure:**
+   - Create/load Assistant on app init
+   - Thread creation and management
+   - Run creation and polling loop
+   - Tool execution dispatcher
+2. **Register tool schemas:**
+   - run_full_scan, get_scan_results, clear_fault_codes
+   - analyze_dtcs, export_report, open_screen
+   - Tool handler implementations
+3. **Thread persistence:**
+   - Store thread_id per VIN/session
+   - Thread metadata (make, model, year, scan_count)
+   - Resume threads on reconnect
+4. **File upload integration:**
+   - Upload scan reports (JSON) after completion
+   - Enable file_search tool
+5. **Privacy controls:**
+   - Thread list UI
+   - Delete conversation button
+   - "Delete All My Data" option
+   - Consent dialog on first use
+6. **Migrate CoPilotController:**
+   - Replace Chat Completions calls with Agents API
+   - Keep OpenAiService for non-conversational AI (DiagnosticAnalyzer)
+   - Handle async run polling gracefully
 
 ### Phase 4: Voice Pilot (Optional, 3-4 weeks)
 1. Implement wake word detection ("OBD Droid")
@@ -400,16 +703,21 @@ and even launch commands.
 ## 📊 Priority Matrix
 
 ### 🔴 HIGH PRIORITY (Blocking MVP)
-1. Add missing stages: Mode 02/07/0A
-2. UI for viewing/sharing scan reports
-3. Integrate AI analysis post-scan
-4. AI settings UI with cost controls
+1. **Agents API Migration** - Switch CoPilot to Assistants API (2-3 weeks)
+   - AgentApiClient + Thread management
+   - Tool registration and execution
+   - File upload for scan reports
+   - Privacy controls
+2. Add missing stages: Mode 02/07/0A
+3. UI for viewing/sharing scan reports
+4. Integrate AI analysis post-scan
+5. AI settings UI with cost controls
 
 ### 🟡 MEDIUM PRIORITY (Post-MVP)
 1. Modes 05/06 (O2/Monitor tests)
 2. Mode 08 (Component tests)
-3. Agent API / Conversations API integration
-4. Unit tests for AI analyzer
+3. Unit tests for AI analyzer
+4. Advanced tool features (chain commands, multi-scan analysis)
 
 ### 🟢 LOW PRIORITY (Future Enhancements)
 1. Wake word detection

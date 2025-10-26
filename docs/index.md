@@ -45,9 +45,8 @@ Professional-grade diagnostic tools and multi-ECU support:
 
 AI-powered diagnostic assistance and intelligent scanning:
 
-- **[vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md)** – Unified vision for scan orchestrator, analyzer, and CoPilot AI
+- **[vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md)** – Unified plan with implementation status, Agents API architecture, and roadmap
 - **[copilot-redesign-summary.md](./copilot-redesign-summary.md)** – World-class CoPilot UX redesign and implementation summary
-- **[agent-api-integration-analysis.md](./agent-api-integration-analysis.md)** – Evaluation of OpenAI Agent API vs Chat Completions API
 
 ---
 
@@ -110,8 +109,7 @@ docs/
 │
 ├── AI & Intelligence
 │   ├── vehicle-intelligence-suite-plan.md
-│   ├── copilot-redesign-summary.md
-│   └── agent-api-integration-analysis.md
+│   └── copilot-redesign-summary.md
 │
 └── Launch & Growth
     ├── launch-plan.md
