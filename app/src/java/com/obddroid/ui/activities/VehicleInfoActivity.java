@@ -88,6 +88,10 @@ public class VehicleInfoActivity extends AppCompatActivity {
         if (item.getItemId() == android.R.id.home) {
             onBackPressed();
             return true;
+        } else if (item.getItemId() == R.id.action_refresh_vehicle_info) {
+            loadVehicleData();
+            showSnackbar("Vehicle data refreshed", SnackbarHelper.MessageType.SUCCESS);
+            return true;
         } else if (item.getItemId() == R.id.action_save_vehicle_info) {
             showSaveReportDialog();
             return true;
