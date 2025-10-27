@@ -38,6 +38,8 @@ public class CorgiVINDecoder {
         public String make;
         public String model;
         public String modelYear;
+        public String series;
+        public String trim;
         public String bodyClass;
         public String bodyStyle;
         public String driveType;
@@ -45,11 +47,19 @@ public class CorgiVINDecoder {
         public String fuelTypePrimary;
         public String engineConfiguration;
         public String transmission;
+        public String transmissionStyle;
+        public String transmissionSpeeds;
         public String vehicleType;
         public String manufacturer;
         public String plantCountry;
         public String displacementL;
+        public String displacementCC;
         public String engineCylinders;
+        public String engineModel;
+        public String doors;
+        public String wheelBase;
+        public String gvwr;
+        public String curbWeight;
         public boolean valid;
         public String errorMessage;
 
@@ -228,14 +238,15 @@ public class CorgiVINDecoder {
             if (cursor.moveToFirst()) {
                 int schemaId = cursor.getInt(0);
                 String schemaName = cursor.getString(1);
-
-                // Extract model from schema name if possible
-                if (schemaName != null && info.model == null) {
-                    extractModelFromSchema(schemaName, info);
-                }
+                Log.d(TAG, "Found VIN schema: " + schemaName + " (ID: " + schemaId + ")");
 
                 // Query patterns for detailed attributes
                 queryPatternAttributes(schemaId, vin, info);
+
+                // Fallback: Extract model from schema name only if pattern query didn't find it
+                if (info.model == null && schemaName != null) {
+                    extractModelFromSchema(schemaName, info);
+                }
             }
         } catch (Exception e) {
             Log.w(TAG, "Error querying schema: " + e.getMessage());
@@ -263,18 +274,45 @@ public class CorgiVINDecoder {
      * Query pattern attributes for body class, drivetrain, etc.
      */
     private void queryPatternAttributes(int schemaId, String vin, VehicleInfo info) {
-        // Query for body and drivetrain
-        queryAttribute(schemaId, vin, "BodyStyle", s -> info.bodyStyle = s);
-        queryAttribute(schemaId, vin, "DriveType", s -> info.driveType = s);
-        queryAttribute(schemaId, vin, "VehicleType", s -> info.vehicleType = s);
-        queryAttribute(schemaId, vin, "Transmission", s -> info.transmission = s);
+        // Query Model first (ElementId = 28) - this is the most important
+        queryPatternByElement(schemaId, vin, 28, "Model", s -> info.model = s);
 
-        // Query for engine attributes
+        // Query identification fields
+        queryPatternByElement(schemaId, vin, 34, "Series", s -> info.series = s); // Element 34 = Series
+        queryPatternByElement(schemaId, vin, 38, "Trim", s -> info.trim = s); // Element 38 = Trim
+
+        // Query vehicle classification attributes
+        queryPatternByElement(schemaId, vin, 5, "BodyClass", s -> info.bodyClass = s);
+        queryAttribute(schemaId, vin, "BodyStyle", s -> info.bodyStyle = s);
+        queryAttribute(schemaId, vin, "VehicleType", s -> info.vehicleType = s);
+        queryAttributeByElementId(schemaId, vin, 14, s -> info.doors = s); // Element 14 = Doors
+        queryAttributeByElementId(schemaId, vin, 109, s -> info.wheelBase = s); // Element 109 = Wheelbase Type
+
+        // Query drivetrain and transmission
+        queryAttribute(schemaId, vin, "DriveType", s -> info.driveType = s);
+        queryPatternByElement(schemaId, vin, 37, "Transmission", s -> info.transmissionStyle = s); // Element 37 = Transmission Style
+        queryAttributeByElementId(schemaId, vin, 63, s -> info.transmissionSpeeds = s); // Element 63 = Transmission Speeds
+
+        // Query engine attributes
+        queryPatternByElement(schemaId, vin, 18, "EngineModel", s -> info.engineModel = s); // Element 18 = Engine Model
         queryAttribute(schemaId, vin, "FuelType", s -> info.fuelType = s);
-        queryAttributeByElementId(schemaId, vin, 24, s -> info.fuelTypePrimary = s); // Element 24 = FuelTypePrimary
-        queryAttribute(schemaId, vin, "EngineConfiguration", s -> info.engineConfiguration = s);
-        queryAttributeByElementId(schemaId, vin, 13, s -> info.displacementL = s); // Element 13 = DisplacementL
-        queryAttributeByElementId(schemaId, vin, 9, s -> info.engineCylinders = s); // Element 9 = EngineCylinders
+        queryPatternByElement(schemaId, vin, 24, "FuelType", s -> info.fuelTypePrimary = s); // FuelTypePrimary
+        queryPatternByElement(schemaId, vin, 64, "EngineConfiguration", s -> info.engineConfiguration = s); // Element 64
+
+        // Displacement and cylinders are raw values (not lookup tables)
+        queryAttributeByElementId(schemaId, vin, 13, s -> info.displacementL = s); // Displacement L
+        queryAttributeByElementId(schemaId, vin, 12, s -> info.displacementCC = s); // Displacement CC
+        queryAttributeByElementId(schemaId, vin, 9, s -> info.engineCylinders = s); // Engine Cylinders
+
+        // Weight specifications
+        queryPatternByElement(schemaId, vin, 58, "GrossVehicleWeightRating", s -> info.gvwr = s); // Element 58 = GVWR
+
+        queryPatternByElement(schemaId, vin, 62, "ValvetrainDesign", s -> {
+            // Store valvetrain if we don't have engine config yet
+            if (info.engineConfiguration == null) {
+                info.engineConfiguration = s;
+            }
+        });
     }
 
     /**
@@ -306,6 +344,36 @@ public class CorgiVINDecoder {
     }
 
     /**
+     * Query pattern by Element ID with lookup table join
+     * This queries the Pattern table and joins to the attribute table (Model, BodyClass, etc.)
+     */
+    private void queryPatternByElement(int schemaId, String vin, int elementId, String tableName, AttributeSetter setter) {
+        String query = "SELECT a.Name " +
+                      "FROM Pattern p " +
+                      "JOIN " + tableName + " a ON CAST(p.AttributeId AS INTEGER) = a.Id " +
+                      "WHERE p.VinSchemaId = ? " +
+                      "AND p.ElementId = ? " +
+                      "AND p.Keys = ? " +
+                      "LIMIT 1";
+
+        String[] positions = extractVinPositions(vin);
+
+        for (String pos : positions) {
+            try (Cursor cursor = database.rawQuery(query,
+                    new String[]{String.valueOf(schemaId), String.valueOf(elementId), pos})) {
+                if (cursor.moveToFirst()) {
+                    String value = cursor.getString(0);
+                    Log.d(TAG, "✓ Pattern match: Element=" + tableName + ", Keys=" + pos + ", Value=" + value);
+                    setter.set(value);
+                    return; // Found it
+                }
+            } catch (Exception e) {
+                // Continue trying other positions or table doesn't exist
+            }
+        }
+    }
+
+    /**
      * Query attribute by Element ID (for elements that don't have lookup tables)
      */
     private void queryAttributeByElementId(int schemaId, String vin, int elementId, AttributeSetter setter) {
@@ -332,16 +400,20 @@ public class CorgiVINDecoder {
     }
 
     /**
-     * Extract various VIN position patterns
+     * Extract various VIN position patterns to try matching against database
+     * The database uses different key formats (e.g., "DA5H", "DA7F", etc.)
      */
     private String[] extractVinPositions(String vin) {
         return new String[]{
-            vin.substring(3, 6),   // Positions 4-6
+            vin.substring(3, 7),   // Positions 4-7 (most common for model: "DA5H")
             vin.substring(3, 8),   // Positions 4-8
-            vin.substring(4, 6),   // Positions 5-6
+            vin.substring(3, 6),   // Positions 4-6
             vin.substring(4, 8),   // Positions 5-8
-            String.valueOf(vin.charAt(6)), // Position 7
-            String.valueOf(vin.charAt(7)), // Position 8
+            vin.substring(4, 7),   // Positions 5-7
+            vin.substring(4, 6),   // Positions 5-6
+            vin.substring(5, 8),   // Positions 6-8
+            String.valueOf(vin.charAt(6)), // Position 7 only
+            String.valueOf(vin.charAt(7)), // Position 8 only
         };
     }
 

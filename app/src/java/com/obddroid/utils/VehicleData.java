@@ -219,6 +219,8 @@ public class VehicleData {
         data.make = info.make;
         data.model = info.model;
         data.modelYear = info.modelYear;
+        data.series = info.series;
+        data.trim = info.trim;
         data.bodyClass = info.bodyClass != null ? info.bodyClass : info.bodyStyle;
         data.bodyStyle = info.bodyStyle;
         data.vehicleType = info.vehicleType;
@@ -229,8 +231,16 @@ public class VehicleData {
         data.fuelTypePrimary = info.fuelTypePrimary;
         data.engineConfiguration = info.engineConfiguration;
         data.transmission = info.transmission;
+        data.transmissionStyle = info.transmissionStyle;
+        data.transmissionSpeeds = info.transmissionSpeeds;
         data.displacementL = info.displacementL;
+        data.displacementCC = info.displacementCC;
         data.engineCylinders = info.engineCylinders;
+        data.engineModel = info.engineModel;
+        data.doors = info.doors;
+        data.wheelBase = info.wheelBase;
+        data.gvwr = info.gvwr;
+        data.curbWeight = info.curbWeight;
         data.valid = info.valid;
         data.errorMessage = info.errorMessage;
         return data;
