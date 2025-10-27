@@ -9,18 +9,25 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Simple VIN Decoder using Corgi's complete offline vPIC database
+ * Hybrid VIN Decoder - Online-first with Offline Fallback
  *
- * Provides dealer-grade VIN decoding with 140+ fields - all offline!
- * No internet connection required.
+ * Strategy:
+ * 1. Try NHTSA API first (when internet available) - most complete data
+ * 2. Fall back to offline vPIC database if online fails
+ * 3. Mark fields that require internet when using offline mode
  *
- * Powered by Corgi (@cardog/corgi) - 66MB vPIC database
+ * Powered by:
+ * - Primary: NHTSA vPIC API (online)
+ * - Fallback: Corgi (@cardog/corgi) - 66MB vPIC database (offline)
+ *
+ * @author Wal33D <aquataze@yahoo.com>
  */
 public class EnhancedVINDecoder {
 
     private static final String TAG = "EnhancedVINDecoder";
 
-    private final CorgiVINDecoder decoder;
+    private final NhtsaVINDecoder onlineDecoder;
+    private final CorgiVINDecoder offlineDecoder;
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -30,23 +37,25 @@ public class EnhancedVINDecoder {
     }
 
     public EnhancedVINDecoder(Context context) {
-        this.decoder = new CorgiVINDecoder(context);
-        Log.d(TAG, "✓ Corgi VIN Decoder initialized - Full offline vPIC database loaded");
+        this.onlineDecoder = new NhtsaVINDecoder(context);
+        this.offlineDecoder = new CorgiVINDecoder(context);
+        Log.d(TAG, "✓ Hybrid VIN Decoder initialized (Online + Offline)");
     }
 
     /**
      * Decode VIN asynchronously
+     * Tries online first, falls back to offline if needed
      */
     public void decodeAsync(String vin, DecodeCallback callback) {
         executor.execute(() -> {
             try {
                 Log.d(TAG, "Decoding VIN: " + vin);
 
-                CorgiVINDecoder.VehicleInfo info = decoder.decode(vin);
-                VehicleData vehicleData = VehicleData.fromCorgiInfo(info);
+                VehicleData vehicleData = decodeHybrid(vin);
 
                 if (vehicleData.isValid()) {
-                    Log.d(TAG, String.format("✓ Decoded: %s %s %s",
+                    Log.d(TAG, String.format("✓ Decoded (%s): %s %s %s",
+                            vehicleData.dataSource,
                             vehicleData.getModelYear(),
                             vehicleData.getMake(),
                             vehicleData.getModel()));
@@ -72,31 +81,84 @@ public class EnhancedVINDecoder {
 
     /**
      * Decode VIN synchronously
+     * Tries online first, falls back to offline if needed
      */
     public VehicleData decode(String vin) {
-        CorgiVINDecoder.VehicleInfo info = decoder.decode(vin);
-        return VehicleData.fromCorgiInfo(info);
+        return decodeHybrid(vin);
     }
 
     /**
-     * Get manufacturer name from VIN (fast)
+     * Hybrid decode strategy
+     */
+    private VehicleData decodeHybrid(String vin) {
+        // Try online first
+        VehicleData onlineData = onlineDecoder.decode(vin);
+        if (onlineData != null && onlineData.isValid()) {
+            Log.d(TAG, "✓ Using online data from NHTSA API");
+            return onlineData;
+        }
+
+        // Fall back to offline
+        Log.d(TAG, "Online decode failed, falling back to offline database");
+        CorgiVINDecoder.VehicleInfo info = offlineDecoder.decode(vin);
+        VehicleData offlineData = VehicleData.fromCorgiInfo(info);
+        offlineData.dataSource = "Offline Database";
+
+        // Add indicators for missing fields
+        if (offlineData.isValid()) {
+            addOfflineIndicators(offlineData);
+        }
+
+        return offlineData;
+    }
+
+    /**
+     * Add "Requires internet" indicators for fields not available offline
+     */
+    private void addOfflineIndicators(VehicleData data) {
+        // Fields that are typically missing in offline mode
+        if (data.engineCylinders == null || data.engineCylinders.isEmpty()) {
+            data.engineCylinders = "Requires internet";
+        }
+        if (data.displacementCC == null || data.displacementCC.isEmpty()) {
+            data.displacementCC = "Requires internet";
+        }
+        if (data.driveType == null || data.driveType.isEmpty()) {
+            data.driveType = "Requires internet";
+        }
+        if (data.transmissionStyle == null || data.transmissionStyle.isEmpty()) {
+            data.transmissionStyle = "Requires internet";
+        }
+        if (data.transmissionSpeeds == null || data.transmissionSpeeds.isEmpty()) {
+            data.transmissionSpeeds = "Requires internet";
+        }
+        if (data.wheelBase == null || data.wheelBase.isEmpty()) {
+            data.wheelBase = "Requires internet";
+        }
+        if (data.plantCity == null || data.plantCity.isEmpty()) {
+            data.plantCity = "Requires internet";
+        }
+    }
+
+    /**
+     * Get manufacturer name from VIN (fast, offline only)
      */
     public String getManufacturer(String vin) {
-        return decoder.getManufacturer(vin);
+        return offlineDecoder.getManufacturer(vin);
     }
 
     /**
-     * Get make name from VIN (fast)
+     * Get make name from VIN (fast, offline only)
      */
     public String getMake(String vin) {
-        return decoder.getMake(vin);
+        return offlineDecoder.getMake(vin);
     }
 
     /**
      * Validate VIN format
      */
     public boolean validate(String vin) {
-        return decoder.validate(vin);
+        return offlineDecoder.validate(vin);
     }
 
     /**
@@ -104,7 +166,7 @@ public class EnhancedVINDecoder {
      */
     public void reloadDatabase() {
         Log.d(TAG, "Reloading VIN database after update");
-        decoder.reloadDatabase();
+        offlineDecoder.reloadDatabase();
     }
 
     /**
@@ -112,7 +174,7 @@ public class EnhancedVINDecoder {
      */
     public void shutdown() {
         executor.shutdown();
-        decoder.close();
+        offlineDecoder.close();
         Log.d(TAG, "VIN Decoder shutdown");
     }
 }

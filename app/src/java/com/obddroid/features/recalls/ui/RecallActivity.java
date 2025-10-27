@@ -49,7 +49,6 @@ import com.obddroid.utils.VehicleData;
  * - RecallExporter: Handles CSV/JSON export
  * - RecallActivity: UI-only logic
  *
- * @author Wal33D
  */
 public class RecallActivity extends AppCompatActivity {
 

@@ -29,7 +29,6 @@ import com.obddroid.utils.VehicleData;
  * - VIN → RecallSearchResult (persisted as JSON)
  * - Results are cached per-VIN with timestamp
  *
- * @author Wal33D
  */
 public class RecallDataManager {
 

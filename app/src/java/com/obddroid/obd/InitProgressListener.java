@@ -4,7 +4,6 @@ package com.obddroid.obd;
  * Listener interface for comprehensive initialization progress
  * Provides detailed callbacks for each phase of vehicle data initialization
  *
- * @author Wal33D
  */
 public interface InitProgressListener {
 

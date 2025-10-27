@@ -41,7 +41,6 @@ import java.util.logging.Logger;
 /**
  * Shows a {@link ListView} of available USB devices.
  *
- * @author mike wakerly (opensource@hoho.com)
  */
 public final class UsbDeviceListActivity extends AppCompatActivity
 {

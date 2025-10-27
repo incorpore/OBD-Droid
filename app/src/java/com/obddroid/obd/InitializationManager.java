@@ -9,7 +9,6 @@ import java.util.logging.Logger;
  * Manages comprehensive vehicle initialization with proper state management
  * Uses event-driven architecture instead of Thread.sleep()
  *
- * @author Wal33D
  */
 public class InitializationManager {
     private static final Logger log = Logger.getLogger(InitializationManager.class.getName());

@@ -20,7 +20,6 @@ import com.obddroid.utils.VehicleData;
  * 1. Decode VIN to get vehicle make/model/year (nhtsa-vin-decoder)
  * 2. Lookup recalls using vehicle information (nhtsa-recall-lookup)
  *
- * @author Wal33D
  */
 public class RecallService {
 

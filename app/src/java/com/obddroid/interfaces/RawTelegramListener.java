@@ -19,7 +19,6 @@ package com.obddroid.interfaces;
  *   "49 02 01 34 4A 47 44 41..."
  *   ← No ECU address!
  *
- * @author Wal33D <aquataze@yahoo.com>
  */
 public interface RawTelegramListener {
 

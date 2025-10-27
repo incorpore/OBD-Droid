@@ -12,7 +12,6 @@ import com.obddroid.utils.VehicleData;
  * Encapsulates both the vehicle information (decoded from VIN) and the
  * list of recalls found for that vehicle.
  *
- * @author Wal33D
  */
 public class RecallSearchResult {
 

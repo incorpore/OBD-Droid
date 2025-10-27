@@ -35,7 +35,6 @@ import io.github.recalllookup.core.RecallRecord;
  * - Android Q+ MediaStore API
  * - Legacy file system for older Android versions
  *
- * @author Wal33D
  */
 public class RecallExporter {
 

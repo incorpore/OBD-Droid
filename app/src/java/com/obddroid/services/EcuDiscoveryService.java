@@ -26,7 +26,6 @@ import java.util.logging.Logger;
  * 6. Restores headers to disabled state (ATH0)
  * 7. Returns results via CompletableFuture
  *
- * @author Wal33D <aquataze@yahoo.com>
  */
 public class EcuDiscoveryService implements RawTelegramListener {
     private static final String TAG = "EcuDiscoveryService";

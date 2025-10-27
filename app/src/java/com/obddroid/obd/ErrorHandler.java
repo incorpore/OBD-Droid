@@ -8,7 +8,6 @@ import java.util.logging.Logger;
  * Comprehensive error handling for OBD protocol operations
  * Provides error recovery, retry logic, and diagnostics
  *
- * @author Wal33D
  */
 public class ErrorHandler {
     private static final Logger log = Logger.getLogger(ErrorHandler.class.getName());

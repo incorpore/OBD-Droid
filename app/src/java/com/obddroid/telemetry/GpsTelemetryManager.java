@@ -22,7 +22,7 @@ import com.obddroid.ecu.Conversion;
 import com.obddroid.ecu.EcuDataItem;
 import com.obddroid.ecu.EcuDataItems;
 import com.obddroid.ecu.EcuDataPv;
-import com.obddroid.ecu.LinearConversion;
+import com.obddroid.ecu.Conversions;
 import com.obddroid.obd.ObdProt;
 import com.obddroid.ui.activities.SettingsActivity;
 
@@ -130,8 +130,8 @@ public class GpsTelemetryManager implements LocationListener {
     }
 
     private static Conversion[] createIdentityConversions(String units) {
-        Conversion metric = new LinearConversion(1, 1, 0, 0, units);
-        Conversion imperial = new LinearConversion(1, 1, 0, 0, units);
+        Conversion metric = new Conversions.Linear(1, 1, 0, 0, units);
+        Conversion imperial = new Conversions.Linear(1, 1, 0, 0, units);
         return new Conversion[]{metric, imperial};
     }
 

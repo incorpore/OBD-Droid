@@ -44,7 +44,7 @@ public class EcuConversions extends HashMap<String, Conversion[]>
 	private static final Logger log = Logger.getLogger("data.cnv");
 
 	/** DEFAULT type conversion */
-	public static final NumericConversion dfltCnv = new IntConversion();
+	public static final NumericConversion dfltCnv = new Conversions.Int();
 
 	/** code list conversion */
 	public static EcuCodeList codeList = null;
@@ -101,7 +101,7 @@ public class EcuConversions extends HashMap<String, Conversion[]>
 					if(params.length > FLD_PARAMETERS)
 					{
 						// create linear conversion (w/ dynamic parameters)
-						newCnv = new LinearConversion(Integer.parseInt(params[FLD_FACTOR]),
+						newCnv = new Conversions.Linear(Integer.parseInt(params[FLD_FACTOR]),
 													  Integer.parseInt(params[FLD_DIVIDER]),
 													  Integer.parseInt(params[FLD_OFFSET]),
 													  Integer.parseInt(params[FLD_PHOFFSET]),
@@ -111,7 +111,7 @@ public class EcuConversions extends HashMap<String, Conversion[]>
 					else
 					{
 						// create linear conversion (w/o dynamic parameter)
-						newCnv = new LinearConversion(Integer.parseInt(params[FLD_FACTOR]),
+						newCnv = new Conversions.Linear(Integer.parseInt(params[FLD_FACTOR]),
 													  Integer.parseInt(params[FLD_DIVIDER]),
 													  Integer.parseInt(params[FLD_OFFSET]),
 													  Integer.parseInt(params[FLD_PHOFFSET]),
@@ -121,7 +121,7 @@ public class EcuConversions extends HashMap<String, Conversion[]>
 				else if (params[FLD_TYPE].equals(CNV_TYPE_HASH))
 				{
 					// create HashConversion based on CSV data
-					newCnv = new HashConversion( String.valueOf(params[FLD_PARAMETERS]).split(";") );
+					newCnv = new Conversions.Hash( String.valueOf(params[FLD_PARAMETERS]).split(";") );
 				}
 				else if (params[FLD_TYPE].equals(CNV_TYPE_BITMAP))
 				{
@@ -132,15 +132,15 @@ public class EcuConversions extends HashMap<String, Conversion[]>
 					if ("TEST_STATUS_4".equals(conversionName)) {
 						// create TestStatusConversion for 4-bit offset test status
 						log.info("Creating TestStatusConversion(4, false) for TEST_STATUS_4");
-						newCnv = new TestStatusConversion(4, false);
+						newCnv = new Conversions.TestStatus(4, false);
 					} else if ("TEST_STATUS_8".equals(conversionName)) {
 						// create TestStatusConversion for 8-bit offset test status
 						log.info("Creating TestStatusConversion(8, true) for TEST_STATUS_8");
-						newCnv = new TestStatusConversion(8, true);
+						newCnv = new Conversions.TestStatus(8, true);
 					} else {
 						// create normal BitmapConversion based on CSV parameters
 						log.fine("Creating BitmapConversion for " + conversionName);
-						newCnv = new BitmapConversion( String.valueOf(params[FLD_PARAMETERS]).split(";") );
+						newCnv = new Conversions.Bitmap( String.valueOf(params[FLD_PARAMETERS]).split(";") );
 					}
 				}
 				else if (params[FLD_TYPE].equals(CNV_TYPE_CODELIST))
@@ -159,7 +159,7 @@ public class EcuConversions extends HashMap<String, Conversion[]>
 				else if (params[FLD_TYPE].equals(CNV_TYPE_VAG))
 				{
 					// create VAG conversion
-					newCnv = new VagConversion(Integer.parseInt(params[FLD_VARIANT]),
+					newCnv = new Conversions.Vag(Integer.parseInt(params[FLD_VARIANT]),
 						Double.parseDouble(params[FLD_FACTOR]) / Integer.parseInt(params[FLD_DIVIDER]),
 						Double.parseDouble(params[FLD_OFFSET]),
 						params[FLD_UNITS]);

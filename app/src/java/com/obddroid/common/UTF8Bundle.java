@@ -5,7 +5,6 @@ import java.util.ResourceBundle;
 /**
  * Wrapper class to ensure UTF8 encoding for resource bundle reading
  *
- * @author OBD-Droid
  */
 
 public class UTF8Bundle

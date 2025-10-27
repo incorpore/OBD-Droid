@@ -15,7 +15,6 @@ import java.util.List;
  * Manages persistent caching of ECU scan results tied to specific VINs.
  * Saves scan results to SharedPreferences and loads them when the same vehicle is connected.
  *
- * @author Wal33D <aquataze@yahoo.com>
  */
 public class EcuCacheManager {
     private static final String TAG = "EcuCacheManager";

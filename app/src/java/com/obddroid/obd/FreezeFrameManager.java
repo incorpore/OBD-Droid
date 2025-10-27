@@ -11,7 +11,6 @@ import java.util.logging.Logger;
  * Manages freeze frame data with proper DTC correlation
  * Understands OBD-II freeze frame structure and PID 0x02 relationships
  *
- * @author Wal33D
  */
 public class FreezeFrameManager {
     private static final Logger log = Logger.getLogger(FreezeFrameManager.class.getName());

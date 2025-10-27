@@ -35,18 +35,71 @@ public class VehicleData {
     public String displacementCC;       // Engine displacement in cubic centimeters
     public String engineCylinders;      // Number of cylinders
     public String engineModel;          // Engine model name
+    public String engineManufacturer;   // Engine manufacturer (e.g., "Daimler")
+    public String engineStrokeCycles;   // 2 or 4 stroke
+    public String engineBrakeHp;        // Horsepower
+    public String topSpeed;             // Top speed in MPH
     public String fuelTypePrimary;      // Primary fuel type
+    public String fuelDeliveryType;     // Fuel injection type
+    public String valveTrainDesign;     // DOHC, SOHC, etc.
+    public String coolingType;          // Water, Air, etc.
     public String electrificationLevel; // Hybrid/EV level
+    public String turbo;                // Turbo status (Yes/No)
+    public String axles;                // Number of axles
+
+    // Dimensions
+    public String numberOfSeats;        // Total seats
+    public String numberOfSeatRows;     // Seat rows
+    public String wheelSizeFront;       // Front wheel size (inches)
+    public String wheelSizeRear;        // Rear wheel size (inches)
+    public String numberOfWheels;       // Number of wheels
+
+    // Steering
+    public String steeringLocation;     // Left/Right-Hand Drive
 
     // Weight specifications
     public String gvwr;                 // Gross Vehicle Weight Rating
     public String curbWeight;           // Curb weight
+
+    // Safety Features - Standard
+    public String abs;                  // Anti-lock Braking System
+    public String esc;                  // Electronic Stability Control
+    public String tractionControl;      // Traction Control
+    public String dynamicBrakeSupport;  // Dynamic Brake Support
+    public String pretensioner;         // Seat belt pretensioner
+    public String seatBeltType;         // Seat belt type
+    public String otherRestraintInfo;   // Additional restraint info
+    public String frontAirBagLocations; // Front airbag locations
+    public String sideAirBagLocations;  // Side airbag locations
+    public String backupCamera;         // Backup camera
+    public String automaticCrashNotification; // ACN/AACN
+    public String daytimeRunningLight;  // DRL
+    public String semiautomaticHeadlampBeamSwitching; // Auto high beams
+    public String autoReverseSystem;    // Auto-reverse windows/sunroof
+    public String tpmsType;             // TPMS type (Direct/Indirect)
+
+    // Safety Features - Optional/Advanced
+    public String adaptiveCruiseControl; // ACC
+    public String crashImminentBraking;  // CIB
+    public String forwardCollisionWarning; // FCW
+    public String pedestrianAEB;        // Pedestrian Auto Emergency Braking
+    public String blindSpotWarning;     // BSW
+    public String laneDepartureWarning; // LDW
+    public String laneKeepingAssistance; // LKA
+    public String parkingAssist;        // Parking assist
+    public String keylessIgnition;      // Keyless ignition
+    public String adaptiveDrivingBeam;  // ADB
+    public String activeSafetyNote;     // Additional safety notes
+
+    // Pricing
+    public String basePrice;            // MSRP
 
     // Metadata
     public String vin;
     private boolean valid;
     private String errorMessage;
     private String message;  // Decode message (e.g., "Decoded offline")
+    public String dataSource;  // "NHTSA API (Online)" or "Offline Database"
 
     public VehicleData() {
         this.valid = false;
@@ -237,6 +290,8 @@ public class VehicleData {
         data.displacementCC = info.displacementCC;
         data.engineCylinders = info.engineCylinders;
         data.engineModel = info.engineModel;
+        data.engineManufacturer = info.engineManufacturer;
+        data.turbo = info.turbo;
         data.doors = info.doors;
         data.wheelBase = info.wheelBase;
         data.gvwr = info.gvwr;

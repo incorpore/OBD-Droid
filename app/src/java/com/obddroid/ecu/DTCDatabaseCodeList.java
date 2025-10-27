@@ -17,7 +17,6 @@ import java.util.Set;
  * - Manufacturer-specific definitions for 33+ brands
  * - i18n support for future translations
  *
- * @author Wal33D
  */
 public class DTCDatabaseCodeList extends ObdCodeList {
 

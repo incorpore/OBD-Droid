@@ -60,6 +60,8 @@ public class CorgiVINDecoder {
         public String wheelBase;
         public String gvwr;
         public String curbWeight;
+        public String engineManufacturer;
+        public String turbo;
         public boolean valid;
         public String errorMessage;
 
@@ -274,38 +276,40 @@ public class CorgiVINDecoder {
      * Query pattern attributes for body class, drivetrain, etc.
      */
     private void queryPatternAttributes(int schemaId, String vin, VehicleInfo info) {
-        // Query Model first (ElementId = 28) - this is the most important
+        // Query Model first (ElementId = 28) - this is the most important (needs Model table lookup)
         queryPatternByElement(schemaId, vin, 28, "Model", s -> info.model = s);
 
-        // Query identification fields
-        queryPatternByElement(schemaId, vin, 34, "Series", s -> info.series = s); // Element 34 = Series
-        queryPatternByElement(schemaId, vin, 38, "Trim", s -> info.trim = s); // Element 38 = Trim
+        // Query identification fields - these are DIRECT VALUES in AttributeId, not table lookups!
+        queryAttributeByElementId(schemaId, vin, 34, s -> info.series = s); // Element 34 = Series (direct value)
+        queryAttributeByElementId(schemaId, vin, 38, s -> info.trim = s); // Element 38 = Trim (direct value)
 
         // Query vehicle classification attributes
-        queryPatternByElement(schemaId, vin, 5, "BodyClass", s -> info.bodyClass = s);
+        queryPatternByElement(schemaId, vin, 5, "BodyClass", s -> info.bodyClass = s); // Needs BodyClass table
         queryAttribute(schemaId, vin, "BodyStyle", s -> info.bodyStyle = s);
         queryAttribute(schemaId, vin, "VehicleType", s -> info.vehicleType = s);
-        queryAttributeByElementId(schemaId, vin, 14, s -> info.doors = s); // Element 14 = Doors
-        queryAttributeByElementId(schemaId, vin, 109, s -> info.wheelBase = s); // Element 109 = Wheelbase Type
+        queryAttributeByElementId(schemaId, vin, 14, s -> info.doors = s); // Element 14 = Doors (direct value)
+        queryAttributeByElementId(schemaId, vin, 109, s -> info.wheelBase = s); // Element 109 = Wheelbase (direct value)
 
         // Query drivetrain and transmission
         queryAttribute(schemaId, vin, "DriveType", s -> info.driveType = s);
-        queryPatternByElement(schemaId, vin, 37, "Transmission", s -> info.transmissionStyle = s); // Element 37 = Transmission Style
-        queryAttributeByElementId(schemaId, vin, 63, s -> info.transmissionSpeeds = s); // Element 63 = Transmission Speeds
+        queryPatternByElement(schemaId, vin, 37, "Transmission", s -> info.transmissionStyle = s); // Needs Transmission table
+        queryAttributeByElementId(schemaId, vin, 63, s -> info.transmissionSpeeds = s); // Direct value
 
         // Query engine attributes
-        queryPatternByElement(schemaId, vin, 18, "EngineModel", s -> info.engineModel = s); // Element 18 = Engine Model
+        queryAttributeByElementId(schemaId, vin, 18, s -> info.engineModel = s); // Element 18 = Engine Model (direct value: "M276")
+        queryAttributeByElementId(schemaId, vin, 146, s -> info.engineManufacturer = s); // Element 146 = Engine Manufacturer (direct value: "Daimler")
         queryAttribute(schemaId, vin, "FuelType", s -> info.fuelType = s);
-        queryPatternByElement(schemaId, vin, 24, "FuelType", s -> info.fuelTypePrimary = s); // FuelTypePrimary
-        queryPatternByElement(schemaId, vin, 64, "EngineConfiguration", s -> info.engineConfiguration = s); // Element 64
+        queryPatternByElement(schemaId, vin, 24, "FuelType", s -> info.fuelTypePrimary = s); // Needs FuelType table
+        queryPatternByElement(schemaId, vin, 64, "EngineConfiguration", s -> info.engineConfiguration = s); // Needs EngineConfiguration table
+        queryPatternByElement(schemaId, vin, 135, "Turbo", s -> info.turbo = s); // Element 135 = Turbo
 
-        // Displacement and cylinders are raw values (not lookup tables)
+        // Displacement and cylinders are raw numeric values (not lookup tables)
         queryAttributeByElementId(schemaId, vin, 13, s -> info.displacementL = s); // Displacement L
         queryAttributeByElementId(schemaId, vin, 12, s -> info.displacementCC = s); // Displacement CC
         queryAttributeByElementId(schemaId, vin, 9, s -> info.engineCylinders = s); // Engine Cylinders
 
         // Weight specifications
-        queryPatternByElement(schemaId, vin, 58, "GrossVehicleWeightRating", s -> info.gvwr = s); // Element 58 = GVWR
+        queryPatternByElement(schemaId, vin, 25, "GrossVehicleWeightRating", s -> info.gvwr = s); // Element 25 = GVWR From
 
         queryPatternByElement(schemaId, vin, 62, "ValvetrainDesign", s -> {
             // Store valvetrain if we don't have engine config yet
