@@ -1217,37 +1217,33 @@ public class ElmProt
 								// Real Mercedes supported PIDs: 0x02,0x04,0x06,0x08,0x0A,0x14
 								handleTelegram("490055401000".toCharArray());
 							}
-							
-							// VIN from real Mercedes-Benz GLE-Class
-							handleTelegram("014".toCharArray());
-							handleTelegram("1:490201344A4744".toCharArray()); // "4JGD"
-							handleTelegram("2:41354842374A42".toCharArray()); // "A5HB7JB"
-							handleTelegram("3:31353831343434".toCharArray()); // "158144"
-							
-							// Real Mercedes Mode 9 data - PID-specific responses
-							// ECU Name: "ECM -EngineControl"
-						if (pid == 0x0A) {
-							handleTelegram("490A0145434D002D456E67696E65436F6E74726F6C0000".toCharArray());
-						}
-						// Calibration ID: "2769011200190170"
-						else if (pid == 0x04) {
-							handleTelegram("49040132373639303131323030313930313730".toCharArray());
-						}
-						// Performance Tracking data
-						else if (pid == 0x08) {
-							handleTelegram("49081410622E4C176910621704106215D8106213CD106220AE10620000000001B303070DFC106209CD1062".toCharArray());
-						}
-						// Auxiliary I/O Status
-						else if (pid == 0x14) {
-							handleTelegram("4914010018".toCharArray());
-						}
-						// Default CAL-ID for other requests
-						else {
-							handleTelegram("0:490402475350".toCharArray());
-						}
-																																										
-							// CVN (Calibration Verification Number) from Mercedes logs
-							handleTelegram("490601EB854939".toCharArray());
+							// VIN from real Mercedes-Benz GLE-Class (PID 0x02)
+							else if (pid == 0x02) {
+								handleTelegram("014".toCharArray());
+								handleTelegram("1:490201344A4744".toCharArray()); // "4JGD"
+								handleTelegram("2:41354842374A42".toCharArray()); // "A5HB7JB"
+								handleTelegram("3:31353831343434".toCharArray()); // "158144"
+							}
+							// Calibration ID: "2769011200190170" (PID 0x04)
+							else if (pid == 0x04) {
+								handleTelegram("49040132373639303131323030313930313730".toCharArray());
+							}
+							// CVN (Calibration Verification Number) from Mercedes logs (PID 0x06)
+							else if (pid == 0x06) {
+								handleTelegram("490601EB854939".toCharArray());
+							}
+							// Performance Tracking data (PID 0x08)
+							else if (pid == 0x08) {
+								handleTelegram("49081410622E4C176910621704106215D8106213CD106220AE10620000000001B303070DFC106209CD1062".toCharArray());
+							}
+							// ECU Name: "ECM -EngineControl" (PID 0x0A)
+							else if (pid == 0x0A) {
+								handleTelegram("490A0145434D002D456E67696E65436F6E74726F6C0000".toCharArray());
+							}
+							// Auxiliary I/O Status (PID 0x14)
+							else if (pid == 0x14) {
+								handleTelegram("4914010018".toCharArray());
+							}
 							break;
 						
 						case OBD_SVC_CTRL_MODE:
