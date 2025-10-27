@@ -167,7 +167,7 @@
         <activity
             android:name="com.obddroid.features.copilot.ui.ThreadManagerActivity"
             android:label="Conversation History"
-            android:theme="@style/AppTheme.MaterialComponents"
+            android:theme="@style/AppTheme.MaterialComponents.NoActionBar"
             android:configChanges="touchscreen|orientation|screenSize"
             android:parentActivityName="com.obddroid.ui.activities.MainActivity"
             android:exported="false" />
