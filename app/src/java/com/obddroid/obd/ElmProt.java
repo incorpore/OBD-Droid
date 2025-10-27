@@ -1040,6 +1040,8 @@ public class ElmProt
 	public static boolean runDemo;
 	// flag to track if demo codes have been cleared
 	private static boolean demoCodesCleared = false;
+	// flag to track if headers are enabled in demo mode
+	private static boolean demoHeadersEnabled = false;
 	// flag to track if freeze frame has been initialized in demo
 	private boolean freezeFrameInitialized = false;
 
@@ -1078,6 +1080,22 @@ public class ElmProt
 				
 				while (runDemo)
 				{
+					// Check for ATH commands to enable/disable headers in demo mode
+					if (lastCommand != null) {
+						String cmd = new String(lastCommand).trim().toUpperCase();
+						if (cmd.equals("ATH1")) {
+							demoHeadersEnabled = true;
+							handleTelegram("OK".toCharArray());
+							Thread.sleep(100);
+							continue;
+						} else if (cmd.equals("ATH0")) {
+							demoHeadersEnabled = false;
+							handleTelegram("OK".toCharArray());
+							Thread.sleep(100);
+							continue;
+						}
+					}
+
 					switch (service)
 					{
 						// read any kinds of trouble codes
@@ -1215,7 +1233,14 @@ public class ElmProt
 							if (pid == 0)
 							{
 								// Real Mercedes supported PIDs: 0x02,0x04,0x06,0x08,0x0A,0x14
-								handleTelegram("490055401000".toCharArray());
+								if (demoHeadersEnabled) {
+									// Respond from multiple ECUs with headers (NO SPACES)
+									handleTelegram("7E806490055401000".toCharArray());   // Engine ECU
+									handleTelegram("7E906490055401000".toCharArray());   // Transmission ECU
+									handleTelegram("7EA06490055401000".toCharArray());   // FPCM ECU
+								} else {
+									handleTelegram("490055401000".toCharArray());
+								}
 							}
 							// VIN from real Mercedes-Benz GLE-Class (PID 0x02)
 							else if (pid == 0x02) {
@@ -1224,21 +1249,69 @@ public class ElmProt
 								handleTelegram("2:41354842374A42".toCharArray()); // "A5HB7JB"
 								handleTelegram("3:31353831343434".toCharArray()); // "158144"
 							}
-							// Calibration ID: "2769011200190170" (PID 0x04)
+							// Calibration ID (PID 0x04)
 							else if (pid == 0x04) {
-								handleTelegram("49040132373639303131323030313930313730".toCharArray());
+								if (demoHeadersEnabled) {
+									// Multiple ECUs with different Cal IDs (matching Teensy simulator)
+									// Engine: "2769011200190170" - multiframe response
+									handleTelegram("7E81013490401323736".toCharArray());
+									handleTelegram("7E82139303131323030".toCharArray());
+									handleTelegram("7E82231393031373000".toCharArray());
+									Thread.sleep(5);
+									// Transmission: "00090237271900001"
+									handleTelegram("7E91014490401303030".toCharArray());
+									handleTelegram("7E92139303233373237".toCharArray());
+									handleTelegram("7E92231393030303031".toCharArray());
+									Thread.sleep(5);
+									// FPCM: "00090121001900560"
+									handleTelegram("7EA1014490401303030".toCharArray());
+									handleTelegram("7EA2139303132313030".toCharArray());
+									handleTelegram("7EA2231393030353630".toCharArray());
+								} else {
+									handleTelegram("49040132373639303131323030313930313730".toCharArray());
+								}
 							}
-							// CVN (Calibration Verification Number) from Mercedes logs (PID 0x06)
+							// CVN (Calibration Verification Number) (PID 0x06)
 							else if (pid == 0x06) {
-								handleTelegram("490601EB854939".toCharArray());
+								if (demoHeadersEnabled) {
+									// Multiple ECUs with different CVNs (matching Teensy simulator)
+									handleTelegram("7E806490601EB854939".toCharArray()); // Engine: EB854939
+									Thread.sleep(5);
+									handleTelegram("7E9064906015DEF71AD".toCharArray()); // Transmission: 5DEF71AD
+									Thread.sleep(5);
+									handleTelegram("7EA064906018CD7FF6C".toCharArray()); // FPCM: 8CD7FF6C
+								} else {
+									handleTelegram("490601EB854939".toCharArray());
+								}
 							}
 							// Performance Tracking data (PID 0x08)
 							else if (pid == 0x08) {
 								handleTelegram("49081410622E4C176910621704106215D8106213CD106220AE10620000000001B303070DFC106209CD1062".toCharArray());
 							}
-							// ECU Name: "ECM -EngineControl" (PID 0x0A)
+							// ECU Name (PID 0x0A)
 							else if (pid == 0x0A) {
-								handleTelegram("490A0145434D002D456E67696E65436F6E74726F6C0000".toCharArray());
+								if (demoHeadersEnabled) {
+									// Multiple ECUs with different names (matching Teensy simulator)
+									// Engine: "ECM\0-EngineControl\0\0"
+									handleTelegram("7E81017490A0145434D".toCharArray());
+									handleTelegram("7E821002D456E67696E".toCharArray());
+									handleTelegram("7E82265436F6E74726F".toCharArray());
+									handleTelegram("7E8236C000000000000".toCharArray());
+									Thread.sleep(5);
+									// Transmission: "TCM\0-TransmisCtrl\0"
+									handleTelegram("7E91016490A0154434D".toCharArray());
+									handleTelegram("7E921002D5472616E73".toCharArray());
+									handleTelegram("7E9226D69734374726C".toCharArray());
+									handleTelegram("7E92300000000000000".toCharArray());
+									Thread.sleep(5);
+									// FPCM: "FPCM\0-FuelPumpCtrl\0\0\0"
+									handleTelegram("7EA1018490A01465043".toCharArray());
+									handleTelegram("7EA214D002D4675656C".toCharArray());
+									handleTelegram("7EA2250756D70437472".toCharArray());
+									handleTelegram("7EA236C000000000000".toCharArray());
+								} else {
+									handleTelegram("490A0145434D002D456E67696E65436F6E74726F6C0000".toCharArray());
+								}
 							}
 							// Auxiliary I/O Status (PID 0x14)
 							else if (pid == 0x14) {

@@ -24,10 +24,83 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="@dimen/spacing_large"
                 android:visibility="gone">
 
-                <!-- Content will be populated programmatically -->
+                <!-- Vehicle Header Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/header_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/spacing_medium"
+                    app:cardBackgroundColor="@color/background_secondary"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="@dimen/spacing_large">
+
+                        <!-- Text content -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="@dimen/spacing_medium">
+
+                            <TextView
+                                android:id="@+id/vehicle_title"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="2018 MERCEDES-BENZ GLE-Class"
+                                android:textColor="@color/text_primary_dark"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="@dimen/spacing_small"/>
+
+                            <TextView
+                                android:id="@+id/vehicle_subtitle"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Sport Utility Vehicle (SUV) / Multi-Purpose Vehicle (MPV)"
+                                android:textColor="@color/text_secondary_dark"
+                                android:textSize="14sp"/>
+
+                        </LinearLayout>
+
+                        <!-- Vehicle Illustration -->
+                        <ImageView
+                            android:id="@+id/vehicle_illustration"
+                            android:layout_width="100dp"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center_vertical"
+                            android:src="@drawable/ic_vehicle_default"
+                            android:contentDescription="Vehicle Type Illustration"
+                            android:scaleType="fitCenter"/>
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Success Banner - REMOVED per user request -->
+                <LinearLayout
+                    android:id="@+id/success_banner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone" />
+
+
+                <!-- Data Sections Container -->
+                <LinearLayout
+                    android:id="@+id/sections_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- Sections will be added programmatically -->
+
+                </LinearLayout>
 
             </LinearLayout>
 

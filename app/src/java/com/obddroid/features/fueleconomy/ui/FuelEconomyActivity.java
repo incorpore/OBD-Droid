@@ -132,6 +132,11 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
 
         log.info("Views initialized");
 
+        // Initialize data layer components FIRST (before demo data)
+        dataManager = new FuelEconomyDataManager();
+        calculator = new FuelEconomyCalculator();
+        fuelEconomyPreferences = new FuelEconomyPreferences(this);
+
         // Initialize with demo data
         initializeDemoData();
 
@@ -153,11 +158,6 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             vehicleManager.addListener(vehicleChangeListener);
         }
         vehiclePreferences = new com.obddroid.utils.VehiclePreferences(this);
-
-        // Initialize data layer components
-        dataManager = new FuelEconomyDataManager();
-        calculator = new FuelEconomyCalculator();
-        fuelEconomyPreferences = new FuelEconomyPreferences(this);
 
         // Check if we need to prompt for tank capacity
         checkAndPromptForTankCapacity();

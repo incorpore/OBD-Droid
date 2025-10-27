@@ -51,11 +51,6 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
     private LinearLayout expandedContainer;
     private ScrollView expandedScrollView;
     private LinearLayout expandedContentLayout;
-    private LinearLayout tabContainer;
-    private TextView vehicleInfoTab;
-    private TextView obdDataTab;
-    private View tabIndicator;
-    private boolean showingVehicleInfo = true;
     private VehicleManager.VehicleChangeListener vehicleListener;
     private boolean isConnected = false;
     private boolean isEcuConnected = false;
@@ -222,58 +217,6 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         expandedContainer.setVisibility(View.GONE);
         expandedContainer.setBackgroundColor(Color.parseColor("#1A1A1A")); // Slightly lighter than footer
 
-        // Create tab container
-        tabContainer = new LinearLayout(getContext());
-        tabContainer.setOrientation(LinearLayout.HORIZONTAL);
-        tabContainer.setBackgroundColor(Color.parseColor("#212121"));
-        tabContainer.setPadding(dpToPx(16), dpToPx(8), dpToPx(16), 0);
-
-        // Create Vehicle Info tab
-        vehicleInfoTab = new TextView(getContext());
-        vehicleInfoTab.setText("VEHICLE INFO");
-        vehicleInfoTab.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
-        vehicleInfoTab.setTypeface(Typeface.DEFAULT_BOLD);
-        vehicleInfoTab.setTextColor(Color.parseColor("#00ACC1")); // Selected color
-        vehicleInfoTab.setPadding(dpToPx(16), dpToPx(8), dpToPx(16), dpToPx(8));
-        vehicleInfoTab.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams vehicleTabParams = new LinearLayout.LayoutParams(
-            0,
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            1.0f
-        );
-        vehicleTabParams.rightMargin = dpToPx(8);
-
-        // Create OBD Data tab
-        obdDataTab = new TextView(getContext());
-        obdDataTab.setText("OBD DATA");
-        obdDataTab.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
-        obdDataTab.setTypeface(Typeface.DEFAULT_BOLD);
-        obdDataTab.setTextColor(Color.parseColor("#666666")); // Unselected color
-        obdDataTab.setPadding(dpToPx(16), dpToPx(8), dpToPx(16), dpToPx(8));
-        obdDataTab.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams obdTabParams = new LinearLayout.LayoutParams(
-            0,
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            1.0f
-        );
-        obdTabParams.leftMargin = dpToPx(8);
-
-        // Add tabs to container
-        tabContainer.addView(vehicleInfoTab, vehicleTabParams);
-        tabContainer.addView(obdDataTab, obdTabParams);
-
-        // Create tab indicator line
-        tabIndicator = new View(getContext());
-        tabIndicator.setBackgroundColor(Color.parseColor("#00ACC1"));
-        LinearLayout.LayoutParams indicatorParams = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            dpToPx(2)
-        );
-
-        // Add tab container to expanded container
-        expandedContainer.addView(tabContainer);
-        expandedContainer.addView(tabIndicator, indicatorParams);
-
         // Create ScrollView for expanded content
         expandedScrollView = new ScrollView(getContext());
         expandedScrollView.setFillViewport(false);
@@ -303,10 +246,6 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             LinearLayout.LayoutParams.WRAP_CONTENT
         );
         addView(expandedContainer, expandedParams);
-
-        // Set up tab click listeners
-        vehicleInfoTab.setOnClickListener(v -> switchToVehicleInfo());
-        obdDataTab.setOnClickListener(v -> switchToObdData());
 
         // Add bottom border line
         View bottomDivider = new View(getContext());
@@ -515,10 +454,8 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             Log.e(TAG, "Error checking for VIN in pvChanged", e);
         }
 
-        // Refresh expanded content if visible
-        if (isExpanded && expandedContainer != null && expandedContainer.getVisibility() == View.VISIBLE && !showingVehicleInfo) {
-            post(() -> updateExpandedContent());
-        }
+        // Mode 9 data is static - no need to refresh OBD DATA tab on every update
+        // Only VEHICLE INFO tab needs live updates (handled by setVehicleData)
     }
 
     public void propertyChange(PropertyChangeEvent evt) {
@@ -740,46 +677,20 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         }
     }
 
-    private void switchToVehicleInfo() {
-        if (showingVehicleInfo) return;
-        showingVehicleInfo = true;
-
-        // Update tab colors
-        vehicleInfoTab.setTextColor(Color.parseColor("#00ACC1"));
-        obdDataTab.setTextColor(Color.parseColor("#666666"));
-
-        // Update content
-        updateExpandedContent();
-    }
-
-    private void switchToObdData() {
-        if (!showingVehicleInfo) return;
-        showingVehicleInfo = false;
-
-        // Update tab colors
-        vehicleInfoTab.setTextColor(Color.parseColor("#666666"));
-        obdDataTab.setTextColor(Color.parseColor("#00ACC1"));
-
-        // Update content
-        updateExpandedContent();
-    }
-
     private void updateExpandedContent() {
         expandedContentLayout.removeAllViews();
 
-        if (showingVehicleInfo) {
-            // Show Vehicle Info tab content
-            if (currentVehicleData != null) {
-                displayVehicleInfo();
-            } else {
-                // Show demo/placeholder content
-                addEmptyStateMessage("Vehicle Information",
-                    "Vehicle information will appear here once connected and VIN is decoded");
-            }
+        // Show Vehicle Info section
+        if (currentVehicleData != null) {
+            displayVehicleInfo();
         } else {
-            // Show OBD Data tab content
-            displayObdData();
+            // Show demo/placeholder content
+            addEmptyStateMessage("Vehicle Information",
+                "Vehicle information will appear here once connected and VIN is decoded");
         }
+
+        // Show OBD Data section below Vehicle Info
+        displayObdData();
     }
 
     private void displayVehicleInfo() {
@@ -787,7 +698,50 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
         // Add VIN section with styled headers and rows
         addStyledSectionHeader("Vehicle Identification");
-        addStyledDetailRow("VIN", currentVehicleData.vin);
+
+        // Use NHTSA VIN if available, otherwise fallback to Mode 9 VIN
+        String vinToDisplay = currentVehicleData.vin;
+        if ((vinToDisplay == null || vinToDisplay.isEmpty()) && vehicleInfoStore != null) {
+            // Try to get VIN from Mode 9 data as fallback
+            for (Object key : vehicleInfoStore.keySet()) {
+                Object pvObj = vehicleInfoStore.get(key);
+                if (pvObj instanceof EcuDataPv) {
+                    EcuDataPv pv = (EcuDataPv) pvObj;
+                    String description = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
+                    Object dataValue = pv.get(EcuDataPv.FID_VALUE);
+
+                    if (description != null && dataValue != null &&
+                        description.toLowerCase().equals("vehicle identification number")) {
+                        vinToDisplay = String.valueOf(dataValue);
+                        break;
+                    }
+                }
+            }
+        }
+        addStyledDetailRow("VIN", vinToDisplay);
+
+        // Add other Mode 9 VIN-related data (like message count) but skip the VIN itself
+        if (vehicleInfoStore != null && !vehicleInfoStore.isEmpty()) {
+            for (Object key : vehicleInfoStore.keySet()) {
+                Object pvObj = vehicleInfoStore.get(key);
+                if (pvObj instanceof EcuDataPv) {
+                    EcuDataPv pv = (EcuDataPv) pvObj;
+                    String description = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
+                    Object dataValue = pv.get(EcuDataPv.FID_VALUE);
+
+                    if (description != null && dataValue != null &&
+                        (description.toLowerCase().contains("vehicle identification") ||
+                         description.toLowerCase().contains("vin")) &&
+                        !description.toLowerCase().contains("calibration") &&
+                        !description.toLowerCase().equals("vehicle identification number") &&
+                        !description.toLowerCase().contains("number of") &&
+                        !description.toLowerCase().contains("message count")) {
+                        // Add VIN-related Mode 9 data but skip VIN itself and counts
+                        addStyledDetailRow(description, String.valueOf(dataValue), null, null);
+                    }
+                }
+            }
+        }
 
         // Format manufacturer name - remove redundant suffixes
         String manufacturerName = currentVehicleData.manufacturer;
@@ -880,87 +834,6 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             addStyledDetailRow("Steering", currentVehicleData.steeringLocation);
         }
 
-        // Add Dimensions section
-        if (currentVehicleData.numberOfSeats != null || currentVehicleData.wheelSizeFront != null) {
-            addStyledSectionHeader("Dimensions");
-            if (currentVehicleData.numberOfSeats != null && !currentVehicleData.numberOfSeats.isEmpty()) {
-                addStyledDetailRow("Seats", currentVehicleData.numberOfSeats);
-            }
-            if (currentVehicleData.numberOfSeatRows != null && !currentVehicleData.numberOfSeatRows.isEmpty()) {
-                addStyledDetailRow("Seat Rows", currentVehicleData.numberOfSeatRows);
-            }
-            if (currentVehicleData.wheelSizeFront != null && !currentVehicleData.wheelSizeFront.isEmpty()) {
-                String wheelSize = currentVehicleData.wheelSizeFront + "\"";
-                if (currentVehicleData.wheelSizeRear != null && !currentVehicleData.wheelSizeRear.isEmpty() &&
-                    !currentVehicleData.wheelSizeRear.equals(currentVehicleData.wheelSizeFront)) {
-                    wheelSize += " / " + currentVehicleData.wheelSizeRear + "\"";
-                }
-                addStyledDetailRow("Wheel Size", wheelSize);
-            }
-        }
-
-        // Add Safety Features section
-        if (currentVehicleData.abs != null || currentVehicleData.backupCamera != null) {
-            addStyledSectionHeader("Safety Features");
-            if (currentVehicleData.abs != null && !currentVehicleData.abs.isEmpty()) {
-                addStyledDetailRow("ABS", currentVehicleData.abs);
-            }
-            if (currentVehicleData.esc != null && !currentVehicleData.esc.isEmpty()) {
-                addStyledDetailRow("Stability Control", currentVehicleData.esc);
-            }
-            if (currentVehicleData.tractionControl != null && !currentVehicleData.tractionControl.isEmpty()) {
-                addStyledDetailRow("Traction Control", currentVehicleData.tractionControl);
-            }
-            if (currentVehicleData.backupCamera != null && !currentVehicleData.backupCamera.isEmpty()) {
-                addStyledDetailRow("Backup Camera", currentVehicleData.backupCamera);
-            }
-            if (currentVehicleData.frontAirBagLocations != null && !currentVehicleData.frontAirBagLocations.isEmpty()) {
-                addStyledDetailRow("Front Airbags", currentVehicleData.frontAirBagLocations);
-            }
-            if (currentVehicleData.sideAirBagLocations != null && !currentVehicleData.sideAirBagLocations.isEmpty()) {
-                addStyledDetailRow("Side Airbags", currentVehicleData.sideAirBagLocations);
-            }
-            if (currentVehicleData.tpmsType != null && !currentVehicleData.tpmsType.isEmpty()) {
-                addStyledDetailRow("TPMS", currentVehicleData.tpmsType);
-            }
-            if (currentVehicleData.daytimeRunningLight != null && !currentVehicleData.daytimeRunningLight.isEmpty()) {
-                addStyledDetailRow("Daytime Running Lights", currentVehicleData.daytimeRunningLight);
-            }
-        }
-
-        // Add Advanced Features section
-        if (currentVehicleData.adaptiveCruiseControl != null || currentVehicleData.blindSpotWarning != null) {
-            addStyledSectionHeader("Advanced Features");
-            if (currentVehicleData.adaptiveCruiseControl != null && !currentVehicleData.adaptiveCruiseControl.isEmpty()) {
-                addStyledDetailRow("Adaptive Cruise Control", currentVehicleData.adaptiveCruiseControl);
-            }
-            if (currentVehicleData.forwardCollisionWarning != null && !currentVehicleData.forwardCollisionWarning.isEmpty()) {
-                addStyledDetailRow("Collision Warning", currentVehicleData.forwardCollisionWarning);
-            }
-            if (currentVehicleData.blindSpotWarning != null && !currentVehicleData.blindSpotWarning.isEmpty()) {
-                addStyledDetailRow("Blind Spot Warning", currentVehicleData.blindSpotWarning);
-            }
-            if (currentVehicleData.laneDepartureWarning != null && !currentVehicleData.laneDepartureWarning.isEmpty()) {
-                addStyledDetailRow("Lane Departure Warning", currentVehicleData.laneDepartureWarning);
-            }
-            if (currentVehicleData.laneKeepingAssistance != null && !currentVehicleData.laneKeepingAssistance.isEmpty()) {
-                addStyledDetailRow("Lane Keeping Assist", currentVehicleData.laneKeepingAssistance);
-            }
-            if (currentVehicleData.parkingAssist != null && !currentVehicleData.parkingAssist.isEmpty()) {
-                addStyledDetailRow("Parking Assist", currentVehicleData.parkingAssist);
-            }
-            if (currentVehicleData.keylessIgnition != null && !currentVehicleData.keylessIgnition.isEmpty()) {
-                addStyledDetailRow("Keyless Ignition", currentVehicleData.keylessIgnition);
-            }
-        }
-
-        // Add Manufacturing section
-        addStyledSectionHeader("Manufacturing");
-        String plantLocation = buildPlantLocation(currentVehicleData);
-        if (!plantLocation.isEmpty()) {
-            addStyledDetailRow("Plant Location", plantLocation);
-        }
-
         // Add Weight section if available
         if (currentVehicleData.gvwr != null || currentVehicleData.curbWeight != null) {
             addStyledSectionHeader("Weight");
@@ -970,12 +843,6 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             if (currentVehicleData.gvwr != null && !currentVehicleData.gvwr.isEmpty()) {
                 addStyledDetailRow("GVWR", currentVehicleData.gvwr);
             }
-        }
-
-        // Add Pricing section if available
-        if (currentVehicleData.basePrice != null && !currentVehicleData.basePrice.isEmpty()) {
-            addStyledSectionHeader("Pricing");
-            addStyledDetailRow("Base MSRP", "$" + currentVehicleData.basePrice);
         }
     }
 
@@ -997,11 +864,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
 
         // Categorize Mode 9 data - show EVERYTHING (now storing mnemonic too)
         java.util.Map<String, java.util.List<String[]>> categorizedData = new java.util.LinkedHashMap<>();
-        categorizedData.put("Vehicle Identification", new java.util.ArrayList<>());
-        categorizedData.put("Emission Monitors", new java.util.ArrayList<>());
         categorizedData.put("System Counters", new java.util.ArrayList<>());
-        categorizedData.put("Protocol Information", new java.util.ArrayList<>());
-        categorizedData.put("Other Information", new java.util.ArrayList<>());
 
         // Process all Mode 9 items
         java.util.List<Map.Entry<Object, ProcessVar>> entries =
@@ -1017,24 +880,23 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
                 Object dataValue = pv.get(EcuDataPv.FID_VALUE);
 
                 if (description != null && dataValue != null) {
-                    // Show ALL Mode 9 data including zeros and VIN
+                    // Simple fast processing - NO expensive formatting
+                    String label = description; // Use raw description
+                    String displayValue = String.valueOf(dataValue); // Simple toString()
+                    String mnemonic = null; // Skip mnemonic lookup
+                    String pidDisplay = null; // Skip PID formatting
 
-                    String label = formatLabel(description);
-                    String displayValue = formatValue(description, dataValue);
-                    String mnemonic = extractMnemonic(description); // Extract mnemonic for description lookup
-                    String pidDisplay = formatPid(pv); // Human-readable PID/VID representation
-
-                    // Categorize ALL the data - including VIN and message counts
+                    // Categorize ALL the data - skip VIN (already shown in Vehicle Info section)
                     // Store as: [label, displayValue, mnemonic]
                     if (description.toLowerCase().contains("vehicle identification") ||
                         description.toLowerCase().contains("vin")) {
-                        categorizedData.get("Vehicle Identification").add(new String[]{label, displayValue, mnemonic, pidDisplay});
+                        // Skip VIN - already shown in Vehicle Identification section from NHTSA data
                     } else if (description.contains("Message count") ||
                               description.contains("Number of") ||
                               description.contains("counts_") ||
                               description.contains("numitems") ||
                               description.contains("length")) {
-                        categorizedData.get("Protocol Information").add(new String[]{label, displayValue, mnemonic, pidDisplay});
+                        // Skip protocol information - not useful for user
                     } else if (description.contains("Monitor") || description.contains("COMP") ||
                               description.contains("Catalyst") || description.contains("O2") ||
                               description.contains("EGR") || description.contains("EVAP") ||
@@ -1042,12 +904,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
                               description.contains("Boost") || description.contains("Fuel") ||
                               description.contains("NMHC") || description.contains("NOx") ||
                               description.contains("PM Filter")) {
-                        // Skip if it's just ignition counter
-                        if (!description.contains("Ignition")) {
-                            categorizedData.get("Emission Monitors").add(new String[]{label, displayValue, mnemonic, pidDisplay});
-                        } else {
-                            categorizedData.get("System Counters").add(new String[]{label, displayValue, mnemonic, pidDisplay});
-                        }
+                        // Skip emission monitors - don't display them
                     } else if (description.contains("Counter") || description.contains("CNTR") ||
                               description.contains("Ignition") || description.contains("OBD Monitoring Conditions")) {
                         categorizedData.get("System Counters").add(new String[]{label, displayValue, mnemonic, pidDisplay});
@@ -1057,7 +914,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
                     } else if (description.contains("ECU name") || description.contains("ECU")) {
                         // Skip ECU data - don't display it
                     } else {
-                        categorizedData.get("Other Information").add(new String[]{label, displayValue, mnemonic, pidDisplay});
+                        // Skip other information - not needed
                     }
                 }
             }
@@ -1495,10 +1352,10 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             Log.d(TAG, "No description found for mnemonic: " + mnemonicKey);
         }
 
-        // Only make rows clickable in OBD Data section (when showingVehicleInfo is false)
-        // Vehicle Info section should NOT have clickable rows
-        if (!showingVehicleInfo) {
-            // We're in OBD Data tab - make rows clickable
+        // Only make rows clickable in OBD Data section (when mnemonicKey or pidDisplay provided)
+        // Vehicle Info section rows (no mnemonic/PID) should NOT be clickable
+        if (mnemonicKey != null || pidDisplay != null) {
+            // Make rows clickable (for OBD Data with mnemonic/PID info)
             row.setClickable(true);
             row.setFocusable(true);
 
@@ -1520,7 +1377,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             // Add visual indicator that row is clickable (slightly lighter background)
             row.setBackgroundColor(Color.parseColor("#222222"));
         } else {
-            // We're in Vehicle Info tab - rows should NOT be clickable
+            // Non-clickable rows (Vehicle Info with no mnemonic/PID)
             // Use standard darker background
             row.setBackgroundColor(Color.parseColor("#1F1F1F"));
         }

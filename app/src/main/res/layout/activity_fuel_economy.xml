@@ -149,7 +149,7 @@
                         </LinearLayout>
 
                         <!-- Bar Chart -->
-                        <com.obddroid.ui.components.FuelEconomyChart
+                        <com.obddroid.features.fueleconomy.ui.FuelEconomyChart
                             android:id="@+id/fuel_economy_chart"
                             android:layout_width="match_parent"
                             android:layout_height="140dp"
@@ -346,7 +346,7 @@
                         </LinearLayout>
 
                         <!-- Fuel Flow Gauge -->
-                        <com.obddroid.ui.components.FuelFlowGauge
+                        <com.obddroid.features.fueleconomy.ui.FuelFlowGauge
                             android:id="@+id/fuel_flow_gauge"
                             android:layout_width="match_parent"
                             android:layout_height="30dp"

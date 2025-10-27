@@ -91,31 +91,9 @@ public class RecallService {
 
                 callback.onVinDecoded(vehicleData);
 
-                // Step 2: Lookup recalls using make/model/year
-                Log.d(TAG, "Step 2: Looking up recalls for " + vehicleData.getMake() +
-                    " " + vehicleData.getModel() + " " + vehicleData.getModelYear());
-
-                recallLookup.getRecalls(
-                    vehicleData.getMake(),
-                    vehicleData.getModel(),
-                    vehicleData.getModelYear(),
-                    new RecallLookupAndroid.RecallCallback() {
-                        @Override
-                        public void onSuccess(List<RecallRecord> recalls) {
-                            Log.d(TAG, "Recall lookup success - found " +
-                                (recalls != null ? recalls.size() : 0) + " recalls");
-
-                            RecallSearchResult result = new RecallSearchResult(vin, vehicleData, recalls);
-                            callback.onSearchCompleted(result);
-                        }
-
-                        @Override
-                        public void onError(String error) {
-                            Log.e(TAG, "Recall lookup error: " + error);
-                            callback.onSearchFailed(error != null ? error :
-                                "Failed to search recalls. Please try again.");
-                        }
-                    });
+                // Step 2: Lookup recalls with smart fallback strategy
+                Log.d(TAG, "Step 2: Starting smart recall lookup with fallback");
+                tryRecallLookupWithFallback(vin, vehicleData, 0, callback);
             }
 
             @Override
@@ -125,6 +103,119 @@ public class RecallService {
                     "Failed to decode VIN. Please check vehicle connection.");
             }
         });
+    }
+
+    /**
+     * Try recall lookup with multiple model name variations (fallback strategy).
+     * This ensures compatibility across all vehicle manufacturers.
+     */
+    private void tryRecallLookupWithFallback(final String vin, final VehicleData vehicleData,
+                                             final int attemptIndex, final RecallSearchCallback callback) {
+        // Generate list of model name variations to try
+        String[] modelVariations = generateModelVariations(vehicleData);
+
+        if (attemptIndex >= modelVariations.length) {
+            // All attempts failed
+            Log.e(TAG, "All recall lookup attempts failed for " + vehicleData.getMake() + " " + vehicleData.model);
+            callback.onSearchFailed("Unable to find recalls. The vehicle model format may not be recognized.");
+            return;
+        }
+
+        String currentModel = modelVariations[attemptIndex];
+        Log.d(TAG, "Trying recall lookup (attempt " + (attemptIndex + 1) + "/" + modelVariations.length +
+            "): " + vehicleData.getMake() + " " + currentModel + " " + vehicleData.getModelYear());
+
+        recallLookup.getRecalls(
+            vehicleData.getMake(),
+            currentModel,
+            vehicleData.getModelYear(),
+            new RecallLookupAndroid.RecallCallback() {
+                @Override
+                public void onSuccess(List<RecallRecord> recalls) {
+                    Log.d(TAG, "Recall lookup SUCCESS with model: " + currentModel +
+                        " - found " + (recalls != null ? recalls.size() : 0) + " recalls");
+                    RecallSearchResult result = new RecallSearchResult(vin, vehicleData, recalls);
+                    callback.onSearchCompleted(result);
+                }
+
+                @Override
+                public void onError(String error) {
+                    if (error != null && error.contains("HTTP 400")) {
+                        // 400 error means bad format - try next variation
+                        Log.w(TAG, "Model format rejected (HTTP 400), trying next variation...");
+                        tryRecallLookupWithFallback(vin, vehicleData, attemptIndex + 1, callback);
+                    } else {
+                        // Other error - fail immediately
+                        Log.e(TAG, "Recall lookup error: " + error);
+                        callback.onSearchFailed(error != null ? error :
+                            "Failed to search recalls. Please try again.");
+                    }
+                }
+            });
+    }
+
+    /**
+     * Generate multiple model name variations to try.
+     * Returns array of model strings from most specific to least specific.
+     */
+    private String[] generateModelVariations(VehicleData vehicleData) {
+        java.util.List<String> variations = new java.util.ArrayList<>();
+        String model = vehicleData.model;
+        String series = vehicleData.series;
+
+        if (model == null || model.isEmpty()) {
+            return new String[]{""};
+        }
+
+        // Remove common suffixes
+        String baseModel = model
+            .replace("-Class", "")
+            .replace(" Class", "")
+            .trim();
+
+        // Variation 1: Base model + full series (e.g., "GLE GLE350-4M")
+        if (series != null && !series.isEmpty() && !series.equals("Not Applicable")) {
+            variations.add(baseModel + " " + series);
+        }
+
+        // Variation 2: Base model + extracted trim number (e.g., "GLE 350")
+        if (series != null && !series.isEmpty() && !series.equals("Not Applicable")) {
+            String trimNumber = extractTrimNumber(series);
+            if (trimNumber != null && !trimNumber.isEmpty() && !trimNumber.equals(series)) {
+                variations.add(baseModel + " " + trimNumber);
+            }
+        }
+
+        // Variation 3: Just base model (e.g., "GLE")
+        variations.add(baseModel);
+
+        // Variation 4: Original model as-is (e.g., "GLE-Class")
+        if (!model.equals(baseModel)) {
+            variations.add(model);
+        }
+
+        Log.d(TAG, "Generated " + variations.size() + " model variations: " + variations);
+        return variations.toArray(new String[0]);
+    }
+
+    /**
+     * Extract trim number from series string.
+     * Examples: "GLE350-4M" -> "350", "Accord EX" -> "EX", "335i" -> "335"
+     */
+    private String extractTrimNumber(String series) {
+        if (series == null || series.isEmpty()) {
+            return null;
+        }
+
+        // Try to extract just the numeric part (e.g., "GLE350-4M" -> "350")
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(\\d+)");
+        java.util.regex.Matcher matcher = pattern.matcher(series);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+
+        // If no numbers, return the series as-is (handles "EX", "LX", etc.)
+        return series;
     }
 
     /**
