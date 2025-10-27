@@ -72,9 +72,9 @@ public class VehicleInfoActivity extends AppCompatActivity {
         contentContainer = findViewById(R.id.vehicle_info_content);
         sectionsContainer = findViewById(R.id.sections_container);
         emptyState = findViewById(R.id.empty_state);
-        vehicleTitle = findViewById(R.id.vehicle_title);
-        vehicleSubtitle = findViewById(R.id.vehicle_subtitle);
-        vehicleIllustration = findViewById(R.id.vehicle_illustration);
+        // vehicleTitle = findViewById(R.id.vehicle_title);
+        // vehicleSubtitle = findViewById(R.id.vehicle_subtitle);
+        // vehicleIllustration = findViewById(R.id.vehicle_illustration);
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);
         footerOverlay = findViewById(R.id.footer_overlay);
 
@@ -546,19 +546,20 @@ public class VehicleInfoActivity extends AppCompatActivity {
 
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
+        content.setPadding(dpToPx(14), dpToPx(12), dpToPx(14), dpToPx(10));  // Slightly more horizontal, less vertical
 
         // Add section header
         TextView header = new TextView(this);
         header.setText(title);
         header.setTextColor(0xFF64B5F6);  // Cyan accent
-        header.setTextSize(14);  // Smaller header
+        header.setTextSize(13);  // Compact header
         header.setTypeface(null, android.graphics.Typeface.BOLD);
+        header.setLetterSpacing(0.03f);  // Slight letter spacing for modern look
         LinearLayout.LayoutParams headerParams = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        headerParams.setMargins(0, 0, 0, dpToPx(8));  // Less margin
+        headerParams.setMargins(0, 0, 0, dpToPx(10));  // Compact spacing
         header.setLayoutParams(headerParams);
         content.addView(header);
 
@@ -577,14 +578,14 @@ public class VehicleInfoActivity extends AppCompatActivity {
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        rowParams.setMargins(0, dpToPx(6), 0, dpToPx(6));
+        rowParams.setMargins(0, dpToPx(4), 0, dpToPx(4));  // More compact vertical spacing
         row.setLayoutParams(rowParams);
 
         // Label
         TextView labelView = new TextView(this);
         labelView.setText(label);
-        labelView.setTextColor(0xFF9E9E9E);  // Gray
-        labelView.setTextSize(12);
+        labelView.setTextColor(0xFFB0BEC5);  // Lighter gray for better contrast
+        labelView.setTextSize(11);  // Compact size
         LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
             0,
             LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -596,13 +597,14 @@ public class VehicleInfoActivity extends AppCompatActivity {
         TextView valueView = new TextView(this);
         valueView.setText(value);
         valueView.setTextColor(0xFFFFFFFF);  // White
-        valueView.setTextSize(10);  // Smaller font size
-        valueView.setTypeface(null, android.graphics.Typeface.NORMAL);  // Not bold
+        valueView.setTextSize(11);  // Match label size for consistency
+        valueView.setTypeface(null, android.graphics.Typeface.NORMAL);
         LinearLayout.LayoutParams valueParams = new LinearLayout.LayoutParams(
             0,
             LinearLayout.LayoutParams.WRAP_CONTENT,
             1.0f
         );
+        valueParams.setMarginStart(dpToPx(8));  // Small gap between label and value
         valueView.setLayoutParams(valueParams);
 
         row.addView(labelView);
