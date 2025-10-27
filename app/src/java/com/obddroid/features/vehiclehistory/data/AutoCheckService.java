@@ -25,8 +25,9 @@ import java.util.concurrent.Executors;
 public class AutoCheckService {
     private static final String TAG = "AutoCheckService";
 
-    // API Configuration - uses localhost with adb reverse tunnel
-    private static final String API_BASE_URL = "http://localhost:3248";
+    // API Configuration - Production server
+    private static final String API_BASE_URL = "https://your-autocheck-instance";
+    private static final String API_KEY = "REDACTED_API_KEY";
     private static final int TIMEOUT_MS = 60000; // 60 seconds for browser automation
 
     private final Context context;
@@ -71,6 +72,7 @@ public class AutoCheckService {
                 // Configure request
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
+                conn.setRequestProperty("X-API-Key", API_KEY);
                 conn.setConnectTimeout(TIMEOUT_MS);
                 conn.setReadTimeout(TIMEOUT_MS);
                 conn.setDoOutput(true);
@@ -144,6 +146,7 @@ public class AutoCheckService {
                 // Configure request
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
+                conn.setRequestProperty("X-API-Key", API_KEY);
                 conn.setConnectTimeout(TIMEOUT_MS);
                 conn.setReadTimeout(TIMEOUT_MS);
                 conn.setDoOutput(true);
@@ -250,6 +253,7 @@ public class AutoCheckService {
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
+                conn.setRequestProperty("X-API-Key", API_KEY);
                 conn.setConnectTimeout(15000);
                 conn.setReadTimeout(15000);
                 conn.setDoOutput(true);
@@ -299,6 +303,7 @@ public class AutoCheckService {
                 URL url = new URL(API_BASE_URL + "/health");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
+                conn.setRequestProperty("X-API-Key", API_KEY);
                 conn.setConnectTimeout(5000);
                 conn.setReadTimeout(5000);
 
