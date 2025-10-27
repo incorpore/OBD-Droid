@@ -743,7 +743,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
     private void showSnackbar(String message, SnackbarHelper.MessageType type) {
         View rootView = findViewById(android.R.id.content);
         if (rootView != null) {
-            SnackbarHelper.showMessage(rootView, message, type);
+            SnackbarHelper.showSnackbar(this, message, type);
         }
     }
 }
