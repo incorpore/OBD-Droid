@@ -192,6 +192,23 @@ final class DashboardUiHelper {
         } else {
             log.warning("Vehicle Info card NOT found!");
         }
+
+        // CoPilot card
+        View copilotCard = activity.findViewById(R.id.card_copilot);
+        if (copilotCard != null) {
+            addCardPressAnimation(copilotCard);
+            copilotCard.setOnClickListener(v -> {
+                log.info("CoPilot card clicked!");
+                activity.launchCoPilotActivity();
+            });
+            copilotCard.setOnLongClickListener(v -> showCardInfoDialog(
+                activity,
+                "CoPilot AI Assistant",
+                "Get intelligent assistance with vehicle diagnostics. Ask questions about scan results, fault codes, repair recommendations, and get guided troubleshooting help."
+            ));
+        } else {
+            log.warning("CoPilot card NOT found!");
+        }
     }
 
     private static void addCardPressAnimation(View card) {

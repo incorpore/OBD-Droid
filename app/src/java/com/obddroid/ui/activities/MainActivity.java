@@ -2730,6 +2730,15 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
+     * Launch the CoPilot AI Assistant activity
+     */
+    void launchCoPilotActivity() {
+        log.info("Launching CoPilot AI Assistant activity");
+        Intent intent = new Intent(this, CoPilotActivity.class);
+        startActivity(intent);
+    }
+
+    /**
      * Initialize the auto-reconnect countdown bar and its click handlers
      */
     private void initializeCountdownBar() {
