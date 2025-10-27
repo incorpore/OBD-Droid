@@ -135,11 +135,12 @@ public class RecallActivity extends AppCompatActivity {
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);
         footerOverlay = findViewById(R.id.footer_overlay);
 
-        heroCard = findViewById(R.id.recalls_hero_card);
-        heroInfoState = findViewById(R.id.hero_info_state);
-        heroResultsState = findViewById(R.id.hero_results_state);
-        heroRecallCount = findViewById(R.id.hero_recall_count);
-        heroVehicleText = findViewById(R.id.hero_vehicle_text);
+        // Hero card removed - no longer needed
+        // heroCard = findViewById(R.id.recalls_hero_card);
+        // heroInfoState = findViewById(R.id.hero_info_state);
+        // heroResultsState = findViewById(R.id.hero_results_state);
+        // heroRecallCount = findViewById(R.id.hero_recall_count);
+        // heroVehicleText = findViewById(R.id.hero_vehicle_text);
     }
 
     private void setupFooterOverlay() {
