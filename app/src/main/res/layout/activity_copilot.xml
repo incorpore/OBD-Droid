@@ -172,7 +172,8 @@
                     android:layout_marginStart="@dimen/spacing_small"
                     android:layout_marginEnd="@dimen/spacing_small"
                     app:boxBackgroundMode="filled"
-                    app:boxBackgroundColor="@color/background_primary">
+                    app:boxBackgroundColor="#3A3A3A"
+                    app:hintTextColor="@color/text_secondary_dark">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/message_input"
