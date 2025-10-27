@@ -180,7 +180,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="24dp"
+                            android:padding="16dp"
                             android:gravity="center">
 
                             <!-- Vehicle Name -->
@@ -188,27 +188,27 @@
                                 android:id="@+id/vehicle_name"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:textSize="24sp"
+                                android:textSize="18sp"
                                 android:textStyle="bold"
                                 android:textColor="#FFFFFF"
                                 android:gravity="center"
-                                android:paddingBottom="8dp"/>
+                                android:paddingBottom="4dp"/>
 
                             <!-- VIN -->
                             <TextView
                                 android:id="@+id/vehicle_vin"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:textSize="12sp"
+                                android:textSize="10sp"
                                 android:textColor="#B0BEC5"
                                 android:gravity="center"
-                                android:paddingBottom="24dp"
+                                android:paddingBottom="16dp"
                                 android:fontFamily="monospace"/>
 
                             <!-- Circular Score Gauge -->
                             <FrameLayout
-                                android:layout_width="140dp"
-                                android:layout_height="140dp"
+                                android:layout_width="110dp"
+                                android:layout_height="110dp"
                                 android:layout_gravity="center">
 
                                 <View
@@ -227,7 +227,7 @@
                                         android:id="@+id/autocheck_score"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:textSize="48sp"
+                                        android:textSize="38sp"
                                         android:textStyle="bold"
                                         android:textColor="#FFFFFF"/>
 
@@ -235,7 +235,7 @@
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="SCORE"
-                                        android:textSize="11sp"
+                                        android:textSize="9sp"
                                         android:textColor="#B0BEC5"
                                         android:letterSpacing="0.1"/>
 
@@ -248,19 +248,19 @@
                                 android:id="@+id/score_range"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textSize="14sp"
+                                android:textSize="12sp"
                                 android:textColor="#B0BEC5"
-                                android:layout_marginTop="16dp"/>
+                                android:layout_marginTop="12dp"/>
 
                             <!-- Score Interpretation -->
                             <TextView
                                 android:id="@+id/score_interpretation"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textSize="16sp"
+                                android:textSize="14sp"
                                 android:textStyle="bold"
                                 android:textColor="#FFFFFF"
-                                android:layout_marginTop="8dp"/>
+                                android:layout_marginTop="6dp"/>
 
                             <!-- Quick Status Badges -->
                             <LinearLayout
@@ -268,7 +268,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal"
-                                android:layout_marginTop="20dp"
+                                android:layout_marginTop="12dp"
                                 android:gravity="center">
                                 <!-- Badges will be added programmatically -->
                             </LinearLayout>
