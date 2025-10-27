@@ -20,34 +20,58 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/spacing_large">
+                android:orientation="vertical">
 
-                <!-- Hero Info Card -->
-                <androidx.cardview.widget.CardView
+                <!-- Full-Width ECU Banner -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/spacing_xxl"
-                    app:cardCornerRadius="@dimen/card_corner_radius"
-                    app:cardElevation="@dimen/elevation_hero_card"
-                    app:cardBackgroundColor="@color/fault_success">
+                    android:background="@color/fault_success"
+                    android:orientation="horizontal"
+                    android:padding="12dp"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔌"
+                        android:textSize="20sp"
+                        android:layout_marginEnd="10dp"/>
 
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="@dimen/card_padding_standard">
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Discover and view all Electronic Control Units (ECUs) in your vehicle. Compare scans to detect calibration changes and potential tampering."
-                            android:textColor="@color/text_hint_dark"
-                            android:textSize="@dimen/text_caption" />
+                            android:text="ECU Modules"
+                            android:textColor="#1A1A1A"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.02"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Discover and view all Electronic Control Units (ECUs) in your vehicle"
+                            android:textColor="#2A2A2A"
+                            android:textSize="11sp"
+                            android:layout_marginTop="2dp"
+                            android:alpha="0.9"/>
 
                     </LinearLayout>
 
-                </androidx.cardview.widget.CardView>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_large">
 
                 <!-- RecyclerView for ECU List -->
                 <androidx.recyclerview.widget.RecyclerView
@@ -61,6 +85,8 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/footer_spacer_height" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
