@@ -313,8 +313,7 @@ public class AutoCheckActivity extends AppCompatActivity {
         checkHistoryButton.setEnabled(false);
         loadingContainer.setVisibility(View.VISIBLE);
 
-        // Fetch report WITHOUT PDF for faster loading
-        // PDF will be generated on-demand when user clicks "Save Report"
+        // Fetch report WITHOUT PDF for faster initial loading
         autoCheckService.fetchReport(vin, new AutoCheckService.AutoCheckCallback() {
             @Override
             public void onSuccess(AutoCheckReport report) {
@@ -322,15 +321,18 @@ public class AutoCheckActivity extends AppCompatActivity {
                 loadingContainer.setVisibility(View.GONE);
                 checkHistoryButton.setEnabled(true);
 
-                // Save report to cache for future use
+                // Save report to cache
                 saveReportToCache(report);
 
-                // Display report with world-class visualization
+                // Display report immediately
                 displayReport(report);
 
                 SnackbarHelper.showSnackbar(AutoCheckActivity.this,
                     "Report loaded successfully!",
                     SnackbarHelper.MessageType.SUCCESS);
+
+                // Start generating PDF in background (don't wait for it)
+                generatePdfInBackground(vin);
             }
 
             @Override
@@ -891,67 +893,36 @@ public class AutoCheckActivity extends AppCompatActivity {
     }
 
     /**
-     * Generate PDF on-demand when user requests it
+     * Generate PDF in background after report loads
+     * This happens silently so PDF is ready when user wants to save it
      */
-    private void generatePdfOnDemand() {
-        if (currentReport == null) {
-            SnackbarHelper.showSnackbar(this, "No report available", SnackbarHelper.MessageType.WARNING);
-            return;
-        }
-
-        SnackbarHelper.showSnackbar(this, "Generating PDF, please wait...", SnackbarHelper.MessageType.INFO);
-
-        // Show loading
-        loadingContainer.setVisibility(View.VISIBLE);
-        loadingText.setText("Generating PDF...");
-
-        // Fetch report WITH PDF
-        autoCheckService.fetchReportWithPdf(currentReport.getVin(), new AutoCheckService.AutoCheckPdfCallback() {
+    private void generatePdfInBackground(String vin) {
+        // Fetch report WITH PDF in background
+        autoCheckService.fetchReportWithPdf(vin, new AutoCheckService.AutoCheckPdfCallback() {
             @Override
             public void onSuccess(AutoCheckReport report, String pdfFilePath) {
-                // Hide loading
-                loadingContainer.setVisibility(View.GONE);
-                loadingText.setText("Loading vehicle history...");
-
-                // Store PDF file path
+                // Store PDF file path silently
                 currentPdfFilePath = pdfFilePath;
-
-                // Update cache with PDF
-                saveReportToCache(report);
 
                 if (pdfFilePath != null && !pdfFilePath.isEmpty()) {
                     isPdfAvailable = true;
                     invalidateOptionsMenu();
 
-                    SnackbarHelper.showSnackbar(AutoCheckActivity.this,
-                        "PDF generated successfully!",
-                        SnackbarHelper.MessageType.SUCCESS);
-
-                    // Now save the PDF
-                    savePDFCopy();
-                } else {
-                    SnackbarHelper.showSnackbar(AutoCheckActivity.this,
-                        "Failed to generate PDF",
-                        SnackbarHelper.MessageType.ERROR);
+                    // Update cache with PDF
+                    saveReportToCache(report);
                 }
             }
 
             @Override
             public void onError(String error) {
-                // Hide loading
-                loadingContainer.setVisibility(View.GONE);
-                loadingText.setText("Loading vehicle history...");
-
-                SnackbarHelper.showSnackbar(AutoCheckActivity.this,
-                    "Failed to generate PDF: " + error,
-                    SnackbarHelper.MessageType.ERROR);
+                // PDF generation failed - not critical, user can still see the report
+                // Don't show error to user since this is a background operation
             }
         });
     }
 
     /**
      * Save a copy of the PDF report to Documents/OBDroid
-     * Generates PDF on-demand if not already available
      */
     private void savePDFCopy() {
         if (currentReport == null) {
@@ -959,21 +930,19 @@ public class AutoCheckActivity extends AppCompatActivity {
             return;
         }
 
-        // If PDF doesn't exist, generate it on-demand
+        // Check if PDF is ready
         if (currentPdfFilePath == null || currentPdfFilePath.isEmpty()) {
-            generatePdfOnDemand();
+            SnackbarHelper.showSnackbar(this, "PDF is still being generated, please wait...", SnackbarHelper.MessageType.INFO);
             return;
         }
 
-        // PDF already exists, save a copy
         Uri savedUri = null;
         File destPdf = null;
 
         try {
             File sourcePdf = new File(currentPdfFilePath);
             if (!sourcePdf.exists()) {
-                // PDF was deleted, regenerate it
-                generatePdfOnDemand();
+                SnackbarHelper.showSnackbar(this, "PDF file not found", SnackbarHelper.MessageType.ERROR);
                 return;
             }
 
