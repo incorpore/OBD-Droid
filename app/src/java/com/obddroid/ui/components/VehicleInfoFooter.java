@@ -849,7 +849,22 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             addStyledDetailRow("Displacement", displacement);
         }
         addStyledDetailRow("Cylinders", currentVehicleData.engineCylinders);
+        if (currentVehicleData.engineBrakeHp != null && !currentVehicleData.engineBrakeHp.isEmpty()) {
+            addStyledDetailRow("Horsepower", currentVehicleData.engineBrakeHp + " hp");
+        }
+        if (currentVehicleData.topSpeed != null && !currentVehicleData.topSpeed.isEmpty()) {
+            addStyledDetailRow("Top Speed", currentVehicleData.topSpeed + " mph");
+        }
         addStyledDetailRow("Fuel Type", currentVehicleData.fuelTypePrimary);
+        if (currentVehicleData.fuelDeliveryType != null && !currentVehicleData.fuelDeliveryType.isEmpty()) {
+            addStyledDetailRow("Fuel Injection", currentVehicleData.fuelDeliveryType);
+        }
+        if (currentVehicleData.valveTrainDesign != null && !currentVehicleData.valveTrainDesign.isEmpty()) {
+            addStyledDetailRow("Valvetrain", currentVehicleData.valveTrainDesign);
+        }
+        if (currentVehicleData.coolingType != null && !currentVehicleData.coolingType.isEmpty()) {
+            addStyledDetailRow("Cooling", currentVehicleData.coolingType);
+        }
 
         // Add Drivetrain section
         addStyledSectionHeader("Drivetrain");
@@ -857,6 +872,86 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         addStyledDetailRow("Transmission", currentVehicleData.transmissionStyle);
         if (currentVehicleData.transmissionSpeeds != null && !currentVehicleData.transmissionSpeeds.isEmpty()) {
             addStyledDetailRow("Speeds", currentVehicleData.transmissionSpeeds);
+        }
+        if (currentVehicleData.axles != null && !currentVehicleData.axles.isEmpty()) {
+            addStyledDetailRow("Axles", currentVehicleData.axles);
+        }
+        if (currentVehicleData.steeringLocation != null && !currentVehicleData.steeringLocation.isEmpty()) {
+            addStyledDetailRow("Steering", currentVehicleData.steeringLocation);
+        }
+
+        // Add Dimensions section
+        if (currentVehicleData.numberOfSeats != null || currentVehicleData.wheelSizeFront != null) {
+            addStyledSectionHeader("Dimensions");
+            if (currentVehicleData.numberOfSeats != null && !currentVehicleData.numberOfSeats.isEmpty()) {
+                addStyledDetailRow("Seats", currentVehicleData.numberOfSeats);
+            }
+            if (currentVehicleData.numberOfSeatRows != null && !currentVehicleData.numberOfSeatRows.isEmpty()) {
+                addStyledDetailRow("Seat Rows", currentVehicleData.numberOfSeatRows);
+            }
+            if (currentVehicleData.wheelSizeFront != null && !currentVehicleData.wheelSizeFront.isEmpty()) {
+                String wheelSize = currentVehicleData.wheelSizeFront + "\"";
+                if (currentVehicleData.wheelSizeRear != null && !currentVehicleData.wheelSizeRear.isEmpty() &&
+                    !currentVehicleData.wheelSizeRear.equals(currentVehicleData.wheelSizeFront)) {
+                    wheelSize += " / " + currentVehicleData.wheelSizeRear + "\"";
+                }
+                addStyledDetailRow("Wheel Size", wheelSize);
+            }
+        }
+
+        // Add Safety Features section
+        if (currentVehicleData.abs != null || currentVehicleData.backupCamera != null) {
+            addStyledSectionHeader("Safety Features");
+            if (currentVehicleData.abs != null && !currentVehicleData.abs.isEmpty()) {
+                addStyledDetailRow("ABS", currentVehicleData.abs);
+            }
+            if (currentVehicleData.esc != null && !currentVehicleData.esc.isEmpty()) {
+                addStyledDetailRow("Stability Control", currentVehicleData.esc);
+            }
+            if (currentVehicleData.tractionControl != null && !currentVehicleData.tractionControl.isEmpty()) {
+                addStyledDetailRow("Traction Control", currentVehicleData.tractionControl);
+            }
+            if (currentVehicleData.backupCamera != null && !currentVehicleData.backupCamera.isEmpty()) {
+                addStyledDetailRow("Backup Camera", currentVehicleData.backupCamera);
+            }
+            if (currentVehicleData.frontAirBagLocations != null && !currentVehicleData.frontAirBagLocations.isEmpty()) {
+                addStyledDetailRow("Front Airbags", currentVehicleData.frontAirBagLocations);
+            }
+            if (currentVehicleData.sideAirBagLocations != null && !currentVehicleData.sideAirBagLocations.isEmpty()) {
+                addStyledDetailRow("Side Airbags", currentVehicleData.sideAirBagLocations);
+            }
+            if (currentVehicleData.tpmsType != null && !currentVehicleData.tpmsType.isEmpty()) {
+                addStyledDetailRow("TPMS", currentVehicleData.tpmsType);
+            }
+            if (currentVehicleData.daytimeRunningLight != null && !currentVehicleData.daytimeRunningLight.isEmpty()) {
+                addStyledDetailRow("Daytime Running Lights", currentVehicleData.daytimeRunningLight);
+            }
+        }
+
+        // Add Advanced Features section
+        if (currentVehicleData.adaptiveCruiseControl != null || currentVehicleData.blindSpotWarning != null) {
+            addStyledSectionHeader("Advanced Features");
+            if (currentVehicleData.adaptiveCruiseControl != null && !currentVehicleData.adaptiveCruiseControl.isEmpty()) {
+                addStyledDetailRow("Adaptive Cruise Control", currentVehicleData.adaptiveCruiseControl);
+            }
+            if (currentVehicleData.forwardCollisionWarning != null && !currentVehicleData.forwardCollisionWarning.isEmpty()) {
+                addStyledDetailRow("Collision Warning", currentVehicleData.forwardCollisionWarning);
+            }
+            if (currentVehicleData.blindSpotWarning != null && !currentVehicleData.blindSpotWarning.isEmpty()) {
+                addStyledDetailRow("Blind Spot Warning", currentVehicleData.blindSpotWarning);
+            }
+            if (currentVehicleData.laneDepartureWarning != null && !currentVehicleData.laneDepartureWarning.isEmpty()) {
+                addStyledDetailRow("Lane Departure Warning", currentVehicleData.laneDepartureWarning);
+            }
+            if (currentVehicleData.laneKeepingAssistance != null && !currentVehicleData.laneKeepingAssistance.isEmpty()) {
+                addStyledDetailRow("Lane Keeping Assist", currentVehicleData.laneKeepingAssistance);
+            }
+            if (currentVehicleData.parkingAssist != null && !currentVehicleData.parkingAssist.isEmpty()) {
+                addStyledDetailRow("Parking Assist", currentVehicleData.parkingAssist);
+            }
+            if (currentVehicleData.keylessIgnition != null && !currentVehicleData.keylessIgnition.isEmpty()) {
+                addStyledDetailRow("Keyless Ignition", currentVehicleData.keylessIgnition);
+            }
         }
 
         // Add Manufacturing section
@@ -873,8 +968,14 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
                 addStyledDetailRow("Curb Weight", currentVehicleData.curbWeight + " lbs");
             }
             if (currentVehicleData.gvwr != null && !currentVehicleData.gvwr.isEmpty()) {
-                addStyledDetailRow("GVWR", currentVehicleData.gvwr + " lbs");
+                addStyledDetailRow("GVWR", currentVehicleData.gvwr);
             }
+        }
+
+        // Add Pricing section if available
+        if (currentVehicleData.basePrice != null && !currentVehicleData.basePrice.isEmpty()) {
+            addStyledSectionHeader("Pricing");
+            addStyledDetailRow("Base MSRP", "$" + currentVehicleData.basePrice);
         }
     }
 
