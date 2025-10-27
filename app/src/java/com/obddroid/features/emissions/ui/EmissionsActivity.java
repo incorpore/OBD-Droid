@@ -68,7 +68,8 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
     private TextView overallStatusText;
     private TextView overallStatusSubtext;
     private TextView lastUpdatedText;
-    private CardView overallStatusCard;
+    private TextView statusIcon;
+    private LinearLayout emissionsStatusBanner;
     private LinearLayout monitorsContainer;
     private VehicleInfoFooter vehicleInfoFooter;
     private View snackbarAnchor;  // Anchor view for snackbars
@@ -120,7 +121,8 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
     }
 
     private void initializeViews() {
-        overallStatusCard = findViewById(R.id.overall_status_card);
+        emissionsStatusBanner = findViewById(R.id.emissions_status_banner);
+        statusIcon = findViewById(R.id.status_icon);
         overallStatusText = findViewById(R.id.overall_status_text);
         overallStatusSubtext = findViewById(R.id.overall_status_subtext);
         lastUpdatedText = findViewById(R.id.last_updated_text);
@@ -795,13 +797,16 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
 
         if (status.isReady) {
             log.info("  Setting status: READY (green)");
-            overallStatusCard.setCardBackgroundColor(COLOR_READY);
+            emissionsStatusBanner.setBackgroundColor(COLOR_READY);
+            statusIcon.setText("✓");
         } else if (!status.hasData) {
             log.info("  Setting status: WAITING FOR DATA (gray)");
-            overallStatusCard.setCardBackgroundColor(COLOR_UNKNOWN);
+            emissionsStatusBanner.setBackgroundColor(COLOR_UNKNOWN);
+            statusIcon.setText("?");
         } else {
             log.info("  Setting status: NOT READY (yellow)");
-            overallStatusCard.setCardBackgroundColor(COLOR_NOT_READY);
+            emissionsStatusBanner.setBackgroundColor(COLOR_NOT_READY);
+            statusIcon.setText("⚠");
         }
 
         // Update status text using calculator-provided strings

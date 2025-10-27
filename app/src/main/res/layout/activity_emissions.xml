@@ -17,98 +17,72 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Full-Width Emissions Banner -->
+            <!-- Combined Status Banner -->
             <LinearLayout
+                android:id="@+id/emissions_status_banner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="#4CAF50"
-                android:orientation="horizontal"
-                android:padding="12dp"
-                android:gravity="center_vertical"
+                android:background="@color/fault_success"
+                android:orientation="vertical"
+                android:padding="16dp"
                 android:layout_marginBottom="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🌿"
-                    android:textSize="20sp"
-                    android:layout_marginEnd="10dp"/>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Emissions Diagnostics"
-                        android:textColor="#1A1A1A"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.02"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Monitor OBD-II readiness status and emissions system health"
-                        android:textColor="#2A2A2A"
-                        android:textSize="11sp"
-                        android:layout_marginTop="2dp"
-                        android:alpha="0.9"/>
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <!-- Overall Status Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/overall_status_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_large"
-                android:layout_marginEnd="@dimen/spacing_large"
-                android:layout_marginBottom="@dimen/spacing_xxl"
-                app:cardBackgroundColor="@color/fault_success"
-                app:cardCornerRadius="@dimen/card_corner_radius"
-                app:cardElevation="@dimen/elevation_hero_card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/card_padding_standard">
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
 
                     <TextView
-                        android:id="@+id/overall_status_text"
+                        android:id="@+id/status_icon"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="✓ READY FOR EMISSIONS TEST"
-                        android:textColor="@color/text_primary_dark"
-                        android:textSize="@dimen/text_section_header"
-                        android:textStyle="bold" />
+                        android:text="✓"
+                        android:textSize="32sp"
+                        android:textColor="#1A1A1A"
+                        android:layout_marginEnd="12dp"/>
 
-                    <TextView
-                        android:id="@+id/overall_status_subtext"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_small"
-                        android:text="All monitors complete • All systems operational"
-                        android:textColor="@color/text_hint_dark"
-                        android:textSize="@dimen/text_caption" />
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/last_updated_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_xs"
-                        android:text="Last updated: --"
-                        android:textColor="@color/text_tertiary_dark"
-                        android:textSize="@dimen/text_label"
-                        android:alpha="0.7" />
+                        <TextView
+                            android:id="@+id/overall_status_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="READY FOR EMISSIONS TEST"
+                            android:textColor="#1A1A1A"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.02"/>
+
+                        <TextView
+                            android:id="@+id/overall_status_subtext"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="All monitors complete • All systems operational"
+                            android:textColor="#2A2A2A"
+                            android:textSize="11sp"
+                            android:layout_marginTop="2dp"
+                            android:alpha="0.9"/>
+
+                        <TextView
+                            android:id="@+id/last_updated_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Last updated: --"
+                            android:textColor="#1A1A1A"
+                            android:textSize="10sp"
+                            android:layout_marginTop="4dp"
+                            android:alpha="0.7" />
+
+                    </LinearLayout>
+
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
