@@ -1369,24 +1369,6 @@ public class MainActivity extends AppCompatActivity
                 launchActivityForResult(settingsIntent, REQUEST_SETTINGS);
                 return true;
 
-            case R.id.full_scan:
-                // Launch the Full Vehicle Scan Activity
-                Intent scanIntent = new Intent(this, ScanActivity.class);
-                startActivity(scanIntent);
-                return true;
-
-            case R.id.copilot:
-                // Launch the CoPilot Activity
-                Intent copilotIntent = new Intent(this, CoPilotActivity.class);
-                startActivity(copilotIntent);
-                return true;
-
-            case R.id.thread_manager:
-                // Launch the Thread Manager Activity
-                Intent threadManagerIntent = new Intent(this, com.obddroid.features.copilot.ui.ThreadManagerActivity.class);
-                startActivity(threadManagerIntent);
-                return true;
-
             case R.id.service_home:
                 // Always return to dashboard/home screen
                 setObdService(ObdProt.OBD_SVC_NONE, getString(R.string.app_name));
@@ -2735,6 +2717,15 @@ public class MainActivity extends AppCompatActivity
     void launchCoPilotActivity() {
         log.info("Launching CoPilot AI Assistant activity");
         Intent intent = new Intent(this, CoPilotActivity.class);
+        startActivity(intent);
+    }
+
+    /**
+     * Launch the Full Vehicle Scan activity
+     */
+    void launchFullScanActivity() {
+        log.info("Launching Full Vehicle Scan activity");
+        Intent intent = new Intent(this, ScanActivity.class);
         startActivity(intent);
     }
 

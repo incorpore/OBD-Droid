@@ -209,6 +209,23 @@ final class DashboardUiHelper {
         } else {
             log.warning("CoPilot card NOT found!");
         }
+
+        // Full Scan card
+        View fullScanCard = activity.findViewById(R.id.card_full_scan);
+        if (fullScanCard != null) {
+            addCardPressAnimation(fullScanCard);
+            fullScanCard.setOnClickListener(v -> {
+                log.info("Full Scan card clicked!");
+                activity.launchFullScanActivity();
+            });
+            fullScanCard.setOnLongClickListener(v -> showCardInfoDialog(
+                activity,
+                "Full Vehicle Scan",
+                "Perform a comprehensive scan of all vehicle systems. Reads live data, fault codes, test results, and vehicle information in one operation."
+            ));
+        } else {
+            log.warning("Full Scan card NOT found!");
+        }
     }
 
     private static void addCardPressAnimation(View card) {

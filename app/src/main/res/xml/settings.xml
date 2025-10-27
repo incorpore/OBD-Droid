@@ -193,6 +193,13 @@
             app:dependency="copilot_enabled" />
 
         <Preference
+            android:key="copilot_conversation_history"
+            android:title="Conversation History"
+            android:summary="View and manage your CoPilot conversation threads"
+            android:layout="@layout/preference_indented"
+            app:dependency="copilot_enabled" />
+
+        <Preference
             android:key="copilot_delete_all_conversations"
             android:title="Delete All Conversations"
             android:summary="Permanently delete all stored CoPilot conversation threads from OpenAI"

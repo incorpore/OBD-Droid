@@ -562,6 +562,17 @@ public class SettingsActivity
 		void setupCoPilotFeatures()
 		{
 			// Delete all conversations preference
+			Preference conversationHistoryPref = findPreference("copilot_conversation_history");
+			if (conversationHistoryPref != null)
+			{
+				conversationHistoryPref.setOnPreferenceClickListener(preference ->
+				{
+					Intent intent = new Intent(getActivity(), com.obddroid.features.copilot.ui.ThreadManagerActivity.class);
+					startActivity(intent);
+					return true;
+				});
+			}
+
 			Preference deleteAllPref = findPreference("copilot_delete_all_conversations");
 			if (deleteAllPref != null)
 			{
