@@ -4,15 +4,15 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
 
     <!-- Typography Scale -->
-    <dimen name="text_hero_title">24sp</dimen>
-    <dimen name="text_hero_subtitle">15sp</dimen>
-    <dimen name="text_section_header">20sp</dimen>
-    <dimen name="text_body">15sp</dimen>
-    <dimen name="text_caption">14sp</dimen>
-    <dimen name="text_label">12sp</dimen>
-    <dimen name="text_large_value">28sp</dimen>
-    <dimen name="text_medium_value">24sp</dimen>
-    <dimen name="text_small_value">16sp</dimen>
+    <dimen name="text_hero_title">20sp</dimen>
+    <dimen name="text_hero_subtitle">13sp</dimen>
+    <dimen name="text_section_header">16sp</dimen>
+    <dimen name="text_body">13sp</dimen>
+    <dimen name="text_caption">12sp</dimen>
+    <dimen name="text_label">10sp</dimen>
+    <dimen name="text_large_value">24sp</dimen>
+    <dimen name="text_medium_value">20sp</dimen>
+    <dimen name="text_small_value">14sp</dimen>
 
     <!-- Spacing Scale (Compact for data-heavy pages) -->
     <dimen name="spacing_xs">4dp</dimen>
@@ -24,7 +24,7 @@
 
     <!-- Card Dimensions -->
     <dimen name="card_corner_radius">12dp</dimen>
-    <dimen name="card_padding_standard">20dp</dimen>
+    <dimen name="card_padding_standard">14dp</dimen>
     <dimen name="card_padding_compact">8dp</dimen>
 
     <!-- Elevation Scale -->
