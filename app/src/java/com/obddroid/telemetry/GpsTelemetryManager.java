@@ -224,16 +224,23 @@ public class GpsTelemetryManager implements LocationListener {
     private void updateField(GpsField field, @Nullable Double value) {
         EcuDataPv pv = dataPvs.get(field);
         if (pv == null) {
+            Log.w(TAG, "updateField: PV is null for field " + field.mnemonic);
             return;
         }
         if (value == null) {
             return;
         }
         double clipped = clamp(value, field.min, field.max);
+
+        // Get old value to check if it changed
+        Object oldValue = pv.get(EcuDataPv.FID_VALUE);
+
         pv.put(EcuDataPv.FID_VALUE, Double.valueOf(clipped));
         pv.put(EcuDataPv.FID_FORMAT, field.formatPattern);
         pv.put(EcuDataPv.FID_DESCRIPT, appContext.getString(field.labelResId));
         pv.put(EcuDataPv.FID_UNITS, field.units);
+
+        Log.d(TAG, "Updated " + field.mnemonic + ": " + oldValue + " -> " + clipped);
     }
 
     /**
@@ -261,8 +268,28 @@ public class GpsTelemetryManager implements LocationListener {
     }
 
     private void ensureLiveDataPreferences() {
-        // Don't manage preferences - let the adapter show all PIDs by default
-        // GPS items are already added to ObdProt.PidPvs, which is sufficient
+        // Add GPS fields to selected PIDs preference so they appear in Live Data
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(appContext);
+        Set<String> selectedPids = prefs.getStringSet(SettingsActivity.KEY_DATA_ITEMS, null);
+
+        // Only update if user has a saved selection (if null/empty, adapter shows all by default)
+        if (selectedPids != null && !selectedPids.isEmpty()) {
+            // Make a mutable copy
+            Set<String> updatedPids = new HashSet<>(selectedPids);
+
+            // Add all GPS field keys
+            for (String key : registeredKeys) {
+                if (!updatedPids.contains(key)) {
+                    updatedPids.add(key);
+                    Log.d(TAG, "Added GPS field to preferences: " + key);
+                }
+            }
+
+            // Save updated selection
+            prefs.edit().putStringSet(SettingsActivity.KEY_DATA_ITEMS, updatedPids).apply();
+            Log.d(TAG, "GPS fields added to selected PIDs preference");
+        }
+
         Log.d(TAG, "GPS fields registered in PidPvs: " + registeredKeys.size());
     }
 

@@ -201,8 +201,28 @@ public class SensorTelemetryManager implements SensorEventListener {
     }
 
     private void ensureLiveDataPreferences() {
-        // Don't manage preferences - let the adapter show all PIDs by default
-        // Sensor items are already added to ObdProt.PidPvs, which is sufficient
+        // Add sensor fields to selected PIDs preference so they appear in Live Data
+        SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(appContext);
+        Set<String> selectedPids = prefs.getStringSet(com.obddroid.ui.activities.SettingsActivity.KEY_DATA_ITEMS, null);
+
+        // Only update if user has a saved selection (if null/empty, adapter shows all by default)
+        if (selectedPids != null && !selectedPids.isEmpty()) {
+            // Make a mutable copy
+            Set<String> updatedPids = new HashSet<>(selectedPids);
+
+            // Add all sensor field keys
+            for (String key : registeredKeys) {
+                if (!updatedPids.contains(key)) {
+                    updatedPids.add(key);
+                    Log.d(TAG, "Added sensor field to preferences: " + key);
+                }
+            }
+
+            // Save updated selection
+            prefs.edit().putStringSet(com.obddroid.ui.activities.SettingsActivity.KEY_DATA_ITEMS, updatedPids).apply();
+            Log.d(TAG, "Sensor fields added to selected PIDs preference");
+        }
+
         Log.d(TAG, "Sensor fields registered in PidPvs: " + registeredKeys.size());
     }
 

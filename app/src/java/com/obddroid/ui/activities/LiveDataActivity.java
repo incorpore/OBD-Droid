@@ -67,8 +67,22 @@ public class LiveDataActivity extends AppCompatActivity
         @Override
         public void run() {
             if (adapter != null && !ObdProt.PidPvs.isEmpty()) {
-                // Refresh the adapter's data source to pick up new PIDs from vehicle
-                adapter.setPvList(ObdProt.PidPvs);
+                // Just refresh the displayed values, don't rebuild the entire list
+                // This allows GPS/Motion telemetry to update smoothly
+
+                // Debug: Log GPS field values to verify they're updating
+                try {
+                    Object latPv = ObdProt.PidPvs.get("F100.0.0");
+                    if (latPv != null && latPv instanceof com.obddroid.ecu.EcuDataPv) {
+                        Object latValue = ((com.obddroid.ecu.EcuDataPv) latPv).get(com.obddroid.ecu.EcuDataPv.FID_VALUE);
+                        log.info("DEBUG: GPS Latitude value in PidPvs: " + latValue + ", adapter count: " + adapter.getCount());
+                    } else {
+                        log.warning("DEBUG: GPS Latitude (F100.0.0) NOT FOUND in PidPvs!");
+                    }
+                } catch (Exception e) {
+                    log.warning("DEBUG: Error checking GPS values: " + e.getMessage());
+                }
+
                 adapter.notifyDataSetChanged();
             }
             updateHandler.postDelayed(this, UPDATE_INTERVAL);
@@ -127,6 +141,12 @@ public class LiveDataActivity extends AppCompatActivity
         CommService.elm.setService(ObdProt.OBD_SVC_DATA);
         log.info("Set OBD service to OBD_SVC_DATA (Live Data mode)");
 
+        // Refresh adapter with current PIDs (in case new ones were added while paused)
+        if (adapter != null && !ObdProt.PidPvs.isEmpty()) {
+            adapter.setPvList(ObdProt.PidPvs);
+            adapter.notifyDataSetChanged();
+        }
+
         // Start updating the adapter
         updateHandler.post(updateRunnable);
 
@@ -147,8 +167,16 @@ public class LiveDataActivity extends AppCompatActivity
 
     @Override
     public void pvChanged(PvChangeEvent event) {
-        // PV data changed - adapter will be updated by updateRunnable
-        // This ensures we capture OBD data changes in real-time
+        // When NEW PIDs are added (vehicle discovery), rebuild the adapter
+        if ((event.getType() & PvChangeEvent.PV_ADDED) != 0) {
+            runOnUiThread(() -> {
+                if (adapter != null) {
+                    adapter.setPvList(ObdProt.PidPvs);
+                    adapter.notifyDataSetChanged();
+                }
+            });
+        }
+        // For value modifications, the updateRunnable will handle the refresh
     }
 
     @Override
