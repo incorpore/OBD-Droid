@@ -1368,24 +1368,7 @@ public class AutoCheckActivity extends AppCompatActivity {
                         }
                     }
 
-                    // Show toast to inform user it's cached
-                    long cacheTime = prefs.getLong(cacheKey + "_time", 0);
-                    long ageMinutes = (System.currentTimeMillis() - cacheTime) / 60000;
-
-                    String toastMessage;
-                    if (ageMinutes < 60) {
-                        toastMessage = "Loaded cached report (" + ageMinutes + " min old)";
-                    } else {
-                        long ageHours = ageMinutes / 60;
-                        toastMessage = "Loaded cached report (" + ageHours + " hr old)";
-                    }
-
-                    // Add PDF status to toast
-                    if (currentPdfFilePath != null) {
-                        toastMessage += " - PDF available";
-                    }
-
-                    SnackbarHelper.showSnackbar(this, toastMessage, SnackbarHelper.MessageType.INFO);
+                    // Silently load cached report - no notification needed
                 }
             }
         } catch (Exception e) {
