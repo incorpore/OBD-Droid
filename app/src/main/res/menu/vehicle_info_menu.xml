@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/action_save_vehicle_info"
-        android:icon="@drawable/ic_file_upload_24"
+        android:icon="@drawable/ic_save_24"
         android:title="Save Report"
         app:contentDescription="Save vehicle information report"
         app:iconTint="@color/text_secondary_dark"
