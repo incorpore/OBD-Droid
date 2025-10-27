@@ -2703,6 +2703,15 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
+     * Launch the Vehicle Info activity
+     */
+    void launchVehicleInfoActivity() {
+        log.info("Launching Vehicle Info activity");
+        Intent intent = new Intent(this, VehicleInfoActivity.class);
+        startActivity(intent);
+    }
+
+    /**
      * Launch the ECU List activity
      */
     void launchEcuListActivity() {

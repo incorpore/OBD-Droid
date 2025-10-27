@@ -138,6 +138,11 @@
             android:configChanges="touchscreen|orientation|screenSize"
             android:exported="false" />
         <activity
+            android:name="com.obddroid.ui.activities.VehicleInfoActivity"
+            android:label="Vehicle Information"
+            android:configChanges="touchscreen|orientation|screenSize"
+            android:exported="false" />
+        <activity
             android:name="com.obddroid.ui.activities.FaultCodesActivity"
             android:label="Fault Codes"
             android:configChanges="touchscreen|orientation|screenSize"

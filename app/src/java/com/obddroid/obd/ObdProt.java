@@ -383,6 +383,17 @@ public class ObdProt extends ProtoHeader
             }
 
             @Override
+            public Object put(Object key, Object value, int action) {
+                Object result = super.put(key, value, action);
+                // Also update data service with event
+                TypedPvList<Object, ProcessVar> serviceData = dataService.getTypedStoreForService(service);
+                if (serviceData != null) {
+                    serviceData.put(key, (ProcessVar) value, action);
+                }
+                return result;
+            }
+
+            @Override
             public void putAll(Map m) {
                 super.putAll(m);
                 // Also update data service

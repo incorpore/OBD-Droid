@@ -175,6 +175,23 @@ final class DashboardUiHelper {
         } else {
             log.warning("ECU List card NOT found!");
         }
+
+        // Vehicle Info card
+        View vehicleInfoCard = activity.findViewById(R.id.card_vehicle_info);
+        if (vehicleInfoCard != null) {
+            addCardPressAnimation(vehicleInfoCard);
+            vehicleInfoCard.setOnClickListener(v -> {
+                log.info("Vehicle Info card clicked!");
+                activity.launchVehicleInfoActivity();
+            });
+            vehicleInfoCard.setOnLongClickListener(v -> showCardInfoDialog(
+                activity,
+                "Vehicle Information",
+                "View comprehensive decoded VIN information from the NHTSA vPIC database. See all available details about your vehicle including specifications, safety features, and manufacturing data."
+            ));
+        } else {
+            log.warning("Vehicle Info card NOT found!");
+        }
     }
 
     private static void addCardPressAnimation(View card) {
