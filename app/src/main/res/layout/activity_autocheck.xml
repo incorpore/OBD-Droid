@@ -632,7 +632,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal"
-                                android:padding="12dp"
+                                android:padding="6dp"
                                 android:gravity="center_vertical">
 
                                 <TextView
@@ -662,8 +662,8 @@
                                 android:layout_height="1dp"
                                 android:background="#404040"
                                 android:alpha="0.5"
-                                android:layout_marginTop="8dp"
-                                android:layout_marginBottom="8dp"/>
+                                android:layout_marginTop="4dp"
+                                android:layout_marginBottom="4dp"/>
 
                             <!-- Accident/Damage -->
                             <LinearLayout
@@ -671,7 +671,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal"
-                                android:padding="12dp"
+                                android:padding="6dp"
                                 android:gravity="center_vertical">
 
                                 <TextView
@@ -697,8 +697,8 @@
                                 android:layout_height="1dp"
                                 android:background="#404040"
                                 android:alpha="0.5"
-                                android:layout_marginTop="8dp"
-                                android:layout_marginBottom="8dp"/>
+                                android:layout_marginTop="4dp"
+                                android:layout_marginBottom="4dp"/>
 
                             <!-- Structural Damage -->
                             <LinearLayout
@@ -706,7 +706,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal"
-                                android:padding="12dp"
+                                android:padding="6dp"
                                 android:gravity="center_vertical">
 
                                 <TextView
@@ -732,8 +732,8 @@
                                 android:layout_height="1dp"
                                 android:background="#404040"
                                 android:alpha="0.5"
-                                android:layout_marginTop="8dp"
-                                android:layout_marginBottom="8dp"/>
+                                android:layout_marginTop="4dp"
+                                android:layout_marginBottom="4dp"/>
 
                             <!-- Airbag Deployment -->
                             <LinearLayout
@@ -741,7 +741,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal"
-                                android:padding="12dp"
+                                android:padding="6dp"
                                 android:gravity="center_vertical">
 
                                 <TextView
@@ -767,8 +767,8 @@
                                 android:layout_height="1dp"
                                 android:background="#404040"
                                 android:alpha="0.5"
-                                android:layout_marginTop="8dp"
-                                android:layout_marginBottom="8dp"/>
+                                android:layout_marginTop="4dp"
+                                android:layout_marginBottom="4dp"/>
 
                             <!-- Odometer Rollback -->
                             <LinearLayout
@@ -776,7 +776,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal"
-                                android:padding="12dp"
+                                android:padding="6dp"
                                 android:gravity="center_vertical">
 
                                 <TextView

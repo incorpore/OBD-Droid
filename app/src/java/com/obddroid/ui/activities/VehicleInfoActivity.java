@@ -1,11 +1,15 @@
 package com.obddroid.ui.activities;
 
+import android.app.Dialog;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -14,9 +18,20 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import com.google.android.flexbox.FlexboxLayout;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.obddroid.R;
 import com.obddroid.services.VehicleManager;
+import com.obddroid.utils.SnackbarHelper;
 import com.obddroid.utils.VehicleData;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Activity for displaying comprehensive decoded VIN information.
@@ -63,9 +78,18 @@ public class VehicleInfoActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.vehicle_info_menu, menu);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             onBackPressed();
+            return true;
+        } else if (item.getItemId() == R.id.action_save_vehicle_info) {
+            showSaveReportDialog();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -574,5 +598,152 @@ public class VehicleInfoActivity extends AppCompatActivity {
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
+    }
+
+    /**
+     * Show save report dialog
+     */
+    private void showSaveReportDialog() {
+        VehicleManager vm = VehicleManager.getInstance();
+        VehicleData vehicleData = vm.getCurrentVehicleData();
+        String vin = vm.getCurrentVIN();
+
+        if (vehicleData == null || TextUtils.isEmpty(vin)) {
+            showSnackbar("No vehicle data available to export", SnackbarHelper.MessageType.INFO);
+            return;
+        }
+
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_export_ecu);
+        dialog.setCancelable(true);
+
+        TextView dialogTitle = dialog.findViewById(R.id.dialog_title);
+        if (dialogTitle != null) dialogTitle.setText("Save Vehicle Information");
+
+        View csvOption = dialog.findViewById(R.id.option_export_csv);
+        if (csvOption != null) {
+            csvOption.setOnClickListener(v -> {
+                dialog.dismiss();
+                exportCsv(vin, vehicleData);
+            });
+        }
+
+        View jsonOption = dialog.findViewById(R.id.option_export_json);
+        if (jsonOption != null) {
+            jsonOption.setOnClickListener(v -> {
+                dialog.dismiss();
+                exportJson(vin, vehicleData);
+            });
+        }
+
+        View cancelButton = dialog.findViewById(R.id.btn_cancel);
+        if (cancelButton != null) {
+            cancelButton.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
+    /**
+     * Export vehicle data to CSV
+     */
+    private void exportCsv(String vin, VehicleData data) {
+        try {
+            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+            String filename = "vehicle_info_" + vin + "_" + timestamp + ".csv";
+            File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            File file = new File(downloadsDir, filename);
+
+            FileWriter writer = new FileWriter(file);
+
+            // CSV Header
+            writer.append("Field,Value\n");
+
+            // Vehicle Identification
+            writer.append("VIN,\"").append(escape(vin)).append("\"\n");
+            if (!TextUtils.isEmpty(data.manufacturer)) writer.append("Manufacturer,\"").append(escape(data.manufacturer)).append("\"\n");
+            if (!TextUtils.isEmpty(data.model)) writer.append("Model,\"").append(escape(data.model)).append("\"\n");
+            if (!TextUtils.isEmpty(data.modelYear)) writer.append("Year,\"").append(escape(data.modelYear)).append("\"\n");
+            if (!TextUtils.isEmpty(data.series)) writer.append("Series,\"").append(escape(data.series)).append("\"\n");
+            if (!TextUtils.isEmpty(data.trim)) writer.append("Trim,\"").append(escape(data.trim)).append("\"\n");
+
+            // Body & Structure
+            if (!TextUtils.isEmpty(data.bodyClass)) writer.append("Body Class,\"").append(escape(data.bodyClass)).append("\"\n");
+            if (!TextUtils.isEmpty(data.vehicleType)) writer.append("Vehicle Type,\"").append(escape(data.vehicleType)).append("\"\n");
+            if (!TextUtils.isEmpty(data.doors)) writer.append("Doors,\"").append(escape(data.doors)).append("\"\n");
+            if (!TextUtils.isEmpty(data.wheelBase)) writer.append("Wheelbase,\"").append(escape(data.wheelBase)).append(" inches\"\n");
+
+            // Engine
+            if (!TextUtils.isEmpty(data.engineModel)) writer.append("Engine Model,\"").append(escape(data.engineModel)).append("\"\n");
+            if (!TextUtils.isEmpty(data.engineConfiguration)) writer.append("Configuration,\"").append(escape(data.engineConfiguration)).append("\"\n");
+            if (!TextUtils.isEmpty(data.displacementL)) writer.append("Displacement,\"").append(escape(data.displacementL)).append("L\"\n");
+            if (!TextUtils.isEmpty(data.engineCylinders)) writer.append("Cylinders,\"").append(escape(data.engineCylinders)).append("\"\n");
+            if (!TextUtils.isEmpty(data.engineBrakeHp)) writer.append("Horsepower,\"").append(escape(data.engineBrakeHp)).append(" hp\"\n");
+            if (!TextUtils.isEmpty(data.fuelTypePrimary)) writer.append("Fuel Type,\"").append(escape(data.fuelTypePrimary)).append("\"\n");
+
+            // Drivetrain
+            if (!TextUtils.isEmpty(data.transmissionStyle)) writer.append("Transmission,\"").append(escape(data.transmissionStyle)).append("\"\n");
+            if (!TextUtils.isEmpty(data.driveType)) writer.append("Drive Type,\"").append(escape(data.driveType)).append("\"\n");
+
+            // Manufacturing
+            if (!TextUtils.isEmpty(data.plantCountry)) writer.append("Plant Country,\"").append(escape(data.plantCountry)).append("\"\n");
+            if (!TextUtils.isEmpty(data.plantCity)) writer.append("Plant City,\"").append(escape(data.plantCity)).append("\"\n");
+            if (!TextUtils.isEmpty(data.plantState)) writer.append("Plant State,\"").append(escape(data.plantState)).append("\"\n");
+
+            // Metadata
+            if (!TextUtils.isEmpty(data.dataSource)) writer.append("Data Source,\"").append(escape(data.dataSource)).append("\"\n");
+
+            writer.flush();
+            writer.close();
+
+            showSnackbar("Saved to Downloads/" + filename, SnackbarHelper.MessageType.SUCCESS);
+        } catch (IOException e) {
+            Log.e(TAG, "Error exporting CSV", e);
+            showSnackbar("Failed to export CSV: " + e.getMessage(), SnackbarHelper.MessageType.ERROR);
+        }
+    }
+
+    /**
+     * Export vehicle data to JSON
+     */
+    private void exportJson(String vin, VehicleData data) {
+        try {
+            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+            String filename = "vehicle_info_" + vin + "_" + timestamp + ".json";
+            File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            File file = new File(downloadsDir, filename);
+
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String json = gson.toJson(data);
+
+            FileWriter writer = new FileWriter(file);
+            writer.write(json);
+            writer.flush();
+            writer.close();
+
+            showSnackbar("Saved to Downloads/" + filename, SnackbarHelper.MessageType.SUCCESS);
+        } catch (IOException e) {
+            Log.e(TAG, "Error exporting JSON", e);
+            showSnackbar("Failed to export JSON: " + e.getMessage(), SnackbarHelper.MessageType.ERROR);
+        }
+    }
+
+    /**
+     * Escape CSV special characters
+     */
+    private String escape(String value) {
+        if (value == null) return "";
+        return value.replace("\"", "\"\"");
+    }
+
+    /**
+     * Show snackbar message
+     */
+    private void showSnackbar(String message, SnackbarHelper.MessageType type) {
+        View rootView = findViewById(android.R.id.content);
+        if (rootView != null) {
+            SnackbarHelper.showMessage(rootView, message, type);
+        }
     }
 }
