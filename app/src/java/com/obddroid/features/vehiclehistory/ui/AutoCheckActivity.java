@@ -61,7 +61,7 @@ public class AutoCheckActivity extends AppCompatActivity {
     private CardView emptyStateCard;
     private Button checkHistoryButton;
     private String currentVin;
-    private LinearLayout loadingContainer;
+    private CardView loadingContainer;
     private ProgressBar loadingSpinner;
     private TextView loadingText;
 
@@ -439,32 +439,27 @@ public class AutoCheckActivity extends AppCompatActivity {
             scoreInterpretation.setTextColor(Color.parseColor("#757575"));
         }
 
-        // Quick status badges
+        // Quick status badges - Show recall count if available
         quickStatusContainer.removeAllViews();
 
-        if (report.hasCleanTitle()) {
-            addStatusBadge("Clean Title", "#4CAF50");
-        }
-
-        if (!report.hasAccidents()) {
-            addStatusBadge("No Accidents", "#4CAF50");
-        }
-
-        if (report.getOdometerRollback() != null && !report.getOdometerRollback()) {
-            addStatusBadge("No Rollback", "#4CAF50");
+        // Display recall count badge
+        if (report.getOpenRecalls() != null && report.getOpenRecalls() > 0) {
+            String recallText = report.getOpenRecalls() + " Recall" + (report.getOpenRecalls() > 1 ? "s" : "") + " Detected";
+            addStatusBadge(recallText, "#FFC107", R.drawable.status_badge_warning);
+        } else if (report.getOpenRecalls() != null && report.getOpenRecalls() == 0) {
+            addStatusBadge("No Open Recalls", "#4CAF50", R.drawable.status_badge_success);
         }
     }
 
-    private void addStatusBadge(String text, String colorHex) {
+    private void addStatusBadge(String text, String colorHex, int backgroundResource) {
         TextView badge = new TextView(this);
         badge.setText(text);
         badge.setTextColor(Color.WHITE);
         badge.setTextSize(12);
         badge.setPadding(24, 12, 24, 12);
-        badge.setBackgroundColor(Color.parseColor(colorHex));
 
-        // Add rounded corners
-        badge.setBackgroundResource(R.drawable.status_badge_success);
+        // Use the provided background resource
+        badge.setBackgroundResource(backgroundResource);
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
