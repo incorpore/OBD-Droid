@@ -181,8 +181,8 @@
                         android:hint="Ask CoPilot anything..."
                         android:inputType="textCapSentences|textMultiLine"
                         android:maxLines="4"
-                        android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_secondary" />
+                        android:textColor="@color/text_primary_dark"
+                        android:textColorHint="@color/text_secondary_dark" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
