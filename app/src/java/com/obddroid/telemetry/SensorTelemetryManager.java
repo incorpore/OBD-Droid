@@ -81,6 +81,23 @@ public class SensorTelemetryManager implements SensorEventListener {
         }
         sensorManager.unregisterListener(this);
         active = false;
+
+        // Remove sensor fields from PidPvs so they disappear from Live Data
+        unregisterDataItems();
+    }
+
+    private void unregisterDataItems() {
+        Log.d(TAG, "Unregistering " + registeredKeys.size() + " sensor fields from PidPvs");
+        for (String key : registeredKeys) {
+            ObdProt.PidPvs.remove(key);
+        }
+
+        // Clear local tracking
+        items.clear();
+        dataPvs.clear();
+        registeredKeys.clear();
+
+        Log.d(TAG, "Sensor fields removed from PidPvs");
     }
 
     private void registerDataItems() {
@@ -138,6 +155,9 @@ public class SensorTelemetryManager implements SensorEventListener {
         updateField(DataField.ACC_X, event.values[0]);
         updateField(DataField.ACC_Y, event.values[1]);
         updateField(DataField.ACC_Z, event.values[2]);
+
+        // Trigger change notification so LiveDataActivity picks up the updates
+        notifyDataChanged();
     }
 
     @Override
@@ -156,6 +176,20 @@ public class SensorTelemetryManager implements SensorEventListener {
         pv.put(EcuDataPv.FID_DESCRIPT, appContext.getString(field.labelResId));
     }
 
+    /**
+     * Notify observers that sensor data has changed
+     * This triggers PvChangeEvent.PV_MODIFIED for all sensor fields
+     */
+    private void notifyDataChanged() {
+        // Trigger change events for all registered sensor fields
+        for (Map.Entry<DataField, EcuDataItem> entry : items.entrySet()) {
+            String key = entry.getValue().toString();
+            EcuDataPv pv = entry.getValue().pv;
+            // Use put with PV_MODIFIED action to trigger change listeners
+            ObdProt.PidPvs.put(key, pv, com.obddroid.common.ProcessVariables.PvChangeEvent.PV_MODIFIED);
+        }
+    }
+
     private double clamp(double value, double min, double max) {
         if (value < min) {
             return min;
@@ -167,28 +201,9 @@ public class SensorTelemetryManager implements SensorEventListener {
     }
 
     private void ensureLiveDataPreferences() {
-        if (registeredKeys.isEmpty()) {
-            return;
-        }
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(appContext);
-        Set<String> current = prefs.getStringSet(SettingsActivity.KEY_DATA_ITEMS, null);
-
-        // If preference is null or empty, create a new set with sensor items
-        if (current == null || current.isEmpty()) {
-            Set<String> updated = new HashSet<>(registeredKeys);
-            prefs.edit().putStringSet(SettingsActivity.KEY_DATA_ITEMS, updated).apply();
-            return;
-        }
-
-        // If sensor items are already in preferences, no need to update
-        if (current.containsAll(registeredKeys)) {
-            return;
-        }
-
-        // Add sensor items to existing preferences
-        Set<String> updated = new HashSet<>(current);
-        updated.addAll(registeredKeys);
-        prefs.edit().putStringSet(SettingsActivity.KEY_DATA_ITEMS, updated).apply();
+        // Don't manage preferences - let the adapter show all PIDs by default
+        // Sensor items are already added to ObdProt.PidPvs, which is sufficient
+        Log.d(TAG, "Sensor fields registered in PidPvs: " + registeredKeys.size());
     }
 
     private enum DataField {

@@ -186,7 +186,7 @@ final class DashboardUiHelper {
             });
             vehicleInfoCard.setOnLongClickListener(v -> showCardInfoDialog(
                 activity,
-                "Vehicle Information",
+                "VIN Decoder",
                 "View comprehensive decoded VIN information from the NHTSA vPIC database. See all available details about your vehicle including specifications, safety features, and manufacturing data."
             ));
         } else {

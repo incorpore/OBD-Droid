@@ -341,16 +341,36 @@ public class FaultCodeService implements RawTelegramListener {
         }
 
         // Determine mode response prefix based on code type
-        String modePrefix;
+        // NOTE: Some vehicles respond to all modes with 43 prefix, so try multiple formats
+        String[] possiblePrefixes;
         switch (codeType) {
-            case CONFIRMED: modePrefix = "43"; break;  // Mode 03 response
-            case PENDING: modePrefix = "47"; break;    // Mode 07 response
-            case PERMANENT: modePrefix = "4A"; break;   // Mode 0A response
-            default: modePrefix = "43";
+            case CONFIRMED:
+                possiblePrefixes = new String[]{"43"};
+                break;
+            case PENDING:
+                possiblePrefixes = new String[]{"47", "43"};  // Try 47 first, fallback to 43
+                break;
+            case PERMANENT:
+                possiblePrefixes = new String[]{"4A", "4C", "43"};  // Try multiple formats
+                break;
+            default:
+                possiblePrefixes = new String[]{"43"};
         }
 
         boolean isPending = (codeType == CodeType.PENDING);
-        int cursor = cleanData.indexOf(modePrefix);
+
+        // Try each possible prefix
+        int cursor = -1;
+        String foundPrefix = null;
+        for (String prefix : possiblePrefixes) {
+            cursor = cleanData.indexOf(prefix);
+            if (cursor >= 0) {
+                foundPrefix = prefix;
+                log.info("Found response with prefix: " + prefix);
+                break;
+            }
+        }
+
         while (cursor >= 0 && cursor + 4 <= cleanData.length()) {
             int count;
             try {
@@ -379,7 +399,7 @@ public class FaultCodeService implements RawTelegramListener {
                 }
             }
 
-            cursor = cleanData.indexOf(modePrefix, index);
+            cursor = foundPrefix != null ? cleanData.indexOf(foundPrefix, index) : -1;
         }
 
         return codes;

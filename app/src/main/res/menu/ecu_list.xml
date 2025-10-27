@@ -22,7 +22,7 @@
 
     <item
         android:id="@+id/action_import_csv"
-        android:title="Import CSV"
+        android:title="Import Report"
         android:icon="@drawable/ic_file_download_24"
         app:showAsAction="never" />
 

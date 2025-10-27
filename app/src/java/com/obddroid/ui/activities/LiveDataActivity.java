@@ -32,6 +32,7 @@ import com.obddroid.services.CommService;
 import com.obddroid.ui.adapters.ObdItemAdapter;
 import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.utils.SnackbarHelper;
+import com.obddroid.utils.PermissionManager;
 
 import java.util.logging.Logger;
 
@@ -58,8 +59,6 @@ public class LiveDataActivity extends AppCompatActivity
     private GpsTelemetryManager gpsTelemetryManager;
     private SensorTelemetryManager sensorTelemetryManager;
 
-    private TypedPvList<Object, ProcessVar> pidStore;
-
     // Update handler
     private Handler updateHandler = new Handler(Looper.getMainLooper());
     private static final long UPDATE_INTERVAL = 500; // Update every 500ms
@@ -67,9 +66,9 @@ public class LiveDataActivity extends AppCompatActivity
     private final Runnable updateRunnable = new Runnable() {
         @Override
         public void run() {
-            if (adapter != null && pidStore != null && !pidStore.isEmpty()) {
+            if (adapter != null && !ObdProt.PidPvs.isEmpty()) {
                 // Refresh the adapter's data source to pick up new PIDs from vehicle
-                adapter.setPvList(pidStore);
+                adapter.setPvList(ObdProt.PidPvs);
                 adapter.notifyDataSetChanged();
             }
             updateHandler.postDelayed(this, UPDATE_INTERVAL);
@@ -98,9 +97,8 @@ public class LiveDataActivity extends AppCompatActivity
         listView = findViewById(android.R.id.list);
         snackbarAnchor = findViewById(R.id.snackbar_anchor);
 
-        // Create adapter with current PID store
-        pidStore = getPidStore();
-        adapter = new ObdItemAdapter(this, R.layout.obd_item, pidStore);
+        // Create adapter with current PidPvs
+        adapter = new ObdItemAdapter(this, R.layout.obd_item, ObdProt.PidPvs);
         listView.setAdapter(adapter);
 
         // Enable multi-select mode with contextual action bar
@@ -123,9 +121,7 @@ public class LiveDataActivity extends AppCompatActivity
         super.onResume();
 
         // Register PV change listeners for OBD data
-        if (pidStore != null) {
-            pidStore.addPvChangeListener(this, PvChangeEvent.PV_ADDED | PvChangeEvent.PV_MODIFIED);
-        }
+        ObdProt.PidPvs.addPvChangeListener(this, PvChangeEvent.PV_ADDED | PvChangeEvent.PV_MODIFIED);
 
         // Set OBD service to live data mode
         CommService.elm.setService(ObdProt.OBD_SVC_DATA);
@@ -143,9 +139,7 @@ public class LiveDataActivity extends AppCompatActivity
         super.onPause();
 
         // Unregister PV change listeners
-        if (pidStore != null) {
-            pidStore.removePvChangeListener(this);
-        }
+        ObdProt.PidPvs.removePvChangeListener(this);
 
         // Stop updates
         updateHandler.removeCallbacks(updateRunnable);
@@ -211,6 +205,35 @@ public class LiveDataActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PermissionManager.PERMISSION_REQUEST_LOCATION) {
+            if (grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, start GPS telemetry
+                log.info("Location permission granted, starting GPS telemetry");
+                if (gpsTelemetryManager != null) {
+                    gpsTelemetryManager.start();
+                    SnackbarHelper.showSuccess(this, "GPS Telemetry enabled");
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                    prefs.edit().putBoolean("gps_telemetry_enabled", true).apply();
+
+                    // Refresh adapter and menu
+                    if (adapter != null && !ObdProt.PidPvs.isEmpty()) {
+                        adapter.setPvList(ObdProt.PidPvs);
+                        adapter.notifyDataSetChanged();
+                    }
+                    invalidateOptionsMenu();
+                }
+            } else {
+                // Permission denied
+                log.warning("Location permission denied by user");
+                SnackbarHelper.showError(this, "GPS Telemetry requires location permission");
+            }
+        }
+    }
+
     private void toggleGpsTelemetry() {
         if (gpsTelemetryManager == null) {
             gpsTelemetryManager = new GpsTelemetryManager(this);
@@ -224,15 +247,23 @@ public class LiveDataActivity extends AppCompatActivity
             log.info("GPS Telemetry disabled by user");
             prefs.edit().putBoolean("gps_telemetry_enabled", false).apply();
         } else {
+            // Check if we have location permissions before starting GPS
+            if (!PermissionManager.hasLocationPermission(this)) {
+                log.info("Location permission not granted, requesting...");
+                PermissionManager.requestLocationPermission(this);
+                SnackbarHelper.showInfo(this, "Location permission required for GPS Telemetry");
+                return;
+            }
+
             gpsTelemetryManager.start();
             SnackbarHelper.showSuccess(this, "GPS Telemetry enabled");
             log.info("GPS Telemetry enabled by user");
             prefs.edit().putBoolean("gps_telemetry_enabled", true).apply();
         }
 
-        // Refresh adapter to show new fields
-        if (adapter != null && pidStore != null && !pidStore.isEmpty()) {
-            adapter.setPvList(pidStore);
+        // Refresh adapter to show/hide fields (even if PidPvs becomes empty)
+        if (adapter != null) {
+            adapter.setPvList(ObdProt.PidPvs);
             adapter.notifyDataSetChanged();
         }
 
@@ -259,9 +290,9 @@ public class LiveDataActivity extends AppCompatActivity
             prefs.edit().putBoolean("sensor_telemetry_enabled", true).apply();
         }
 
-        // Refresh adapter to show new fields
-        if (adapter != null && pidStore != null && !pidStore.isEmpty()) {
-            adapter.setPvList(pidStore);
+        // Refresh adapter to show/hide fields (even if PidPvs becomes empty)
+        if (adapter != null) {
+            adapter.setPvList(ObdProt.PidPvs);
             adapter.notifyDataSetChanged();
         }
 
@@ -291,16 +322,10 @@ public class LiveDataActivity extends AppCompatActivity
         }
 
         // Refresh adapter after auto-start
-        if (adapter != null && pidStore != null && !pidStore.isEmpty()) {
-            adapter.setPvList(pidStore);
+        if (adapter != null) {
+            adapter.setPvList(ObdProt.PidPvs);
             adapter.notifyDataSetChanged();
         }
-    }
-
-    private TypedPvList<Object, ProcessVar> getPidStore() {
-        TypedPvList<Object, ProcessVar> store =
-            ObdProt.getDataService().getTypedStoreForService(ObdProt.OBD_SVC_DATA);
-        return store != null ? store : new TypedPvList<>();
     }
 
     // ========== MultiChoiceModeListener Implementation ==========

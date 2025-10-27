@@ -35,6 +35,8 @@ public class AutoCheckReport {
     private Boolean airbagDeployed;
     private Boolean odometerRollback;
     private String recalls;
+    private Integer openRecalls;
+    private List<RecallDetail> recallDetails;
     private Integer serviceRecords;
     private List<HistoryEvent> historyEvents;
 
@@ -68,10 +70,27 @@ public class AutoCheckReport {
         }
     }
 
+    public static class RecallDetail {
+        public String recallDate;
+        public String recallType;
+        public String nhtsaRecallNo;
+        public String oemRecallNo;
+        public String combinedRecallNo;
+        public String campaignDescription;
+        public String status;
+
+        public RecallDetail(String recallDate, String recallType, String campaignDescription) {
+            this.recallDate = recallDate;
+            this.recallType = recallType;
+            this.campaignDescription = campaignDescription;
+        }
+    }
+
     // Constructor
     public AutoCheckReport(String vin) {
         this.vin = vin;
         this.historyEvents = new ArrayList<>();
+        this.recallDetails = new ArrayList<>();
         this.increasingFactors = new ArrayList<>();
         this.decreasingFactors = new ArrayList<>();
     }
@@ -163,6 +182,39 @@ public class AutoCheckReport {
             }
         }
 
+        // Parse recall information
+        if (json.has("openRecalls")) {
+            report.openRecalls = json.getInt("openRecalls");
+        }
+
+        if (json.has("recallDetails")) {
+            JSONArray recallsArray = json.getJSONArray("recallDetails");
+            for (int i = 0; i < recallsArray.length(); i++) {
+                JSONObject recallJson = recallsArray.getJSONObject(i);
+
+                String recallDate = recallJson.optString("recallDate", "Unknown");
+                String recallType = recallJson.optString("recallType", "Unknown");
+                String campaignDescription = recallJson.optString("campaignDescription", "No description available");
+
+                RecallDetail recall = new RecallDetail(recallDate, recallType, campaignDescription);
+
+                if (recallJson.has("nhtsaRecallNo")) {
+                    recall.nhtsaRecallNo = recallJson.getString("nhtsaRecallNo");
+                }
+                if (recallJson.has("oemRecallNo")) {
+                    recall.oemRecallNo = recallJson.getString("oemRecallNo");
+                }
+                if (recallJson.has("combinedRecallNo")) {
+                    recall.combinedRecallNo = recallJson.getString("combinedRecallNo");
+                }
+                if (recallJson.has("status")) {
+                    recall.status = recallJson.getString("status");
+                }
+
+                report.recallDetails.add(recall);
+            }
+        }
+
         return report;
     }
 
@@ -210,6 +262,8 @@ public class AutoCheckReport {
     public Boolean getAirbagDeployed() { return airbagDeployed; }
     public Boolean getOdometerRollback() { return odometerRollback; }
     public String getRecalls() { return recalls; }
+    public Integer getOpenRecalls() { return openRecalls; }
+    public List<RecallDetail> getRecallDetails() { return recallDetails; }
     public Integer getServiceRecords() { return serviceRecords; }
     public List<HistoryEvent> getHistoryEvents() { return historyEvents; }
 

@@ -809,6 +809,47 @@
                     </androidx.cardview.widget.CardView>
 
                     <!-- ═══════════════════════════════════════ -->
+                    <!-- OPEN RECALLS -->
+                    <!-- ═══════════════════════════════════════ -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/recalls_card"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="4dp"
+                        app:cardBackgroundColor="#2C2C2C"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="⚠️ Open Recalls"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFC107"
+                                android:paddingBottom="12dp"
+                                android:letterSpacing="0.02"/>
+
+                            <!-- Recalls Container -->
+                            <LinearLayout
+                                android:id="@+id/recalls_container"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical">
+                                <!-- Recall items will be added programmatically -->
+                            </LinearLayout>
+
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- ═══════════════════════════════════════ -->
                     <!-- VEHICLE DETAILS -->
                     <!-- ═══════════════════════════════════════ -->
                     <androidx.cardview.widget.CardView

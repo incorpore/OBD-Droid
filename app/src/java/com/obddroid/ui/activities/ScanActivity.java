@@ -488,7 +488,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         );
         nameText.setLayoutParams(nameParams);
         nameText.setText(stageName);
-        nameText.setTextColor(getColor(R.color.text_primary));
+        nameText.setTextColor(getColor(R.color.text_primary_dark));
         nameText.setTextSize(14);
         nameText.setTag("name");
 
@@ -498,7 +498,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             LinearLayout.LayoutParams.WRAP_CONTENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         ));
-        messageText.setTextColor(getColor(R.color.text_secondary));
+        messageText.setTextColor(getColor(R.color.text_secondary_dark));
         messageText.setTextSize(12);
         messageText.setVisibility(View.GONE);
         messageText.setTag("message");
@@ -531,7 +531,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             switch (status) {
                 case "pending":
                     icon.setText("○");
-                    icon.setTextColor(getColor(R.color.text_secondary));
+                    icon.setTextColor(getColor(R.color.text_secondary_dark));
                     break;
                 case "in_progress":
                     icon.setText("⟳");
@@ -543,7 +543,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
                     break;
                 case "skipped":
                     icon.setText("⊘");
-                    icon.setTextColor(getColor(R.color.text_secondary));
+                    icon.setTextColor(getColor(R.color.text_secondary_dark));
                     break;
                 case "failed":
                     icon.setText("✗");

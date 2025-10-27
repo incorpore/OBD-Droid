@@ -64,7 +64,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
 
         // Set up action bar
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Vehicle Information");
+            getSupportActionBar().setTitle("VIN Decoder");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -551,7 +551,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
         // Add section header
         TextView header = new TextView(this);
         header.setText(title);
-        header.setTextColor(0xFF64B5F6);  // Cyan accent
+        header.setTextColor(0xFFFFFFFF);  // White
         header.setTextSize(13);  // Compact header
         header.setTypeface(null, android.graphics.Typeface.BOLD);
         header.setLetterSpacing(0.03f);  // Slight letter spacing for modern look

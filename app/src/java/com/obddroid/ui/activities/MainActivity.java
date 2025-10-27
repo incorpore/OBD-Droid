@@ -1354,7 +1354,55 @@ public class MainActivity extends AppCompatActivity
                 return true;
 
             case R.id.secure_connect_scan:
-                setMode(MODE.ONLINE);
+                // ENHANCED: Force clear any stuck connection state and go to adapter selection
+                // This provides an escape mechanism if the user is stuck in "Connecting..." state
+                log.info("Connect button clicked - forcing disconnect and adapter selection");
+
+                // End any active sessions FIRST to prevent null pointer exceptions
+                try {
+                    CoPilotController.getInstance().endSession("user initiated reconnection");
+                    DiscoveryManager.getInstance().endSession("User initiated reconnection");
+                } catch (Exception e) {
+                    log.warning("Error ending sessions: " + e.getMessage());
+                }
+
+                // Stop any ongoing connection attempts
+                if (mCommService != null) {
+                    log.info("Stopping existing communication service");
+                    try {
+                        mCommService.stop();
+                    } catch (Exception e) {
+                        log.warning("Error stopping CommService: " + e.getMessage());
+                    }
+                }
+
+                // Reset connection state
+                ecuConnectionState = ElmProt.STAT.UNDEFINED;
+                ecuUserSelected = false;
+
+                // Clear vehicle data (after ending sessions)
+                try {
+                    VehicleManager.getInstance().clearVehicle();
+                } catch (Exception e) {
+                    log.warning("Error clearing vehicle data: " + e.getMessage());
+                }
+
+                // Force mode to OFFLINE first to ensure clean state
+                mode = MODE.OFFLINE;
+
+                // Update UI to show disconnected state
+                setMenuItemVisible(R.id.disconnect, false);
+                setMenuItemVisible(R.id.secure_connect_scan, true);
+                updateServiceMenuItems(false);
+
+                // Now launch adapter selection (always, regardless of current state)
+                log.info("Launching adapter selection activity");
+                Intent adapterIntent = new Intent(this, UnifiedAdapterSelectionActivity.class);
+                launchActivityForResult(adapterIntent, REQUEST_CONNECT_UNIFIED);
+
+                // Update status
+                setStatus(getString(R.string.status_online));
+
                 return true;
 
 

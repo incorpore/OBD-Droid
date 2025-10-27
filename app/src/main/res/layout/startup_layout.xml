@@ -448,7 +448,7 @@
                                     android:layout_width="28dp"
                                     android:layout_height="28dp"
                                     android:src="@drawable/ic_dashboard_vehicle_info"
-                                    android:contentDescription="Vehicle Information"/>
+                                    android:contentDescription="VIN Decoder"/>
                             </LinearLayout>
 
                             <TextView
@@ -456,7 +456,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:layout_marginStart="@dimen/spacing_medium"
-                                android:text="Vehicle Info"
+                                android:text="VIN Decoder"
                                 android:textColor="@color/text_primary_dark"
                                 android:textSize="@dimen/text_body"
                                 android:textStyle="bold"/>

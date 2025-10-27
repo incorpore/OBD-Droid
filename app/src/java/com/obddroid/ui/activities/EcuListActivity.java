@@ -40,6 +40,10 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -64,6 +68,8 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
     private static final int REQUEST_CODE_IMPORT_CSV = 1001;
     private static final int REQUEST_CODE_IMPORT_CSV_FOR_COMPARISON = 1002;
     private static final int REQUEST_CODE_SELECT_BASELINE_SCAN = 1003;
+    private static final int REQUEST_CODE_IMPORT_JSON = 1004;
+    private static final int REQUEST_CODE_IMPORT_JSON_FOR_COMPARISON = 1005;
 
     private RecyclerView recyclerView;
     private EcuAdapter adapter;
@@ -181,7 +187,7 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
             showExportDialog();
             return true;
         } else if (id == R.id.action_import_csv) {
-            importFromCSV();
+            showImportDialog();
             return true;
         } else if (id == R.id.action_about) {
             showAboutDialog();
@@ -242,11 +248,127 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
     }
 
     /**
+     * Show import dialog to choose format
+     */
+    private void showImportDialog() {
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_import_ecu);
+        dialog.setCancelable(true);
+
+        // CSV option
+        View csvOption = dialog.findViewById(R.id.option_import_csv);
+        csvOption.setOnClickListener(v -> {
+            dialog.dismiss();
+            importFromCSV();
+        });
+
+        // JSON option
+        View jsonOption = dialog.findViewById(R.id.option_import_json);
+        jsonOption.setOnClickListener(v -> {
+            dialog.dismiss();
+            importFromJSON();
+        });
+
+        // Cancel button
+        View cancelBtn = dialog.findViewById(R.id.btn_cancel);
+        cancelBtn.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+    /**
      * Export ECU data to JSON format
      */
     private void exportToJSON() {
-        showSnackbar("JSON export coming soon", Snackbar.LENGTH_SHORT);
-        // TODO: Implement JSON export
+        // Get ECU data from adapter
+        List<EcuInfo> ecuList = adapter.getEcuList();
+        if (ecuList.isEmpty()) {
+            showSnackbar("No ECU data to export", Snackbar.LENGTH_SHORT);
+            return;
+        }
+
+        try {
+            // Get VIN and extract last 6 digits
+            String vin = VehicleManager.getInstance(this).getCurrentVIN();
+            String vinSuffix = "UNKNOWN";
+            if (vin != null && vin.length() >= 6) {
+                vinSuffix = vin.substring(vin.length() - 6);
+            }
+
+            // Create filename with VIN suffix and timestamp
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
+            String timestamp = sdf.format(new Date());
+            String filename = vinSuffix + "-ecu_modules-" + timestamp + ".json";
+
+            // Build JSON structure
+            JSONObject root = new JSONObject();
+            root.put("export_date", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(new Date()));
+            root.put("vin", vin != null ? vin : "");
+            root.put("ecu_count", ecuList.size());
+
+            JSONArray ecusArray = new JSONArray();
+            for (EcuInfo ecu : ecuList) {
+                JSONObject ecuJson = new JSONObject();
+                ecuJson.put("address", String.format("0x%X", ecu.getAddress()));
+                ecuJson.put("address_decimal", ecu.getAddress());
+                ecuJson.put("name", ecu.getName() != null ? ecu.getName() : "");
+                ecuJson.put("type", ecu.getEcuType() != null ? ecu.getEcuType() : "");
+                ecuJson.put("calibration_id", ecu.getCalibrationId() != null ? ecu.getCalibrationId() : "");
+                ecuJson.put("cvn", ecu.getCalibrationVerification() != null ? ecu.getCalibrationVerification() : "");
+                ecusArray.put(ecuJson);
+            }
+            root.put("ecus", ecusArray);
+
+            String jsonString = root.toString(2);  // Pretty print with 2-space indent
+
+            // Use MediaStore for Android 10+ to save to Documents/OBDroid
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Android 10+ - Use MediaStore API
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, filename);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "application/json");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/OBDroid");
+
+                Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
+                if (uri != null) {
+                    OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                    OutputStreamWriter writer = new OutputStreamWriter(outputStream);
+                    writer.write(jsonString);
+                    writer.flush();
+                    writer.close();
+                    outputStream.close();
+
+                    log.info("Exported " + ecuList.size() + " ECUs via MediaStore to: Documents/OBDroid/" + filename);
+                    showSnackbar("Exported " + ecuList.size() + " ECU(s) to:\nDocuments/OBDroid/" + filename,
+                        Snackbar.LENGTH_LONG);
+                } else {
+                    throw new IOException("Failed to create file in Documents");
+                }
+            } else {
+                // Android 9 and below - Use legacy file system
+                File documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+                File obdroidDir = new File(documentsDir, "OBDroid");
+                if (!obdroidDir.exists()) {
+                    obdroidDir.mkdirs();
+                }
+
+                File jsonFile = new File(obdroidDir, filename);
+                FileWriter writer = new FileWriter(jsonFile);
+                writer.write(jsonString);
+                writer.flush();
+                writer.close();
+
+                log.info("Exported " + ecuList.size() + " ECUs to: " + jsonFile.getAbsolutePath());
+                showSnackbar("Exported " + ecuList.size() + " ECU(s) to:\nDocuments/OBDroid/" + jsonFile.getName(),
+                    Snackbar.LENGTH_LONG);
+            }
+
+        } catch (IOException | JSONException e) {
+            log.severe("Error exporting JSON: " + e.getMessage());
+            showSnackbar("Export failed: " + e.getMessage(),
+                Snackbar.LENGTH_LONG);
+        }
     }
 
     /**
@@ -498,6 +620,18 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
         startActivityForResult(intent, REQUEST_CODE_IMPORT_CSV);
     }
 
+    /**
+     * Import ECU data from JSON file
+     */
+    private void importFromJSON() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/json");
+        String[] mimeTypes = {"application/json", "text/plain"};
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+        startActivityForResult(intent, REQUEST_CODE_IMPORT_JSON);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -506,9 +640,17 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
             if (data != null && data.getData() != null) {
                 importCSVFile(data.getData());
             }
+        } else if (requestCode == REQUEST_CODE_IMPORT_JSON && resultCode == RESULT_OK) {
+            if (data != null && data.getData() != null) {
+                importJSONFile(data.getData());
+            }
         } else if (requestCode == REQUEST_CODE_IMPORT_CSV_FOR_COMPARISON && resultCode == RESULT_OK) {
             if (data != null && data.getData() != null) {
                 importCSVFileForComparison(data.getData());
+            }
+        } else if (requestCode == REQUEST_CODE_IMPORT_JSON_FOR_COMPARISON && resultCode == RESULT_OK) {
+            if (data != null && data.getData() != null) {
+                importJSONFileForComparison(data.getData());
             }
         } else if (requestCode == REQUEST_CODE_SELECT_BASELINE_SCAN && resultCode == RESULT_OK) {
             if (data != null) {
@@ -664,6 +806,133 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
 
         } catch (IOException e) {
             log.severe("Error importing CSV: " + e.getMessage());
+            showSnackbar("Import failed: " + e.getMessage(),
+                Snackbar.LENGTH_LONG);
+        }
+    }
+
+    /**
+     * Import JSON file and populate ECU list
+     */
+    private void importJSONFile(Uri uri) {
+        try {
+            BufferedReader reader = new BufferedReader(
+                new InputStreamReader(getContentResolver().openInputStream(uri)));
+
+            StringBuilder jsonBuilder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                jsonBuilder.append(line);
+            }
+            reader.close();
+
+            JSONObject root = new JSONObject(jsonBuilder.toString());
+            JSONArray ecusArray = root.getJSONArray("ecus");
+
+            List<EcuInfo> importedEcus = new java.util.ArrayList<>();
+            for (int i = 0; i < ecusArray.length(); i++) {
+                JSONObject ecuJson = ecusArray.getJSONObject(i);
+
+                // Parse address - try hex first, then decimal
+                int address;
+                if (ecuJson.has("address")) {
+                    String addressStr = ecuJson.getString("address");
+                    address = Integer.decode(addressStr);  // Handles 0x prefix
+                } else {
+                    address = ecuJson.getInt("address_decimal");
+                }
+
+                String name = ecuJson.optString("name", "");
+                String calId = ecuJson.optString("calibration_id", "");
+                String cvn = ecuJson.optString("cvn", "");
+
+                EcuInfo ecu = new EcuInfo(address);
+                if (!name.isEmpty()) ecu.setName(name);
+                if (!calId.isEmpty()) ecu.setCalibrationId(calId);
+                if (!cvn.isEmpty()) ecu.setCalibrationVerification(cvn);
+
+                importedEcus.add(ecu);
+            }
+
+            // Update adapter with imported data
+            adapter.setEcuList(importedEcus);
+            updateEmptyView();
+
+            // Mark data as imported
+            isDataFromImport = true;
+            importedFileName = extractTimestampFromFilename(getFileNameFromUri(uri));
+
+            showSnackbar("Imported " + importedEcus.size() + " ECU(s) from JSON",
+                Snackbar.LENGTH_LONG);
+
+            log.info("Successfully imported " + importedEcus.size() + " ECUs from JSON: " + importedFileName);
+
+        } catch (IOException | JSONException e) {
+            log.severe("Error importing JSON: " + e.getMessage());
+            showSnackbar("Import failed: " + e.getMessage(),
+                Snackbar.LENGTH_LONG);
+        }
+    }
+
+    /**
+     * Import JSON file and use it as baseline for comparison
+     */
+    private void importJSONFileForComparison(Uri uri) {
+        try {
+            BufferedReader reader = new BufferedReader(
+                new InputStreamReader(getContentResolver().openInputStream(uri)));
+
+            StringBuilder jsonBuilder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                jsonBuilder.append(line);
+            }
+            reader.close();
+
+            JSONObject root = new JSONObject(jsonBuilder.toString());
+            JSONArray ecusArray = root.getJSONArray("ecus");
+
+            List<EcuInfo> importedEcus = new java.util.ArrayList<>();
+            for (int i = 0; i < ecusArray.length(); i++) {
+                JSONObject ecuJson = ecusArray.getJSONObject(i);
+
+                // Parse address - try hex first, then decimal
+                int address;
+                if (ecuJson.has("address")) {
+                    String addressStr = ecuJson.getString("address");
+                    address = Integer.decode(addressStr);  // Handles 0x prefix
+                } else {
+                    address = ecuJson.getInt("address_decimal");
+                }
+
+                String name = ecuJson.optString("name", "");
+                String calId = ecuJson.optString("calibration_id", "");
+                String cvn = ecuJson.optString("cvn", "");
+
+                EcuInfo ecu = new EcuInfo(address);
+                if (!name.isEmpty()) ecu.setName(name);
+                if (!calId.isEmpty()) ecu.setCalibrationId(calId);
+                if (!cvn.isEmpty()) ecu.setCalibrationVerification(cvn);
+
+                importedEcus.add(ecu);
+            }
+
+            if (importedEcus.isEmpty()) {
+                showSnackbar("No ECU data found in JSON", Snackbar.LENGTH_SHORT);
+                return;
+            }
+
+            // Create an EcuScan from imported data (use current time as timestamp)
+            String vin = VehicleManager.getInstance(this).getCurrentVIN();
+            EcuScan importedScan = new EcuScan(vin, importedEcus);
+
+            // Compare against current data
+            compareAgainstCurrentData(importedScan);
+
+            log.info("Imported " + importedEcus.size() + " ECUs from JSON for comparison");
+
+        } catch (IOException | JSONException e) {
+            log.severe("Error importing JSON: " + e.getMessage());
             showSnackbar("Import failed: " + e.getMessage(),
                 Snackbar.LENGTH_LONG);
         }

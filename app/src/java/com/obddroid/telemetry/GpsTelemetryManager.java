@@ -80,6 +80,23 @@ public class GpsTelemetryManager implements LocationListener {
         }
         locationManager.removeUpdates(this);
         active = false;
+
+        // Remove GPS fields from PidPvs so they disappear from Live Data
+        unregisterDataItems();
+    }
+
+    private void unregisterDataItems() {
+        Log.d(TAG, "Unregistering " + registeredKeys.size() + " GPS fields from PidPvs");
+        for (String key : registeredKeys) {
+            ObdProt.PidPvs.remove(key);
+        }
+
+        // Clear local tracking
+        items.clear();
+        dataPvs.clear();
+        registeredKeys.clear();
+
+        Log.d(TAG, "GPS fields removed from PidPvs");
     }
 
     private void registerDataItems() {
@@ -181,12 +198,16 @@ public class GpsTelemetryManager implements LocationListener {
         if (!active) {
             return;
         }
+        Log.d(TAG, "GPS location update: lat=" + location.getLatitude() + ", lon=" + location.getLongitude());
         updateField(GpsField.LATITUDE, location.getLatitude());
         updateField(GpsField.LONGITUDE, location.getLongitude());
         updateField(GpsField.ALTITUDE, location.hasAltitude() ? location.getAltitude() : null);
         updateField(GpsField.BEARING, location.hasBearing() ? (double) normaliseBearing(location.getBearing()) : null);
         double speedKmh = location.hasSpeed() ? location.getSpeed() * 3.6 : Double.NaN;
         updateField(GpsField.SPEED, Double.isNaN(speedKmh) ? null : speedKmh);
+
+        // Trigger change notification so LiveDataActivity picks up the updates
+        notifyDataChanged();
     }
 
     @Override public void onProviderEnabled(@NonNull String provider) { }
@@ -215,6 +236,20 @@ public class GpsTelemetryManager implements LocationListener {
         pv.put(EcuDataPv.FID_UNITS, field.units);
     }
 
+    /**
+     * Notify observers that GPS data has changed
+     * This triggers PvChangeEvent.PV_MODIFIED for all GPS fields
+     */
+    private void notifyDataChanged() {
+        // Trigger change events for all registered GPS fields
+        for (Map.Entry<GpsField, EcuDataItem> entry : items.entrySet()) {
+            String key = entry.getValue().toString();
+            EcuDataPv pv = entry.getValue().pv;
+            // Use put with PV_MODIFIED action to trigger change listeners
+            ObdProt.PidPvs.put(key, pv, com.obddroid.common.ProcessVariables.PvChangeEvent.PV_MODIFIED);
+        }
+    }
+
     private double clamp(double value, double min, double max) {
         if (min != Double.NEGATIVE_INFINITY && value < min) {
             return min;
@@ -226,35 +261,9 @@ public class GpsTelemetryManager implements LocationListener {
     }
 
     private void ensureLiveDataPreferences() {
-        if (registeredKeys.isEmpty()) {
-            Log.w(TAG, "No registered keys to add to preferences");
-            return;
-        }
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(appContext);
-        Set<String> current = prefs.getStringSet(SettingsActivity.KEY_DATA_ITEMS, null);
-
-        Log.d(TAG, "Current preference size: " + (current == null ? "null" : current.size()));
-        Log.d(TAG, "GPS keys to add: " + registeredKeys.size());
-
-        // If preference is null or empty, create a new set with GPS items
-        if (current == null || current.isEmpty()) {
-            Set<String> updated = new HashSet<>(registeredKeys);
-            prefs.edit().putStringSet(SettingsActivity.KEY_DATA_ITEMS, updated).apply();
-            Log.d(TAG, "Created new preference set with " + updated.size() + " GPS items");
-            return;
-        }
-
-        // If GPS items are already in preferences, no need to update
-        if (current.containsAll(registeredKeys)) {
-            Log.d(TAG, "GPS items already in preferences");
-            return;
-        }
-
-        // Add GPS items to existing preferences
-        Set<String> updated = new HashSet<>(current);
-        updated.addAll(registeredKeys);
-        prefs.edit().putStringSet(SettingsActivity.KEY_DATA_ITEMS, updated).apply();
-        Log.d(TAG, "Updated preferences from " + current.size() + " to " + updated.size() + " items");
+        // Don't manage preferences - let the adapter show all PIDs by default
+        // GPS items are already added to ObdProt.PidPvs, which is sufficient
+        Log.d(TAG, "GPS fields registered in PidPvs: " + registeredKeys.size());
     }
 
     private enum GpsField {
