@@ -92,15 +92,17 @@
 
 
                 <!-- Data Sections Container -->
-                <LinearLayout
+                <com.google.android.flexbox.FlexboxLayout
                     android:id="@+id/sections_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    app:flexWrap="wrap"
+                    app:justifyContent="flex_start"
+                    app:alignItems="flex_start">
 
                     <!-- Sections will be added programmatically -->
 
-                </LinearLayout>
+                </com.google.android.flexbox.FlexboxLayout>
 
             </LinearLayout>
 

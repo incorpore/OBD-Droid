@@ -13,6 +13,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
+import com.google.android.flexbox.FlexboxLayout;
 import com.obddroid.R;
 import com.obddroid.services.VehicleManager;
 import com.obddroid.utils.VehicleData;
@@ -27,15 +28,11 @@ public class VehicleInfoActivity extends AppCompatActivity {
 
     // UI Components
     private LinearLayout contentContainer;
-    private LinearLayout sectionsContainer;
+    private FlexboxLayout sectionsContainer;
     private View emptyState;
     private TextView vehicleTitle;
     private TextView vehicleSubtitle;
     private ImageView vehicleIllustration;
-
-    // For 2-column card layout
-    private LinearLayout currentRow;
-    private int cardsInCurrentRow = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,10 +89,8 @@ public class VehicleInfoActivity extends AppCompatActivity {
             if (emptyState != null) emptyState.setVisibility(View.GONE);
             if (contentContainer != null) contentContainer.setVisibility(View.VISIBLE);
 
-            // Reset 2-column layout tracking
+            // Clear previous cards
             sectionsContainer.removeAllViews();
-            currentRow = null;
-            cardsInCurrentRow = 0;
 
             // Populate header
             populateHeader(vin, vehicleData);
@@ -483,34 +478,26 @@ public class VehicleInfoActivity extends AppCompatActivity {
     }
 
     /**
-     * Add a card to the 2-column layout
+     * Add a card to the FlexboxLayout (fluid responsive layout)
      */
     private void addCardToLayout(CardView card) {
-        // Create a new row if needed (every 2 cards)
-        if (currentRow == null || cardsInCurrentRow >= 2) {
-            currentRow = new LinearLayout(this);
-            currentRow.setOrientation(LinearLayout.HORIZONTAL);
-            LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            );
-            currentRow.setLayoutParams(rowParams);
-            sectionsContainer.addView(currentRow);
-            cardsInCurrentRow = 0;
-        }
-
-        // Set card layout params for 2-column layout
-        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
-            0,
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            1.0f  // Equal weight for 2 cards
+        // Set FlexboxLayout params for responsive wrapping
+        FlexboxLayout.LayoutParams cardParams = new FlexboxLayout.LayoutParams(
+            FlexboxLayout.LayoutParams.WRAP_CONTENT,
+            FlexboxLayout.LayoutParams.WRAP_CONTENT
         );
+
+        // Each card should take approximately half the screen width (minus margins)
+        // This allows 2 cards per row on most devices, but can adapt to different screen sizes
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
         int margin = dpToPx(6);
+        int cardWidth = (screenWidth / 2) - (margin * 3);  // Account for margins
+
+        cardParams.width = cardWidth;
         cardParams.setMargins(margin, margin, margin, margin);
         card.setLayoutParams(cardParams);
 
-        currentRow.addView(card);
-        cardsInCurrentRow++;
+        sectionsContainer.addView(card);
     }
 
     /**
