@@ -107,6 +107,10 @@ public class AutoCheckActivity extends AppCompatActivity {
     private TextView airbagValue;
     private TextView rollbackValue;
 
+    // Recalls Section
+    private CardView recallsCard;
+    private LinearLayout recallsContainer;
+
     // Details Section
     private CardView detailsCard;
     private TextView vehicleDetailsText;
@@ -242,6 +246,10 @@ public class AutoCheckActivity extends AppCompatActivity {
         structuralValue = findViewById(R.id.structural_value);
         airbagValue = findViewById(R.id.airbag_value);
         rollbackValue = findViewById(R.id.rollback_value);
+
+        // Recalls Section
+        recallsCard = findViewById(R.id.recalls_card);
+        recallsContainer = findViewById(R.id.recalls_container);
 
         // Details Section
         detailsCard = findViewById(R.id.details_card);
@@ -384,6 +392,11 @@ public class AutoCheckActivity extends AppCompatActivity {
         // SAFETY & TITLE OVERVIEW
         // ═══════════════════════════════════════
         displaySafetySection(report);
+
+        // ═══════════════════════════════════════
+        // OPEN RECALLS
+        // ═══════════════════════════════════════
+        displayRecalls(report);
 
         // ═══════════════════════════════════════
         // VEHICLE DETAILS
@@ -660,6 +673,114 @@ public class AutoCheckActivity extends AppCompatActivity {
             textView.setText(isNegative ? "✓ No" : "✗ No");
             textView.setTextColor(Color.parseColor(isNegative ? "#4CAF50" : "#F44336"));
         }
+    }
+
+    private void displayRecalls(AutoCheckReport report) {
+        // Check if we have recall data
+        if (report.getRecallDetails() == null || report.getRecallDetails().isEmpty()) {
+            recallsCard.setVisibility(View.GONE);
+            return;
+        }
+
+        recallsCard.setVisibility(View.VISIBLE);
+        recallsContainer.removeAllViews();
+
+        // Display each recall
+        for (AutoCheckReport.RecallDetail recall : report.getRecallDetails()) {
+            View recallItem = createRecallItemView(recall);
+            recallsContainer.addView(recallItem);
+        }
+    }
+
+    private View createRecallItemView(AutoCheckReport.RecallDetail recall) {
+        LinearLayout itemLayout = new LinearLayout(this);
+        itemLayout.setOrientation(LinearLayout.VERTICAL);
+        itemLayout.setBackgroundResource(R.drawable.stat_card_background);
+        itemLayout.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
+
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        layoutParams.setMargins(0, 0, 0, dpToPx(8));
+        itemLayout.setLayoutParams(layoutParams);
+
+        // Recall header (Date and Type)
+        LinearLayout headerRow = new LinearLayout(this);
+        headerRow.setOrientation(LinearLayout.HORIZONTAL);
+        headerRow.setLayoutParams(new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        TextView dateText = new TextView(this);
+        dateText.setText(recall.recallDate != null ? recall.recallDate : "Unknown Date");
+        dateText.setTextSize(13);
+        dateText.setTextColor(Color.parseColor("#FFC107"));
+        dateText.setTypeface(null, android.graphics.Typeface.BOLD);
+        LinearLayout.LayoutParams dateParams = new LinearLayout.LayoutParams(
+            0,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            1.0f
+        );
+        dateText.setLayoutParams(dateParams);
+        headerRow.addView(dateText);
+
+        TextView typeText = new TextView(this);
+        typeText.setText(recall.recallType != null ? recall.recallType : "");
+        typeText.setTextSize(12);
+        typeText.setTextColor(Color.parseColor("#B0BEC5"));
+        typeText.setGravity(Gravity.END);
+        headerRow.addView(typeText);
+
+        itemLayout.addView(headerRow);
+
+        // NHTSA / OEM Recall Numbers
+        if (recall.combinedRecallNo != null && !recall.combinedRecallNo.isEmpty()) {
+            TextView recallNoText = new TextView(this);
+            recallNoText.setText(recall.combinedRecallNo);
+            recallNoText.setTextSize(11);
+            recallNoText.setTextColor(Color.parseColor("#90CAF9"));
+            recallNoText.setTypeface(null, android.graphics.Typeface.BOLD);
+            LinearLayout.LayoutParams recallNoParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            recallNoParams.setMargins(0, dpToPx(4), 0, dpToPx(6));
+            recallNoText.setLayoutParams(recallNoParams);
+            itemLayout.addView(recallNoText);
+        }
+
+        // Campaign Description
+        TextView descriptionText = new TextView(this);
+        descriptionText.setText(recall.campaignDescription != null ? recall.campaignDescription : "No description available");
+        descriptionText.setTextSize(12);
+        descriptionText.setTextColor(Color.parseColor("#FFFFFF"));
+        LinearLayout.LayoutParams descParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        descParams.setMargins(0, dpToPx(4), 0, 0);
+        descriptionText.setLayoutParams(descParams);
+        itemLayout.addView(descriptionText);
+
+        // Status (if available)
+        if (recall.status != null && !recall.status.isEmpty()) {
+            TextView statusText = new TextView(this);
+            statusText.setText("Status: " + recall.status);
+            statusText.setTextSize(11);
+            statusText.setTextColor(Color.parseColor("#FFC107"));
+            statusText.setTypeface(null, android.graphics.Typeface.ITALIC);
+            LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            statusParams.setMargins(0, dpToPx(6), 0, 0);
+            statusText.setLayoutParams(statusParams);
+            itemLayout.addView(statusText);
+        }
+
+        return itemLayout;
     }
 
     private void displayVehicleDetails(AutoCheckReport report) {

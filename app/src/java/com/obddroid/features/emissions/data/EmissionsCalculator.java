@@ -38,11 +38,11 @@ public class EmissionsCalculator {
          */
         public String getStatusText() {
             if (isReady) {
-                return "✓ READY FOR EMISSIONS TEST";
+                return "READY FOR EMISSIONS TEST";
             } else if (!hasData) {
-                return "⚠ WAITING FOR DATA";
+                return "WAITING FOR DATA";
             } else {
-                return "⚠ NOT READY FOR EMISSIONS TEST";
+                return "NOT READY FOR EMISSIONS TEST";
             }
         }
 
