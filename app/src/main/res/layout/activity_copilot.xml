@@ -162,6 +162,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
                     app:fabSize="mini"
+                    app:backgroundTint="@color/colorPrimary"
                     app:srcCompat="@android:drawable/ic_btn_speak_now"
                     app:tint="@android:color/white" />
 
@@ -194,6 +195,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
                     app:fabSize="mini"
+                    app:backgroundTint="@color/colorPrimary"
                     app:srcCompat="@android:drawable/ic_menu_send"
                     app:tint="@android:color/white" />
 
