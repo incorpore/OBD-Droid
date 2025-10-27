@@ -1322,12 +1322,20 @@ public class AutoCheckActivity extends AppCompatActivity {
             String json = prefs.getString(cacheKey, null);
 
             if (json != null && !json.isEmpty()) {
+                // Show loading indicator while parsing and rendering cached data
+                loadingContainer.setVisibility(View.VISIBLE);
+                loadingText.setText("Loading cached report...");
+
                 Gson gson = new Gson();
                 AutoCheckReport report = gson.fromJson(json, AutoCheckReport.class);
 
                 if (report != null) {
                     // Display cached report
                     displayReport(report);
+
+                    // Hide loading after display
+                    loadingContainer.setVisibility(View.GONE);
+                    loadingText.setText("Loading vehicle history...");
 
                     // Restore PDF file path if available
                     String cachedPdfPath = prefs.getString(cacheKey + "_pdf", null);
@@ -1369,10 +1377,16 @@ public class AutoCheckActivity extends AppCompatActivity {
                     }
 
                     // Silently load cached report - no notification needed
+                } else {
+                    // Failed to parse cached report
+                    loadingContainer.setVisibility(View.GONE);
+                    loadingText.setText("Loading vehicle history...");
                 }
             }
         } catch (Exception e) {
             // Silent fail - if cache load fails, user can generate new report
+            loadingContainer.setVisibility(View.GONE);
+            loadingText.setText("Loading vehicle history...");
             e.printStackTrace();
         }
     }
