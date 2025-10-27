@@ -208,13 +208,13 @@ public class RecallDataManager {
     }
 
     /**
-     * Check if cached data is fresh (less than 1 hour old).
+     * Check if cached data is fresh (less than 24 hours old).
      *
      * @return true if cache is fresh
      */
     public boolean isCacheFresh() {
         long ageMinutes = getCacheAgeMinutes();
-        return ageMinutes >= 0 && ageMinutes < 60;
+        return ageMinutes >= 0 && ageMinutes < 1440; // 24 hours = 1440 minutes
     }
 
     /**
