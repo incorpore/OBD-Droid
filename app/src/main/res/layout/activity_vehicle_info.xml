@@ -164,4 +164,13 @@
         android:focusable="true"
         android:visibility="gone"/>
 
+    <!-- Vehicle Info Footer -->
+    <com.obddroid.ui.components.VehicleInfoFooter
+        android:id="@+id/vehicle_footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/background_secondary"
+        android:elevation="@dimen/elevation_footer"/>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

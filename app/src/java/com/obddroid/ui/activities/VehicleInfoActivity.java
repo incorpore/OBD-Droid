@@ -23,6 +23,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.obddroid.R;
 import com.obddroid.services.VehicleManager;
+import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.utils.SnackbarHelper;
 import com.obddroid.utils.VehicleData;
 
@@ -48,6 +49,8 @@ public class VehicleInfoActivity extends AppCompatActivity {
     private TextView vehicleTitle;
     private TextView vehicleSubtitle;
     private ImageView vehicleIllustration;
+    private VehicleInfoFooter vehicleInfoFooter;
+    private View footerOverlay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +75,17 @@ public class VehicleInfoActivity extends AppCompatActivity {
         vehicleTitle = findViewById(R.id.vehicle_title);
         vehicleSubtitle = findViewById(R.id.vehicle_subtitle);
         vehicleIllustration = findViewById(R.id.vehicle_illustration);
+        vehicleInfoFooter = findViewById(R.id.vehicle_footer);
+        footerOverlay = findViewById(R.id.footer_overlay);
+
+        // Set up footer overlay interaction
+        if (footerOverlay != null) {
+            footerOverlay.setOnClickListener(v -> {
+                if (vehicleInfoFooter != null) {
+                    vehicleInfoFooter.collapse();
+                }
+            });
+        }
 
         // Load and display vehicle data
         loadVehicleData();
