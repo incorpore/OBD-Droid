@@ -102,6 +102,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
             populateManufacturing(vehicleData);
             populateWeight(vehicleData);
             populatePricing(vehicleData);
+            populateMetadata(vehicleData);
 
         } catch (Exception e) {
             Log.e(TAG, "Error loading vehicle data", e);
@@ -236,6 +237,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
         LinearLayout content = (LinearLayout) sectionCard.getChildAt(0);
 
         if (!TextUtils.isEmpty(data.engineModel)) addDetailRow(content, "Engine Model", data.engineModel);
+        if (!TextUtils.isEmpty(data.engineConfiguration)) addDetailRow(content, "Configuration", data.engineConfiguration);
         if (!TextUtils.isEmpty(data.displacementL)) {
             String displacement = data.displacementL;
             if (!TextUtils.isEmpty(data.displacementCC)) {
@@ -244,10 +246,14 @@ public class VehicleInfoActivity extends AppCompatActivity {
             addDetailRow(content, "Displacement", displacement);
         }
         if (!TextUtils.isEmpty(data.engineCylinders)) addDetailRow(content, "Cylinders", data.engineCylinders);
+        if (!TextUtils.isEmpty(data.engineStrokeCycles)) addDetailRow(content, "Stroke Cycles", data.engineStrokeCycles);
         if (!TextUtils.isEmpty(data.engineBrakeHp)) addDetailRow(content, "Horsepower", data.engineBrakeHp + " hp");
         if (!TextUtils.isEmpty(data.topSpeed)) addDetailRow(content, "Top Speed", data.topSpeed + " mph");
-        if (!TextUtils.isEmpty(data.fuelTypePrimary)) addDetailRow(content, "Fuel Type", data.fuelTypePrimary);
+        if (!TextUtils.isEmpty(data.turbo)) addDetailRow(content, "Turbo", data.turbo);
+        if (!TextUtils.isEmpty(data.fuelTypePrimary)) addDetailRow(content, "Fuel Type (Primary)", data.fuelTypePrimary);
+        if (!TextUtils.isEmpty(data.fuelType)) addDetailRow(content, "Fuel Type", data.fuelType);
         if (!TextUtils.isEmpty(data.fuelDeliveryType)) addDetailRow(content, "Fuel Injection", data.fuelDeliveryType);
+        if (!TextUtils.isEmpty(data.electrificationLevel)) addDetailRow(content, "Electrification", data.electrificationLevel);
         if (!TextUtils.isEmpty(data.valveTrainDesign)) addDetailRow(content, "Valvetrain", data.valveTrainDesign);
         if (!TextUtils.isEmpty(data.coolingType)) addDetailRow(content, "Cooling", data.coolingType);
         if (!TextUtils.isEmpty(data.engineManufacturer)) addDetailRow(content, "Engine Mfr", data.engineManufacturer);
@@ -284,6 +290,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
 
         if (!TextUtils.isEmpty(data.numberOfSeats)) addDetailRow(content, "Seats", data.numberOfSeats);
         if (!TextUtils.isEmpty(data.numberOfSeatRows)) addDetailRow(content, "Seat Rows", data.numberOfSeatRows);
+        if (!TextUtils.isEmpty(data.numberOfWheels)) addDetailRow(content, "Number of Wheels", data.numberOfWheels);
         if (!TextUtils.isEmpty(data.wheelSizeFront)) {
             String wheelSize = data.wheelSizeFront + "\"";
             if (!TextUtils.isEmpty(data.wheelSizeRear) &&
@@ -308,11 +315,18 @@ public class VehicleInfoActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(data.abs)) addDetailRow(content, "ABS", data.abs);
         if (!TextUtils.isEmpty(data.esc)) addDetailRow(content, "Stability Control", data.esc);
         if (!TextUtils.isEmpty(data.tractionControl)) addDetailRow(content, "Traction Control", data.tractionControl);
+        if (!TextUtils.isEmpty(data.dynamicBrakeSupport)) addDetailRow(content, "Dynamic Brake Support", data.dynamicBrakeSupport);
         if (!TextUtils.isEmpty(data.backupCamera)) addDetailRow(content, "Backup Camera", data.backupCamera);
         if (!TextUtils.isEmpty(data.frontAirBagLocations)) addDetailRow(content, "Front Airbags", data.frontAirBagLocations);
         if (!TextUtils.isEmpty(data.sideAirBagLocations)) addDetailRow(content, "Side Airbags", data.sideAirBagLocations);
+        if (!TextUtils.isEmpty(data.pretensioner)) addDetailRow(content, "Seat Belt Pretensioner", data.pretensioner);
+        if (!TextUtils.isEmpty(data.seatBeltType)) addDetailRow(content, "Seat Belt Type", data.seatBeltType);
+        if (!TextUtils.isEmpty(data.otherRestraintInfo)) addDetailRow(content, "Other Restraints", data.otherRestraintInfo);
         if (!TextUtils.isEmpty(data.tpmsType)) addDetailRow(content, "TPMS", data.tpmsType);
         if (!TextUtils.isEmpty(data.daytimeRunningLight)) addDetailRow(content, "Daytime Running Lights", data.daytimeRunningLight);
+        if (!TextUtils.isEmpty(data.semiautomaticHeadlampBeamSwitching)) addDetailRow(content, "Auto High Beams", data.semiautomaticHeadlampBeamSwitching);
+        if (!TextUtils.isEmpty(data.automaticCrashNotification)) addDetailRow(content, "Crash Notification", data.automaticCrashNotification);
+        if (!TextUtils.isEmpty(data.autoReverseSystem)) addDetailRow(content, "Auto Reverse System", data.autoReverseSystem);
 
         sectionsContainer.addView(sectionCard);
     }
@@ -328,11 +342,15 @@ public class VehicleInfoActivity extends AppCompatActivity {
 
         if (!TextUtils.isEmpty(data.adaptiveCruiseControl)) addDetailRow(content, "Adaptive Cruise Control", data.adaptiveCruiseControl);
         if (!TextUtils.isEmpty(data.forwardCollisionWarning)) addDetailRow(content, "Collision Warning", data.forwardCollisionWarning);
+        if (!TextUtils.isEmpty(data.crashImminentBraking)) addDetailRow(content, "Crash Imminent Braking", data.crashImminentBraking);
+        if (!TextUtils.isEmpty(data.pedestrianAEB)) addDetailRow(content, "Pedestrian Auto Braking", data.pedestrianAEB);
         if (!TextUtils.isEmpty(data.blindSpotWarning)) addDetailRow(content, "Blind Spot Warning", data.blindSpotWarning);
         if (!TextUtils.isEmpty(data.laneDepartureWarning)) addDetailRow(content, "Lane Departure Warning", data.laneDepartureWarning);
         if (!TextUtils.isEmpty(data.laneKeepingAssistance)) addDetailRow(content, "Lane Keeping Assist", data.laneKeepingAssistance);
         if (!TextUtils.isEmpty(data.parkingAssist)) addDetailRow(content, "Parking Assist", data.parkingAssist);
+        if (!TextUtils.isEmpty(data.adaptiveDrivingBeam)) addDetailRow(content, "Adaptive Driving Beam", data.adaptiveDrivingBeam);
         if (!TextUtils.isEmpty(data.keylessIgnition)) addDetailRow(content, "Keyless Ignition", data.keylessIgnition);
+        if (!TextUtils.isEmpty(data.activeSafetyNote)) addDetailRow(content, "Safety Notes", data.activeSafetyNote);
 
         sectionsContainer.addView(sectionCard);
     }
@@ -440,6 +458,17 @@ public class VehicleInfoActivity extends AppCompatActivity {
         LinearLayout content = (LinearLayout) sectionCard.getChildAt(0);
 
         addDetailRow(content, "Base MSRP", "$" + data.basePrice);
+
+        sectionsContainer.addView(sectionCard);
+    }
+
+    private void populateMetadata(VehicleData data) {
+        if (TextUtils.isEmpty(data.dataSource)) return;
+
+        CardView sectionCard = createSectionCard("Data Source");
+        LinearLayout content = (LinearLayout) sectionCard.getChildAt(0);
+
+        addDetailRow(content, "Decoder", data.dataSource);
 
         sectionsContainer.addView(sectionCard);
     }
