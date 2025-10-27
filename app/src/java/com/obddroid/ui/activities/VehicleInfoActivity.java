@@ -33,6 +33,10 @@ public class VehicleInfoActivity extends AppCompatActivity {
     private TextView vehicleSubtitle;
     private ImageView vehicleIllustration;
 
+    // For 2-column card layout
+    private LinearLayout currentRow;
+    private int cardsInCurrentRow = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,6 +91,11 @@ public class VehicleInfoActivity extends AppCompatActivity {
             // Hide empty state and show content
             if (emptyState != null) emptyState.setVisibility(View.GONE);
             if (contentContainer != null) contentContainer.setVisibility(View.VISIBLE);
+
+            // Reset 2-column layout tracking
+            sectionsContainer.removeAllViews();
+            currentRow = null;
+            cardsInCurrentRow = 0;
 
             // Populate header
             populateHeader(vin, vehicleData);
@@ -204,7 +213,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(data.series)) addDetailRow(content, "Series", data.series);
         if (!TextUtils.isEmpty(data.trim)) addDetailRow(content, "Trim", data.trim);
 
-        sectionsContainer.addView(sectionCard);
+        addCardToLayout(sectionCard);
     }
 
     private void populateBodyStructure(VehicleData data) {
@@ -223,7 +232,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(data.doors)) addDetailRow(content, "Doors", data.doors);
         if (!TextUtils.isEmpty(data.wheelBase)) addDetailRow(content, "Wheelbase", data.wheelBase + " inches");
 
-        sectionsContainer.addView(sectionCard);
+        addCardToLayout(sectionCard);
     }
 
     private void populateEngine(VehicleData data) {
@@ -258,7 +267,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(data.coolingType)) addDetailRow(content, "Cooling", data.coolingType);
         if (!TextUtils.isEmpty(data.engineManufacturer)) addDetailRow(content, "Engine Mfr", data.engineManufacturer);
 
-        sectionsContainer.addView(sectionCard);
+        addCardToLayout(sectionCard);
     }
 
     private void populateDrivetrain(VehicleData data) {
@@ -276,7 +285,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(data.axles)) addDetailRow(content, "Axles", data.axles);
         if (!TextUtils.isEmpty(data.steeringLocation)) addDetailRow(content, "Steering", data.steeringLocation);
 
-        sectionsContainer.addView(sectionCard);
+        addCardToLayout(sectionCard);
     }
 
     private void populateDimensions(VehicleData data) {
@@ -300,7 +309,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
             addDetailRow(content, "Wheel Size", wheelSize);
         }
 
-        sectionsContainer.addView(sectionCard);
+        addCardToLayout(sectionCard);
     }
 
     private void populateSafety(VehicleData data) {
@@ -328,7 +337,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(data.automaticCrashNotification)) addDetailRow(content, "Crash Notification", data.automaticCrashNotification);
         if (!TextUtils.isEmpty(data.autoReverseSystem)) addDetailRow(content, "Auto Reverse System", data.autoReverseSystem);
 
-        sectionsContainer.addView(sectionCard);
+        addCardToLayout(sectionCard);
     }
 
     private void populateAdvancedFeatures(VehicleData data) {
@@ -352,7 +361,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(data.keylessIgnition)) addDetailRow(content, "Keyless Ignition", data.keylessIgnition);
         if (!TextUtils.isEmpty(data.activeSafetyNote)) addDetailRow(content, "Safety Notes", data.activeSafetyNote);
 
-        sectionsContainer.addView(sectionCard);
+        addCardToLayout(sectionCard);
     }
 
     private void populateManufacturing(VehicleData data) {
@@ -381,7 +390,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
             addDetailRow(content, "Plant Location", plantLocation.toString());
         }
 
-        sectionsContainer.addView(sectionCard);
+        addCardToLayout(sectionCard);
     }
 
     private void populateWeight(VehicleData data) {
@@ -448,7 +457,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
             }
         }
 
-        sectionsContainer.addView(sectionCard);
+        addCardToLayout(sectionCard);
     }
 
     private void populatePricing(VehicleData data) {
@@ -459,7 +468,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
 
         addDetailRow(content, "Base MSRP", "$" + data.basePrice);
 
-        sectionsContainer.addView(sectionCard);
+        addCardToLayout(sectionCard);
     }
 
     private void populateMetadata(VehicleData data) {
@@ -470,7 +479,38 @@ public class VehicleInfoActivity extends AppCompatActivity {
 
         addDetailRow(content, "Decoder", data.dataSource);
 
-        sectionsContainer.addView(sectionCard);
+        addCardToLayout(sectionCard);
+    }
+
+    /**
+     * Add a card to the 2-column layout
+     */
+    private void addCardToLayout(CardView card) {
+        // Create a new row if needed (every 2 cards)
+        if (currentRow == null || cardsInCurrentRow >= 2) {
+            currentRow = new LinearLayout(this);
+            currentRow.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            currentRow.setLayoutParams(rowParams);
+            sectionsContainer.addView(currentRow);
+            cardsInCurrentRow = 0;
+        }
+
+        // Set card layout params for 2-column layout
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+            0,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            1.0f  // Equal weight for 2 cards
+        );
+        int margin = dpToPx(6);
+        cardParams.setMargins(margin, margin, margin, margin);
+        card.setLayoutParams(cardParams);
+
+        currentRow.addView(card);
+        cardsInCurrentRow++;
     }
 
     /**
@@ -478,32 +518,25 @@ public class VehicleInfoActivity extends AppCompatActivity {
      */
     private CardView createSectionCard(String title) {
         CardView card = new CardView(this);
-        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        int margin = dpToPx(12);
-        cardParams.setMargins(margin, margin / 2, margin, margin / 2);
-        card.setLayoutParams(cardParams);
         card.setCardBackgroundColor(0xFF2C2C2C);  // Dark gray
         card.setRadius(dpToPx(12));
         card.setCardElevation(dpToPx(4));
 
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16));
+        content.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
 
         // Add section header
         TextView header = new TextView(this);
         header.setText(title);
         header.setTextColor(0xFF64B5F6);  // Cyan accent
-        header.setTextSize(16);
+        header.setTextSize(14);  // Smaller header
         header.setTypeface(null, android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams headerParams = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        headerParams.setMargins(0, 0, 0, dpToPx(12));
+        headerParams.setMargins(0, 0, 0, dpToPx(8));  // Less margin
         header.setLayoutParams(headerParams);
         content.addView(header);
 
@@ -541,8 +574,8 @@ public class VehicleInfoActivity extends AppCompatActivity {
         TextView valueView = new TextView(this);
         valueView.setText(value);
         valueView.setTextColor(0xFFFFFFFF);  // White
-        valueView.setTextSize(12);
-        valueView.setTypeface(null, android.graphics.Typeface.BOLD);
+        valueView.setTextSize(10);  // Smaller font size
+        valueView.setTypeface(null, android.graphics.Typeface.NORMAL);  // Not bold
         LinearLayout.LayoutParams valueParams = new LinearLayout.LayoutParams(
             0,
             LinearLayout.LayoutParams.WRAP_CONTENT,

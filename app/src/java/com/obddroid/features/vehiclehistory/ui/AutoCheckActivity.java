@@ -179,7 +179,12 @@ public class AutoCheckActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_refresh) {
             // Refresh the report - fetch a new one from the API
-            SnackbarHelper.showSnackbar(this, "Refreshing vehicle history...", SnackbarHelper.MessageType.INFO);
+            // Hide current report and show loading
+            reportContainer.setVisibility(View.GONE);
+            errorCard.setVisibility(View.GONE);
+            loadingContainer.setVisibility(View.VISIBLE);
+            loadingText.setText("Refreshing vehicle history...");
+
             fetchVehicleHistory();
             return true;
         } else if (item.getItemId() == R.id.action_save_report) {
