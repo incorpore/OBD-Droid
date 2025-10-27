@@ -752,11 +752,12 @@ public class AutoCheckActivity extends AppCompatActivity {
         timelineIndicator.setLayoutParams(indicatorParams);
         eventLayout.addView(timelineIndicator);
 
-        // Event content with background card
+        // Event content with transparent background
         LinearLayout eventContent = new LinearLayout(this);
         eventContent.setOrientation(LinearLayout.VERTICAL);
         eventContent.setPadding(16, 14, 16, 14);
-        eventContent.setBackgroundResource(R.drawable.stat_card_background);
+        // Make background transparent for better readability
+        eventContent.setBackgroundColor(Color.TRANSPARENT);
 
         // Date - larger and more prominent
         TextView dateText = new TextView(this);
@@ -767,41 +768,41 @@ public class AutoCheckActivity extends AppCompatActivity {
         dateText.setLetterSpacing(0.02f);
         eventContent.addView(dateText);
 
-        // Details - larger and better spaced
+        // Details - brighter text for better readability
         TextView detailsText = new TextView(this);
         detailsText.setText(event.details != null ? event.details : "No details");
         detailsText.setTextSize(15);
-        detailsText.setTextColor(Color.parseColor("#212121"));
+        detailsText.setTextColor(Color.parseColor("#E0E0E0"));
         detailsText.setPadding(0, 8, 0, 0);
         detailsText.setLineSpacing(4, 1.0f);
         eventContent.addView(detailsText);
 
-        // Location - better visibility
+        // Location - brighter for better visibility
         if (event.location != null && !event.location.isEmpty()) {
             TextView locationText = new TextView(this);
             locationText.setText("📍 " + event.location);
             locationText.setTextSize(13);
-            locationText.setTextColor(Color.parseColor("#616161"));
+            locationText.setTextColor(Color.parseColor("#D32F2F"));
             locationText.setPadding(0, 8, 0, 0);
             eventContent.addView(locationText);
         }
 
-        // Odometer - better visibility
+        // Odometer - brighter for better visibility
         if (event.odometer != null && !event.odometer.isEmpty()) {
             TextView odometerText = new TextView(this);
             odometerText.setText("🛣 " + event.odometer + " miles");
             odometerText.setTextSize(13);
-            odometerText.setTextColor(Color.parseColor("#616161"));
+            odometerText.setTextColor(Color.parseColor("#66BB6A"));
             odometerText.setPadding(0, 4, 0, 0);
             eventContent.addView(odometerText);
         }
 
-        // Source - more readable, not italic
+        // Source - brighter, more readable
         if (event.source != null && !event.source.isEmpty()) {
             TextView sourceText = new TextView(this);
             sourceText.setText("Source: " + event.source);
             sourceText.setTextSize(12);
-            sourceText.setTextColor(Color.parseColor("#757575"));
+            sourceText.setTextColor(Color.parseColor("#B0BEC5"));
             sourceText.setPadding(0, 8, 0, 0);
             eventContent.addView(sourceText);
         }

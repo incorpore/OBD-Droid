@@ -614,16 +614,16 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="16dp">
+                            android:padding="14dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Safety &amp; Title Overview"
-                                android:textSize="20sp"
+                                android:textSize="16sp"
                                 android:textStyle="bold"
                                 android:textColor="#FFFFFF"
-                                android:paddingBottom="16dp"
+                                android:paddingBottom="12dp"
                                 android:letterSpacing="0.02"/>
 
                             <!-- Title Brand -->
@@ -816,25 +816,25 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="16dp">
+                            android:padding="14dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Vehicle Specifications"
-                                android:textSize="20sp"
+                                android:textSize="16sp"
                                 android:textStyle="bold"
                                 android:textColor="#FFFFFF"
-                                android:paddingBottom="16dp"
+                                android:paddingBottom="12dp"
                                 android:letterSpacing="0.02"/>
 
                             <TextView
                                 android:id="@+id/vehicle_details_text"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:textSize="15sp"
+                                android:textSize="13sp"
                                 android:textColor="#B0BEC5"
-                                android:lineSpacingExtra="8dp"/>
+                                android:lineSpacingExtra="4dp"/>
 
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>

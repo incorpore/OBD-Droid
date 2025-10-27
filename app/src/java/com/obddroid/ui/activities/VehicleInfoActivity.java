@@ -478,20 +478,16 @@ public class VehicleInfoActivity extends AppCompatActivity {
     }
 
     /**
-     * Add a card to the FlexboxLayout (fluid responsive layout)
+     * Add a card to the layout (single column, full width)
      */
     private void addCardToLayout(CardView card) {
-        // Calculate card width: 50% of screen width minus margins
-        int screenWidth = getResources().getDisplayMetrics().widthPixels;
-        int margin = dpToPx(4);
-        int cardWidth = (screenWidth / 2) - (margin * 2);
-
         FlexboxLayout.LayoutParams cardParams = new FlexboxLayout.LayoutParams(
-            cardWidth,
+            FlexboxLayout.LayoutParams.MATCH_PARENT,
             FlexboxLayout.LayoutParams.WRAP_CONTENT
         );
 
-        cardParams.setMargins(margin, margin, margin, margin);
+        int margin = dpToPx(8);
+        cardParams.setMargins(margin, margin / 2, margin, margin / 2);
         card.setLayoutParams(cardParams);
 
         sectionsContainer.addView(card);
