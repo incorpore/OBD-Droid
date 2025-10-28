@@ -126,11 +126,18 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             String descUpper = desc.toUpperCase();
 
             // Categorize based on key or description
+            // IMPORTANT: Check for test/monitor/system status FIRST before other categories
             if (descUpper.contains("NUMBER OF FAULT CODES") ||
                 descUpper.contains("MIL STATUS") ||
                 descUpper.contains("MALFUNCTION INDICATOR")) {
                 // MIL and Fault Codes go to Diagnostic Status section
                 diagnosticItems.add(pv);
+            } else if ((descUpper.contains("TEST") && descUpper.contains("STATUS")) ||
+                       (descUpper.contains("MONITOR") && descUpper.contains("STATUS")) ||
+                       (descUpper.contains("SYSTEM") && descUpper.contains("STATUS")) ||
+                       descUpper.contains("MISFIRE")) {
+                // Test/Monitor/System status fields + Misfire go to Readiness Monitors (full-width)
+                testStatusItems.add(pv);
             } else if (key.startsWith("F100") || descUpper.contains("GPS")) {
                 gpsItems.add(pv);
             } else if (key.startsWith("F200") || descUpper.contains("ACCEL") || descUpper.contains("GYRO")) {
@@ -147,11 +154,11 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 pressureItems.add(pv);
             } else if ((descUpper.contains("FUEL") &&
                        (descUpper.contains("TRIM") || descUpper.contains("LEVEL") ||
-                        descUpper.contains("RATE") || descUpper.contains("SYSTEM") ||
-                        descUpper.contains("RAIL") || descUpper.contains("TYPE"))) ||
+                        descUpper.contains("RATE") || descUpper.contains("RAIL") ||
+                        descUpper.contains("TYPE"))) ||
                        descUpper.contains("INJECTOR") ||
                        descUpper.contains("ETHANOL")) {
-                // Fuel system parameters
+                // Fuel system parameters (excluding "FUEL SYSTEM STATUS" which is caught above)
                 fuelSystemItems.add(pv);
             } else if (descUpper.contains("OXYGEN SENSOR") && descUpper.contains("PRESENT")) {
                 oxygenSensorItems.add(pv);
@@ -162,12 +169,6 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                        key.equals(desc)) {
                 // Unidentified PIDs/VIDs: empty desc, starts with "PID "/"VID ", is hex value, or desc equals key
                 unidentifiedItems.add(pv);
-            } else if ((descUpper.contains("TEST") && descUpper.contains("STATUS")) ||
-                       (descUpper.contains("MONITOR") && descUpper.contains("STATUS")) ||
-                       (descUpper.contains("SYSTEM") && descUpper.contains("STATUS")) ||
-                       descUpper.contains("MISFIRE")) {
-                // Test/Monitor/System status fields + Misfire go to Readiness Monitors
-                testStatusItems.add(pv);
             } else {
                 // Everything else goes into Live OBD Data
                 obdItems.add(pv);
