@@ -80,6 +80,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         // Categorize items
         List<EcuDataPv> gpsItems = new ArrayList<>();
         List<EcuDataPv> motionItems = new ArrayList<>();
+        List<EcuDataPv> oxygenSensorItems = new ArrayList<>();
         List<EcuDataPv> testItems = new ArrayList<>();
         List<EcuDataPv> obdItems = new ArrayList<>();
 
@@ -94,6 +95,8 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 gpsItems.add(pv);
             } else if (key.startsWith("F200") || desc.toUpperCase().contains("ACCEL") || desc.toUpperCase().contains("GYRO")) {
                 motionItems.add(pv);
+            } else if (desc.toUpperCase().contains("OXYGEN SENSOR") && desc.toUpperCase().contains("PRESENT")) {
+                oxygenSensorItems.add(pv);
             } else if (desc.toUpperCase().contains("TEST") || desc.toUpperCase().contains("STATUS") ||
                        desc.toUpperCase().contains("MONITOR")) {
                 testItems.add(pv);
@@ -121,6 +124,13 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             items.add(new ListItem("📱 Motion Sensors"));
             for (EcuDataPv pv : motionItems) {
                 items.add(new ListItem(pv, false)); // 2-column grid
+            }
+        }
+
+        if (!oxygenSensorItems.isEmpty()) {
+            items.add(new ListItem("🔵 Oxygen Sensors"));
+            for (EcuDataPv pv : oxygenSensorItems) {
+                items.add(new ListItem(pv, true)); // FULL WIDTH
             }
         }
 
