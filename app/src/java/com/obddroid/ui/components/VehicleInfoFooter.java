@@ -683,14 +683,13 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         // Show Vehicle Info section
         if (currentVehicleData != null) {
             displayVehicleInfo();
+            // Show OBD Data section below Vehicle Info
+            displayObdData();
         } else {
-            // Show demo/placeholder content
+            // Show single combined empty state when no data is available
             addEmptyStateMessage("Vehicle Information",
                 "Vehicle information will appear here once connected and VIN is decoded");
         }
-
-        // Show OBD Data section below Vehicle Info
-        displayObdData();
     }
 
     private void displayVehicleInfo() {
@@ -857,8 +856,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
     private void addMode9Section() {
         // Get Mode 9 data from VidPvs
         if (vehicleInfoStore == null || vehicleInfoStore.isEmpty()) {
-            // No Mode 9 data available
-            addEmptyStateMessage("No OBD Mode 9 data available", "Mode 9 data will appear here once retrieved from the vehicle");
+            // No Mode 9 data available - silently skip (combined with vehicle info empty state)
             return;
         }
 
@@ -951,9 +949,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             }
         }
 
-        if (!hasAnyData) {
-            addEmptyStateMessage("No OBD Mode 9 data available", "Mode 9 data will appear here once retrieved from the vehicle");
-        }
+        // If no displayable data, silently skip section (combined with vehicle info empty state)
     }
 
     private String formatLabel(String description) {
