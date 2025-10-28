@@ -31,6 +31,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private static final int VIEW_TYPE_HEADER = 0;
     private static final int VIEW_TYPE_ITEM = 1;
+    private static final int VIEW_TYPE_MAP = 3;
 
     private final Context context;
     private List<ListItem> items = new ArrayList<>();
@@ -41,16 +42,18 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         void onSelectionChanged(int selectedCount);
     }
 
-    // Wrapper class for list items (either header or data)
+    // Wrapper class for list items (either header, data, or map)
     private static class ListItem {
         final boolean isHeader;
         final boolean isFullWidth;
+        final boolean isMap;
         final String headerTitle;
         final EcuDataPv dataPv;
 
         ListItem(String headerTitle) {
             this.isHeader = true;
             this.isFullWidth = false;
+            this.isMap = false;
             this.headerTitle = headerTitle;
             this.dataPv = null;
         }
@@ -58,8 +61,22 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         ListItem(EcuDataPv dataPv, boolean isFullWidth) {
             this.isHeader = false;
             this.isFullWidth = isFullWidth;
+            this.isMap = false;
             this.headerTitle = null;
             this.dataPv = dataPv;
+        }
+
+        // Special constructor for map tile
+        private ListItem(boolean isMapTile) {
+            this.isHeader = false;
+            this.isFullWidth = false;
+            this.isMap = isMapTile;
+            this.headerTitle = null;
+            this.dataPv = null;
+        }
+
+        static ListItem createMapTile() {
+            return new ListItem(true);
         }
     }
 
@@ -138,6 +155,8 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             for (EcuDataPv pv : gpsItems) {
                 items.add(new ListItem(pv, false)); // 2-column grid
             }
+            // Add map preview tile at the end
+            items.add(ListItem.createMapTile());
         }
 
         if (!motionItems.isEmpty()) {
@@ -178,6 +197,8 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         ListItem item = items.get(position);
         if (item.isHeader) {
             return VIEW_TYPE_HEADER;
+        } else if (item.isMap) {
+            return VIEW_TYPE_MAP;
         } else if (item.isFullWidth) {
             return 2; // Full-width item type
         } else {
@@ -191,6 +212,10 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (viewType == VIEW_TYPE_HEADER) {
             View view = LayoutInflater.from(context).inflate(R.layout.obd_section_header, parent, false);
             return new HeaderViewHolder(view);
+        } else if (viewType == VIEW_TYPE_MAP) {
+            // Map tile layout
+            View view = LayoutInflater.from(context).inflate(R.layout.gps_map_tile, parent, false);
+            return new MapViewHolder(view);
         } else if (viewType == 2) {
             // Full-width layout for diagnostic tests
             View view = LayoutInflater.from(context).inflate(R.layout.obd_item_full_width, parent, false);
@@ -215,6 +240,18 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             StaggeredGridLayoutManager.LayoutParams layoutParams =
                 (StaggeredGridLayoutManager.LayoutParams) headerHolder.itemView.getLayoutParams();
             layoutParams.setFullSpan(true);
+
+        } else if (holder instanceof MapViewHolder) {
+            // Bind map tile
+            MapViewHolder mapHolder = (MapViewHolder) holder;
+
+            // Make map span full width
+            StaggeredGridLayoutManager.LayoutParams layoutParams =
+                (StaggeredGridLayoutManager.LayoutParams) mapHolder.itemView.getLayoutParams();
+            layoutParams.setFullSpan(true);
+
+            // Load map with GPS coordinates from the GPS telemetry data
+            loadMapForGpsData(mapHolder);
 
         } else if (holder instanceof ItemViewHolder) {
             // Bind data item
@@ -342,6 +379,16 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
     }
 
+    // Map ViewHolder
+    public static class MapViewHolder extends RecyclerView.ViewHolder {
+        android.widget.ImageView mapPreview;
+
+        public MapViewHolder(@NonNull View itemView) {
+            super(itemView);
+            mapPreview = itemView.findViewById(R.id.map_preview);
+        }
+    }
+
     // Item ViewHolder
     public static class ItemViewHolder extends RecyclerView.ViewHolder {
         CardView cardView;
@@ -357,6 +404,48 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             value = itemView.findViewById(R.id.obd_value);
             units = itemView.findViewById(R.id.obd_units);
             progressBar = itemView.findViewById(R.id.bar);
+        }
+    }
+
+    /**
+     * Load map tile with GPS coordinates from GPS telemetry data
+     */
+    private void loadMapForGpsData(MapViewHolder holder) {
+        try {
+            // Find GPS lat/lon from ObdProt.PidPvs
+            com.obddroid.ecu.EcuDataPv latPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F100.0.0");
+            com.obddroid.ecu.EcuDataPv lonPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F100.1.0");
+
+            if (latPv != null && lonPv != null) {
+                Object latValue = latPv.get(com.obddroid.ecu.EcuDataPv.FID_VALUE);
+                Object lonValue = lonPv.get(com.obddroid.ecu.EcuDataPv.FID_VALUE);
+
+                if (latValue instanceof Number && lonValue instanceof Number) {
+                    double latitude = ((Number) latValue).doubleValue();
+                    double longitude = ((Number) lonValue).doubleValue();
+
+                    // Load map tile at zoom level 15 (street level)
+                    com.obddroid.utils.MapTileHelper.loadMapTile(latitude, longitude, 15, holder.mapPreview);
+
+                    // Make map clickable to open external maps app
+                    holder.itemView.setOnClickListener(v -> openExternalMap(latitude, longitude));
+                }
+            }
+        } catch (Exception e) {
+            android.util.Log.e("ObdRecyclerAdapter", "Failed to load GPS map: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Open external maps app with GPS coordinates
+     */
+    private void openExternalMap(double latitude, double longitude) {
+        try {
+            android.net.Uri geoUri = android.net.Uri.parse(String.format("geo:%f,%f?z=15", latitude, longitude));
+            android.content.Intent mapIntent = new android.content.Intent(android.content.Intent.ACTION_VIEW, geoUri);
+            context.startActivity(mapIntent);
+        } catch (Exception e) {
+            android.util.Log.e("ObdRecyclerAdapter", "Failed to open map: " + e.getMessage());
         }
     }
 }
