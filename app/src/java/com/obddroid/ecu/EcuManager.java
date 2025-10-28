@@ -168,6 +168,25 @@ public class EcuManager {
     public synchronized void clear() {
         log.info("EcuManager: Clearing all ECU data");
         ecuMap.clear();
+
+        // Also clear the ecuAddresses in ElmProt to prevent stale addresses from being reloaded
+        try {
+            if (CommService.elm != null) {
+                java.lang.reflect.Field addressField = ElmProt.class.getDeclaredField("ecuAddresses");
+                addressField.setAccessible(true);
+                Object addresses = addressField.get(CommService.elm);
+
+                if (addresses instanceof TreeSet) {
+                    @SuppressWarnings("unchecked")
+                    TreeSet<Integer> ecuAddresses = (TreeSet<Integer>) addresses;
+                    log.info("EcuManager: Clearing " + ecuAddresses.size() + " stale ECU addresses from ElmProt");
+                    ecuAddresses.clear();
+                }
+            }
+        } catch (Exception e) {
+            log.warning("EcuManager: Could not clear ECU addresses from ElmProt: " + e.getMessage());
+        }
+
         notifyListeners();
     }
 
