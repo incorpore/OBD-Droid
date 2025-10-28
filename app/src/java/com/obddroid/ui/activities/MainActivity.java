@@ -961,8 +961,14 @@ public class MainActivity extends AppCompatActivity
                     break;
 
                 case CONNECTING:
-                    // Service is still connecting, show connecting status
-                    setStatus(R.string.title_connecting);
+                    // CONNECTING state can get stuck if connection attempt fails silently
+                    // Reset to offline to allow user to retry
+                    log.warning("Found stale CONNECTING state on resume - resetting to offline");
+                    mCommService.stop();  // This will trigger state change to OFFLINE
+                    if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
+                    {
+                        onDisconnect();
+                    }
                     break;
 
                 case OFFLINE:
