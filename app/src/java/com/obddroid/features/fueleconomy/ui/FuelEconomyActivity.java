@@ -48,6 +48,9 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private TextView fuelFlowValue;
     private TextView throttlePositionValue;
     private TextView timeToEmptyValue;
+    private TextView vehicleStatusText;
+    private TextView vehicleSpeedValue;
+    private View vehicleStatusIndicator;
     private FuelEconomyChart fuelEconomyChart;
     private FuelFlowGauge fuelFlowGauge;
     private VehicleInfoFooter vehicleInfoFooter;
@@ -127,6 +130,9 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         fuelFlowValue = findViewById(R.id.fuel_flow_value);
         throttlePositionValue = findViewById(R.id.throttle_position_value);
         timeToEmptyValue = findViewById(R.id.time_to_empty_value);
+        vehicleStatusText = findViewById(R.id.vehicle_status_text);
+        vehicleSpeedValue = findViewById(R.id.vehicle_speed_value);
+        vehicleStatusIndicator = findViewById(R.id.vehicle_status_indicator);
         fuelEconomyChart = findViewById(R.id.fuel_economy_chart);
         fuelFlowGauge = findViewById(R.id.fuel_flow_gauge);
 
@@ -194,15 +200,14 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         super.onResume();
         log.info("=== FuelEconomyActivity onResume() ===");
 
-        // Auto-request Live Data service if not already active
-        if (ObdProt.PidPvs.size() == 0) {
-            log.info("PidPvs is empty - requesting Live Data service");
-            try {
-                // Request live data service to start collecting OBD data
-                com.obddroid.services.CommService.elm.setService(ObdProt.OBD_SVC_DATA, true);
-            } catch (Exception e) {
-                log.warning("Failed to request Live Data service: " + e.getMessage());
-            }
+        // Always request Live Data service to ensure OBD data is being collected
+        // This is needed even if PidPvs is not empty (e.g. when navigating from LiveDataActivity)
+        log.info("Requesting Live Data service (PidPvs size: " + ObdProt.PidPvs.size() + ")");
+        try {
+            // Request live data service to start collecting OBD data
+            com.obddroid.services.CommService.elm.setService(ObdProt.OBD_SVC_DATA);
+        } catch (Exception e) {
+            log.warning("Failed to request Live Data service: " + e.getMessage());
         }
 
         startPeriodicUpdates();
@@ -941,6 +946,12 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private void updateDisplayedValues() {
         // This method is called periodically - actively pull OBD data as backup to PV listener
         try {
+        // Get current speed first for status indicator
+        float speed = getCurrentSpeed();
+
+        // Update vehicle status indicator
+        updateVehicleStatusIndicator(speed);
+
         // Force MPG calculation update from current OBD values
         updateMPGCalculation();
 
@@ -966,6 +977,31 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             }
         } catch (Exception e) {
             log.warning("updateDisplayedValues error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Update vehicle status indicator based on current speed
+     */
+    private void updateVehicleStatusIndicator(float speedMph) {
+        if (speedMph < 1.0f) {
+            // Vehicle stopped
+            vehicleStatusText.setText("Vehicle Stopped - MPG calculation paused");
+            vehicleSpeedValue.setText("0 mph");
+            vehicleStatusIndicator.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(
+                    androidx.core.content.ContextCompat.getColor(this, R.color.fault_warning)
+                )
+            );
+        } else {
+            // Vehicle moving
+            vehicleStatusText.setText("Vehicle Moving - Calculating MPG");
+            vehicleSpeedValue.setText(String.format(Locale.US, "%.0f mph", speedMph));
+            vehicleStatusIndicator.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(
+                    androidx.core.content.ContextCompat.getColor(this, R.color.fault_success)
+                )
+            );
         }
     }
 
