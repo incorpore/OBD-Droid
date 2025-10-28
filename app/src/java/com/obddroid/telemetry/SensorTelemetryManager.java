@@ -41,6 +41,7 @@ public class SensorTelemetryManager implements SensorEventListener {
     private final Map<DataField, EcuDataItem> items = new EnumMap<>(DataField.class);
     private final Map<DataField, EcuDataPv> dataPvs = new EnumMap<>(DataField.class);
     private final Set<String> registeredKeys = new HashSet<>();
+    private final Map<String, TelemetryFieldLoader.FieldDefinition> customFields;
 
     private Sensor accelerometer;
     private boolean active = false;
@@ -48,6 +49,9 @@ public class SensorTelemetryManager implements SensorEventListener {
     public SensorTelemetryManager(@NonNull Context context) {
         this.appContext = context.getApplicationContext();
         this.sensorManager = (SensorManager) appContext.getSystemService(Context.SENSOR_SERVICE);
+
+        // Load custom field definitions from CSV if available
+        this.customFields = TelemetryFieldLoader.loadMotionFields(context);
     }
 
     public boolean isActive() {
@@ -108,7 +112,16 @@ public class SensorTelemetryManager implements SensorEventListener {
 
             int pid = CUSTOM_PID_BASE + field.ordinal();
             Conversion[] conversions = createIdentityConversions(field.units);
-            String description = appContext.getString(field.labelResId);
+
+            // Use custom CSV label if available, otherwise fall back to string resource
+            String description;
+            TelemetryFieldLoader.FieldDefinition customField = customFields.get(field.mnemonic.toLowerCase());
+            if (customField != null) {
+                description = customField.label;
+                Log.d(TAG, "Using custom label for " + field.mnemonic + ": " + description);
+            } else {
+                description = appContext.getString(field.labelResId);
+            }
 
             EcuDataItem item = new EcuDataItem(
                 pid,

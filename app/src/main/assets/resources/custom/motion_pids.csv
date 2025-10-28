@@ -1,0 +1,4 @@
+svc,pid,ofs,len,bit_offset,bit_length,bit_mask,formula,format,min,max,update_cycle_ms,mnemonic,label,description
+0x01,0xF120,0,4,0,32,0xFFFFFFFF,FLOAT,%.3f,-20,20,100,accel_x,Acceleration X,Device accelerometer X-axis in m/s²
+0x01,0xF121,0,4,0,32,0xFFFFFFFF,FLOAT,%.3f,-20,20,100,accel_y,Acceleration Y,Device accelerometer Y-axis in m/s²
+0x01,0xF122,0,4,0,32,0xFFFFFFFF,FLOAT,%.3f,-20,20,100,accel_z,Acceleration Z,Device accelerometer Z-axis in m/s²

@@ -1,0 +1,6 @@
+key,label,description
+gps_latitude,GPS Latitude,Device GPS latitude coordinate in decimal degrees (-90 to 90)
+gps_longitude,GPS Longitude,Device GPS longitude coordinate in decimal degrees (-180 to 180)
+gps_speed,GPS Speed,Current speed from GPS in kilometers per hour
+gps_bearing,GPS Bearing,Current heading/direction from GPS in degrees (0-360)
+gps_altitude,GPS Altitude,Current altitude from GPS in meters above sea level

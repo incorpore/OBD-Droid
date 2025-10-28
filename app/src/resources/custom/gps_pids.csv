@@ -1,0 +1,6 @@
+svc,pid,ofs,len,bit_offset,bit_length,bit_mask,formula,format,min,max,update_cycle_ms,mnemonic,label,description
+0x01,0xF100,0,8,0,64,0xFFFFFFFFFFFFFFFF,DOUBLE,%.6f,-90,90,1000,gps_latitude,GPS Latitude,Device GPS latitude coordinate in decimal degrees
+0x01,0xF101,0,8,0,64,0xFFFFFFFFFFFFFFFF,DOUBLE,%.6f,-180,180,1000,gps_longitude,GPS Longitude,Device GPS longitude coordinate in decimal degrees
+0x01,0xF102,0,4,0,32,0xFFFFFFFF,FLOAT,%.2f,0,500,1000,gps_speed,GPS Speed,Device GPS speed in km/h
+0x01,0xF103,0,4,0,32,0xFFFFFFFF,FLOAT,%.1f,0,360,1000,gps_bearing,GPS Bearing,Device GPS bearing/heading in degrees
+0x01,0xF104,0,8,0,64,0xFFFFFFFFFFFFFFFF,DOUBLE,%.1f,-500,9000,1000,gps_altitude,GPS Altitude,Device GPS altitude in meters above sea level

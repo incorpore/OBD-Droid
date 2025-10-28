@@ -47,12 +47,16 @@ public class GpsTelemetryManager implements LocationListener {
     private final Map<GpsField, EcuDataItem> items = new EnumMap<>(GpsField.class);
     private final Map<GpsField, EcuDataPv> dataPvs = new EnumMap<>(GpsField.class);
     private final Set<String> registeredKeys = new HashSet<>();
+    private final Map<String, TelemetryFieldLoader.FieldDefinition> customFields;
 
     private boolean active = false;
 
     public GpsTelemetryManager(@NonNull Context context) {
         this.appContext = context.getApplicationContext();
         this.locationManager = (LocationManager) appContext.getSystemService(Context.LOCATION_SERVICE);
+
+        // Load custom field definitions from CSV if available
+        this.customFields = TelemetryFieldLoader.loadGpsFields(context);
     }
 
     public boolean isActive() {
@@ -107,7 +111,16 @@ public class GpsTelemetryManager implements LocationListener {
 
             int pid = CUSTOM_PID_BASE + field.ordinal();
             Conversion[] conversions = createIdentityConversions(field.units);
-            String description = appContext.getString(field.labelResId);
+
+            // Use custom CSV label if available, otherwise fall back to string resource
+            String description;
+            TelemetryFieldLoader.FieldDefinition customField = customFields.get(field.mnemonic.toLowerCase());
+            if (customField != null) {
+                description = customField.label;
+                Log.d(TAG, "Using custom label for " + field.mnemonic + ": " + description);
+            } else {
+                description = appContext.getString(field.labelResId);
+            }
 
             EcuDataItem item = new EcuDataItem(
                 pid,

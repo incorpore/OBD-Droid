@@ -1,0 +1,4 @@
+key,label,description
+accel_x,Acceleration X,Device accelerometer reading on X-axis in meters per second squared
+accel_y,Acceleration Y,Device accelerometer reading on Y-axis in meters per second squared
+accel_z,Acceleration Z,Device accelerometer reading on Z-axis in meters per second squared (includes gravity ~9.8 m/s²)
