@@ -25,6 +25,10 @@ public class TiltIndicatorView extends View implements SensorEventListener {
     private float accelX = 0.0f;  // m/s² (left/right tilt)
     private float accelY = 0.0f;  // m/s² (forward/backward tilt)
 
+    // Calibration offsets - set when user taps to recalibrate
+    private float offsetX = 0.0f;
+    private float offsetY = 0.0f;
+
     private SensorManager sensorManager;
     private Sensor accelerometer;
 
@@ -49,6 +53,10 @@ public class TiltIndicatorView extends View implements SensorEventListener {
         if (sensorManager != null) {
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         }
+
+        // Set up tap listener to recalibrate
+        setOnClickListener(v -> recalibrate());
+        setClickable(true);
 
         // Outer circle paint (boundary)
         circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -110,6 +118,16 @@ public class TiltIndicatorView extends View implements SensorEventListener {
     }
 
     /**
+     * Recalibrate the tilt indicator - current position becomes the new center/zero point
+     */
+    private void recalibrate() {
+        offsetX = accelX;
+        offsetY = accelY;
+        invalidate();
+        android.util.Log.d("TiltIndicatorView", String.format("Recalibrated: offsetX=%f, offsetY=%f", offsetX, offsetY));
+    }
+
+    /**
      * Update the acceleration values (in m/s²)
      * @param x X-axis acceleration (left/right)
      * @param y Y-axis acceleration (forward/backward)
@@ -143,11 +161,15 @@ public class TiltIndicatorView extends View implements SensorEventListener {
         canvas.drawLine(centerX, centerY - 10, centerX, centerY + 10, circlePaint);
         circlePaint.setStrokeWidth(2f);
 
-        // Calculate ball position based on acceleration
+        // Calculate ball position based on acceleration (calibrated)
+        // Subtract offsets to show relative tilt from calibration point
+        float calibratedX = accelX - offsetX;
+        float calibratedY = accelY - offsetY;
+
         // Scale factor: 1 G (9.8 m/s²) should move the ball to the edge
         float maxAccel = 9.8f;  // 1 G
-        float ballX = centerX + (accelX / maxAccel) * maxRadius * 0.8f;
-        float ballY = centerY + (accelY / maxAccel) * maxRadius * 0.8f;
+        float ballX = centerX + (calibratedX / maxAccel) * maxRadius * 0.8f;
+        float ballY = centerY + (calibratedY / maxAccel) * maxRadius * 0.8f;
 
         // Clamp ball position to stay within the outer circle
         float distanceFromCenter = (float) Math.sqrt(Math.pow(ballX - centerX, 2) + Math.pow(ballY - centerY, 2));
