@@ -90,20 +90,28 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             String key = entry.getKey();
             Object description = pv.get(EcuDataPv.FID_DESCRIPT);
             String desc = description != null ? String.valueOf(description) : "";
+            String descUpper = desc.toUpperCase();
+
+            // Skip fields that are shown in the status bar (avoid duplication)
+            if (descUpper.contains("NUMBER OF FAULT CODES") ||
+                descUpper.contains("MIL STATUS") ||
+                descUpper.contains("MALFUNCTION INDICATOR")) {
+                continue; // Don't add to any category - filtered out
+            }
 
             // Categorize based on key or description
-            if (key.startsWith("F100") || desc.toUpperCase().contains("GPS")) {
+            if (key.startsWith("F100") || descUpper.contains("GPS")) {
                 gpsItems.add(pv);
-            } else if (key.startsWith("F200") || desc.toUpperCase().contains("ACCEL") || desc.toUpperCase().contains("GYRO")) {
+            } else if (key.startsWith("F200") || descUpper.contains("ACCEL") || descUpper.contains("GYRO")) {
                 motionItems.add(pv);
-            } else if (desc.toUpperCase().contains("OXYGEN SENSOR") && desc.toUpperCase().contains("PRESENT")) {
+            } else if (descUpper.contains("OXYGEN SENSOR") && descUpper.contains("PRESENT")) {
                 oxygenSensorItems.add(pv);
-            } else if ((desc.toUpperCase().contains("SYSTEM") && desc.toUpperCase().contains("STATUS")) ||
-                       (desc.toUpperCase().contains("FUEL") && desc.toUpperCase().contains("STATUS"))) {
+            } else if ((descUpper.contains("SYSTEM") && descUpper.contains("STATUS")) ||
+                       (descUpper.contains("FUEL") && descUpper.contains("STATUS"))) {
                 // System status fields (Fuel System Status, etc.)
                 systemStatusItems.add(pv);
-            } else if (desc.toUpperCase().contains("TEST") || desc.toUpperCase().contains("STATUS") ||
-                       desc.toUpperCase().contains("MONITOR")) {
+            } else if (descUpper.contains("TEST") || descUpper.contains("STATUS") ||
+                       descUpper.contains("MONITOR")) {
                 testItems.add(pv);
             } else {
                 obdItems.add(pv);
