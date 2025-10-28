@@ -174,10 +174,42 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
         }
 
-        // Build sectioned list - Live OBD Data first
+        // Build sectioned list - Diagnostic Status first
+        if (!diagnosticItems.isEmpty()) {
+            items.add(new ListItem("🔧 Diagnostic Status"));
+            for (EcuDataPv pv : diagnosticItems) {
+                items.add(new ListItem(pv, false)); // 2-column grid
+            }
+        }
+
+        // Live OBD Data after Diagnostic Status
         if (!obdItems.isEmpty()) {
             items.add(new ListItem("🚗 Live OBD Data"));
             for (EcuDataPv pv : obdItems) {
+                items.add(new ListItem(pv, false)); // 2-column grid
+            }
+        }
+
+        // Temperature sensors section
+        if (!temperatureItems.isEmpty()) {
+            items.add(new ListItem("🌡️ Temperature Sensors"));
+            for (EcuDataPv pv : temperatureItems) {
+                items.add(new ListItem(pv, false)); // 2-column grid
+            }
+        }
+
+        // Pressure sensors section
+        if (!pressureItems.isEmpty()) {
+            items.add(new ListItem("🔘 Pressure Sensors"));
+            for (EcuDataPv pv : pressureItems) {
+                items.add(new ListItem(pv, false)); // 2-column grid
+            }
+        }
+
+        // Fuel system section
+        if (!fuelSystemItems.isEmpty()) {
+            items.add(new ListItem("⛽ Fuel System"));
+            for (EcuDataPv pv : fuelSystemItems) {
                 items.add(new ListItem(pv, false)); // 2-column grid
             }
         }
