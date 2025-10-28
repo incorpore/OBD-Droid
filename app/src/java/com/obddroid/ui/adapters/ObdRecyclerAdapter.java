@@ -242,13 +242,8 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutParams.setFullSpan(true);
 
         } else if (holder instanceof MapViewHolder) {
-            // Bind map tile
+            // Bind map tile - normal grid size (NOT full width)
             MapViewHolder mapHolder = (MapViewHolder) holder;
-
-            // Make map span full width
-            StaggeredGridLayoutManager.LayoutParams layoutParams =
-                (StaggeredGridLayoutManager.LayoutParams) mapHolder.itemView.getLayoutParams();
-            layoutParams.setFullSpan(true);
 
             // Load map with GPS coordinates from the GPS telemetry data
             loadMapForGpsData(mapHolder);

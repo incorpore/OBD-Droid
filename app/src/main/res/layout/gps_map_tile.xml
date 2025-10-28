@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- GPS map preview tile -->
+<!-- GPS map preview tile - same size as other GPS cards -->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="100dp"
     android:layout_margin="4dp"
     android:clickable="true"
     android:focusable="true"
@@ -13,31 +13,31 @@
     app:cardElevation="2dp"
     app:cardBackgroundColor="@color/background_secondary">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="match_parent">
 
         <!-- Map Preview Image -->
         <ImageView
             android:id="@+id/map_preview"
             android:layout_width="match_parent"
-            android:layout_height="160dp"
+            android:layout_height="match_parent"
             android:scaleType="centerCrop"
             android:contentDescription="GPS Location Map" />
 
-        <!-- Overlay label -->
+        <!-- Small overlay label at bottom -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="📍 Tap to view in Maps"
-            android:textSize="11sp"
-            android:textColor="@color/text_secondary"
+            android:layout_gravity="bottom"
+            android:text="📍 Map"
+            android:textSize="9sp"
+            android:textColor="#FFFFFF"
             android:textStyle="bold"
             android:gravity="center"
-            android:padding="8dp"
-            android:background="#80000000" />
+            android:padding="4dp"
+            android:background="#AA000000" />
 
-    </LinearLayout>
+    </FrameLayout>
 
 </androidx.cardview.widget.CardView>
