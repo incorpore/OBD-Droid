@@ -156,7 +156,9 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 items.add(new ListItem(pv, false)); // 2-column grid
             }
             // Add map preview tile at the end
-            items.add(ListItem.createMapTile());
+            ListItem mapTile = ListItem.createMapTile();
+            items.add(mapTile);
+            android.util.Log.d("ObdRecyclerAdapter", "Added map tile to items list. Map tile isMap=" + mapTile.isMap);
         }
 
         if (!motionItems.isEmpty()) {
@@ -230,6 +232,8 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ListItem item = items.get(position);
+        android.util.Log.d("ObdRecyclerAdapter", String.format("onBindViewHolder pos=%d, isHeader=%s, isMap=%s, holder=%s",
+            position, item.isHeader, item.isMap, holder.getClass().getSimpleName()));
 
         if (holder instanceof HeaderViewHolder) {
             // Bind header
@@ -406,28 +410,48 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
      * Load map tile with GPS coordinates from GPS telemetry data
      */
     private void loadMapForGpsData(MapViewHolder holder) {
+        android.util.Log.d("ObdRecyclerAdapter", "loadMapForGpsData called");
         try {
+            // Debug: List all GPS/Telemetry keys (F1xx and F2xx)
+            for (java.util.Map.Entry<String, com.obddroid.ecu.EcuDataPv> entry : com.obddroid.obd.ObdProt.PidPvs.entrySetTyped()) {
+                String key = entry.getKey();
+                if (key.startsWith("F1") || key.startsWith("F2")) {
+                    Object desc = entry.getValue().get(com.obddroid.ecu.EcuDataPv.FID_DESCRIPT);
+                    android.util.Log.d("ObdRecyclerAdapter", "Found telemetry key: " + key + " = " + desc);
+                }
+            }
+
             // Find GPS lat/lon from ObdProt.PidPvs
             com.obddroid.ecu.EcuDataPv latPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F100.0.0");
             com.obddroid.ecu.EcuDataPv lonPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F100.1.0");
+
+            android.util.Log.d("ObdRecyclerAdapter", String.format("GPS PVs found: lat=%s, lon=%s", latPv != null, lonPv != null));
 
             if (latPv != null && lonPv != null) {
                 Object latValue = latPv.get(com.obddroid.ecu.EcuDataPv.FID_VALUE);
                 Object lonValue = lonPv.get(com.obddroid.ecu.EcuDataPv.FID_VALUE);
 
+                android.util.Log.d("ObdRecyclerAdapter", String.format("GPS values: lat=%s, lon=%s", latValue, lonValue));
+
                 if (latValue instanceof Number && lonValue instanceof Number) {
                     double latitude = ((Number) latValue).doubleValue();
                     double longitude = ((Number) lonValue).doubleValue();
+
+                    android.util.Log.d("ObdRecyclerAdapter", String.format("Loading map for coords: lat=%f, lon=%f", latitude, longitude));
 
                     // Load map tile at zoom level 15 (street level)
                     com.obddroid.utils.MapTileHelper.loadMapTile(latitude, longitude, 15, holder.mapPreview);
 
                     // Make map clickable to open external maps app
                     holder.itemView.setOnClickListener(v -> openExternalMap(latitude, longitude));
+                } else {
+                    android.util.Log.w("ObdRecyclerAdapter", "GPS values are not numbers");
                 }
+            } else {
+                android.util.Log.w("ObdRecyclerAdapter", "GPS PVs are null");
             }
         } catch (Exception e) {
-            android.util.Log.e("ObdRecyclerAdapter", "Failed to load GPS map: " + e.getMessage());
+            android.util.Log.e("ObdRecyclerAdapter", "Failed to load GPS map: " + e.getMessage(), e);
         }
     }
 

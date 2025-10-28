@@ -44,6 +44,8 @@ public class MapTileHelper {
      * @param imageView ImageView to display the map
      */
     public static void loadMapTile(double latitude, double longitude, int zoom, ImageView imageView) {
+        Log.d(TAG, String.format("loadMapTile called with lat=%f, lon=%f, zoom=%d", latitude, longitude, zoom));
+
         executor.execute(() -> {
             try {
                 // Convert lat/lon to tile coordinates
@@ -52,35 +54,45 @@ public class MapTileHelper {
 
                 // Build tile URL
                 String tileUrl = String.format("%s/%d/%d/%d.png", TILE_SERVER, zoom, tileX, tileY);
-                Log.d(TAG, "Loading map tile: " + tileUrl);
+                Log.d(TAG, "Downloading map tile from: " + tileUrl);
+                Log.d(TAG, String.format("Tile coordinates: X=%d, Y=%d", tileX, tileY));
 
                 // Download tile
                 URL url = new URL(tileUrl);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestProperty("User-Agent", "OBD-Droid/1.0");
-                connection.setConnectTimeout(5000);
-                connection.setReadTimeout(5000);
+                connection.setConnectTimeout(10000);
+                connection.setReadTimeout(10000);
                 connection.connect();
 
-                InputStream input = connection.getInputStream();
-                Bitmap tileBitmap = BitmapFactory.decodeStream(input);
-                input.close();
+                int responseCode = connection.getResponseCode();
+                Log.d(TAG, "HTTP Response Code: " + responseCode);
 
-                if (tileBitmap != null) {
-                    // Add location marker to the center
-                    Bitmap markedBitmap = addLocationMarker(tileBitmap);
+                if (responseCode == 200) {
+                    InputStream input = connection.getInputStream();
+                    Bitmap tileBitmap = BitmapFactory.decodeStream(input);
+                    input.close();
 
-                    // Update UI on main thread
-                    mainHandler.post(() -> imageView.setImageBitmap(markedBitmap));
-                    Log.d(TAG, "Map tile loaded successfully");
+                    if (tileBitmap != null) {
+                        Log.d(TAG, String.format("Bitmap loaded: %dx%d", tileBitmap.getWidth(), tileBitmap.getHeight()));
+                        // Add location marker to the center
+                        Bitmap markedBitmap = addLocationMarker(tileBitmap);
+
+                        // Update UI on main thread
+                        mainHandler.post(() -> {
+                            imageView.setImageBitmap(markedBitmap);
+                            Log.d(TAG, "Map tile set to ImageView successfully");
+                        });
+                    } else {
+                        Log.e(TAG, "Failed to decode bitmap from stream");
+                    }
+                } else {
+                    Log.e(TAG, "HTTP request failed with code: " + responseCode);
                 }
 
             } catch (Exception e) {
-                Log.e(TAG, "Failed to load map tile: " + e.getMessage());
-                // Optionally set a placeholder image
-                mainHandler.post(() -> {
-                    // Could set a "map unavailable" image here
-                });
+                Log.e(TAG, "Failed to load map tile: " + e.getMessage(), e);
+                e.printStackTrace();
             }
         });
     }
