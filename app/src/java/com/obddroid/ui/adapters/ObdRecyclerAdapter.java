@@ -107,8 +107,11 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 oxygenSensorItems.add(pv);
             } else if ((descUpper.contains("TEST") && descUpper.contains("STATUS")) ||
                        (descUpper.contains("MONITOR") && descUpper.contains("STATUS")) ||
-                       (descUpper.contains("SYSTEM") && descUpper.contains("STATUS"))) {
-                // Test/Monitor/System status fields go at the bottom without header
+                       (descUpper.contains("SYSTEM") && descUpper.contains("STATUS")) ||
+                       descUpper.contains("MISFIRE") ||
+                       desc.isEmpty() ||
+                       key.equals(desc)) {
+                // Test/Monitor/System status fields + Misfire + Unidentified PIDs go to Other Data
                 testStatusItems.add(pv);
             } else {
                 // Everything else goes into Live OBD Data
