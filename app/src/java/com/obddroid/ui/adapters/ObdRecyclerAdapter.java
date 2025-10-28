@@ -99,9 +99,12 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         items.clear();
 
         if (pvList == null || pvList.isEmpty()) {
+            android.util.Log.d("ObdRecyclerAdapter", "updateData: pvList is null or empty");
             notifyDataSetChanged();
             return;
         }
+
+        android.util.Log.d("ObdRecyclerAdapter", "updateData: pvList size = " + pvList.size());
 
         // Categorize items
         List<EcuDataPv> gpsItems = new ArrayList<>();
@@ -262,6 +265,13 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             items.add(tiltTile);
             android.util.Log.d("ObdRecyclerAdapter", "Added tilt tile to items list. Tilt tile isTilt=" + tiltTile.isTilt);
         }
+
+        // Log categorization summary
+        android.util.Log.d("ObdRecyclerAdapter", String.format(
+            "updateData summary: total=%d, diagnostic=%d, obd=%d, temp=%d, pressure=%d, fuel=%d, o2=%d, test=%d, unidentified=%d, gps=%d, motion=%d, finalItems=%d",
+            pvList.size(), diagnosticItems.size(), obdItems.size(), temperatureItems.size(), pressureItems.size(),
+            fuelSystemItems.size(), oxygenSensorItems.size(), testStatusItems.size(), unidentifiedItems.size(),
+            gpsItems.size(), motionItems.size(), items.size()));
 
         notifyDataSetChanged();
     }

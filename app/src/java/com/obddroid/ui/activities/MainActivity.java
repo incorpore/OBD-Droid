@@ -338,12 +338,6 @@ public class MainActivity extends AppCompatActivity
     private boolean hasAttemptedAutoReconnect = false;
     private boolean isManuallyReconnecting = false; // Flag to prevent infinite loop during manual reconnect
 
-    // === Stale Connection Recovery ===
-    private int staleConnectionRetryCount = 0;
-    private static final int MAX_STALE_CONNECTION_RETRIES = 3;
-    private long connectingStateEnteredTime = 0;
-    private static final long CONNECTING_TIMEOUT_MS = 10000; // 10 seconds before considering it "stale"
-
     // === Auto-Reconnect Countdown UI ===
     private View autoReconnectCountdownBar;
     private ProgressBar countdownProgress;
@@ -405,8 +399,7 @@ public class MainActivity extends AppCompatActivity
                                 break;
 
                             case CONNECTING:
-                                // Check if this is a stale CONNECTING state and attempt retry
-                                handleConnectingState();
+                                setStatus(R.string.title_connecting);
                                 break;
 
                             default:
@@ -968,8 +961,8 @@ public class MainActivity extends AppCompatActivity
                     break;
 
                 case CONNECTING:
-                    // Handle CONNECTING state with retry logic
-                    handleConnectingState();
+                    // Service is still connecting, show connecting status
+                    setStatus(R.string.title_connecting);
                     break;
 
                 case OFFLINE:
@@ -989,115 +982,6 @@ public class MainActivity extends AppCompatActivity
             if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
             {
                 setStatus(getString(R.string.status_connect_device));
-            }
-        }
-    }
-
-    /**
-     * Handle CONNECTING state with automatic retry logic
-     * Called both from MESSAGE_STATE_CHANGE handler and updateConnectionStatusUI()
-     * Only triggers retry if connection has been stuck for > CONNECTING_TIMEOUT_MS
-     */
-    private void handleConnectingState()
-    {
-        long currentTime = System.currentTimeMillis();
-
-        // If this is a fresh CONNECTING state, record timestamp and allow normal connection
-        if (connectingStateEnteredTime == 0)
-        {
-            connectingStateEnteredTime = currentTime;
-            log.info("Entered CONNECTING state - allowing normal connection attempt");
-            setStatus(R.string.title_connecting);
-            return;
-        }
-
-        // Check how long we've been in CONNECTING state
-        long timeInConnecting = currentTime - connectingStateEnteredTime;
-
-        // If we haven't been stuck long enough, allow it to continue
-        if (timeInConnecting < CONNECTING_TIMEOUT_MS)
-        {
-            log.fine(String.format("CONNECTING state: %dms elapsed, waiting for timeout", timeInConnecting));
-            setStatus(R.string.title_connecting);
-            return;
-        }
-
-        // Been stuck in CONNECTING for too long - trigger retry logic
-        log.warning(String.format("CONNECTING state stuck for %dms - triggering retry", timeInConnecting));
-
-        // CONNECTING state can get stuck if connection attempt fails silently
-        // Try to reconnect a few times before giving up
-        if (staleConnectionRetryCount < MAX_STALE_CONNECTION_RETRIES)
-        {
-            staleConnectionRetryCount++;
-            log.info(String.format("Stale CONNECTING state - retry attempt %d/%d",
-                staleConnectionRetryCount, MAX_STALE_CONNECTION_RETRIES));
-
-            // Reset timestamp for next attempt
-            connectingStateEnteredTime = 0;
-
-            // Stop current connection attempt
-            if (mCommService != null)
-            {
-                mCommService.stop();
-            }
-
-            // Try to reconnect using last saved adapter
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
-            String lastAddress = prefs.getString("LAST_ADAPTER_ADDRESS", null);
-
-            if (lastAdapterType != null && lastAddress != null)
-            {
-                // Delay reconnection attempt slightly to allow service to fully stop
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    log.info("Attempting to reconnect to last adapter: " + lastAdapterType);
-                    setStatus("Reconnecting... (attempt " + staleConnectionRetryCount + ")");
-
-                    // Reconnect based on adapter type
-                    if ("bluetooth".equals(lastAdapterType))
-                    {
-                        connectBtDevice(lastAddress, true);
-                    }
-                    else if ("network".equals(lastAdapterType))
-                    {
-                        int lastPort = prefs.getInt("LAST_ADAPTER_PORT", 35000);
-                        connectNetworkDevice(lastAddress, lastPort);
-                    }
-                    else if ("usb".equals(lastAdapterType))
-                    {
-                        // USB reconnection would need device reference
-                        log.warning("USB reconnection not supported in stale recovery");
-                        onDisconnect();
-                    }
-                }, 1000); // 1 second delay
-            }
-            else
-            {
-                log.warning("No last adapter info found - cannot retry");
-                if (mCommService != null)
-                {
-                    mCommService.stop();
-                }
-                if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
-                {
-                    onDisconnect();
-                }
-            }
-        }
-        else
-        {
-            // Max retries exceeded - give up and disconnect
-            log.warning("Max stale connection retries exceeded - disconnecting");
-            staleConnectionRetryCount = 0; // Reset counter for next time
-            connectingStateEnteredTime = 0; // Reset timestamp
-            if (mCommService != null)
-            {
-                mCommService.stop();
-            }
-            if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
-            {
-                onDisconnect();
             }
         }
     }
@@ -3407,15 +3291,6 @@ public class MainActivity extends AppCompatActivity
             isManuallyReconnecting = false;
         }
 
-        // Reset stale connection retry counter on successful connection
-        if (staleConnectionRetryCount > 0) {
-            log.info("Connection successful - resetting stale connection retry counter");
-            staleConnectionRetryCount = 0;
-        }
-
-        // Reset CONNECTING state timestamp on successful connection
-        connectingStateEnteredTime = 0;
-
         // Reset ECU selection state for new connection
         ecuUserSelected = false;
 
@@ -3452,9 +3327,6 @@ public class MainActivity extends AppCompatActivity
             // The reconnect process will handle mode changes
             return;
         }
-
-        // Reset CONNECTING state timestamp on disconnect
-        connectingStateEnteredTime = 0;
 
         // Clear vehicle data on disconnect
         VehicleManager.getInstance().clearVehicle();
