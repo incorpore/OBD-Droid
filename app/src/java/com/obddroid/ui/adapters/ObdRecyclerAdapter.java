@@ -134,7 +134,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         if (!motionItems.isEmpty()) {
-            items.add(new ListItem("📱 Motion Sensors"));
+            items.add(new ListItem("📱 Motion Telemetry"));
             for (EcuDataPv pv : motionItems) {
                 items.add(new ListItem(pv, false)); // 2-column grid
             }
