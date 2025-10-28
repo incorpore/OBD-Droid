@@ -144,18 +144,18 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
         }
 
-        // Build sectioned list - Live OBD Data first
-        if (!obdItems.isEmpty()) {
-            items.add(new ListItem("🚗 Live OBD Data"));
-            for (EcuDataPv pv : obdItems) {
+        // Build sectioned list - Diagnostic Status first
+        if (!diagnosticItems.isEmpty()) {
+            items.add(new ListItem("🔧 Diagnostic Status"));
+            for (EcuDataPv pv : diagnosticItems) {
                 items.add(new ListItem(pv, false)); // 2-column grid
             }
         }
 
-        // Diagnostic Status section (MIL + Fault Codes) after OBD Data
-        if (!diagnosticItems.isEmpty()) {
-            items.add(new ListItem("🔧 Diagnostic Status"));
-            for (EcuDataPv pv : diagnosticItems) {
+        // Live OBD Data after Diagnostic Status
+        if (!obdItems.isEmpty()) {
+            items.add(new ListItem("🚗 Live OBD Data"));
+            for (EcuDataPv pv : obdItems) {
                 items.add(new ListItem(pv, false)); // 2-column grid
             }
         }
