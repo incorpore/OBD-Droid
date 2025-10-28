@@ -81,6 +81,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         List<EcuDataPv> gpsItems = new ArrayList<>();
         List<EcuDataPv> motionItems = new ArrayList<>();
         List<EcuDataPv> oxygenSensorItems = new ArrayList<>();
+        List<EcuDataPv> testStatusItems = new ArrayList<>();
         List<EcuDataPv> obdItems = new ArrayList<>();
 
         for (java.util.Map.Entry<String, EcuDataPv> entry : pvList.entrySetTyped()) {
@@ -104,9 +105,13 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 motionItems.add(pv);
             } else if (descUpper.contains("OXYGEN SENSOR") && descUpper.contains("PRESENT")) {
                 oxygenSensorItems.add(pv);
+            } else if ((descUpper.contains("TEST") && descUpper.contains("STATUS")) ||
+                       (descUpper.contains("MONITOR") && descUpper.contains("STATUS")) ||
+                       (descUpper.contains("SYSTEM") && descUpper.contains("STATUS"))) {
+                // Test/Monitor/System status fields go at the bottom without header
+                testStatusItems.add(pv);
             } else {
-                // Everything else goes into Live OBD Data (ungrouped)
-                // This includes system status, diagnostic tests, etc.
+                // Everything else goes into Live OBD Data
                 obdItems.add(pv);
             }
         }
@@ -115,12 +120,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (!obdItems.isEmpty()) {
             items.add(new ListItem("🚗 Live OBD Data"));
             for (EcuDataPv pv : obdItems) {
-                // Use full-width for long test/status fields, 2-column for regular data
-                String desc = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
-                boolean isFullWidth = desc.length() > 30 ||
-                                      desc.toUpperCase().contains("TEST") ||
-                                      desc.toUpperCase().contains("MONITOR");
-                items.add(new ListItem(pv, isFullWidth));
+                items.add(new ListItem(pv, false)); // 2-column grid
             }
         }
 
@@ -142,6 +142,14 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             items.add(new ListItem("🔵 Oxygen Sensors"));
             for (EcuDataPv pv : oxygenSensorItems) {
                 items.add(new ListItem(pv, true)); // FULL WIDTH
+            }
+        }
+
+        // Add test/status fields at the bottom WITHOUT a section header
+        // Just lumped together in full-width format
+        if (!testStatusItems.isEmpty()) {
+            for (EcuDataPv pv : testStatusItems) {
+                items.add(new ListItem(pv, true)); // FULL WIDTH, no header
             }
         }
 
