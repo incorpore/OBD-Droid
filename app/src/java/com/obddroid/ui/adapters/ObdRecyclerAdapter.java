@@ -110,8 +110,11 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                        (descUpper.contains("SYSTEM") && descUpper.contains("STATUS")) ||
                        descUpper.contains("MISFIRE") ||
                        desc.isEmpty() ||
+                       descUpper.startsWith("PID ") ||
+                       descUpper.matches("^[0-9A-F]+$") ||
                        key.equals(desc)) {
                 // Test/Monitor/System status fields + Misfire + Unidentified PIDs go to Other Data
+                // Unidentified: empty desc, starts with "PID ", is hex value, or desc equals key
                 testStatusItems.add(pv);
             } else {
                 // Everything else goes into Live OBD Data
