@@ -81,8 +81,6 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         List<EcuDataPv> gpsItems = new ArrayList<>();
         List<EcuDataPv> motionItems = new ArrayList<>();
         List<EcuDataPv> oxygenSensorItems = new ArrayList<>();
-        List<EcuDataPv> systemStatusItems = new ArrayList<>();
-        List<EcuDataPv> testItems = new ArrayList<>();
         List<EcuDataPv> obdItems = new ArrayList<>();
 
         for (java.util.Map.Entry<String, EcuDataPv> entry : pvList.entrySetTyped()) {
@@ -106,14 +104,9 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 motionItems.add(pv);
             } else if (descUpper.contains("OXYGEN SENSOR") && descUpper.contains("PRESENT")) {
                 oxygenSensorItems.add(pv);
-            } else if ((descUpper.contains("SYSTEM") && descUpper.contains("STATUS")) ||
-                       (descUpper.contains("FUEL") && descUpper.contains("STATUS"))) {
-                // System status fields (Fuel System Status, etc.)
-                systemStatusItems.add(pv);
-            } else if (descUpper.contains("TEST") || descUpper.contains("STATUS") ||
-                       descUpper.contains("MONITOR")) {
-                testItems.add(pv);
             } else {
+                // Everything else goes into Live OBD Data (ungrouped)
+                // This includes system status, diagnostic tests, etc.
                 obdItems.add(pv);
             }
         }
@@ -122,7 +115,12 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (!obdItems.isEmpty()) {
             items.add(new ListItem("🚗 Live OBD Data"));
             for (EcuDataPv pv : obdItems) {
-                items.add(new ListItem(pv, false)); // 2-column grid
+                // Use full-width for long test/status fields, 2-column for regular data
+                String desc = String.valueOf(pv.get(EcuDataPv.FID_DESCRIPT));
+                boolean isFullWidth = desc.length() > 30 ||
+                                      desc.toUpperCase().contains("TEST") ||
+                                      desc.toUpperCase().contains("MONITOR");
+                items.add(new ListItem(pv, isFullWidth));
             }
         }
 
@@ -143,20 +141,6 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (!oxygenSensorItems.isEmpty()) {
             items.add(new ListItem("🔵 Oxygen Sensors"));
             for (EcuDataPv pv : oxygenSensorItems) {
-                items.add(new ListItem(pv, true)); // FULL WIDTH
-            }
-        }
-
-        if (!systemStatusItems.isEmpty()) {
-            items.add(new ListItem("⚙️ System Status"));
-            for (EcuDataPv pv : systemStatusItems) {
-                items.add(new ListItem(pv, true)); // FULL WIDTH
-            }
-        }
-
-        if (!testItems.isEmpty()) {
-            items.add(new ListItem("🔬 Diagnostic Tests"));
-            for (EcuDataPv pv : testItems) {
                 items.add(new ListItem(pv, true)); // FULL WIDTH
             }
         }
