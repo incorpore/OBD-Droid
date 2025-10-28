@@ -12,14 +12,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- Live Data ListView -->
-        <ListView
-            android:id="@android:id/list"
+        <!-- Live Data RecyclerView (staggered 2-column layout) -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@color/background_primary"
-            android:dividerHeight="0dp"
-            android:divider="@null"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
             android:paddingTop="8dp"
             android:paddingBottom="80dp"
             android:clipToPadding="false"
