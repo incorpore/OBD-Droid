@@ -16,4 +16,11 @@
         android:icon="@drawable/ic_sensors_24"
         app:showAsAction="never" />
 
+    <!-- Save Report -->
+    <item
+        android:id="@+id/action_save_report"
+        android:title="Save Report"
+        android:icon="@drawable/ic_file_upload_24"
+        app:showAsAction="never" />
+
 </menu>

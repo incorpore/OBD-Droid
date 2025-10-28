@@ -1,8 +1,10 @@
 package com.obddroid.ui.activities;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.SparseBooleanArray;
@@ -19,6 +21,15 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import com.obddroid.R;
 import com.obddroid.obd.ObdProt;
@@ -215,6 +226,9 @@ public class LiveDataActivity extends AppCompatActivity
             return true;
         } else if (id == R.id.action_toggle_motion_telemetry) {
             toggleMotionTelemetry();
+            return true;
+        } else if (id == R.id.action_save_report) {
+            showSaveReportDialog();
             return true;
         }
 
@@ -464,5 +478,150 @@ public class LiveDataActivity extends AppCompatActivity
         // TODO: Actually implement filtering by hiding non-selected items
         SnackbarHelper.showInfo(this, "Filter functionality coming soon");
         log.info("Filter requested for " + selectedPositions.length + " items");
+    }
+
+    // ========== Save Report ==========
+
+    /**
+     * Show dialog to choose export format (CSV or JSON)
+     */
+    private void showSaveReportDialog() {
+        if (ObdProt.PidPvs.isEmpty()) {
+            SnackbarHelper.showWarning(this, "No live data available to save");
+            return;
+        }
+
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_export_ecu);
+        dialog.setCancelable(true);
+
+        TextView dialogTitle = dialog.findViewById(R.id.dialog_title);
+        if (dialogTitle != null) dialogTitle.setText("Save Live Data Report");
+
+        View csvOption = dialog.findViewById(R.id.option_export_csv);
+        if (csvOption != null) {
+            csvOption.setOnClickListener(v -> {
+                dialog.dismiss();
+                exportCsv();
+            });
+        }
+
+        View jsonOption = dialog.findViewById(R.id.option_export_json);
+        if (jsonOption != null) {
+            jsonOption.setOnClickListener(v -> {
+                dialog.dismiss();
+                exportJson();
+            });
+        }
+
+        View cancelButton = dialog.findViewById(R.id.btn_cancel);
+        if (cancelButton != null) {
+            cancelButton.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
+    /**
+     * Export live data to CSV
+     */
+    private void exportCsv() {
+        try {
+            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+            String filename = "live_data_" + timestamp + ".csv";
+            File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            File file = new File(downloadsDir, filename);
+
+            FileWriter writer = new FileWriter(file);
+
+            // CSV Header
+            writer.append("PID,Description,Value,Units\n");
+
+            // Write all PIDs
+            for (java.util.Map.Entry<String, EcuDataPv> entry : ObdProt.PidPvs.entrySetTyped()) {
+                String pid = String.valueOf(entry.getKey());
+                EcuDataPv pv = entry.getValue();
+
+                Object description = pv.get(EcuDataPv.FID_DESCRIPT);
+                Object value = pv.get(EcuDataPv.FID_VALUE);
+                String units = pv.getUnits();
+
+                String desc = description != null ? String.valueOf(description) : "";
+                String val = value != null ? String.valueOf(value) : "";
+                String unit = units != null ? units : "";
+
+                // Escape CSV special characters
+                desc = escapeCsv(desc);
+                val = escapeCsv(val);
+                unit = escapeCsv(unit);
+
+                writer.append(String.format("\"%s\",\"%s\",\"%s\",\"%s\"\n", pid, desc, val, unit));
+            }
+
+            writer.flush();
+            writer.close();
+
+            SnackbarHelper.showSuccess(this, "Saved to Downloads/" + filename);
+            log.info("Live data exported to CSV: " + filename);
+        } catch (IOException e) {
+            log.severe("Error exporting CSV: " + e.getMessage());
+            SnackbarHelper.showError(this, "Failed to export CSV: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Export live data to JSON
+     */
+    private void exportJson() {
+        try {
+            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+            String filename = "live_data_" + timestamp + ".json";
+            File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            File file = new File(downloadsDir, filename);
+
+            // Build JSON structure
+            java.util.Map<String, java.util.Map<String, Object>> data = new java.util.HashMap<>();
+            for (java.util.Map.Entry<String, EcuDataPv> entry : ObdProt.PidPvs.entrySetTyped()) {
+                String pid = String.valueOf(entry.getKey());
+                EcuDataPv pv = entry.getValue();
+
+                java.util.Map<String, Object> pidData = new java.util.HashMap<>();
+                pidData.put("description", pv.get(EcuDataPv.FID_DESCRIPT));
+                pidData.put("value", pv.get(EcuDataPv.FID_VALUE));
+                pidData.put("units", pv.getUnits());
+
+                data.put(pid, pidData);
+            }
+
+            // Create wrapper object with metadata
+            java.util.Map<String, Object> report = new java.util.HashMap<>();
+            report.put("timestamp", timestamp);
+            report.put("exportDate", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date()));
+            report.put("dataSource", "LiveData");
+            report.put("pidCount", data.size());
+            report.put("pids", data);
+
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String json = gson.toJson(report);
+
+            FileWriter writer = new FileWriter(file);
+            writer.write(json);
+            writer.flush();
+            writer.close();
+
+            SnackbarHelper.showSuccess(this, "Saved to Downloads/" + filename);
+            log.info("Live data exported to JSON: " + filename);
+        } catch (IOException e) {
+            log.severe("Error exporting JSON: " + e.getMessage());
+            SnackbarHelper.showError(this, "Failed to export JSON: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Escape CSV special characters
+     */
+    private String escapeCsv(String value) {
+        if (value == null) return "";
+        return value.replace("\"", "\"\"");
     }
 }

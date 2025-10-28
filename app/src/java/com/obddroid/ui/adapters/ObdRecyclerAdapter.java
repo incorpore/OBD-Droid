@@ -106,6 +106,9 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         // Categorize items
         List<EcuDataPv> gpsItems = new ArrayList<>();
         List<EcuDataPv> motionItems = new ArrayList<>();
+        List<EcuDataPv> temperatureItems = new ArrayList<>();
+        List<EcuDataPv> pressureItems = new ArrayList<>();
+        List<EcuDataPv> fuelSystemItems = new ArrayList<>();
         List<EcuDataPv> oxygenSensorItems = new ArrayList<>();
         List<EcuDataPv> testStatusItems = new ArrayList<>();
         List<EcuDataPv> diagnosticItems = new ArrayList<>();
@@ -132,6 +135,24 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 gpsItems.add(pv);
             } else if (key.startsWith("F200") || descUpper.contains("ACCEL") || descUpper.contains("GYRO")) {
                 motionItems.add(pv);
+            } else if ((descUpper.contains("TEMP") || descUpper.contains("TEMPERATURE")) &&
+                       !descUpper.contains("SENSOR") &&
+                       !descUpper.contains("CIRCUIT")) {
+                // Temperature readings (coolant, intake air, oil, catalyst, transmission, etc.)
+                temperatureItems.add(pv);
+            } else if ((descUpper.contains("PRESSURE") || descUpper.contains("VACUUM")) &&
+                       !descUpper.contains("SENSOR") &&
+                       !descUpper.contains("CIRCUIT")) {
+                // Pressure readings (fuel, manifold, barometric, evap, etc.)
+                pressureItems.add(pv);
+            } else if ((descUpper.contains("FUEL") &&
+                       (descUpper.contains("TRIM") || descUpper.contains("LEVEL") ||
+                        descUpper.contains("RATE") || descUpper.contains("SYSTEM") ||
+                        descUpper.contains("RAIL") || descUpper.contains("TYPE"))) ||
+                       descUpper.contains("INJECTOR") ||
+                       descUpper.contains("ETHANOL")) {
+                // Fuel system parameters
+                fuelSystemItems.add(pv);
             } else if (descUpper.contains("OXYGEN SENSOR") && descUpper.contains("PRESENT")) {
                 oxygenSensorItems.add(pv);
             } else if (desc.isEmpty() ||
@@ -145,7 +166,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                        (descUpper.contains("MONITOR") && descUpper.contains("STATUS")) ||
                        (descUpper.contains("SYSTEM") && descUpper.contains("STATUS")) ||
                        descUpper.contains("MISFIRE")) {
-                // Test/Monitor/System status fields + Misfire go to Other Data
+                // Test/Monitor/System status fields + Misfire go to Readiness Monitors
                 testStatusItems.add(pv);
             } else {
                 // Everything else goes into Live OBD Data
