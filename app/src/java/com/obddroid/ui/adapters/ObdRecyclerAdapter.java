@@ -422,8 +422,9 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             // Find GPS lat/lon from ObdProt.PidPvs
+            // GPS fields use sequential PIDs: F100=Lat, F101=Lon, F102=Alt, F103=Bearing, F104=Speed
             com.obddroid.ecu.EcuDataPv latPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F100.0.0");
-            com.obddroid.ecu.EcuDataPv lonPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F100.1.0");
+            com.obddroid.ecu.EcuDataPv lonPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F101.0.0");  // FIX: Was F100.1.0!
 
             android.util.Log.d("ObdRecyclerAdapter", String.format("GPS PVs found: lat=%s, lon=%s", latPv != null, lonPv != null));
 
