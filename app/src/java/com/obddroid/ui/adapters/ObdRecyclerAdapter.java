@@ -99,6 +99,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         List<EcuDataPv> motionItems = new ArrayList<>();
         List<EcuDataPv> oxygenSensorItems = new ArrayList<>();
         List<EcuDataPv> testStatusItems = new ArrayList<>();
+        List<EcuDataPv> diagnosticItems = new ArrayList<>();
         List<EcuDataPv> unidentifiedItems = new ArrayList<>();
         List<EcuDataPv> obdItems = new ArrayList<>();
 
@@ -112,15 +113,13 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             String desc = description != null ? String.valueOf(description) : "";
             String descUpper = desc.toUpperCase();
 
-            // Skip fields that are shown in the status bar (avoid duplication)
+            // Categorize based on key or description
             if (descUpper.contains("NUMBER OF FAULT CODES") ||
                 descUpper.contains("MIL STATUS") ||
                 descUpper.contains("MALFUNCTION INDICATOR")) {
-                continue; // Don't add to any category - filtered out
-            }
-
-            // Categorize based on key or description
-            if (key.startsWith("F100") || descUpper.contains("GPS")) {
+                // MIL and Fault Codes go to Diagnostic Status section
+                diagnosticItems.add(pv);
+            } else if (key.startsWith("F100") || descUpper.contains("GPS")) {
                 gpsItems.add(pv);
             } else if (key.startsWith("F200") || descUpper.contains("ACCEL") || descUpper.contains("GYRO")) {
                 motionItems.add(pv);
@@ -149,6 +148,14 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (!obdItems.isEmpty()) {
             items.add(new ListItem("🚗 Live OBD Data"));
             for (EcuDataPv pv : obdItems) {
+                items.add(new ListItem(pv, false)); // 2-column grid
+            }
+        }
+
+        // Diagnostic Status section (MIL + Fault Codes) after OBD Data
+        if (!diagnosticItems.isEmpty()) {
+            items.add(new ListItem("🔧 Diagnostic Status"));
+            for (EcuDataPv pv : diagnosticItems) {
                 items.add(new ListItem(pv, false)); // 2-column grid
             }
         }

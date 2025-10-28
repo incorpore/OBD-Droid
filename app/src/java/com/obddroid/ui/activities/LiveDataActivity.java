@@ -59,10 +59,6 @@ public class LiveDataActivity extends AppCompatActivity
     private View snackbarAnchor;
     private ActionMode actionMode;
 
-    // Status bar components
-    private TextView milStatusText;
-    private TextView faultCodeCountText;
-
     // Telemetry managers
     private GpsTelemetryManager gpsTelemetryManager;
     private SensorTelemetryManager sensorTelemetryManager;
@@ -77,43 +73,10 @@ public class LiveDataActivity extends AppCompatActivity
             if (recyclerAdapter != null && !ObdProt.PidPvs.isEmpty()) {
                 // Just refresh the displayed values, don't rebuild the entire list
                 recyclerAdapter.notifyDataSetChanged();
-
-                // Update status bar
-                updateStatusBar();
             }
             updateHandler.postDelayed(this, UPDATE_INTERVAL);
         }
     };
-
-    private void updateStatusBar() {
-        try {
-            // Get numCodes from CommService.elm which contains both MIL status and fault count
-            int numCodes = CommService.elm.getNumCodes();
-
-            // Extract MIL status from bit 7 (0x80)
-            boolean milOn = (numCodes & 0x80) != 0;
-
-            // Extract actual fault code count from bits 0-6 (0x7F)
-            int faultCount = numCodes & 0x7F;
-
-            runOnUiThread(() -> {
-                // Update MIL Status
-                if (milStatusText != null) {
-                    milStatusText.setText(milOn ? "ON" : "OFF");
-                    milStatusText.setTextColor(milOn ? 0xFFF44336 : 0xFF4CAF50); // Red or Green
-                }
-
-                // Update Fault Code Count
-                if (faultCodeCountText != null) {
-                    faultCodeCountText.setText(String.valueOf(faultCount));
-                    faultCodeCountText.setTextColor(faultCount > 0 ? 0xFFF44336 : 0xFF4CAF50); // Red or Green
-                }
-            });
-        } catch (Exception e) {
-            // Silently handle errors - OBD connection might not be established yet
-            log.fine("Could not update status bar: " + e.getMessage());
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -145,10 +108,6 @@ public class LiveDataActivity extends AppCompatActivity
         // Create adapter with grid tile layout
         recyclerAdapter = new ObdRecyclerAdapter(this, ObdProt.PidPvs, this::onSelectionChanged);
         recyclerView.setAdapter(recyclerAdapter);
-
-        // Setup status bar
-        milStatusText = findViewById(R.id.mil_status);
-        faultCodeCountText = findViewById(R.id.fault_code_count);
 
         // Setup footer
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);
