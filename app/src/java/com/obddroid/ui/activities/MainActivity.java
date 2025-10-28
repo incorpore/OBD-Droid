@@ -341,6 +341,8 @@ public class MainActivity extends AppCompatActivity
     // === Stale Connection Recovery ===
     private int staleConnectionRetryCount = 0;
     private static final int MAX_STALE_CONNECTION_RETRIES = 3;
+    private long connectingStateEnteredTime = 0;
+    private static final long CONNECTING_TIMEOUT_MS = 10000; // 10 seconds before considering it "stale"
 
     // === Auto-Reconnect Countdown UI ===
     private View autoReconnectCountdownBar;
@@ -994,17 +996,45 @@ public class MainActivity extends AppCompatActivity
     /**
      * Handle CONNECTING state with automatic retry logic
      * Called both from MESSAGE_STATE_CHANGE handler and updateConnectionStatusUI()
-     * Attempts to reconnect up to MAX_STALE_CONNECTION_RETRIES times before giving up
+     * Only triggers retry if connection has been stuck for > CONNECTING_TIMEOUT_MS
      */
     private void handleConnectingState()
     {
+        long currentTime = System.currentTimeMillis();
+
+        // If this is a fresh CONNECTING state, record timestamp and allow normal connection
+        if (connectingStateEnteredTime == 0)
+        {
+            connectingStateEnteredTime = currentTime;
+            log.info("Entered CONNECTING state - allowing normal connection attempt");
+            setStatus(R.string.title_connecting);
+            return;
+        }
+
+        // Check how long we've been in CONNECTING state
+        long timeInConnecting = currentTime - connectingStateEnteredTime;
+
+        // If we haven't been stuck long enough, allow it to continue
+        if (timeInConnecting < CONNECTING_TIMEOUT_MS)
+        {
+            log.fine(String.format("CONNECTING state: %dms elapsed, waiting for timeout", timeInConnecting));
+            setStatus(R.string.title_connecting);
+            return;
+        }
+
+        // Been stuck in CONNECTING for too long - trigger retry logic
+        log.warning(String.format("CONNECTING state stuck for %dms - triggering retry", timeInConnecting));
+
         // CONNECTING state can get stuck if connection attempt fails silently
         // Try to reconnect a few times before giving up
         if (staleConnectionRetryCount < MAX_STALE_CONNECTION_RETRIES)
         {
             staleConnectionRetryCount++;
-            log.info(String.format("Found CONNECTING state - retry attempt %d/%d",
+            log.info(String.format("Stale CONNECTING state - retry attempt %d/%d",
                 staleConnectionRetryCount, MAX_STALE_CONNECTION_RETRIES));
+
+            // Reset timestamp for next attempt
+            connectingStateEnteredTime = 0;
 
             // Stop current connection attempt
             if (mCommService != null)
@@ -1060,6 +1090,7 @@ public class MainActivity extends AppCompatActivity
             // Max retries exceeded - give up and disconnect
             log.warning("Max stale connection retries exceeded - disconnecting");
             staleConnectionRetryCount = 0; // Reset counter for next time
+            connectingStateEnteredTime = 0; // Reset timestamp
             if (mCommService != null)
             {
                 mCommService.stop();
@@ -3382,6 +3413,9 @@ public class MainActivity extends AppCompatActivity
             staleConnectionRetryCount = 0;
         }
 
+        // Reset CONNECTING state timestamp on successful connection
+        connectingStateEnteredTime = 0;
+
         // Reset ECU selection state for new connection
         ecuUserSelected = false;
 
@@ -3418,6 +3452,9 @@ public class MainActivity extends AppCompatActivity
             // The reconnect process will handle mode changes
             return;
         }
+
+        // Reset CONNECTING state timestamp on disconnect
+        connectingStateEnteredTime = 0;
 
         // Clear vehicle data on disconnect
         VehicleManager.getInstance().clearVehicle();
