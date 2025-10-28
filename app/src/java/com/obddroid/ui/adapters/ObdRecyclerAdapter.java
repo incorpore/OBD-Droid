@@ -107,7 +107,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         for (java.util.Map.Entry<String, EcuDataPv> entry : entries) {
             EcuDataPv pv = entry.getValue();
-            String key = entry.getKey();
+            String key = String.valueOf(entry.getKey());
             Object description = pv.get(EcuDataPv.FID_DESCRIPT);
             String desc = description != null ? String.valueOf(description) : "";
             String descUpper = desc.toUpperCase();
@@ -435,6 +435,12 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 if (latValue instanceof Number && lonValue instanceof Number) {
                     double latitude = ((Number) latValue).doubleValue();
                     double longitude = ((Number) lonValue).doubleValue();
+
+                    // Check if GPS coordinates are valid (not 0,0 or near 0,0 which indicates no GPS lock)
+                    if (Math.abs(latitude) < 0.0001 && Math.abs(longitude) < 0.0001) {
+                        android.util.Log.d("ObdRecyclerAdapter", "Skipping map update - invalid GPS coordinates (0,0)");
+                        return;
+                    }
 
                     // Calculate distance from last position (in degrees, rough approximation)
                     double latDiff = Math.abs(latitude - holder.lastLatitude);
