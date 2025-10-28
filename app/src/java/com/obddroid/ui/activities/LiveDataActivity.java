@@ -86,58 +86,31 @@ public class LiveDataActivity extends AppCompatActivity
 
     private void updateStatusBar() {
         try {
-            // Update MIL Status
-            EcuDataPv milPv = ObdProt.PidPvs.getTyped("01.0.0"); // MIL Status is typically PID 01
-            if (milPv != null) {
-                Object milValue = milPv.get(EcuDataPv.FID_VALUE);
-                if (milValue != null) {
-                    String milText = String.valueOf(milValue);
-                    boolean milOn = milText.contains("ON") || milText.contains("1");
+            // Get numCodes from CommService.elm which contains both MIL status and fault count
+            int numCodes = CommService.elm.getNumCodes();
 
-                    runOnUiThread(() -> {
-                        if (milStatusText != null) {
-                            milStatusText.setText(milOn ? "ON" : "OFF");
-                            milStatusText.setTextColor(
-                                milOn ? 0xFFF44336 : 0xFF4CAF50); // Red or Green
-                        }
-                    });
+            // Extract MIL status from bit 7 (0x80)
+            boolean milOn = (numCodes & 0x80) != 0;
+
+            // Extract actual fault code count from bits 0-6 (0x7F)
+            int faultCount = numCodes & 0x7F;
+
+            runOnUiThread(() -> {
+                // Update MIL Status
+                if (milStatusText != null) {
+                    milStatusText.setText(milOn ? "ON" : "OFF");
+                    milStatusText.setTextColor(milOn ? 0xFFF44336 : 0xFF4CAF50); // Red or Green
                 }
-            }
 
-            // Update Fault Code Count
-            EcuDataPv faultCountPv = ObdProt.PidPvs.getTyped("01.0.0"); // Same PID often contains fault count
-            if (faultCountPv != null) {
-                // Try to extract fault code count from the PID
-                // This might need adjustment based on how your app stores fault codes
-                Object description = faultCountPv.get(EcuDataPv.FID_DESCRIPT);
-                if (description != null) {
-                    String desc = String.valueOf(description);
-                    // Look for patterns like "DTC: 3" or extract number
-                    int count = 0;
-                    try {
-                        // Attempt to parse fault code count
-                        if (desc.contains("DTC")) {
-                            String[] parts = desc.split(":");
-                            if (parts.length > 1) {
-                                count = Integer.parseInt(parts[1].trim().split("\\s")[0]);
-                            }
-                        }
-                    } catch (Exception e) {
-                        // Ignore parsing errors
-                    }
-
-                    final int faultCount = count;
-                    runOnUiThread(() -> {
-                        if (faultCodeCountText != null) {
-                            faultCodeCountText.setText(String.valueOf(faultCount));
-                            faultCodeCountText.setTextColor(
-                                faultCount > 0 ? 0xFFF44336 : 0xFF4CAF50); // Red or Green
-                        }
-                    });
+                // Update Fault Code Count
+                if (faultCodeCountText != null) {
+                    faultCodeCountText.setText(String.valueOf(faultCount));
+                    faultCodeCountText.setTextColor(faultCount > 0 ? 0xFFF44336 : 0xFF4CAF50); // Red or Green
                 }
-            }
+            });
         } catch (Exception e) {
-            // Silently handle errors
+            // Silently handle errors - OBD connection might not be established yet
+            log.fine("Could not update status bar: " + e.getMessage());
         }
     }
 

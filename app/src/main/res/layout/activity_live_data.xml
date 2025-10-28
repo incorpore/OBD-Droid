@@ -35,14 +35,14 @@
             android:focusable="true"
             android:visibility="gone"/>
 
-        <!-- OBD Status Bar (MIL + Fault Codes) -->
+        <!-- OBD Status Bar (MIL + Fault Codes) - sits right above vehicle footer -->
         <include
             android:id="@+id/obd_status_bar"
             layout="@layout/obd_status_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
-            android:layout_marginBottom="80dp" />
+            android:layout_marginBottom="65dp" />
 
         <!-- Snackbar Anchor -->
         <View
