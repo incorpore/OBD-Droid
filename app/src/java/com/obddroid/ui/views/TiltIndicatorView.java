@@ -3,14 +3,19 @@ package com.obddroid.ui.views;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.util.AttributeSet;
 import android.view.View;
 
 /**
  * Custom view that displays a tilt indicator (inclinometer) for vehicle motion
  * Shows a ball that moves based on X/Y acceleration to indicate vehicle tilt
+ * Uses phone's accelerometer sensor for real-time updates
  */
-public class TiltIndicatorView extends View {
+public class TiltIndicatorView extends View implements SensorEventListener {
 
     private Paint circlePaint;
     private Paint centerCirclePaint;
@@ -19,6 +24,9 @@ public class TiltIndicatorView extends View {
 
     private float accelX = 0.0f;  // m/s² (left/right tilt)
     private float accelY = 0.0f;  // m/s² (forward/backward tilt)
+
+    private SensorManager sensorManager;
+    private Sensor accelerometer;
 
     public TiltIndicatorView(Context context) {
         super(context);
@@ -36,17 +44,23 @@ public class TiltIndicatorView extends View {
     }
 
     private void init() {
+        // Initialize sensor manager
+        sensorManager = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
+        if (sensorManager != null) {
+            accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        }
+
         // Outer circle paint (boundary)
         circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         circlePaint.setStyle(Paint.Style.STROKE);
         circlePaint.setStrokeWidth(2f);
-        circlePaint.setColor(0xFF444444);  // Dark gray
+        circlePaint.setColor(0xFFAAAAAA);  // Light gray - visible on dark background
 
         // Center reference circle paint
         centerCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         centerCirclePaint.setStyle(Paint.Style.STROKE);
         centerCirclePaint.setStrokeWidth(1.5f);
-        centerCirclePaint.setColor(0xFF666666);  // Medium gray
+        centerCirclePaint.setColor(0xFF888888);  // Medium-light gray
 
         // Ball paint (moves with tilt)
         ballPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -58,6 +72,41 @@ public class TiltIndicatorView extends View {
         textPaint.setTextSize(24f);
         textPaint.setColor(0xFFFFFFFF);  // White
         textPaint.setTextAlign(Paint.Align.CENTER);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        // Register sensor listener when view is attached
+        if (sensorManager != null && accelerometer != null) {
+            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+        }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        // Unregister sensor listener when view is detached to save battery
+        if (sensorManager != null) {
+            sensorManager.unregisterListener(this);
+        }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            // Update acceleration values
+            // X axis: positive = device tilted right, negative = left
+            // Y axis: positive = device tilted down (towards user), negative = up (away from user)
+            accelX = event.values[0];
+            accelY = event.values[1];
+            invalidate();  // Redraw the view
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        // Not needed for this use case
     }
 
     /**

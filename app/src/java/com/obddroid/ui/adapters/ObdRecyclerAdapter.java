@@ -32,6 +32,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int VIEW_TYPE_HEADER = 0;
     private static final int VIEW_TYPE_ITEM = 1;
     private static final int VIEW_TYPE_MAP = 3;
+    private static final int VIEW_TYPE_TILT = 4;
 
     private final Context context;
     private List<ListItem> items = new ArrayList<>();
@@ -42,11 +43,12 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         void onSelectionChanged(int selectedCount);
     }
 
-    // Wrapper class for list items (either header, data, or map)
+    // Wrapper class for list items (either header, data, map, or tilt)
     private static class ListItem {
         final boolean isHeader;
         final boolean isFullWidth;
         final boolean isMap;
+        final boolean isTilt;
         final String headerTitle;
         final EcuDataPv dataPv;
 
@@ -54,6 +56,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             this.isHeader = true;
             this.isFullWidth = false;
             this.isMap = false;
+            this.isTilt = false;
             this.headerTitle = headerTitle;
             this.dataPv = null;
         }
@@ -62,21 +65,27 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             this.isHeader = false;
             this.isFullWidth = isFullWidth;
             this.isMap = false;
+            this.isTilt = false;
             this.headerTitle = null;
             this.dataPv = dataPv;
         }
 
-        // Special constructor for map tile
-        private ListItem(boolean isMapTile) {
+        // Special constructor for map/tilt tiles
+        private ListItem(boolean isMapTile, boolean isTiltTile) {
             this.isHeader = false;
             this.isFullWidth = false;
             this.isMap = isMapTile;
+            this.isTilt = isTiltTile;
             this.headerTitle = null;
             this.dataPv = null;
         }
 
         static ListItem createMapTile() {
-            return new ListItem(true);
+            return new ListItem(true, false);
+        }
+
+        static ListItem createTiltTile() {
+            return new ListItem(false, true);
         }
     }
 
@@ -144,15 +153,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
         }
 
-        // Build sectioned list - Diagnostic Status first
-        if (!diagnosticItems.isEmpty()) {
-            items.add(new ListItem("🔧 Diagnostic Status"));
-            for (EcuDataPv pv : diagnosticItems) {
-                items.add(new ListItem(pv, false)); // 2-column grid
-            }
-        }
-
-        // Live OBD Data after Diagnostic Status
+        // Build sectioned list - Live OBD Data first
         if (!obdItems.isEmpty()) {
             items.add(new ListItem("🚗 Live OBD Data"));
             for (EcuDataPv pv : obdItems) {
@@ -160,6 +161,31 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
         }
 
+        // Oxygen sensors in "Sensors" section
+        if (!oxygenSensorItems.isEmpty()) {
+            items.add(new ListItem("📡 Sensors"));
+            for (EcuDataPv pv : oxygenSensorItems) {
+                items.add(new ListItem(pv, true)); // FULL WIDTH
+            }
+        }
+
+        // Test/Monitor/System status fields in separate section
+        if (!testStatusItems.isEmpty()) {
+            items.add(new ListItem("🔍 Test Status"));
+            for (EcuDataPv pv : testStatusItems) {
+                items.add(new ListItem(pv, true)); // FULL WIDTH
+            }
+        }
+
+        // Separate section for unidentified PIDs/VIDs
+        if (!unidentifiedItems.isEmpty()) {
+            items.add(new ListItem("❓ Unidentified PID/VID"));
+            for (EcuDataPv pv : unidentifiedItems) {
+                items.add(new ListItem(pv, true)); // FULL WIDTH
+            }
+        }
+
+        // GPS Telemetry moved to bottom
         if (!gpsItems.isEmpty()) {
             items.add(new ListItem("📍 GPS Telemetry"));
             for (EcuDataPv pv : gpsItems) {
@@ -171,34 +197,16 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             android.util.Log.d("ObdRecyclerAdapter", "Added map tile to items list. Map tile isMap=" + mapTile.isMap);
         }
 
+        // Motion Telemetry at the very bottom
         if (!motionItems.isEmpty()) {
             items.add(new ListItem("📱 Motion Telemetry"));
             for (EcuDataPv pv : motionItems) {
                 items.add(new ListItem(pv, false)); // 2-column grid
             }
-        }
-
-        // Combine oxygen sensors and test/status fields into "Other Data" section
-        if (!oxygenSensorItems.isEmpty() || !testStatusItems.isEmpty()) {
-            items.add(new ListItem("📊 Other Data"));
-
-            // Add oxygen sensor fields first
-            for (EcuDataPv pv : oxygenSensorItems) {
-                items.add(new ListItem(pv, true)); // FULL WIDTH
-            }
-
-            // Then add test/status fields
-            for (EcuDataPv pv : testStatusItems) {
-                items.add(new ListItem(pv, true)); // FULL WIDTH
-            }
-        }
-
-        // Separate section for unidentified PIDs/VIDs at the bottom
-        if (!unidentifiedItems.isEmpty()) {
-            items.add(new ListItem("❓ Unidentified PID/VID"));
-            for (EcuDataPv pv : unidentifiedItems) {
-                items.add(new ListItem(pv, true)); // FULL WIDTH
-            }
+            // Add tilt indicator tile at the end
+            ListItem tiltTile = ListItem.createTiltTile();
+            items.add(tiltTile);
+            android.util.Log.d("ObdRecyclerAdapter", "Added tilt tile to items list. Tilt tile isTilt=" + tiltTile.isTilt);
         }
 
         notifyDataSetChanged();
@@ -211,6 +219,8 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             return VIEW_TYPE_HEADER;
         } else if (item.isMap) {
             return VIEW_TYPE_MAP;
+        } else if (item.isTilt) {
+            return VIEW_TYPE_TILT;
         } else if (item.isFullWidth) {
             return 2; // Full-width item type
         } else {
@@ -228,6 +238,10 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             // Map tile layout
             View view = LayoutInflater.from(context).inflate(R.layout.gps_map_tile, parent, false);
             return new MapViewHolder(view);
+        } else if (viewType == VIEW_TYPE_TILT) {
+            // Tilt indicator tile layout
+            View view = LayoutInflater.from(context).inflate(R.layout.motion_tilt_tile, parent, false);
+            return new TiltViewHolder(view);
         } else if (viewType == 2) {
             // Full-width layout for diagnostic tests
             View view = LayoutInflater.from(context).inflate(R.layout.obd_item_full_width, parent, false);
@@ -261,6 +275,13 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             // Load map with GPS coordinates from the GPS telemetry data
             loadMapForGpsData(mapHolder);
+
+        } else if (holder instanceof TiltViewHolder) {
+            // Bind tilt indicator tile - normal grid size (NOT full width)
+            TiltViewHolder tiltHolder = (TiltViewHolder) holder;
+
+            // Update tilt indicator with acceleration data from motion telemetry
+            loadTiltDataForMotion(tiltHolder);
 
         } else if (holder instanceof ItemViewHolder) {
             // Bind data item
@@ -401,6 +422,16 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
     }
 
+    // Tilt Indicator ViewHolder
+    public static class TiltViewHolder extends RecyclerView.ViewHolder {
+        com.obddroid.ui.views.TiltIndicatorView tiltIndicator;
+
+        public TiltViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tiltIndicator = itemView.findViewById(R.id.tilt_indicator);
+        }
+    }
+
     // Item ViewHolder
     public static class ItemViewHolder extends RecyclerView.ViewHolder {
         CardView cardView;
@@ -503,6 +534,45 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             context.startActivity(mapIntent);
         } catch (Exception e) {
             android.util.Log.e("ObdRecyclerAdapter", "Failed to open map: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Load tilt indicator with acceleration data from motion telemetry
+     */
+    private void loadTiltDataForMotion(TiltViewHolder holder) {
+        android.util.Log.d("ObdRecyclerAdapter", "loadTiltDataForMotion called");
+
+        try {
+            // Find acceleration X/Y from ObdProt.PidPvs
+            // Motion fields use F2xx PIDs: F200=AccelX, F201=AccelY, F202=AccelZ
+            com.obddroid.ecu.EcuDataPv accelXPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F200.0.0");
+            com.obddroid.ecu.EcuDataPv accelYPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F201.0.0");
+
+            android.util.Log.d("ObdRecyclerAdapter", String.format("Accel PVs found: X=%s, Y=%s", accelXPv != null, accelYPv != null));
+
+            if (accelXPv != null && accelYPv != null) {
+                Object accelXValue = accelXPv.get(com.obddroid.ecu.EcuDataPv.FID_VALUE);
+                Object accelYValue = accelYPv.get(com.obddroid.ecu.EcuDataPv.FID_VALUE);
+
+                android.util.Log.d("ObdRecyclerAdapter", String.format("Accel values: X=%s, Y=%s", accelXValue, accelYValue));
+
+                if (accelXValue instanceof Number && accelYValue instanceof Number) {
+                    float accelX = ((Number) accelXValue).floatValue();
+                    float accelY = ((Number) accelYValue).floatValue();
+
+                    android.util.Log.d("ObdRecyclerAdapter", String.format("Updating tilt indicator: X=%f, Y=%f", accelX, accelY));
+
+                    // Update the tilt indicator view
+                    holder.tiltIndicator.setAcceleration(accelX, accelY);
+                } else {
+                    android.util.Log.w("ObdRecyclerAdapter", "Acceleration values are not numbers");
+                }
+            } else {
+                android.util.Log.w("ObdRecyclerAdapter", "Acceleration PVs are null");
+            }
+        } catch (Exception e) {
+            android.util.Log.e("ObdRecyclerAdapter", "Failed to load tilt data: " + e.getMessage(), e);
         }
     }
 }
