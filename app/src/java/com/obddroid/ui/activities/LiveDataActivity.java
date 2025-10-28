@@ -11,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,6 +22,7 @@ import android.preference.PreferenceManager;
 
 import com.obddroid.R;
 import com.obddroid.obd.ObdProt;
+import com.obddroid.ecu.EcuDataPv;
 import com.obddroid.common.ProcessVariables.ProcessVar;
 import com.obddroid.common.ProcessVariables.PvChangeEvent;
 import com.obddroid.common.ProcessVariables.PvChangeListener;
@@ -56,6 +58,10 @@ public class LiveDataActivity extends AppCompatActivity
     private View snackbarAnchor;
     private ActionMode actionMode;
 
+    // Status bar components
+    private TextView milStatusText;
+    private TextView faultCodeCountText;
+
     // Telemetry managers
     private GpsTelemetryManager gpsTelemetryManager;
     private SensorTelemetryManager sensorTelemetryManager;
@@ -70,10 +76,70 @@ public class LiveDataActivity extends AppCompatActivity
             if (recyclerAdapter != null && !ObdProt.PidPvs.isEmpty()) {
                 // Just refresh the displayed values, don't rebuild the entire list
                 recyclerAdapter.notifyDataSetChanged();
+
+                // Update status bar
+                updateStatusBar();
             }
             updateHandler.postDelayed(this, UPDATE_INTERVAL);
         }
     };
+
+    private void updateStatusBar() {
+        try {
+            // Update MIL Status
+            EcuDataPv milPv = ObdProt.PidPvs.getTyped("01.0.0"); // MIL Status is typically PID 01
+            if (milPv != null) {
+                Object milValue = milPv.get(EcuDataPv.FID_VALUE);
+                if (milValue != null) {
+                    String milText = String.valueOf(milValue);
+                    boolean milOn = milText.contains("ON") || milText.contains("1");
+
+                    runOnUiThread(() -> {
+                        if (milStatusText != null) {
+                            milStatusText.setText(milOn ? "ON" : "OFF");
+                            milStatusText.setTextColor(
+                                milOn ? 0xFFF44336 : 0xFF4CAF50); // Red or Green
+                        }
+                    });
+                }
+            }
+
+            // Update Fault Code Count
+            EcuDataPv faultCountPv = ObdProt.PidPvs.getTyped("01.0.0"); // Same PID often contains fault count
+            if (faultCountPv != null) {
+                // Try to extract fault code count from the PID
+                // This might need adjustment based on how your app stores fault codes
+                Object description = faultCountPv.get(EcuDataPv.FID_DESCRIPT);
+                if (description != null) {
+                    String desc = String.valueOf(description);
+                    // Look for patterns like "DTC: 3" or extract number
+                    int count = 0;
+                    try {
+                        // Attempt to parse fault code count
+                        if (desc.contains("DTC")) {
+                            String[] parts = desc.split(":");
+                            if (parts.length > 1) {
+                                count = Integer.parseInt(parts[1].trim().split("\\s")[0]);
+                            }
+                        }
+                    } catch (Exception e) {
+                        // Ignore parsing errors
+                    }
+
+                    final int faultCount = count;
+                    runOnUiThread(() -> {
+                        if (faultCodeCountText != null) {
+                            faultCodeCountText.setText(String.valueOf(faultCount));
+                            faultCodeCountText.setTextColor(
+                                faultCount > 0 ? 0xFFF44336 : 0xFF4CAF50); // Red or Green
+                        }
+                    });
+                }
+            }
+        } catch (Exception e) {
+            // Silently handle errors
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +171,10 @@ public class LiveDataActivity extends AppCompatActivity
         // Create adapter with grid tile layout
         recyclerAdapter = new ObdRecyclerAdapter(this, ObdProt.PidPvs, this::onSelectionChanged);
         recyclerView.setAdapter(recyclerAdapter);
+
+        // Setup status bar
+        milStatusText = findViewById(R.id.mil_status);
+        faultCodeCountText = findViewById(R.id.fault_code_count);
 
         // Setup footer
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);

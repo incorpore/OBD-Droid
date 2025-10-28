@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OBD status bar showing MIL status and fault codes -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@color/background_secondary"
+    android:elevation="4dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
+    android:gravity="center_vertical">
+
+    <!-- MIL Status (Check Engine Light) -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MIL:"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:textStyle="bold"
+            android:paddingEnd="6dp" />
+
+        <TextView
+            android:id="@+id/mil_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="OFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#4CAF50" />
+
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="1dp"
+        android:layout_height="24dp"
+        android:background="@color/text_secondary"
+        android:alpha="0.3"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp" />
+
+    <!-- Fault Code Count -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Fault Codes:"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:textStyle="bold"
+            android:paddingEnd="6dp" />
+
+        <TextView
+            android:id="@+id/fault_code_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#4CAF50" />
+
+    </LinearLayout>
+
+</LinearLayout>
