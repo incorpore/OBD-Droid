@@ -138,18 +138,18 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
         }
 
-        if (!oxygenSensorItems.isEmpty()) {
-            items.add(new ListItem("🔵 Oxygen Sensors"));
+        // Combine oxygen sensors and test/status fields into "Other Data" section
+        if (!oxygenSensorItems.isEmpty() || !testStatusItems.isEmpty()) {
+            items.add(new ListItem("📊 Other Data"));
+
+            // Add oxygen sensor fields first
             for (EcuDataPv pv : oxygenSensorItems) {
                 items.add(new ListItem(pv, true)); // FULL WIDTH
             }
-        }
 
-        // Add test/status fields at the bottom WITHOUT a section header
-        // Just lumped together in full-width format
-        if (!testStatusItems.isEmpty()) {
+            // Then add test/status fields
             for (EcuDataPv pv : testStatusItems) {
-                items.add(new ListItem(pv, true)); // FULL WIDTH, no header
+                items.add(new ListItem(pv, true)); // FULL WIDTH
             }
         }
 
