@@ -338,6 +338,10 @@ public class MainActivity extends AppCompatActivity
     private boolean hasAttemptedAutoReconnect = false;
     private boolean isManuallyReconnecting = false; // Flag to prevent infinite loop during manual reconnect
 
+    // === Stale Connection Recovery ===
+    private int staleConnectionRetryCount = 0;
+    private static final int MAX_STALE_CONNECTION_RETRIES = 3;
+
     // === Auto-Reconnect Countdown UI ===
     private View autoReconnectCountdownBar;
     private ProgressBar countdownProgress;
@@ -962,12 +966,66 @@ public class MainActivity extends AppCompatActivity
 
                 case CONNECTING:
                     // CONNECTING state can get stuck if connection attempt fails silently
-                    // Reset to offline to allow user to retry
-                    log.warning("Found stale CONNECTING state on resume - resetting to offline");
-                    mCommService.stop();  // This will trigger state change to OFFLINE
-                    if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
+                    // Try to reconnect a few times before giving up
+                    if (staleConnectionRetryCount < MAX_STALE_CONNECTION_RETRIES)
                     {
-                        onDisconnect();
+                        staleConnectionRetryCount++;
+                        log.info(String.format("Found stale CONNECTING state - retry attempt %d/%d",
+                            staleConnectionRetryCount, MAX_STALE_CONNECTION_RETRIES));
+
+                        // Stop current connection attempt
+                        mCommService.stop();
+
+                        // Try to reconnect using last saved adapter
+                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                        String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
+                        String lastAddress = prefs.getString("LAST_ADAPTER_ADDRESS", null);
+
+                        if (lastAdapterType != null && lastAddress != null)
+                        {
+                            // Delay reconnection attempt slightly to allow service to fully stop
+                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                log.info("Attempting to reconnect to last adapter: " + lastAdapterType);
+                                setStatus("Reconnecting... (attempt " + staleConnectionRetryCount + ")");
+
+                                // Reconnect based on adapter type
+                                if ("bluetooth".equals(lastAdapterType))
+                                {
+                                    connectBtDevice(lastAddress, true);
+                                }
+                                else if ("network".equals(lastAdapterType))
+                                {
+                                    int lastPort = prefs.getInt("LAST_ADAPTER_PORT", 35000);
+                                    connectNetworkDevice(lastAddress, lastPort);
+                                }
+                                else if ("usb".equals(lastAdapterType))
+                                {
+                                    // USB reconnection would need device reference
+                                    log.warning("USB reconnection not supported in stale recovery");
+                                    onDisconnect();
+                                }
+                            }, 1000); // 1 second delay
+                        }
+                        else
+                        {
+                            log.warning("No last adapter info found - cannot retry");
+                            mCommService.stop();
+                            if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
+                            {
+                                onDisconnect();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Max retries exceeded - give up and disconnect
+                        log.warning("Max stale connection retries exceeded - disconnecting");
+                        staleConnectionRetryCount = 0; // Reset counter for next time
+                        mCommService.stop();
+                        if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
+                        {
+                            onDisconnect();
+                        }
                     }
                     break;
 
@@ -3295,6 +3353,12 @@ public class MainActivity extends AppCompatActivity
         if (isManuallyReconnecting) {
             log.info("Manual reconnect completed successfully - clearing flag");
             isManuallyReconnecting = false;
+        }
+
+        // Reset stale connection retry counter on successful connection
+        if (staleConnectionRetryCount > 0) {
+            log.info("Connection successful - resetting stale connection retry counter");
+            staleConnectionRetryCount = 0;
         }
 
         // Reset ECU selection state for new connection
