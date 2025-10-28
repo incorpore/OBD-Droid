@@ -36,6 +36,7 @@ import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.utils.SnackbarHelper;
 import com.obddroid.utils.PermissionManager;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -451,10 +452,24 @@ public class LiveDataActivity extends AppCompatActivity
             return;
         }
 
-        // Note: ChartActivity expects an ObdItemAdapter, so we need to create a compatibility wrapper
-        // For now, we'll log a message indicating this needs to be updated
-        SnackbarHelper.showInfo(this, "Chart view needs adapter compatibility update");
-        log.info("Chart view requested with " + selectedPositions.length + " items");
+        // Create a compatibility adapter for ChartActivity
+        // ChartActivity expects an ObdItemAdapter, so we create one with selected items
+        List<com.obddroid.ecu.EcuDataPv> selectedItems = recyclerAdapter.getSelectedItems();
+
+        ObdItemAdapter chartAdapter = new ObdItemAdapter(this, R.layout.obd_item, ObdProt.PidPvs);
+        chartAdapter.clear();
+        chartAdapter.addAll(selectedItems);
+
+        ChartActivity.setAdapter(chartAdapter);
+        Intent intent = new Intent(this, ChartActivity.class);
+
+        // Map to sequential positions since we're using a filtered adapter
+        int[] chartPositions = new int[selectedItems.size()];
+        for (int i = 0; i < selectedItems.size(); i++) {
+            chartPositions[i] = i;
+        }
+        intent.putExtra(ChartActivity.POSITIONS, chartPositions);
+        startActivity(intent);
     }
 
     private void launchDashboardView() {

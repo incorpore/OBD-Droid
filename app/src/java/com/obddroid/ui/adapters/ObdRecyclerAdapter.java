@@ -294,6 +294,22 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         return positions;
     }
 
+    /**
+     * Get the actual EcuDataPv objects for selected positions (for chart compatibility)
+     */
+    public List<EcuDataPv> getSelectedItems() {
+        List<EcuDataPv> selectedItems = new ArrayList<>();
+        for (int pos : selectedPositions) {
+            if (pos >= 0 && pos < items.size()) {
+                ListItem item = items.get(pos);
+                if (!item.isHeader && item.dataPv != null) {
+                    selectedItems.add(item.dataPv);
+                }
+            }
+        }
+        return selectedItems;
+    }
+
     @Override
     public int getItemCount() {
         return items.size();
