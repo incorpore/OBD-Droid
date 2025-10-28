@@ -82,6 +82,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         List<EcuDataPv> motionItems = new ArrayList<>();
         List<EcuDataPv> oxygenSensorItems = new ArrayList<>();
         List<EcuDataPv> testStatusItems = new ArrayList<>();
+        List<EcuDataPv> unidentifiedItems = new ArrayList<>();
         List<EcuDataPv> obdItems = new ArrayList<>();
 
         for (java.util.Map.Entry<String, EcuDataPv> entry : pvList.entrySetTyped()) {
@@ -105,16 +106,18 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 motionItems.add(pv);
             } else if (descUpper.contains("OXYGEN SENSOR") && descUpper.contains("PRESENT")) {
                 oxygenSensorItems.add(pv);
+            } else if (desc.isEmpty() ||
+                       descUpper.startsWith("PID ") ||
+                       descUpper.startsWith("VID ") ||
+                       descUpper.matches("^[0-9A-F]+$") ||
+                       key.equals(desc)) {
+                // Unidentified PIDs/VIDs: empty desc, starts with "PID "/"VID ", is hex value, or desc equals key
+                unidentifiedItems.add(pv);
             } else if ((descUpper.contains("TEST") && descUpper.contains("STATUS")) ||
                        (descUpper.contains("MONITOR") && descUpper.contains("STATUS")) ||
                        (descUpper.contains("SYSTEM") && descUpper.contains("STATUS")) ||
-                       descUpper.contains("MISFIRE") ||
-                       desc.isEmpty() ||
-                       descUpper.startsWith("PID ") ||
-                       descUpper.matches("^[0-9A-F]+$") ||
-                       key.equals(desc)) {
-                // Test/Monitor/System status fields + Misfire + Unidentified PIDs go to Other Data
-                // Unidentified: empty desc, starts with "PID ", is hex value, or desc equals key
+                       descUpper.contains("MISFIRE")) {
+                // Test/Monitor/System status fields + Misfire go to Other Data
                 testStatusItems.add(pv);
             } else {
                 // Everything else goes into Live OBD Data
@@ -155,6 +158,14 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             // Then add test/status fields
             for (EcuDataPv pv : testStatusItems) {
+                items.add(new ListItem(pv, true)); // FULL WIDTH
+            }
+        }
+
+        // Separate section for unidentified PIDs/VIDs at the bottom
+        if (!unidentifiedItems.isEmpty()) {
+            items.add(new ListItem("❓ Unidentified PID/VID"));
+            for (EcuDataPv pv : unidentifiedItems) {
                 items.add(new ListItem(pv, true)); // FULL WIDTH
             }
         }
