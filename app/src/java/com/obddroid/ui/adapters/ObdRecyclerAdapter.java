@@ -102,7 +102,10 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         List<EcuDataPv> unidentifiedItems = new ArrayList<>();
         List<EcuDataPv> obdItems = new ArrayList<>();
 
-        for (java.util.Map.Entry<String, EcuDataPv> entry : pvList.entrySetTyped()) {
+        // Create a snapshot to avoid ConcurrentModificationException
+        List<java.util.Map.Entry<String, EcuDataPv>> entries = new ArrayList<>(pvList.entrySetTyped());
+
+        for (java.util.Map.Entry<String, EcuDataPv> entry : entries) {
             EcuDataPv pv = entry.getValue();
             String key = entry.getKey();
             Object description = pv.get(EcuDataPv.FID_DESCRIPT);
@@ -381,6 +384,9 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     // Map ViewHolder
     public static class MapViewHolder extends RecyclerView.ViewHolder {
         android.widget.ImageView mapPreview;
+        long lastUpdateTime = 0;
+        double lastLatitude = 0.0;
+        double lastLongitude = 0.0;
 
         public MapViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -411,20 +417,12 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
      */
     private void loadMapForGpsData(MapViewHolder holder) {
         android.util.Log.d("ObdRecyclerAdapter", "loadMapForGpsData called");
-        try {
-            // Debug: List all GPS/Telemetry keys (F1xx and F2xx)
-            for (java.util.Map.Entry<String, com.obddroid.ecu.EcuDataPv> entry : com.obddroid.obd.ObdProt.PidPvs.entrySetTyped()) {
-                String key = entry.getKey();
-                if (key.startsWith("F1") || key.startsWith("F2")) {
-                    Object desc = entry.getValue().get(com.obddroid.ecu.EcuDataPv.FID_DESCRIPT);
-                    android.util.Log.d("ObdRecyclerAdapter", "Found telemetry key: " + key + " = " + desc);
-                }
-            }
 
+        try {
             // Find GPS lat/lon from ObdProt.PidPvs
             // GPS fields use sequential PIDs: F100=Lat, F101=Lon, F102=Alt, F103=Bearing, F104=Speed
             com.obddroid.ecu.EcuDataPv latPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F100.0.0");
-            com.obddroid.ecu.EcuDataPv lonPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F101.0.0");  // FIX: Was F100.1.0!
+            com.obddroid.ecu.EcuDataPv lonPv = com.obddroid.obd.ObdProt.PidPvs.getTyped("F101.0.0");
 
             android.util.Log.d("ObdRecyclerAdapter", String.format("GPS PVs found: lat=%s, lon=%s", latPv != null, lonPv != null));
 
@@ -438,7 +436,33 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                     double latitude = ((Number) latValue).doubleValue();
                     double longitude = ((Number) lonValue).doubleValue();
 
-                    android.util.Log.d("ObdRecyclerAdapter", String.format("Loading map for coords: lat=%f, lon=%f", latitude, longitude));
+                    // Calculate distance from last position (in degrees, rough approximation)
+                    double latDiff = Math.abs(latitude - holder.lastLatitude);
+                    double lonDiff = Math.abs(longitude - holder.lastLongitude);
+                    double distanceChanged = Math.sqrt(latDiff * latDiff + lonDiff * lonDiff);
+
+                    // Check if location changed significantly (>0.001 degrees ≈ 100 meters)
+                    boolean locationChangedSignificantly = distanceChanged > 0.001;
+
+                    // Check if enough time has passed
+                    long currentTime = System.currentTimeMillis();
+                    boolean enoughTimePassed = (currentTime - holder.lastUpdateTime) >= 15000;
+
+                    // Update if: first load, location changed significantly, or 15 seconds passed
+                    boolean shouldUpdate = (holder.lastUpdateTime == 0) || locationChangedSignificantly || enoughTimePassed;
+
+                    if (!shouldUpdate) {
+                        android.util.Log.d("ObdRecyclerAdapter", "Skipping map update - no significant change");
+                        return;
+                    }
+
+                    android.util.Log.d("ObdRecyclerAdapter", String.format("Loading map for coords: lat=%f, lon=%f (distance changed: %f)",
+                        latitude, longitude, distanceChanged));
+
+                    // Update tracking variables
+                    holder.lastUpdateTime = currentTime;
+                    holder.lastLatitude = latitude;
+                    holder.lastLongitude = longitude;
 
                     // Load map tile at zoom level 15 (street level)
                     com.obddroid.utils.MapTileHelper.loadMapTile(latitude, longitude, 15, holder.mapPreview);
