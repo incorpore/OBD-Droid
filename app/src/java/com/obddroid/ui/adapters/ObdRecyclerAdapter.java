@@ -161,9 +161,9 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
         }
 
-        // Oxygen sensors in "Sensors" section
+        // Oxygen sensors in specific section
         if (!oxygenSensorItems.isEmpty()) {
-            items.add(new ListItem("📡 Sensors"));
+            items.add(new ListItem("💨 Oxygen Sensors"));
             for (EcuDataPv pv : oxygenSensorItems) {
                 items.add(new ListItem(pv, true)); // FULL WIDTH
             }
@@ -171,7 +171,7 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         // Test/Monitor/System status fields in separate section
         if (!testStatusItems.isEmpty()) {
-            items.add(new ListItem("🔍 Test Status"));
+            items.add(new ListItem("📋 Readiness Monitors"));
             for (EcuDataPv pv : testStatusItems) {
                 items.add(new ListItem(pv, true)); // FULL WIDTH
             }
