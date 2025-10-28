@@ -23,6 +23,54 @@
                 android:orientation="vertical"
                 android:padding="@dimen/spacing_small">
 
+                <!-- Vehicle Status Indicator Card -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/spacing_small"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardElevation="@dimen/elevation_content_card"
+                    app:cardBackgroundColor="@color/background_secondary">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="@dimen/spacing_small"
+                        android:gravity="center_vertical">
+
+                        <!-- Status Indicator Circle -->
+                        <View
+                            android:id="@+id/vehicle_status_indicator"
+                            android:layout_width="12dp"
+                            android:layout_height="12dp"
+                            android:layout_marginEnd="@dimen/spacing_small"
+                            android:background="@drawable/circle_indicator"
+                            android:backgroundTint="@color/fault_warning" />
+
+                        <!-- Status Text -->
+                        <TextView
+                            android:id="@+id/vehicle_status_text"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:text="Vehicle Stopped - MPG calculation paused"
+                            android:textSize="@dimen/text_small_value"
+                            android:textColor="@color/text_primary_dark" />
+
+                        <!-- Speed Value -->
+                        <TextView
+                            android:id="@+id/vehicle_speed_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 mph"
+                            android:textSize="@dimen/text_small_value"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_secondary_dark"
+                            android:layout_marginStart="@dimen/spacing_small" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
                 <!-- Fuel Economy Chart Card -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
@@ -166,54 +214,6 @@
                             android:textColor="@color/text_primary_dark"
                             android:gravity="center"
                             android:letterSpacing="0.05" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Vehicle Status Indicator Card -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/spacing_small"
-                    app:cardCornerRadius="@dimen/card_corner_radius"
-                    app:cardElevation="@dimen/elevation_content_card"
-                    app:cardBackgroundColor="@color/background_secondary">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="@dimen/spacing_small"
-                        android:gravity="center_vertical">
-
-                        <!-- Status Indicator Circle -->
-                        <View
-                            android:id="@+id/vehicle_status_indicator"
-                            android:layout_width="12dp"
-                            android:layout_height="12dp"
-                            android:layout_marginEnd="@dimen/spacing_small"
-                            android:background="@drawable/circle_indicator"
-                            android:backgroundTint="@color/fault_warning" />
-
-                        <!-- Status Text -->
-                        <TextView
-                            android:id="@+id/vehicle_status_text"
-                            android:layout_width="0dp"
-                            android:layout_weight="1"
-                            android:layout_height="wrap_content"
-                            android:text="Vehicle Stopped - MPG calculation paused"
-                            android:textSize="@dimen/text_small_value"
-                            android:textColor="@color/text_primary_dark" />
-
-                        <!-- Speed Value -->
-                        <TextView
-                            android:id="@+id/vehicle_speed_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0 mph"
-                            android:textSize="@dimen/text_small_value"
-                            android:textStyle="bold"
-                            android:textColor="@color/text_secondary_dark"
-                            android:layout_marginStart="@dimen/spacing_small" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
