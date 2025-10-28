@@ -403,7 +403,8 @@ public class MainActivity extends AppCompatActivity
                                 break;
 
                             case CONNECTING:
-                                setStatus(R.string.title_connecting);
+                                // Check if this is a stale CONNECTING state and attempt retry
+                                handleConnectingState();
                                 break;
 
                             default:
@@ -965,68 +966,8 @@ public class MainActivity extends AppCompatActivity
                     break;
 
                 case CONNECTING:
-                    // CONNECTING state can get stuck if connection attempt fails silently
-                    // Try to reconnect a few times before giving up
-                    if (staleConnectionRetryCount < MAX_STALE_CONNECTION_RETRIES)
-                    {
-                        staleConnectionRetryCount++;
-                        log.info(String.format("Found stale CONNECTING state - retry attempt %d/%d",
-                            staleConnectionRetryCount, MAX_STALE_CONNECTION_RETRIES));
-
-                        // Stop current connection attempt
-                        mCommService.stop();
-
-                        // Try to reconnect using last saved adapter
-                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-                        String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
-                        String lastAddress = prefs.getString("LAST_ADAPTER_ADDRESS", null);
-
-                        if (lastAdapterType != null && lastAddress != null)
-                        {
-                            // Delay reconnection attempt slightly to allow service to fully stop
-                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                                log.info("Attempting to reconnect to last adapter: " + lastAdapterType);
-                                setStatus("Reconnecting... (attempt " + staleConnectionRetryCount + ")");
-
-                                // Reconnect based on adapter type
-                                if ("bluetooth".equals(lastAdapterType))
-                                {
-                                    connectBtDevice(lastAddress, true);
-                                }
-                                else if ("network".equals(lastAdapterType))
-                                {
-                                    int lastPort = prefs.getInt("LAST_ADAPTER_PORT", 35000);
-                                    connectNetworkDevice(lastAddress, lastPort);
-                                }
-                                else if ("usb".equals(lastAdapterType))
-                                {
-                                    // USB reconnection would need device reference
-                                    log.warning("USB reconnection not supported in stale recovery");
-                                    onDisconnect();
-                                }
-                            }, 1000); // 1 second delay
-                        }
-                        else
-                        {
-                            log.warning("No last adapter info found - cannot retry");
-                            mCommService.stop();
-                            if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
-                            {
-                                onDisconnect();
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // Max retries exceeded - give up and disconnect
-                        log.warning("Max stale connection retries exceeded - disconnecting");
-                        staleConnectionRetryCount = 0; // Reset counter for next time
-                        mCommService.stop();
-                        if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
-                        {
-                            onDisconnect();
-                        }
-                    }
+                    // Handle CONNECTING state with retry logic
+                    handleConnectingState();
                     break;
 
                 case OFFLINE:
@@ -1046,6 +987,86 @@ public class MainActivity extends AppCompatActivity
             if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
             {
                 setStatus(getString(R.string.status_connect_device));
+            }
+        }
+    }
+
+    /**
+     * Handle CONNECTING state with automatic retry logic
+     * Called both from MESSAGE_STATE_CHANGE handler and updateConnectionStatusUI()
+     * Attempts to reconnect up to MAX_STALE_CONNECTION_RETRIES times before giving up
+     */
+    private void handleConnectingState()
+    {
+        // CONNECTING state can get stuck if connection attempt fails silently
+        // Try to reconnect a few times before giving up
+        if (staleConnectionRetryCount < MAX_STALE_CONNECTION_RETRIES)
+        {
+            staleConnectionRetryCount++;
+            log.info(String.format("Found CONNECTING state - retry attempt %d/%d",
+                staleConnectionRetryCount, MAX_STALE_CONNECTION_RETRIES));
+
+            // Stop current connection attempt
+            if (mCommService != null)
+            {
+                mCommService.stop();
+            }
+
+            // Try to reconnect using last saved adapter
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            String lastAdapterType = prefs.getString("LAST_ADAPTER_TYPE", null);
+            String lastAddress = prefs.getString("LAST_ADAPTER_ADDRESS", null);
+
+            if (lastAdapterType != null && lastAddress != null)
+            {
+                // Delay reconnection attempt slightly to allow service to fully stop
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    log.info("Attempting to reconnect to last adapter: " + lastAdapterType);
+                    setStatus("Reconnecting... (attempt " + staleConnectionRetryCount + ")");
+
+                    // Reconnect based on adapter type
+                    if ("bluetooth".equals(lastAdapterType))
+                    {
+                        connectBtDevice(lastAddress, true);
+                    }
+                    else if ("network".equals(lastAdapterType))
+                    {
+                        int lastPort = prefs.getInt("LAST_ADAPTER_PORT", 35000);
+                        connectNetworkDevice(lastAddress, lastPort);
+                    }
+                    else if ("usb".equals(lastAdapterType))
+                    {
+                        // USB reconnection would need device reference
+                        log.warning("USB reconnection not supported in stale recovery");
+                        onDisconnect();
+                    }
+                }, 1000); // 1 second delay
+            }
+            else
+            {
+                log.warning("No last adapter info found - cannot retry");
+                if (mCommService != null)
+                {
+                    mCommService.stop();
+                }
+                if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
+                {
+                    onDisconnect();
+                }
+            }
+        }
+        else
+        {
+            // Max retries exceeded - give up and disconnect
+            log.warning("Max stale connection retries exceeded - disconnecting");
+            staleConnectionRetryCount = 0; // Reset counter for next time
+            if (mCommService != null)
+            {
+                mCommService.stop();
+            }
+            if (mode != MODE.OFFLINE && mode != MODE.DEMO && mode != MODE.FILE)
+            {
+                onDisconnect();
             }
         }
     }
