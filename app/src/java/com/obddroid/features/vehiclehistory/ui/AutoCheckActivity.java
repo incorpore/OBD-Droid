@@ -1001,7 +1001,6 @@ public class AutoCheckActivity extends AppCompatActivity {
 
         // Add additional info from report
         addGlanceTextItem(container, "Damage Information", report.getDamageMessage());
-        addGlanceTextItem(container, "Total Recalls", report.getRecalls());
 
         atAGlanceCard.addView(container);
 
@@ -1041,7 +1040,7 @@ public class AutoCheckActivity extends AppCompatActivity {
             // IMPORTANT: Check for positive indicators FIRST (before checking "issue" alone)
             if (combined.contains("no issue") || combined.contains("checks out") ||
                 combined.contains("clean") || combined.contains("not reported") ||
-                combined.contains("no records")) {
+                combined.contains("no records") || combined.contains("events reported")) {
                 iconText = "✓";
                 iconColor = Color.parseColor("#4CAF50");
             }
@@ -1052,9 +1051,8 @@ public class AutoCheckActivity extends AppCompatActivity {
                 iconText = "✗";
                 iconColor = Color.parseColor("#F44336");
             }
-            // Finally check for warning/informational indicators
-            else if (combined.contains("reported") || combined.contains("events") ||
-                     combined.contains("open recall")) {
+            // Finally check for warning indicators (actual recalls only)
+            else if (combined.contains("open recall")) {
                 iconText = "!";
                 iconColor = Color.parseColor("#FFC107");
             }
