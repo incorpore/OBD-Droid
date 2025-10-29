@@ -1124,11 +1124,36 @@ public class AutoCheckActivity extends AppCompatActivity {
         );
         itemLayout.setLayoutParams(itemParams);
 
-        // Info icon
+        // Smart icon based on value content
         TextView icon = new TextView(this);
-        icon.setText("ℹ");
+        String iconText = "✓";
+        int iconColor = Color.parseColor("#4CAF50");
+
+        String valueLower = value.toLowerCase();
+
+        // IMPORTANT: Check for positive indicators FIRST (before checking "issue" alone)
+        if (valueLower.contains("no issue") || valueLower.contains("checks out") ||
+            valueLower.contains("clean") || valueLower.contains("not reported") ||
+            valueLower.contains("no records") || valueLower.contains("events reported")) {
+            iconText = "✓";
+            iconColor = Color.parseColor("#4CAF50");
+        }
+        // Then check for negative/issue indicators
+        else if (valueLower.contains("issue") || valueLower.contains("found") ||
+                 valueLower.contains("problem") || valueLower.contains("damage") ||
+                 valueLower.contains("accident")) {
+            iconText = "✗";
+            iconColor = Color.parseColor("#F44336");
+        }
+        // Finally check for warning indicators (actual recalls only)
+        else if (valueLower.contains("open recall")) {
+            iconText = "!";
+            iconColor = Color.parseColor("#FFC107");
+        }
+
+        icon.setText(iconText);
         icon.setTextSize(18);
-        icon.setTextColor(Color.parseColor("#2196F3"));
+        icon.setTextColor(iconColor);
         icon.setTypeface(null, android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
