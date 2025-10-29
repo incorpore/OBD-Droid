@@ -331,64 +331,74 @@
                                 android:textColor="#FFFFFF"
                                 android:paddingBottom="12dp"/>
 
-                            <!-- Vehicle Comparison -->
+                            <!-- Horizontal container for side-by-side boxes -->
                             <LinearLayout
-                                android:id="@+id/comparison_container"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:background="@drawable/stat_card_background"
-                                android:padding="12dp"
-                                android:layout_marginBottom="12dp"
-                                android:visibility="gone">
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="12dp">
 
-                                <TextView
-                                    android:layout_width="wrap_content"
+                                <!-- Vehicle Comparison -->
+                                <LinearLayout
+                                    android:id="@+id/comparison_container"
+                                    android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:text="Vehicle Comparison"
-                                    android:textSize="11sp"
-                                    android:textStyle="bold"
-                                    android:textColor="#B0BEC5"
-                                    android:letterSpacing="0.05"
-                                    android:paddingBottom="6dp"/>
+                                    android:layout_weight="1"
+                                    android:orientation="vertical"
+                                    android:background="@drawable/stat_card_background"
+                                    android:padding="12dp"
+                                    android:layout_marginEnd="6dp"
+                                    android:visibility="gone">
 
-                                <TextView
-                                    android:id="@+id/vehicle_comparison"
-                                    android:layout_width="match_parent"
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Vehicle Comparison"
+                                        android:textSize="11sp"
+                                        android:textStyle="bold"
+                                        android:textColor="#B0BEC5"
+                                        android:letterSpacing="0.05"
+                                        android:paddingBottom="6dp"/>
+
+                                    <TextView
+                                        android:id="@+id/vehicle_comparison"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:textSize="13sp"
+                                        android:textColor="#FFFFFF"
+                                        android:lineSpacingExtra="2dp"/>
+                                </LinearLayout>
+
+                                <!-- Vehicle Outlook -->
+                                <LinearLayout
+                                    android:id="@+id/outlook_container"
+                                    android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:textSize="13sp"
-                                    android:textColor="#FFFFFF"
-                                    android:lineSpacingExtra="2dp"/>
-                            </LinearLayout>
+                                    android:layout_weight="1"
+                                    android:orientation="vertical"
+                                    android:background="@drawable/stat_card_background"
+                                    android:padding="12dp"
+                                    android:layout_marginStart="6dp"
+                                    android:visibility="gone">
 
-                            <!-- Vehicle Outlook -->
-                            <LinearLayout
-                                android:id="@+id/outlook_container"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:background="@drawable/stat_card_background"
-                                android:padding="12dp"
-                                android:layout_marginBottom="12dp"
-                                android:visibility="gone">
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Vehicle Outlook"
+                                        android:textSize="11sp"
+                                        android:textStyle="bold"
+                                        android:textColor="#B0BEC5"
+                                        android:letterSpacing="0.05"
+                                        android:paddingBottom="6dp"/>
 
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Vehicle Outlook"
-                                    android:textSize="11sp"
-                                    android:textStyle="bold"
-                                    android:textColor="#B0BEC5"
-                                    android:letterSpacing="0.05"
-                                    android:paddingBottom="6dp"/>
-
-                                <TextView
-                                    android:id="@+id/vehicle_outlook"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:textSize="13sp"
-                                    android:textColor="#FFFFFF"
-                                    android:lineSpacingExtra="2dp"/>
+                                    <TextView
+                                        android:id="@+id/vehicle_outlook"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:textSize="13sp"
+                                        android:textColor="#FFFFFF"
+                                        android:lineSpacingExtra="2dp"/>
+                                </LinearLayout>
                             </LinearLayout>
 
                             <!-- Increasing Factors -->
