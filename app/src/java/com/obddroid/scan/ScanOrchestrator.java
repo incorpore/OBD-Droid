@@ -19,7 +19,7 @@ import androidx.core.app.NotificationCompat;
 import com.obddroid.R;
 import com.obddroid.obd.ElmProt;
 import com.obddroid.scan.stages.ComponentTestStage;
-import com.obddroid.scan.stages.DiscoverySnapshotStage;
+import com.obddroid.scan.stages.FreshEcuDiscoveryStage;
 import com.obddroid.scan.stages.FaultCodeStage;
 import com.obddroid.scan.stages.FreezeFrameStage;
 import com.obddroid.scan.stages.LiveDataStage;
@@ -201,7 +201,8 @@ public class ScanOrchestrator extends Service {
 
     private List<ScanStage> buildStageList() {
         List<ScanStage> stages = new ArrayList<>();
-        stages.add(new DiscoverySnapshotStage());
+        // Use FRESH ECU discovery (queries vehicle directly, not cached data)
+        stages.add(new FreshEcuDiscoveryStage());
         stages.add(new VehicleInfoStage());
         stages.add(new LiveDataStage());
         stages.add(new FaultCodeStage());
