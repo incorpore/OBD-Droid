@@ -18,9 +18,11 @@ public class AutoCheckReport {
     private String year;
     private String make;
     private String model;
+    private String trim;
     private String style;
     private String engine;
     private String country;
+    private String vehicleClass;
     private Integer owners;
     private String usage;  // "Lease", "Personal", "Commercial", etc.
     private Integer lastOdometer;
@@ -33,6 +35,7 @@ public class AutoCheckReport {
     private Boolean totalLoss;
     private Boolean structuralDamage;
     private Boolean airbagDeployed;
+    private Boolean overturned;
     private Boolean odometerRollback;
     private String recalls;
     private Integer openRecalls;
@@ -103,9 +106,11 @@ public class AutoCheckReport {
         if (json.has("year")) report.year = json.getString("year");
         if (json.has("make")) report.make = json.getString("make");
         if (json.has("model")) report.model = json.getString("model");
+        if (json.has("trim")) report.trim = json.getString("trim");
         if (json.has("style")) report.style = json.getString("style");
         if (json.has("engine")) report.engine = json.getString("engine");
         if (json.has("country")) report.country = json.getString("country");
+        if (json.has("vehicleClass")) report.vehicleClass = json.getString("vehicleClass");
         if (json.has("owners")) report.owners = json.getInt("owners");
         if (json.has("usage")) report.usage = json.getString("usage");
         if (json.has("lastOdometer")) report.lastOdometer = json.getInt("lastOdometer");
@@ -125,6 +130,7 @@ public class AutoCheckReport {
         if (json.has("totalLoss")) report.totalLoss = json.getBoolean("totalLoss");
         if (json.has("structuralDamage")) report.structuralDamage = json.getBoolean("structuralDamage");
         if (json.has("airbagDeployed")) report.airbagDeployed = json.getBoolean("airbagDeployed");
+        if (json.has("overturned")) report.overturned = json.getBoolean("overturned");
         if (json.has("odometerRollback")) report.odometerRollback = json.getBoolean("odometerRollback");
 
         // Score range
@@ -223,9 +229,11 @@ public class AutoCheckReport {
     public String getYear() { return year; }
     public String getMake() { return make; }
     public String getModel() { return model; }
+    public String getTrim() { return trim; }
     public String getStyle() { return style; }
     public String getEngine() { return engine; }
     public String getCountry() { return country; }
+    public String getVehicleClass() { return vehicleClass; }
     public Integer getOwners() { return owners; }
     public String getUsage() { return usage; }
     public Integer getLastOdometer() { return lastOdometer; }
@@ -260,6 +268,7 @@ public class AutoCheckReport {
     public Boolean getTotalLoss() { return totalLoss; }
     public Boolean getStructuralDamage() { return structuralDamage; }
     public Boolean getAirbagDeployed() { return airbagDeployed; }
+    public Boolean getOverturned() { return overturned; }
     public Boolean getOdometerRollback() { return odometerRollback; }
     public String getRecalls() { return recalls; }
     public Integer getOpenRecalls() { return openRecalls; }
@@ -272,6 +281,11 @@ public class AutoCheckReport {
     public String getVehicleOutlook() { return vehicleOutlook; }
     public List<String> getIncreasingFactors() { return increasingFactors; }
     public List<String> getDecreasingFactors() { return decreasingFactors; }
+
+    // Setters (for basic decode functionality)
+    public void setYear(String year) { this.year = year; }
+    public void setMake(String make) { this.make = make; }
+    public void setModel(String model) { this.model = model; }
 
     // Helper methods
     public String getVehicleName() {
