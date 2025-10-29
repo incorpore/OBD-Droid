@@ -1038,20 +1038,23 @@ public class AutoCheckActivity extends AppCompatActivity {
             String messageLower = (check.status != null ? check.status : "").toLowerCase();
             String combined = statusLower + " " + messageLower;
 
-            // Check for negative/issue indicators
-            if (combined.contains("issue") || combined.contains("found") ||
-                combined.contains("problem") || combined.contains("damage")) {
-                iconText = "✗";
-                iconColor = Color.parseColor("#F44336");
-            }
-            // Check for positive indicators - these override the default
-            else if (combined.contains("no issue") || combined.contains("checks out") ||
-                     combined.contains("clean") || combined.contains("not reported")) {
+            // IMPORTANT: Check for positive indicators FIRST (before checking "issue" alone)
+            if (combined.contains("no issue") || combined.contains("checks out") ||
+                combined.contains("clean") || combined.contains("not reported") ||
+                combined.contains("no records")) {
                 iconText = "✓";
                 iconColor = Color.parseColor("#4CAF50");
             }
-            // Check for warning/informational indicators
-            else if (combined.contains("reported") || combined.contains("events")) {
+            // Then check for negative/issue indicators
+            else if (combined.contains("issue") || combined.contains("found") ||
+                     combined.contains("problem") || combined.contains("damage") ||
+                     combined.contains("accident")) {
+                iconText = "✗";
+                iconColor = Color.parseColor("#F44336");
+            }
+            // Finally check for warning/informational indicators
+            else if (combined.contains("reported") || combined.contains("events") ||
+                     combined.contains("open recall")) {
                 iconText = "!";
                 iconColor = Color.parseColor("#FFC107");
             }
