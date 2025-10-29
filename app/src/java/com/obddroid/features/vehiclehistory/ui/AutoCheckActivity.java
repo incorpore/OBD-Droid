@@ -364,6 +364,23 @@ public class AutoCheckActivity extends AppCompatActivity {
     }
 
     /**
+     * Remove any previously created dynamic cards
+     */
+    private void removeDynamicCards() {
+        LinearLayout reportContainer = findViewById(R.id.report_container);
+        if (reportContainer == null) return;
+
+        // Find and remove all cards with dynamic tags
+        for (int i = reportContainer.getChildCount() - 1; i >= 0; i--) {
+            View child = reportContainer.getChildAt(i);
+            Object tag = child.getTag();
+            if (tag != null && tag.toString().startsWith("dynamic_card_")) {
+                reportContainer.removeViewAt(i);
+            }
+        }
+    }
+
+    /**
      * Display report with world-class visualization
      */
     private void displayReport(AutoCheckReport report) {
@@ -375,6 +392,9 @@ public class AutoCheckActivity extends AppCompatActivity {
         errorCard.setVisibility(View.GONE);
         emptyStateCard.setVisibility(View.GONE);
         reportContainer.setVisibility(View.VISIBLE);
+
+        // Remove any previously created dynamic cards
+        removeDynamicCards();
 
         // ═══════════════════════════════════════
         // HERO SCORE SECTION
@@ -955,6 +975,7 @@ public class AutoCheckActivity extends AppCompatActivity {
 
         // Create a card for At-A-Glance
         CardView atAGlanceCard = new CardView(this);
+        atAGlanceCard.setTag("dynamic_card_ataglance");  // Tag for removal
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
@@ -1096,6 +1117,7 @@ public class AutoCheckActivity extends AppCompatActivity {
 
         // Create a card
         CardView odometerCard = new CardView(this);
+        odometerCard.setTag("dynamic_card_odometer");  // Tag for removal
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
@@ -1175,6 +1197,7 @@ public class AutoCheckActivity extends AppCompatActivity {
 
         // Create a card
         CardView ownerCard = new CardView(this);
+        ownerCard.setTag("dynamic_card_owner");  // Tag for removal
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
