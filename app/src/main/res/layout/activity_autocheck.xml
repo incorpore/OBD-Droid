@@ -203,101 +203,121 @@
                         app:cardElevation="4dp"
                         app:cardBackgroundColor="#2C2C2C">
 
+                        <!-- 2-Column Layout -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="12dp"
-                            android:gravity="center">
+                            android:orientation="horizontal"
+                            android:padding="12dp">
 
-                            <!-- Vehicle Name -->
-                            <TextView
-                                android:id="@+id/vehicle_name"
-                                android:layout_width="match_parent"
+                            <!-- Left Column: Score Circle -->
+                            <LinearLayout
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:textSize="17sp"
-                                android:textStyle="bold"
-                                android:textColor="#FFFFFF"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
                                 android:gravity="center"
-                                android:paddingBottom="2dp"/>
+                                android:paddingEnd="8dp">
 
-                            <!-- VIN -->
-                            <TextView
-                                android:id="@+id/vehicle_vin"
-                                android:layout_width="match_parent"
+                                <!-- Circular Score Gauge -->
+                                <FrameLayout
+                                    android:layout_width="90dp"
+                                    android:layout_height="90dp">
+
+                                    <View
+                                        android:id="@+id/score_circle_background"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:background="@drawable/score_circle_background"/>
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:orientation="vertical"
+                                        android:gravity="center">
+
+                                        <TextView
+                                            android:id="@+id/autocheck_score"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:textSize="32sp"
+                                            android:textStyle="bold"
+                                            android:textColor="#FFFFFF"/>
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="SCORE"
+                                            android:textSize="8sp"
+                                            android:textColor="#B0BEC5"
+                                            android:letterSpacing="0.1"/>
+
+                                    </LinearLayout>
+
+                                </FrameLayout>
+
+                                <!-- Score Range -->
+                                <TextView
+                                    android:id="@+id/score_range"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="10sp"
+                                    android:textColor="#B0BEC5"
+                                    android:layout_marginTop="6dp"/>
+
+                                <!-- Score Interpretation -->
+                                <TextView
+                                    android:id="@+id/score_interpretation"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"
+                                    android:layout_marginTop="2dp"/>
+
+                            </LinearLayout>
+
+                            <!-- Right Column: Vehicle Info & Badges -->
+                            <LinearLayout
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:textSize="10sp"
-                                android:textColor="#B0BEC5"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
                                 android:gravity="center"
-                                android:paddingBottom="10dp"
-                                android:fontFamily="monospace"/>
+                                android:paddingStart="8dp">
 
-                            <!-- Circular Score Gauge -->
-                            <FrameLayout
-                                android:layout_width="90dp"
-                                android:layout_height="90dp"
-                                android:layout_gravity="center">
-
-                                <View
-                                    android:id="@+id/score_circle_background"
+                                <!-- Vehicle Name -->
+                                <TextView
+                                    android:id="@+id/vehicle_name"
                                     android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:background="@drawable/score_circle_background"/>
+                                    android:layout_height="wrap_content"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"
+                                    android:gravity="center"
+                                    android:paddingBottom="4dp"/>
 
+                                <!-- VIN -->
+                                <TextView
+                                    android:id="@+id/vehicle_vin"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="9sp"
+                                    android:textColor="#B0BEC5"
+                                    android:gravity="center"
+                                    android:paddingBottom="12dp"
+                                    android:fontFamily="monospace"/>
+
+                                <!-- Quick Status Badges -->
                                 <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
+                                    android:id="@+id/quick_status_container"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
                                     android:orientation="vertical"
                                     android:gravity="center">
-
-                                    <TextView
-                                        android:id="@+id/autocheck_score"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:textSize="32sp"
-                                        android:textStyle="bold"
-                                        android:textColor="#FFFFFF"/>
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="SCORE"
-                                        android:textSize="8sp"
-                                        android:textColor="#B0BEC5"
-                                        android:letterSpacing="0.1"/>
-
+                                    <!-- Badges will be added programmatically -->
                                 </LinearLayout>
 
-                            </FrameLayout>
-
-                            <!-- Score Range -->
-                            <TextView
-                                android:id="@+id/score_range"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textSize="11sp"
-                                android:textColor="#B0BEC5"
-                                android:layout_marginTop="8dp"/>
-
-                            <!-- Score Interpretation -->
-                            <TextView
-                                android:id="@+id/score_interpretation"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textSize="13sp"
-                                android:textStyle="bold"
-                                android:textColor="#FFFFFF"
-                                android:layout_marginTop="4dp"/>
-
-                            <!-- Quick Status Badges -->
-                            <LinearLayout
-                                android:id="@+id/quick_status_container"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:layout_marginTop="8dp"
-                                android:gravity="center">
-                                <!-- Badges will be added programmatically -->
                             </LinearLayout>
 
                         </LinearLayout>
