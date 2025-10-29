@@ -43,11 +43,19 @@ public class AutoCheckReport {
     private Integer serviceRecords;
     private List<HistoryEvent> historyEvents;
 
-    // Score Analysis (NEW)
+    // Score Analysis
     private String vehicleComparison;
     private String vehicleOutlook;
     private List<String> increasingFactors;
     private List<String> decreasingFactors;
+
+    // New API fields
+    private String bodyStyle;
+    private String vehicleUsage;
+    private String damageMessage;
+    private AtAGlance atAGlance;
+    private OdometerSubChecks odometerSubChecks;
+    private List<OwnerHistory> ownerHistory;
 
     // Nested classes
     public static class ScoreRange {
@@ -89,6 +97,45 @@ public class AutoCheckReport {
         }
     }
 
+    public static class GlanceCheck {
+        public String status;
+        public String statusType;  // "No Issue", "Issue Found", "Events Reported", etc.
+        public String description;
+        public String subtitle;
+        public Integer count;
+    }
+
+    public static class AtAGlance {
+        public GlanceCheck stateTitleBrand;
+        public GlanceCheck auctionBrandIssues;
+        public GlanceCheck accidentDamage;
+        public GlanceCheck openRecallCheck;
+        public GlanceCheck insuranceLossTransfer;
+        public GlanceCheck odometerCheck;
+        public GlanceCheck certifiedPreOwned;
+        public GlanceCheck serviceRepair;
+        public GlanceCheck additionalHistory;
+    }
+
+    public static class OdometerSubChecks {
+        public String stateTitleOdometerCheck;
+        public String auctionOdometerCheck;
+        public String odometerCalculationCheck;
+    }
+
+    public static class OwnerHistory {
+        public int ownerNumber;
+        public String location;
+        public String ownedFrom;
+        public String ownedTo;
+        public String usage;
+        public List<HistoryEvent> events;
+
+        public OwnerHistory() {
+            this.events = new ArrayList<>();
+        }
+    }
+
     // Constructor
     public AutoCheckReport(String vin) {
         this.vin = vin;
@@ -96,6 +143,7 @@ public class AutoCheckReport {
         this.recallDetails = new ArrayList<>();
         this.increasingFactors = new ArrayList<>();
         this.decreasingFactors = new ArrayList<>();
+        this.ownerHistory = new ArrayList<>();
     }
 
     // Parse from JSON
