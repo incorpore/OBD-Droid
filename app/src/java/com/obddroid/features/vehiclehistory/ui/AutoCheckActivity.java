@@ -392,11 +392,6 @@ public class AutoCheckActivity extends AppCompatActivity {
         displayStatsGrid(report);
 
         // ═══════════════════════════════════════
-        // AT-A-GLANCE STATUS
-        // ═══════════════════════════════════════
-        displayAtAGlance(report);
-
-        // ═══════════════════════════════════════
         // SAFETY & TITLE OVERVIEW
         // ═══════════════════════════════════════
         displaySafetySection(report);
@@ -410,6 +405,11 @@ public class AutoCheckActivity extends AppCompatActivity {
         // VEHICLE DETAILS
         // ═══════════════════════════════════════
         displayVehicleDetails(report);
+
+        // ═══════════════════════════════════════
+        // AT-A-GLANCE STATUS
+        // ═══════════════════════════════════════
+        displayAtAGlance(report);
 
         // ═══════════════════════════════════════
         // ODOMETER SUB-CHECKS
@@ -804,32 +804,15 @@ public class AutoCheckActivity extends AppCompatActivity {
     private void displayVehicleDetails(AutoCheckReport report) {
         StringBuilder details = new StringBuilder();
 
-        if (report.getStyle() != null) {
-            details.append("Style: ").append(report.getStyle()).append("\n");
-        }
-
-        if (report.getBodyStyle() != null) {
-            details.append("Body Style: ").append(report.getBodyStyle()).append("\n");
-        }
-
-        if (report.getEngine() != null) {
-            details.append("Engine: ").append(report.getEngine()).append("\n");
-        }
-
-        if (report.getCountry() != null) {
-            details.append("Made in: ").append(report.getCountry()).append("\n");
-        }
-
-        if (report.getVehicleUsage() != null) {
-            details.append("Vehicle Usage: ").append(report.getVehicleUsage()).append("\n");
-        }
-
         if (report.getDamageMessage() != null) {
-            details.append("\n⚠️ Damage Info:\n").append(report.getDamageMessage()).append("\n");
+            details.append("⚠️ Damage Info:\n").append(report.getDamageMessage()).append("\n");
         }
 
         if (report.getRecalls() != null) {
-            details.append("\nRecalls: ").append(report.getRecalls()).append("\n");
+            if (details.length() > 0) {
+                details.append("\n");
+            }
+            details.append("Recalls: ").append(report.getRecalls()).append("\n");
         }
 
         if (details.length() > 0) {
