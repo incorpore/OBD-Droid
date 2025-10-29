@@ -85,46 +85,65 @@
                             android:backgroundTint="#4CAF50"
                             android:textColor="#FFFFFF"/>
 
-                        <!-- Loading Container -->
-                        <androidx.cardview.widget.CardView
-                            android:id="@+id/loading_container"
-                            android:layout_width="match_parent"
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Loading Container (moved outside empty state card) -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/loading_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/spacing_large"
+                    app:cardCornerRadius="@dimen/card_corner_radius"
+                    app:cardElevation="@dimen/elevation_content_card"
+                    app:cardBackgroundColor="@color/background_secondary"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="48dp"
+                        android:gravity="center">
+
+                        <!-- Loading Icon -->
+                        <TextView
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/spacing_large"
-                            app:cardCornerRadius="@dimen/card_corner_radius"
-                            app:cardElevation="@dimen/elevation_content_card"
-                            app:cardBackgroundColor="@color/background_secondary"
-                            android:visibility="gone">
+                            android:text="⏳"
+                            android:textSize="64sp"
+                            android:layout_marginBottom="24dp"/>
 
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:padding="@dimen/card_padding_standard"
-                                android:gravity="center">
+                        <ProgressBar
+                            android:id="@+id/loading_spinner"
+                            android:layout_width="64dp"
+                            android:layout_height="64dp"
+                            android:indeterminateTint="#4CAF50"
+                            android:layout_marginBottom="24dp" />
 
-                                <ProgressBar
-                                    android:id="@+id/loading_spinner"
-                                    android:layout_width="64dp"
-                                    android:layout_height="64dp"
-                                    android:indeterminateTint="@color/fault_success"
-                                    android:layout_marginBottom="@dimen/spacing_large" />
+                        <TextView
+                            android:id="@+id/loading_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Fetching Vehicle History..."
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#FFFFFF"
+                            android:textAlignment="center"
+                            android:gravity="center"
+                            android:layout_marginBottom="8dp" />
 
-                                <TextView
-                                    android:id="@+id/loading_text"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Loading vehicle history..."
-                                    android:textSize="@dimen/text_body"
-                                    android:textColor="@color/text_secondary_dark"
-                                    android:textAlignment="center"
-                                    android:gravity="center" />
-
-                            </LinearLayout>
-
-                        </androidx.cardview.widget.CardView>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="This may take a few seconds"
+                            android:textSize="14sp"
+                            android:textColor="#B0BEC5"
+                            android:textAlignment="center"
+                            android:gravity="center" />
 
                     </LinearLayout>
+
                 </androidx.cardview.widget.CardView>
 
                 <!-- Error Card -->

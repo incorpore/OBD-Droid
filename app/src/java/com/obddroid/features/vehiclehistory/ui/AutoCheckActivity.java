@@ -319,6 +319,7 @@ public class AutoCheckActivity extends AppCompatActivity {
         // Hide previous results and errors
         errorCard.setVisibility(View.GONE);
         reportContainer.setVisibility(View.GONE);
+        emptyStateCard.setVisibility(View.GONE);
         isPdfAvailable = false;
         invalidateOptionsMenu();
 
@@ -1396,6 +1397,7 @@ public class AutoCheckActivity extends AppCompatActivity {
         errorCard.setVisibility(View.VISIBLE);
         errorMessage.setText(error);
         reportContainer.setVisibility(View.GONE);
+        emptyStateCard.setVisibility(View.VISIBLE);  // Show empty state so user can retry
         isPdfAvailable = false;
         invalidateOptionsMenu();
     }
