@@ -996,10 +996,14 @@ public class AutoCheckActivity extends AppCompatActivity {
 
         atAGlanceCard.addView(container);
 
-        // Find the report container and add the card
+        // Find the report container and insert before timeline card
         LinearLayout reportContainer = findViewById(R.id.report_container);
-        if (reportContainer != null) {
-            reportContainer.addView(atAGlanceCard);
+        CardView timelineCard = findViewById(R.id.timeline_card);
+        if (reportContainer != null && timelineCard != null) {
+            int timelineIndex = reportContainer.indexOfChild(timelineCard);
+            if (timelineIndex >= 0) {
+                reportContainer.addView(atAGlanceCard, timelineIndex);
+            }
         }
     }
 
@@ -1133,9 +1137,14 @@ public class AutoCheckActivity extends AppCompatActivity {
 
         odometerCard.addView(container);
 
+        // Find the report container and insert before timeline card
         LinearLayout reportContainer = findViewById(R.id.report_container);
-        if (reportContainer != null) {
-            reportContainer.addView(odometerCard);
+        CardView timelineCard = findViewById(R.id.timeline_card);
+        if (reportContainer != null && timelineCard != null) {
+            int timelineIndex = reportContainer.indexOfChild(timelineCard);
+            if (timelineIndex >= 0) {
+                reportContainer.addView(odometerCard, timelineIndex);
+            }
         }
     }
 
@@ -1202,9 +1211,14 @@ public class AutoCheckActivity extends AppCompatActivity {
 
         ownerCard.addView(container);
 
+        // Find the report container and insert before timeline card
         LinearLayout reportContainer = findViewById(R.id.report_container);
-        if (reportContainer != null) {
-            reportContainer.addView(ownerCard);
+        CardView timelineCard = findViewById(R.id.timeline_card);
+        if (reportContainer != null && timelineCard != null) {
+            int timelineIndex = reportContainer.indexOfChild(timelineCard);
+            if (timelineIndex >= 0) {
+                reportContainer.addView(ownerCard, timelineIndex);
+            }
         }
     }
 
