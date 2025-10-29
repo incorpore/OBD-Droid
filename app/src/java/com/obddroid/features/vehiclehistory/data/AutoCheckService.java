@@ -109,15 +109,8 @@ public class AutoCheckService {
                 // Parse response
                 JSONObject json = new JSONObject(response.toString());
 
-                // Check if request was successful
-                if (!json.optBoolean("success", false)) {
-                    String error = json.optString("error", "Unknown error");
-                    mainHandler.post(() -> callback.onError(error));
-                    return;
-                }
-
-                // Extract report data
-                JSONObject reportData = json.getJSONObject("report");
+                // Extract report data from "data" field
+                JSONObject reportData = json.getJSONObject("data");
                 AutoCheckReport report = AutoCheckReport.fromJSON(reportData);
 
                 Log.d(TAG, "Successfully fetched AutoCheck report: " + report.getVehicleName());
@@ -193,15 +186,8 @@ public class AutoCheckService {
                 // Parse response
                 JSONObject json = new JSONObject(response.toString());
 
-                // Check if request was successful
-                if (!json.optBoolean("success", false)) {
-                    String error = json.optString("error", "Unknown error");
-                    mainHandler.post(() -> callback.onError(error));
-                    return;
-                }
-
-                // Extract report data
-                JSONObject reportData = json.getJSONObject("report");
+                // Extract report data from "data" field
+                JSONObject reportData = json.getJSONObject("data");
                 AutoCheckReport report = AutoCheckReport.fromJSON(reportData);
 
                 // Extract and save PDF if available (at top level of response)
@@ -302,22 +288,13 @@ public class AutoCheckService {
 
                 JSONObject json = new JSONObject(response.toString());
 
-                // Check if request was successful
-                if (!json.optBoolean("success", false)) {
-                    String error = json.optString("error", "Unknown error");
-                    mainHandler.post(() -> callback.onError(error));
-                    return;
-                }
-
-                // The decode endpoint returns basic vehicle info in "vehicle" field
-                // Create a minimal report with just year/make/model
-                JSONObject vehicleData = json.getJSONObject("vehicle");
+                // The decode endpoint returns basic vehicle info at top level
                 String decodedVin = json.getString("vin");
 
                 AutoCheckReport report = new AutoCheckReport(decodedVin);
-                if (vehicleData.has("year")) report.setYear(vehicleData.getString("year"));
-                if (vehicleData.has("make")) report.setMake(vehicleData.getString("make"));
-                if (vehicleData.has("model")) report.setModel(vehicleData.getString("model"));
+                if (json.has("year")) report.setYear(json.getString("year"));
+                if (json.has("make")) report.setMake(json.getString("make"));
+                if (json.has("model")) report.setModel(json.getString("model"));
 
                 mainHandler.post(() -> callback.onSuccess(report));
 
