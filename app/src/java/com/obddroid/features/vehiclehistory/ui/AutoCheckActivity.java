@@ -27,6 +27,8 @@ import androidx.core.content.FileProvider;
 import android.view.Menu;
 import android.view.MenuItem;
 import com.google.gson.Gson;
+
+import java.util.List;
 import com.obddroid.R;
 import com.obddroid.features.vehiclehistory.data.AutoCheckService;
 import com.obddroid.features.vehiclehistory.model.AutoCheckReport;
@@ -390,6 +392,11 @@ public class AutoCheckActivity extends AppCompatActivity {
         displayStatsGrid(report);
 
         // ═══════════════════════════════════════
+        // AT-A-GLANCE STATUS
+        // ═══════════════════════════════════════
+        displayAtAGlance(report);
+
+        // ═══════════════════════════════════════
         // SAFETY & TITLE OVERVIEW
         // ═══════════════════════════════════════
         displaySafetySection(report);
@@ -403,6 +410,16 @@ public class AutoCheckActivity extends AppCompatActivity {
         // VEHICLE DETAILS
         // ═══════════════════════════════════════
         displayVehicleDetails(report);
+
+        // ═══════════════════════════════════════
+        // ODOMETER SUB-CHECKS
+        // ═══════════════════════════════════════
+        displayOdometerSubChecks(report);
+
+        // ═══════════════════════════════════════
+        // OWNER HISTORY TIMELINE
+        // ═══════════════════════════════════════
+        displayOwnerHistory(report);
 
         // ═══════════════════════════════════════
         // HISTORY TIMELINE
@@ -791,12 +808,24 @@ public class AutoCheckActivity extends AppCompatActivity {
             details.append("Style: ").append(report.getStyle()).append("\n");
         }
 
+        if (report.getBodyStyle() != null) {
+            details.append("Body Style: ").append(report.getBodyStyle()).append("\n");
+        }
+
         if (report.getEngine() != null) {
             details.append("Engine: ").append(report.getEngine()).append("\n");
         }
 
         if (report.getCountry() != null) {
             details.append("Made in: ").append(report.getCountry()).append("\n");
+        }
+
+        if (report.getVehicleUsage() != null) {
+            details.append("Vehicle Usage: ").append(report.getVehicleUsage()).append("\n");
+        }
+
+        if (report.getDamageMessage() != null) {
+            details.append("\n⚠️ Damage Info:\n").append(report.getDamageMessage()).append("\n");
         }
 
         if (report.getRecalls() != null) {
@@ -933,6 +962,343 @@ public class AutoCheckActivity extends AppCompatActivity {
         eventLayout.addView(eventContent);
 
         timelineContainer.addView(eventLayout);
+    }
+
+    private void displayAtAGlance(AutoCheckReport report) {
+        AutoCheckReport.AtAGlance atAGlance = report.getAtAGlance();
+        if (atAGlance == null) {
+            return;  // No at-a-glance data, skip this section
+        }
+
+        // Create a card for At-A-Glance
+        CardView atAGlanceCard = new CardView(this);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.setMargins(0, 0, 0, (int) getResources().getDimension(R.dimen.spacing_large));
+        atAGlanceCard.setLayoutParams(cardParams);
+        atAGlanceCard.setCardBackgroundColor(getResources().getColor(R.color.background_secondary));
+        atAGlanceCard.setRadius(getResources().getDimension(R.dimen.card_corner_radius));
+        atAGlanceCard.setCardElevation(getResources().getDimension(R.dimen.elevation_content_card));
+
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(
+            (int) getResources().getDimension(R.dimen.card_padding_standard),
+            (int) getResources().getDimension(R.dimen.card_padding_standard),
+            (int) getResources().getDimension(R.dimen.card_padding_standard),
+            (int) getResources().getDimension(R.dimen.card_padding_standard)
+        );
+
+        // Title
+        TextView title = new TextView(this);
+        title.setText("Vehicle Status At-A-Glance");
+        title.setTextSize(20);
+        title.setTextColor(Color.parseColor("#FFFFFF"));
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        title.setPadding(0, 0, 0, (int) getResources().getDimension(R.dimen.spacing_medium));
+        container.addView(title);
+
+        // Add all checks
+        addGlanceCheckItem(container, "State Title Brand", atAGlance.stateTitleBrand);
+        addGlanceCheckItem(container, "Auction Brand Issues", atAGlance.auctionBrandIssues);
+        addGlanceCheckItem(container, "Accident/Damage", atAGlance.accidentDamage);
+        addGlanceCheckItem(container, "Open Recalls", atAGlance.openRecallCheck);
+        addGlanceCheckItem(container, "Insurance Loss Transfer", atAGlance.insuranceLossTransfer);
+        addGlanceCheckItem(container, "Odometer", atAGlance.odometerCheck);
+        addGlanceCheckItem(container, "Certified Pre-Owned", atAGlance.certifiedPreOwned);
+        addGlanceCheckItem(container, "Service/Repair Records", atAGlance.serviceRepair);
+        addGlanceCheckItem(container, "Additional History", atAGlance.additionalHistory);
+
+        atAGlanceCard.addView(container);
+
+        // Find the report container and add the card
+        LinearLayout reportContainer = findViewById(R.id.report_container);
+        if (reportContainer != null) {
+            reportContainer.addView(atAGlanceCard);
+        }
+    }
+
+    private void addGlanceCheckItem(LinearLayout parent, String label, AutoCheckReport.GlanceCheck check) {
+        if (check == null) return;
+
+        LinearLayout itemLayout = new LinearLayout(this);
+        itemLayout.setOrientation(LinearLayout.HORIZONTAL);
+        itemLayout.setPadding(0, 12, 0, 12);
+        LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        itemLayout.setLayoutParams(itemParams);
+
+        // Status icon
+        TextView icon = new TextView(this);
+        String iconText = "✓";
+        int iconColor = Color.parseColor("#4CAF50");
+
+        if (check.statusType != null) {
+            if (check.statusType.toLowerCase().contains("issue") ||
+                check.statusType.toLowerCase().contains("found")) {
+                iconText = "✗";
+                iconColor = Color.parseColor("#F44336");
+            } else if (check.statusType.toLowerCase().contains("reported") ||
+                       check.statusType.toLowerCase().contains("events")) {
+                iconText = "!";
+                iconColor = Color.parseColor("#FFC107");
+            }
+        }
+
+        icon.setText(iconText);
+        icon.setTextSize(18);
+        icon.setTextColor(iconColor);
+        icon.setTypeface(null, android.graphics.Typeface.BOLD);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        iconParams.setMargins(0, 0, 20, 0);
+        icon.setLayoutParams(iconParams);
+        itemLayout.addView(icon);
+
+        // Content
+        LinearLayout contentLayout = new LinearLayout(this);
+        contentLayout.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams contentParams = new LinearLayout.LayoutParams(
+            0,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            1.0f
+        );
+        contentLayout.setLayoutParams(contentParams);
+
+        // Label
+        TextView labelText = new TextView(this);
+        labelText.setText(label);
+        labelText.setTextSize(15);
+        labelText.setTextColor(Color.parseColor("#FFFFFF"));
+        labelText.setTypeface(null, android.graphics.Typeface.BOLD);
+        contentLayout.addView(labelText);
+
+        // Status
+        if (check.status != null) {
+            TextView statusText = new TextView(this);
+            statusText.setText(check.status);
+            statusText.setTextSize(14);
+            statusText.setTextColor(Color.parseColor("#B0BEC5"));
+            statusText.setPadding(0, 4, 0, 0);
+            contentLayout.addView(statusText);
+        }
+
+        // Description
+        if (check.description != null) {
+            TextView descText = new TextView(this);
+            descText.setText(check.description);
+            descText.setTextSize(13);
+            descText.setTextColor(Color.parseColor("#90A4AE"));
+            descText.setPadding(0, 4, 0, 0);
+            contentLayout.addView(descText);
+        }
+
+        itemLayout.addView(contentLayout);
+        parent.addView(itemLayout);
+    }
+
+    private void displayOdometerSubChecks(AutoCheckReport report) {
+        AutoCheckReport.OdometerSubChecks checks = report.getOdometerSubChecks();
+        if (checks == null) return;
+
+        // Create a card
+        CardView odometerCard = new CardView(this);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.setMargins(0, 0, 0, (int) getResources().getDimension(R.dimen.spacing_large));
+        odometerCard.setLayoutParams(cardParams);
+        odometerCard.setCardBackgroundColor(getResources().getColor(R.color.background_secondary));
+        odometerCard.setRadius(getResources().getDimension(R.dimen.card_corner_radius));
+        odometerCard.setCardElevation(getResources().getDimension(R.dimen.elevation_content_card));
+
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(
+            (int) getResources().getDimension(R.dimen.card_padding_standard),
+            (int) getResources().getDimension(R.dimen.card_padding_standard),
+            (int) getResources().getDimension(R.dimen.card_padding_standard),
+            (int) getResources().getDimension(R.dimen.card_padding_standard)
+        );
+
+        // Title
+        TextView title = new TextView(this);
+        title.setText("Odometer Validation");
+        title.setTextSize(18);
+        title.setTextColor(Color.parseColor("#FFFFFF"));
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        title.setPadding(0, 0, 0, (int) getResources().getDimension(R.dimen.spacing_medium));
+        container.addView(title);
+
+        // Add checks
+        if (checks.stateTitleOdometerCheck != null) {
+            addOdometerCheckItem(container, "State Title Check", checks.stateTitleOdometerCheck);
+        }
+        if (checks.auctionOdometerCheck != null) {
+            addOdometerCheckItem(container, "Auction Check", checks.auctionOdometerCheck);
+        }
+        if (checks.odometerCalculationCheck != null) {
+            addOdometerCheckItem(container, "Calculation Check", checks.odometerCalculationCheck);
+        }
+
+        odometerCard.addView(container);
+
+        LinearLayout reportContainer = findViewById(R.id.report_container);
+        if (reportContainer != null) {
+            reportContainer.addView(odometerCard);
+        }
+    }
+
+    private void addOdometerCheckItem(LinearLayout parent, String label, String status) {
+        LinearLayout itemLayout = new LinearLayout(this);
+        itemLayout.setOrientation(LinearLayout.HORIZONTAL);
+        itemLayout.setPadding(0, 8, 0, 8);
+
+        TextView labelText = new TextView(this);
+        labelText.setText(label + ": ");
+        labelText.setTextSize(14);
+        labelText.setTextColor(Color.parseColor("#B0BEC5"));
+        itemLayout.addView(labelText);
+
+        TextView statusText = new TextView(this);
+        statusText.setText(status);
+        statusText.setTextSize(14);
+        statusText.setTextColor(Color.parseColor("#FFFFFF"));
+        statusText.setTypeface(null, android.graphics.Typeface.BOLD);
+        itemLayout.addView(statusText);
+
+        parent.addView(itemLayout);
+    }
+
+    private void displayOwnerHistory(AutoCheckReport report) {
+        List<AutoCheckReport.OwnerHistory> owners = report.getOwnerHistory();
+        if (owners == null || owners.isEmpty()) return;
+
+        // Create a card
+        CardView ownerCard = new CardView(this);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.setMargins(0, 0, 0, (int) getResources().getDimension(R.dimen.spacing_large));
+        ownerCard.setLayoutParams(cardParams);
+        ownerCard.setCardBackgroundColor(getResources().getColor(R.color.background_secondary));
+        ownerCard.setRadius(getResources().getDimension(R.dimen.card_corner_radius));
+        ownerCard.setCardElevation(getResources().getDimension(R.dimen.elevation_content_card));
+
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(
+            (int) getResources().getDimension(R.dimen.card_padding_standard),
+            (int) getResources().getDimension(R.dimen.card_padding_standard),
+            (int) getResources().getDimension(R.dimen.card_padding_standard),
+            (int) getResources().getDimension(R.dimen.card_padding_standard)
+        );
+
+        // Title
+        TextView title = new TextView(this);
+        title.setText("Ownership History (" + owners.size() + " Owner" + (owners.size() > 1 ? "s" : "") + ")");
+        title.setTextSize(18);
+        title.setTextColor(Color.parseColor("#FFFFFF"));
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        title.setPadding(0, 0, 0, (int) getResources().getDimension(R.dimen.spacing_medium));
+        container.addView(title);
+
+        // Add owners
+        for (int i = 0; i < owners.size(); i++) {
+            AutoCheckReport.OwnerHistory owner = owners.get(i);
+            addOwnerItem(container, owner, i == owners.size() - 1);
+        }
+
+        ownerCard.addView(container);
+
+        LinearLayout reportContainer = findViewById(R.id.report_container);
+        if (reportContainer != null) {
+            reportContainer.addView(ownerCard);
+        }
+    }
+
+    private void addOwnerItem(LinearLayout parent, AutoCheckReport.OwnerHistory owner, boolean isLast) {
+        LinearLayout ownerLayout = new LinearLayout(this);
+        ownerLayout.setOrientation(LinearLayout.VERTICAL);
+        ownerLayout.setPadding(0, 0, 0, isLast ? 0 : (int) getResources().getDimension(R.dimen.spacing_medium));
+
+        // Owner header
+        TextView header = new TextView(this);
+        header.setText("Owner #" + owner.ownerNumber);
+        header.setTextSize(16);
+        header.setTextColor(Color.parseColor("#00ACC1"));
+        header.setTypeface(null, android.graphics.Typeface.BOLD);
+        ownerLayout.addView(header);
+
+        // Location
+        if (owner.location != null) {
+            TextView locationText = new TextView(this);
+            locationText.setText("📍 " + owner.location);
+            locationText.setTextSize(14);
+            locationText.setTextColor(Color.parseColor("#B0BEC5"));
+            locationText.setPadding(0, 4, 0, 0);
+            ownerLayout.addView(locationText);
+        }
+
+        // Owned period
+        if (owner.ownedFrom != null || owner.ownedTo != null) {
+            TextView periodText = new TextView(this);
+            String period = "";
+            if (owner.ownedFrom != null) period += owner.ownedFrom;
+            if (owner.ownedTo != null) {
+                if (!period.isEmpty()) period += " → ";
+                period += owner.ownedTo;
+            }
+            periodText.setText("📅 " + period);
+            periodText.setTextSize(14);
+            periodText.setTextColor(Color.parseColor("#B0BEC5"));
+            periodText.setPadding(0, 4, 0, 0);
+            ownerLayout.addView(periodText);
+        }
+
+        // Usage
+        if (owner.usage != null) {
+            TextView usageText = new TextView(this);
+            usageText.setText("🚗 " + owner.usage);
+            usageText.setTextSize(14);
+            usageText.setTextColor(Color.parseColor("#B0BEC5"));
+            usageText.setPadding(0, 4, 0, 0);
+            ownerLayout.addView(usageText);
+        }
+
+        // Events count
+        if (owner.events != null && !owner.events.isEmpty()) {
+            TextView eventsText = new TextView(this);
+            eventsText.setText("• " + owner.events.size() + " event" + (owner.events.size() > 1 ? "s" : "") + " during ownership");
+            eventsText.setTextSize(13);
+            eventsText.setTextColor(Color.parseColor("#90A4AE"));
+            eventsText.setPadding(0, 8, 0, 0);
+            eventsText.setTypeface(null, android.graphics.Typeface.ITALIC);
+            ownerLayout.addView(eventsText);
+        }
+
+        parent.addView(ownerLayout);
+
+        // Separator
+        if (!isLast) {
+            View separator = new View(this);
+            separator.setBackgroundColor(Color.parseColor("#37474F"));
+            LinearLayout.LayoutParams sepParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                2
+            );
+            sepParams.setMargins(0, (int) getResources().getDimension(R.dimen.spacing_medium), 0, (int) getResources().getDimension(R.dimen.spacing_medium));
+            separator.setLayoutParams(sepParams);
+            parent.addView(separator);
+        }
     }
 
     private void openPdf() {
