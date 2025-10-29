@@ -1033,13 +1033,25 @@ public class AutoCheckActivity extends AppCompatActivity {
         String iconText = "✓";
         int iconColor = Color.parseColor("#4CAF50");
 
-        if (check.statusType != null) {
-            if (check.statusType.toLowerCase().contains("issue") ||
-                check.statusType.toLowerCase().contains("found")) {
+        if (check.statusType != null || check.status != null) {
+            String statusLower = (check.statusType != null ? check.statusType : "").toLowerCase();
+            String messageLower = (check.status != null ? check.status : "").toLowerCase();
+            String combined = statusLower + " " + messageLower;
+
+            // Check for negative/issue indicators
+            if (combined.contains("issue") || combined.contains("found") ||
+                combined.contains("problem") || combined.contains("damage")) {
                 iconText = "✗";
                 iconColor = Color.parseColor("#F44336");
-            } else if (check.statusType.toLowerCase().contains("reported") ||
-                       check.statusType.toLowerCase().contains("events")) {
+            }
+            // Check for positive indicators - these override the default
+            else if (combined.contains("no issue") || combined.contains("checks out") ||
+                     combined.contains("clean") || combined.contains("not reported")) {
+                iconText = "✓";
+                iconColor = Color.parseColor("#4CAF50");
+            }
+            // Check for warning/informational indicators
+            else if (combined.contains("reported") || combined.contains("events")) {
                 iconText = "!";
                 iconColor = Color.parseColor("#FFC107");
             }
