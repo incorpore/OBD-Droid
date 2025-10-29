@@ -44,6 +44,7 @@ import com.obddroid.services.CommService;
 import com.obddroid.ui.adapters.ObdItemAdapter;
 import com.obddroid.ui.adapters.ObdRecyclerAdapter;
 import com.obddroid.ui.components.VehicleInfoFooter;
+import com.obddroid.ui.activities.DashBoardActivity;
 import com.obddroid.utils.SnackbarHelper;
 import com.obddroid.utils.PermissionManager;
 
@@ -452,8 +453,19 @@ public class LiveDataActivity extends AppCompatActivity
             return;
         }
 
-        SnackbarHelper.showInfo(this, "Dashboard view needs adapter compatibility update");
-        log.info("Dashboard view requested with " + selectedPositions.length + " items");
+        // Create an ObdItemAdapter with the current PID data
+        ObdItemAdapter obdAdapter = new ObdItemAdapter(this, R.layout.obd_item, ObdProt.PidPvs);
+
+        // Set the adapter for DashBoardActivity to use
+        DashBoardActivity.setAdapter(obdAdapter);
+
+        // Create intent and add the selected positions
+        Intent intent = new Intent(this, DashBoardActivity.class);
+        intent.putExtra(DashBoardActivity.POSITIONS, selectedPositions);
+        intent.putExtra(DashBoardActivity.RES_ID, R.layout.obd_gauge);
+
+        log.info("Launching dashboard with " + selectedPositions.length + " items");
+        startActivity(intent);
     }
 
     private void launchHudView() {
