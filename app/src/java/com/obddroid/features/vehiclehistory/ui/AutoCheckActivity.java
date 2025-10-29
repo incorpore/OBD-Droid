@@ -450,7 +450,7 @@ public class AutoCheckActivity extends AppCompatActivity {
     private void displayHeroSection(AutoCheckReport report) {
         // Vehicle name
         vehicleName.setText(report.getVehicleName());
-        vehicleVin.setText("VIN: " + report.getVin());
+        vehicleVin.setText(report.getVin());
 
         // AutoCheck score with dynamic coloring
         if (report.getScore() != null) {
