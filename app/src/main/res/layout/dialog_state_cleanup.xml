@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modern Material Design progress dialog for state cleanup -->
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="280dp"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="8dp"
+    app:cardBackgroundColor="@color/background_secondary">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Animated circular progress indicator -->
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/cleanup_progress"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_horizontal"
+            android:indeterminate="true"
+            app:indicatorSize="48dp"
+            app:trackThickness="4dp"
+            app:indicatorColor="@color/colorAccent" />
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/cleanup_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Cleaning Up State"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary_dark"
+            android:gravity="center" />
+
+        <!-- Status message -->
+        <TextView
+            android:id="@+id/cleanup_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Resetting adapter state..."
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary_dark"
+            android:gravity="center"
+            android:alpha="0.8" />
+
+        <!-- Progress step indicator (e.g., "Step 4 of 6") -->
+        <TextView
+            android:id="@+id/cleanup_step"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Step 4 of 6"
+            android:textSize="12sp"
+            android:textColor="@color/colorAccent"
+            android:gravity="center"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

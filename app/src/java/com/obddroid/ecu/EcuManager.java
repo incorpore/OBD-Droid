@@ -163,29 +163,24 @@ public class EcuManager {
     }
 
     /**
-     * Clear all discovered ECU data
+     * Clear all discovered ECU data from EcuManager's cache.
+     *
+     * IMPORTANT: This does NOT clear ElmProt.ecuAddresses!
+     * Those addresses are the source of truth for ECU discovery and should only be
+     * cleared by StateManager during FULL cleanup (Test Control mode).
+     *
+     * Preserving ecuAddresses allows ECU Modules scanning to work consistently.
      */
     public synchronized void clear() {
-        log.info("EcuManager: Clearing all ECU data");
+        log.info("EcuManager: Clearing ECU map (preserving ElmProt.ecuAddresses)");
         ecuMap.clear();
 
-        // Also clear the ecuAddresses in ElmProt to prevent stale addresses from being reloaded
-        try {
-            if (CommService.elm != null) {
-                java.lang.reflect.Field addressField = ElmProt.class.getDeclaredField("ecuAddresses");
-                addressField.setAccessible(true);
-                Object addresses = addressField.get(CommService.elm);
-
-                if (addresses instanceof TreeSet) {
-                    @SuppressWarnings("unchecked")
-                    TreeSet<Integer> ecuAddresses = (TreeSet<Integer>) addresses;
-                    log.info("EcuManager: Clearing " + ecuAddresses.size() + " stale ECU addresses from ElmProt");
-                    ecuAddresses.clear();
-                }
-            }
-        } catch (Exception e) {
-            log.warning("EcuManager: Could not clear ECU addresses from ElmProt: " + e.getMessage());
-        }
+        // NOTE: We deliberately do NOT clear ElmProt.ecuAddresses here!
+        // Clearing them causes the ECU scan to return inconsistent results (0, then 2, then 3)
+        // because EcuDiscoveryService relies on those addresses being stable.
+        //
+        // ElmProt.ecuAddresses should only be cleared by StateManager during FULL cleanup
+        // (e.g., when exiting Test Control mode).
 
         notifyListeners();
     }

@@ -147,15 +147,16 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
     @Override
     protected void onResume() {
         super.onResume();
-        ecuManager.startListening();
-        // DON'T load data here - only load after scan
+        // DON'T call startListening() - we want FRESH scans only!
+        // EcuListActivity uses isolated EcuDiscoveryService for on-demand scanning.
+        // Loading cached addresses from the connection stage would pollute fresh scan results.
         updateEmptyView();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        // Don't stop listening - let it continue in background
+        // Nothing to stop - we never started listening
     }
 
     @Override

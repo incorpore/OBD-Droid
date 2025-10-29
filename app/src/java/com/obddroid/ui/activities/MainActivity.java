@@ -91,11 +91,13 @@ import com.obddroid.services.CommService;
 import com.obddroid.services.NetworkCommService;
 import com.obddroid.services.UsbCommService;
 import com.obddroid.services.ObdDataService;
+import com.obddroid.services.StateManager;
 import com.obddroid.ui.components.AutoHider;
 import com.obddroid.utils.ExportTask;
 import com.obddroid.utils.FileHelper;
 import com.obddroid.utils.PermissionManager;
 import com.obddroid.utils.SnackbarHelper;
+import com.obddroid.ui.helpers.StateCleanupDialog;
 import com.obddroid.features.copilot.data.CoPilotController;
 import com.obddroid.services.VehicleManager;
 import com.obddroid.services.discovery.DiscoveryManager;
@@ -1162,28 +1164,36 @@ public class MainActivity extends AppCompatActivity
                         checkToRestoreLastDataSelection();
                     } else
                     {
-                        // Stop the service at protocol level FIRST to prevent stuck cycles
-                        if (CommService.elm != null) {
-                            log.info("Back pressed - stopping current service before returning to dashboard");
-                            CommService.elm.setService(ObdProt.OBD_SVC_NONE, false);
-                        }
+                        // Get current service BEFORE cleanup changes it
+                        final int previousService = CommService.elm.getService();
 
-                        // If we saved ECU state before entering a potentially bad mode, restore it now
-                        if (unsupportedModeHelper != null) {
-                            ElmProt.STAT savedState = unsupportedModeHelper.getSavedEcuState();
-                            if (savedState != ElmProt.STAT.UNDEFINED &&
-                                ecuConnectionState == ElmProt.STAT.NODATA) {
-                                log.info("Restoring saved ECU state after backing out: " + savedState);
-                                ecuConnectionState = savedState;
-                                VehicleManager.getInstance().setECUConnectionState(ecuConnectionState);
+                        // ═══════════════════════════════════════════════════════════
+                        // STATE CLEANUP - Show progress dialog and run async cleanup
+                        // ═══════════════════════════════════════════════════════════
+                        StateCleanupDialog.show(MainActivity.this, previousService, (success) -> {
+                            // Cleanup complete - now restore ECU state and update UI
+
+                            // If we saved ECU state before entering a potentially bad mode, restore it now
+                            if (unsupportedModeHelper != null) {
+                                ElmProt.STAT savedState = unsupportedModeHelper.getSavedEcuState();
+                                if (savedState != ElmProt.STAT.UNDEFINED &&
+                                    ecuConnectionState == ElmProt.STAT.NODATA) {
+                                    log.info("Restoring saved ECU state after backing out: " + savedState);
+                                    ecuConnectionState = savedState;
+                                    VehicleManager.getInstance().setECUConnectionState(ecuConnectionState);
+                                }
+
+                                // Reset cycle detection
+                                unsupportedModeHelper.reset();
                             }
 
-                            // Reset cycle detection
-                            unsupportedModeHelper.reset();
-                        }
+                            // Update UI
+                            setObdService(ObdProt.OBD_SVC_NONE, null);
 
-                        // Then update UI
-                        setObdService(ObdProt.OBD_SVC_NONE, null);
+                            if (!success) {
+                                log.warning("State cleanup encountered errors - see logs");
+                            }
+                        });
                     }
                 } else
                 {
@@ -2997,6 +3007,9 @@ public class MainActivity extends AppCompatActivity
      */
     void setObdService(int newObdService, CharSequence menuTitle)
     {
+        // Track service changes for StateManager
+        StateManager.onServiceChanged(newObdService);
+
         // remember this as current OBD service
         obdService = newObdService;
         ignoreNrcs = false;
