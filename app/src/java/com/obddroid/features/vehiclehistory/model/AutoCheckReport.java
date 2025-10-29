@@ -269,6 +269,103 @@ public class AutoCheckReport {
             }
         }
 
+        // Parse new fields (v1.0.3+)
+        if (json.has("bodyStyle")) report.bodyStyle = json.getString("bodyStyle");
+        if (json.has("vehicleUsage")) report.vehicleUsage = json.getString("vehicleUsage");
+        if (json.has("damageMessage")) report.damageMessage = json.getString("damageMessage");
+
+        // Parse At-A-Glance
+        if (json.has("atAGlance")) {
+            JSONObject ataglanceJson = json.getJSONObject("atAGlance");
+            report.atAGlance = new AtAGlance();
+
+            if (ataglanceJson.has("stateTitleBrand")) {
+                report.atAGlance.stateTitleBrand = parseGlanceCheck(ataglanceJson.getJSONObject("stateTitleBrand"));
+            }
+            if (ataglanceJson.has("auctionBrandIssues")) {
+                report.atAGlance.auctionBrandIssues = parseGlanceCheck(ataglanceJson.getJSONObject("auctionBrandIssues"));
+            }
+            if (ataglanceJson.has("accidentDamage")) {
+                report.atAGlance.accidentDamage = parseGlanceCheck(ataglanceJson.getJSONObject("accidentDamage"));
+            }
+            if (ataglanceJson.has("openRecallCheck")) {
+                report.atAGlance.openRecallCheck = parseGlanceCheck(ataglanceJson.getJSONObject("openRecallCheck"));
+            }
+            if (ataglanceJson.has("insuranceLossTransfer")) {
+                report.atAGlance.insuranceLossTransfer = parseGlanceCheck(ataglanceJson.getJSONObject("insuranceLossTransfer"));
+            }
+            if (ataglanceJson.has("odometerCheck")) {
+                report.atAGlance.odometerCheck = parseGlanceCheck(ataglanceJson.getJSONObject("odometerCheck"));
+            }
+            if (ataglanceJson.has("certifiedPreOwned")) {
+                report.atAGlance.certifiedPreOwned = parseGlanceCheck(ataglanceJson.getJSONObject("certifiedPreOwned"));
+            }
+            if (ataglanceJson.has("serviceRepair")) {
+                report.atAGlance.serviceRepair = parseGlanceCheck(ataglanceJson.getJSONObject("serviceRepair"));
+            }
+            if (ataglanceJson.has("additionalHistory")) {
+                report.atAGlance.additionalHistory = parseGlanceCheck(ataglanceJson.getJSONObject("additionalHistory"));
+            }
+        }
+
+        // Parse Odometer Sub-Checks
+        if (json.has("odometerSubChecks")) {
+            JSONObject odometerJson = json.getJSONObject("odometerSubChecks");
+            report.odometerSubChecks = new OdometerSubChecks();
+
+            if (odometerJson.has("stateTitleOdometerCheck")) {
+                report.odometerSubChecks.stateTitleOdometerCheck = odometerJson.getString("stateTitleOdometerCheck");
+            }
+            if (odometerJson.has("auctionOdometerCheck")) {
+                report.odometerSubChecks.auctionOdometerCheck = odometerJson.getString("auctionOdometerCheck");
+            }
+            if (odometerJson.has("odometerCalculationCheck")) {
+                report.odometerSubChecks.odometerCalculationCheck = odometerJson.getString("odometerCalculationCheck");
+            }
+        }
+
+        // Parse Owner History
+        if (json.has("ownerHistory")) {
+            JSONArray ownersArray = json.getJSONArray("ownerHistory");
+            for (int i = 0; i < ownersArray.length(); i++) {
+                JSONObject ownerJson = ownersArray.getJSONObject(i);
+                OwnerHistory owner = new OwnerHistory();
+
+                if (ownerJson.has("ownerNumber")) owner.ownerNumber = ownerJson.getInt("ownerNumber");
+                if (ownerJson.has("location")) owner.location = ownerJson.getString("location");
+                if (ownerJson.has("ownedFrom")) owner.ownedFrom = ownerJson.getString("ownedFrom");
+                if (ownerJson.has("ownedTo")) owner.ownedTo = ownerJson.getString("ownedTo");
+                if (ownerJson.has("usage")) owner.usage = ownerJson.getString("usage");
+
+                // Parse events for this owner
+                if (ownerJson.has("events")) {
+                    JSONArray eventsArray = ownerJson.getJSONArray("events");
+                    for (int j = 0; j < eventsArray.length(); j++) {
+                        JSONObject eventJson = eventsArray.getJSONObject(j);
+
+                        String date = "Unknown Date";
+                        if (eventJson.has("eventDate")) {
+                            date = eventJson.getString("eventDate");
+                        } else if (eventJson.has("date")) {
+                            date = eventJson.getString("date");
+                        }
+
+                        String details = eventJson.has("details") ? eventJson.getString("details") : "";
+                        HistoryEvent event = new HistoryEvent(date, details);
+
+                        if (eventJson.has("location")) event.location = eventJson.getString("location");
+                        if (eventJson.has("odometer")) event.odometer = eventJson.getString("odometer");
+                        if (eventJson.has("source")) event.source = eventJson.getString("source");
+                        if (eventJson.has("dataSource")) event.source = eventJson.getString("dataSource");
+
+                        owner.events.add(event);
+                    }
+                }
+
+                report.ownerHistory.add(owner);
+            }
+        }
+
         return report;
     }
 
@@ -330,6 +427,14 @@ public class AutoCheckReport {
     public List<String> getIncreasingFactors() { return increasingFactors; }
     public List<String> getDecreasingFactors() { return decreasingFactors; }
 
+    // New field getters (v1.0.3+)
+    public String getBodyStyle() { return bodyStyle; }
+    public String getVehicleUsage() { return vehicleUsage; }
+    public String getDamageMessage() { return damageMessage; }
+    public AtAGlance getAtAGlance() { return atAGlance; }
+    public OdometerSubChecks getOdometerSubChecks() { return odometerSubChecks; }
+    public List<OwnerHistory> getOwnerHistory() { return ownerHistory; }
+
     // Setters (for basic decode functionality)
     public void setYear(String year) { this.year = year; }
     public void setMake(String make) { this.make = make; }
@@ -364,6 +469,16 @@ public class AutoCheckReport {
     public String toString() {
         return String.format("AutoCheck Report: %s (VIN: %s, Score: %s, Owners: %d)",
                 getVehicleName(), vin, getScoreSummary(), owners != null ? owners : 0);
+    }
+
+    private static GlanceCheck parseGlanceCheck(JSONObject json) throws JSONException {
+        GlanceCheck check = new GlanceCheck();
+        if (json.has("status")) check.status = json.getString("status");
+        if (json.has("statusType")) check.statusType = json.getString("statusType");
+        if (json.has("description")) check.description = json.getString("description");
+        if (json.has("subtitle")) check.subtitle = json.getString("subtitle");
+        if (json.has("count")) check.count = json.getInt("count");
+        return check;
     }
 
     private static Integer parseInteger(Object value) {
