@@ -453,18 +453,26 @@ public class LiveDataActivity extends AppCompatActivity
             return;
         }
 
-        // Create an ObdItemAdapter with the current PID data
-        ObdItemAdapter obdAdapter = new ObdItemAdapter(this, R.layout.obd_item, ObdProt.PidPvs);
+        // Create a compatibility adapter for DashBoardActivity
+        // DashBoardActivity expects an ObdItemAdapter, so we create one with selected items only
+        List<com.obddroid.ecu.EcuDataPv> selectedItems = recyclerAdapter.getSelectedItems();
 
-        // Set the adapter for DashBoardActivity to use
-        DashBoardActivity.setAdapter(obdAdapter);
+        ObdItemAdapter dashboardAdapter = new ObdItemAdapter(this, R.layout.obd_item, ObdProt.PidPvs);
+        dashboardAdapter.clear();
+        dashboardAdapter.addAll(selectedItems);
 
-        // Create intent and add the selected positions
+        DashBoardActivity.setAdapter(dashboardAdapter);
         Intent intent = new Intent(this, DashBoardActivity.class);
-        intent.putExtra(DashBoardActivity.POSITIONS, selectedPositions);
+
+        // Map to sequential positions since we're using a filtered adapter
+        int[] dashboardPositions = new int[selectedItems.size()];
+        for (int i = 0; i < selectedItems.size(); i++) {
+            dashboardPositions[i] = i;
+        }
+        intent.putExtra(DashBoardActivity.POSITIONS, dashboardPositions);
         // Note: RES_ID defaults to R.layout.dashboard, which is the correct container layout
 
-        log.info("Launching dashboard with " + selectedPositions.length + " items");
+        log.info("Launching dashboard with " + selectedItems.size() + " items");
         startActivity(intent);
     }
 
