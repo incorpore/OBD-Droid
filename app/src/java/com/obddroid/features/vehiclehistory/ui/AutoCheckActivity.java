@@ -992,7 +992,6 @@ public class AutoCheckActivity extends AppCompatActivity {
         addGlanceCheckItem(container, "State Title Brand", atAGlance.stateTitleBrand);
         addGlanceCheckItem(container, "Auction Brand Issues", atAGlance.auctionBrandIssues);
         addGlanceCheckItem(container, "Accident/Damage", atAGlance.accidentDamage);
-        addGlanceCheckItem(container, "Open Recalls", atAGlance.openRecallCheck);
         addGlanceCheckItem(container, "Insurance Loss Transfer", atAGlance.insuranceLossTransfer);
         addGlanceCheckItem(container, "Odometer", atAGlance.odometerCheck);
         addGlanceCheckItem(container, "Certified Pre-Owned", atAGlance.certifiedPreOwned);
