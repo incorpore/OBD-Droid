@@ -822,25 +822,9 @@ public class AutoCheckActivity extends AppCompatActivity {
     }
 
     private void displayVehicleDetails(AutoCheckReport report) {
-        StringBuilder details = new StringBuilder();
-
-        if (report.getDamageMessage() != null) {
-            details.append("⚠️ Damage Info:\n").append(report.getDamageMessage()).append("\n");
-        }
-
-        if (report.getRecalls() != null) {
-            if (details.length() > 0) {
-                details.append("\n");
-            }
-            details.append("Recalls: ").append(report.getRecalls()).append("\n");
-        }
-
-        if (details.length() > 0) {
-            vehicleDetailsText.setText(details.toString().trim());
-            detailsCard.setVisibility(View.VISIBLE);
-        } else {
-            detailsCard.setVisibility(View.GONE);
-        }
+        // Vehicle details have been moved to At-A-Glance section
+        // Hide this card as it's no longer needed
+        detailsCard.setVisibility(View.GONE);
     }
 
     private void displayTimeline(AutoCheckReport report) {
@@ -1015,6 +999,10 @@ public class AutoCheckActivity extends AppCompatActivity {
         addGlanceCheckItem(container, "Service/Repair Records", atAGlance.serviceRepair);
         addGlanceCheckItem(container, "Additional History", atAGlance.additionalHistory);
 
+        // Add additional info from report
+        addGlanceTextItem(container, "Damage Information", report.getDamageMessage());
+        addGlanceTextItem(container, "Total Recalls", report.getRecalls());
+
         atAGlanceCard.addView(container);
 
         // Find the report container and insert before timeline card
@@ -1106,6 +1094,62 @@ public class AutoCheckActivity extends AppCompatActivity {
             descText.setPadding(0, 4, 0, 0);
             contentLayout.addView(descText);
         }
+
+        itemLayout.addView(contentLayout);
+        parent.addView(itemLayout);
+    }
+
+    private void addGlanceTextItem(LinearLayout parent, String label, String value) {
+        if (value == null || value.trim().isEmpty()) return;
+
+        LinearLayout itemLayout = new LinearLayout(this);
+        itemLayout.setOrientation(LinearLayout.HORIZONTAL);
+        itemLayout.setPadding(0, 12, 0, 12);
+        LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        itemLayout.setLayoutParams(itemParams);
+
+        // Info icon
+        TextView icon = new TextView(this);
+        icon.setText("ℹ");
+        icon.setTextSize(18);
+        icon.setTextColor(Color.parseColor("#2196F3"));
+        icon.setTypeface(null, android.graphics.Typeface.BOLD);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        iconParams.setMargins(0, 0, 20, 0);
+        icon.setLayoutParams(iconParams);
+        itemLayout.addView(icon);
+
+        // Content
+        LinearLayout contentLayout = new LinearLayout(this);
+        contentLayout.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams contentParams = new LinearLayout.LayoutParams(
+            0,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            1.0f
+        );
+        contentLayout.setLayoutParams(contentParams);
+
+        // Label
+        TextView labelText = new TextView(this);
+        labelText.setText(label);
+        labelText.setTextSize(15);
+        labelText.setTextColor(Color.parseColor("#FFFFFF"));
+        labelText.setTypeface(null, android.graphics.Typeface.BOLD);
+        contentLayout.addView(labelText);
+
+        // Value
+        TextView valueText = new TextView(this);
+        valueText.setText(value);
+        valueText.setTextSize(14);
+        valueText.setTextColor(Color.parseColor("#B0BEC5"));
+        valueText.setPadding(0, 4, 0, 0);
+        contentLayout.addView(valueText);
 
         itemLayout.addView(contentLayout);
         parent.addView(itemLayout);
