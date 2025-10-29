@@ -462,7 +462,7 @@ public class LiveDataActivity extends AppCompatActivity
         // Create intent and add the selected positions
         Intent intent = new Intent(this, DashBoardActivity.class);
         intent.putExtra(DashBoardActivity.POSITIONS, selectedPositions);
-        intent.putExtra(DashBoardActivity.RES_ID, R.layout.obd_gauge);
+        // Note: RES_ID defaults to R.layout.dashboard, which is the correct container layout
 
         log.info("Launching dashboard with " + selectedPositions.length + " items");
         startActivity(intent);
