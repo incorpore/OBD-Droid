@@ -131,8 +131,11 @@ public class StateManager {
         // Step 2: Clear data collections based on cleanup level
         success &= clearDataCollections(level);
 
-        // Step 3: Clear ECU addresses (critical!)
-        success &= clearEcuAddresses();
+        // Step 3: Clear ECU addresses (ONLY for FULL cleanup - Test Control)
+        // Preserving ECU addresses for normal navigation allows ECU Modules to work correctly
+        if (level == CleanupLevel.FULL) {
+            success &= clearEcuAddresses();
+        }
 
         // Step 4: Reset ELM adapter state if needed
         if (level == CleanupLevel.HARD || level == CleanupLevel.FULL) {
