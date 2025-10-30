@@ -112,15 +112,6 @@ public class EcuDiscoveryService implements RawTelegramListener {
                 sendRawCommand("090A");
                 Thread.sleep(1200);  // Wait for all ECU multiline responses (increased for reliability)
 
-                // Step 5: Disable headers to restore normal operation
-                Log.i(TAG, "Step 5: Disabling headers (ATH0)");
-                sendRawCommand("ATH0");
-                Thread.sleep(500);  // Wait for headers to disable
-
-                // Remove raw listener
-                CommService.elm.removeRawTelegramListener(this);
-                Log.i(TAG, "Unregistered RAW telegram listener");
-
                 // Step 6: Process any pending multiline buffers
                 if (!multilineBuffers.isEmpty()) {
                     Log.i(TAG, "Step 6: Processing " + multilineBuffers.size() + " pending multiline buffers");
@@ -147,9 +138,25 @@ public class EcuDiscoveryService implements RawTelegramListener {
 
             } catch (Exception e) {
                 Log.e(TAG, "ECU discovery failed: " + e.getMessage(), e);
-                CommService.elm.removeRawTelegramListener(this);
                 currentDiscovery.completeExceptionally(e);
             } finally {
+                // CRITICAL: Always restore ELM state, even on exceptions/timeouts
+                // This prevents leaving headers enabled, which breaks normal OBD communication
+                try {
+                    Log.i(TAG, "Step 5 (cleanup): Disabling headers (ATH0)");
+                    sendRawCommand("ATH0");
+                    Thread.sleep(500);  // Wait for headers to disable
+                    Log.i(TAG, "Headers disabled successfully");
+                } catch (Exception cleanup) {
+                    Log.e(TAG, "Failed to disable headers during cleanup: " + cleanup.getMessage());
+                }
+
+                // Remove raw listener
+                if (CommService.elm != null) {
+                    CommService.elm.removeRawTelegramListener(this);
+                    Log.i(TAG, "Unregistered RAW telegram listener");
+                }
+
                 isDiscovering.set(false);
             }
         }, "ECU-Discovery-Thread").start();
