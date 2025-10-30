@@ -133,9 +133,9 @@ public class ObdRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             if (descUpper.contains("NUMBER OF FAULT CODES") ||
                 descUpper.contains("MIL STATUS") ||
                 descUpper.contains("MALFUNCTION INDICATOR") ||
-                descUpper.contains("WARM") ||
-                (descUpper.contains("DISTANCE") && descUpper.contains("MIL"))) {
-                // MIL, Fault Codes, Warm-ups, and Distance since MIL go to Diagnostic Status section
+                (descUpper.contains("WARM") && descUpper.contains("SINCE")) ||
+                (descUpper.contains("DISTANCE") && descUpper.contains("SINCE") && descUpper.contains("MIL"))) {
+                // MIL, Fault Codes, Warm-ups since reset, and Distance since MIL activated go to Diagnostic Status section
                 diagnosticItems.add(pv);
             } else if ((descUpper.contains("TEST") && descUpper.contains("STATUS")) ||
                        (descUpper.contains("MONITOR") && descUpper.contains("STATUS")) ||
