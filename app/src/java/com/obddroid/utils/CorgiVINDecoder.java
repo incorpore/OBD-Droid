@@ -284,7 +284,7 @@ public class CorgiVINDecoder {
         queryAttributeByElementId(schemaId, vin, 38, s -> info.trim = s); // Element 38 = Trim (direct value)
 
         // Query vehicle classification attributes
-        queryPatternByElement(schemaId, vin, 5, "BodyClass", s -> info.bodyClass = s); // Needs BodyClass table
+        queryPatternByElement(schemaId, vin, 5, "BodyStyle", s -> info.bodyClass = s); // Needs BodyStyle table
         queryAttribute(schemaId, vin, "BodyStyle", s -> info.bodyStyle = s);
         queryAttribute(schemaId, vin, "VehicleType", s -> info.vehicleType = s);
         queryAttributeByElementId(schemaId, vin, 14, s -> info.doors = s); // Element 14 = Doors (direct value)
