@@ -320,21 +320,43 @@ public class CorgiVINDecoder {
     }
 
     /**
-     * Match VIN against a pattern with wildcards
+     * Check if a VIN substring matches a pattern with wildcards
      *
      * Pattern format:
      * - '*' matches any single character
-     * - '|' separates multiple patterns (OR logic)
      * - Other chars must match exactly
+     * - Pattern and substring must be same length
      *
      * Examples:
-     * - "**BA" matches any 2 chars + "BA" (e.g., "12BA", "ABBA")
-     * - "A***E" matches "A" + any 3 chars + "E" (e.g., "A123E", "ABCDE")
-     * - "681S" matches exactly "681S"
-     * - "S|T" matches "S" OR "T"
-     * - "*****|*A" matches any 5 chars OR (*A)
+     * - vinSubstring="12BA", pattern="**BA" → TRUE (** matches 12, BA matches BA)
+     * - vinSubstring="ABCDE", pattern="A***E" → TRUE (A matches A, *** matches BCD, E matches E)
+     * - vinSubstring="681S", pattern="681S" → TRUE (exact match)
+     * - vinSubstring="DA5H", pattern="**BA" → FALSE (5H ≠ BA)
      */
-    private boolean matchesVinPattern(String vin, String patternKeys) {
+    private boolean matchesPattern(String vinSubstring, String pattern) {
+        // Must be same length to match
+        if (vinSubstring.length() != pattern.length()) {
+            return false;
+        }
+
+        // Compare character by character
+        for (int i = 0; i < pattern.length(); i++) {
+            char patternChar = pattern.charAt(i);
+            char vinChar = vinSubstring.charAt(i);
+
+            // '*' matches any character, otherwise must match exactly
+            if (patternChar != '*' && patternChar != vinChar) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if VIN substring matches any of the pipe-delimited patterns
+     */
+    private boolean matchesAnyPattern(String vinSubstring, String patternKeys) {
         if (patternKeys == null || patternKeys.isEmpty()) {
             return false;
         }
@@ -343,42 +365,7 @@ public class CorgiVINDecoder {
         String[] patterns = patternKeys.split("\\|");
 
         for (String pattern : patterns) {
-            // Try to match this pattern against all possible VIN substrings
-            if (matchesSinglePattern(vin, pattern)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Match VIN against a single pattern (no pipe delimiters)
-     */
-    private boolean matchesSinglePattern(String vin, String pattern) {
-        pattern = pattern.trim();
-        if (pattern.isEmpty()) {
-            return false;
-        }
-
-        int patternLen = pattern.length();
-
-        // Try matching at each possible position in the VIN
-        for (int vinStart = 0; vinStart <= vin.length() - patternLen; vinStart++) {
-            boolean matches = true;
-
-            // Check if VIN substring matches pattern
-            for (int i = 0; i < patternLen; i++) {
-                char patternChar = pattern.charAt(i);
-                char vinChar = vin.charAt(vinStart + i);
-
-                if (patternChar != '*' && patternChar != vinChar) {
-                    matches = false;
-                    break;
-                }
-            }
-
-            if (matches) {
+            if (matchesPattern(vinSubstring, pattern.trim())) {
                 return true;
             }
         }
@@ -389,7 +376,7 @@ public class CorgiVINDecoder {
     /**
      * Query a specific attribute from patterns
      *
-     * FIXED: Now properly matches VIN against wildcard patterns in database (* = any char)
+     * FIXED: Matches VIN substrings at specific positions against wildcard patterns
      */
     private void queryAttribute(int schemaId, String vin, String tableName, AttributeSetter setter) {
         // Get ALL patterns for this schema (not filtered by Keys)
@@ -399,17 +386,22 @@ public class CorgiVINDecoder {
                       "JOIN " + tableName + " a ON CAST(p.AttributeId AS INTEGER) = a.Id " +
                       "WHERE p.VinSchemaId = ?";
 
+        // Extract VIN substrings at known positions (4-7, 5-8, etc.)
+        String[] vinSubstrings = extractVinPositions(vin);
+
         try (Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(schemaId)})) {
-            // Try to match VIN against each pattern
+            // Try to match each VIN substring against each pattern
             while (cursor.moveToNext()) {
                 String patternKeys = cursor.getString(0);
                 String value = cursor.getString(1);
 
-                // Check if VIN matches this pattern
-                if (matchesVinPattern(vin, patternKeys)) {
-                    Log.d(TAG, "✓ Attribute match: Table=" + tableName + ", Pattern=" + patternKeys + ", Value=" + value);
-                    setter.set(value);
-                    return; // Found it
+                // Try pattern against all extracted VIN positions
+                for (String vinSubstring : vinSubstrings) {
+                    if (matchesAnyPattern(vinSubstring, patternKeys)) {
+                        Log.d(TAG, "✓ Attribute match: Table=" + tableName + ", VIN substring=" + vinSubstring + ", Pattern=" + patternKeys + ", Value=" + value);
+                        setter.set(value);
+                        return; // Found it
+                    }
                 }
             }
         } catch (Exception e) {
@@ -421,7 +413,7 @@ public class CorgiVINDecoder {
      * Query pattern by Element ID with lookup table join
      * This queries the Pattern table and joins to the attribute table (Model, BodyClass, etc.)
      *
-     * FIXED: Now properly matches VIN against wildcard patterns in database (* = any char)
+     * FIXED: Matches VIN substrings at specific positions against wildcard patterns
      */
     private void queryPatternByElement(int schemaId, String vin, int elementId, String tableName, AttributeSetter setter) {
         // Get ALL patterns for this schema/element (not filtered by Keys)
@@ -431,19 +423,24 @@ public class CorgiVINDecoder {
                       "WHERE p.VinSchemaId = ? " +
                       "AND p.ElementId = ?";
 
+        // Extract VIN substrings at known positions (4-7, 5-8, etc.)
+        String[] vinSubstrings = extractVinPositions(vin);
+
         try (Cursor cursor = database.rawQuery(query,
                 new String[]{String.valueOf(schemaId), String.valueOf(elementId)})) {
 
-            // Try to match VIN against each pattern
+            // Try to match each VIN substring against each pattern
             while (cursor.moveToNext()) {
                 String patternKeys = cursor.getString(0);
                 String value = cursor.getString(1);
 
-                // Check if VIN matches this pattern
-                if (matchesVinPattern(vin, patternKeys)) {
-                    Log.d(TAG, "✓ Pattern match: Element=" + tableName + ", Pattern=" + patternKeys + ", Value=" + value);
-                    setter.set(value);
-                    return; // Found it
+                // Try pattern against all extracted VIN positions
+                for (String vinSubstring : vinSubstrings) {
+                    if (matchesAnyPattern(vinSubstring, patternKeys)) {
+                        Log.d(TAG, "✓ Pattern match: Element=" + tableName + ", VIN substring=" + vinSubstring + ", Pattern=" + patternKeys + ", Value=" + value);
+                        setter.set(value);
+                        return; // Found it
+                    }
                 }
             }
         } catch (Exception e) {
@@ -454,7 +451,7 @@ public class CorgiVINDecoder {
     /**
      * Query attribute by Element ID (for elements that don't have lookup tables)
      *
-     * FIXED: Now properly matches VIN against wildcard patterns in database (* = any char)
+     * FIXED: Matches VIN substrings at specific positions against wildcard patterns
      */
     private void queryAttributeByElementId(int schemaId, String vin, int elementId, AttributeSetter setter) {
         // Get ALL patterns for this schema/element (not filtered by Keys)
@@ -463,19 +460,24 @@ public class CorgiVINDecoder {
                       "WHERE p.VinSchemaId = ? " +
                       "AND p.ElementId = ?";
 
+        // Extract VIN substrings at known positions (4-7, 5-8, etc.)
+        String[] vinSubstrings = extractVinPositions(vin);
+
         try (Cursor cursor = database.rawQuery(query,
                 new String[]{String.valueOf(schemaId), String.valueOf(elementId)})) {
 
-            // Try to match VIN against each pattern
+            // Try to match each VIN substring against each pattern
             while (cursor.moveToNext()) {
                 String patternKeys = cursor.getString(0);
                 String value = cursor.getString(1);
 
-                // Check if VIN matches this pattern
-                if (matchesVinPattern(vin, patternKeys)) {
-                    Log.d(TAG, "✓ Attribute match: Element=" + elementId + ", Pattern=" + patternKeys + ", Value=" + value);
-                    setter.set(value);
-                    return; // Found it
+                // Try pattern against all extracted VIN positions
+                for (String vinSubstring : vinSubstrings) {
+                    if (matchesAnyPattern(vinSubstring, patternKeys)) {
+                        Log.d(TAG, "✓ Attribute match: Element=" + elementId + ", VIN substring=" + vinSubstring + ", Pattern=" + patternKeys + ", Value=" + value);
+                        setter.set(value);
+                        return; // Found it
+                    }
                 }
             }
         } catch (Exception e) {
