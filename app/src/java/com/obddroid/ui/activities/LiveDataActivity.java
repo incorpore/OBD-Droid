@@ -165,9 +165,14 @@ public class LiveDataActivity extends AppCompatActivity
         // Stop updates
         updateHandler.removeCallbacks(updateRunnable);
 
-        // Stop OBD polling to allow fresh data when navigating to other features
-        CommService.elm.setService(ObdProt.OBD_SVC_NONE);
-        log.info("Set OBD service to NONE (stopped polling)");
+        // Only stop OBD polling if we're finishing (user leaving Live Data context)
+        // Don't stop if just pausing for child activities (Charts, Dashboard, HUD)
+        if (isFinishing()) {
+            CommService.elm.setService(ObdProt.OBD_SVC_NONE);
+            log.info("Set OBD service to NONE (stopped polling - activity finishing)");
+        } else {
+            log.info("Activity pausing but not finishing (child activity launched) - keeping OBD service active");
+        }
     }
 
     @Override

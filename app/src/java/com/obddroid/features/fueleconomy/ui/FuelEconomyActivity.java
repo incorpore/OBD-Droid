@@ -218,9 +218,14 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         super.onPause();
         stopPeriodicUpdates();
 
-        // Stop OBD polling to allow fresh data when navigating to other features
-        com.obddroid.services.CommService.elm.setService(ObdProt.OBD_SVC_NONE);
-        log.info("Set OBD service to NONE (stopped polling)");
+        // Only stop OBD polling if we're finishing (user leaving Fuel Economy)
+        // Keep polling active if just pausing temporarily
+        if (isFinishing()) {
+            com.obddroid.services.CommService.elm.setService(ObdProt.OBD_SVC_NONE);
+            log.info("Set OBD service to NONE (stopped polling - activity finishing)");
+        } else {
+            log.info("Activity pausing but not finishing - keeping OBD service active");
+        }
     }
 
     @Override
