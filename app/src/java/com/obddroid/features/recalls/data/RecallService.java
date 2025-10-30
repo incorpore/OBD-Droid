@@ -162,6 +162,7 @@ public class RecallService {
         java.util.List<String> variations = new java.util.ArrayList<>();
         String model = vehicleData.model;
         String series = vehicleData.series;
+        String trim = vehicleData.trim;
 
         if (model == null || model.isEmpty()) {
             return new String[]{""};
@@ -173,23 +174,28 @@ public class RecallService {
             .replace(" Class", "")
             .trim();
 
+        // Use series if available, otherwise fallback to trim (NHTSA often puts data in Trim field)
+        String trimOrSeries = (series != null && !series.isEmpty() && !series.equals("Not Applicable"))
+            ? series
+            : trim;
+
         // Variation 1: Clean series model (e.g., "GLE350" from "GLE350-4M") - Mercedes/luxury format
-        if (series != null && !series.isEmpty() && !series.equals("Not Applicable")) {
-            String cleanSeries = extractCleanSeriesModel(series);
+        if (trimOrSeries != null && !trimOrSeries.isEmpty() && !trimOrSeries.equals("Not Applicable")) {
+            String cleanSeries = extractCleanSeriesModel(trimOrSeries);
             if (cleanSeries != null && !cleanSeries.isEmpty() && !cleanSeries.equals(baseModel)) {
                 variations.add(cleanSeries);
             }
         }
 
         // Variation 2: Base model + full series (e.g., "GLE GLE350-4M")
-        if (series != null && !series.isEmpty() && !series.equals("Not Applicable")) {
-            variations.add(baseModel + " " + series);
+        if (trimOrSeries != null && !trimOrSeries.isEmpty() && !trimOrSeries.equals("Not Applicable")) {
+            variations.add(baseModel + " " + trimOrSeries);
         }
 
         // Variation 3: Base model + extracted trim number (e.g., "GLE 350")
-        if (series != null && !series.isEmpty() && !series.equals("Not Applicable")) {
-            String trimNumber = extractTrimNumber(series);
-            if (trimNumber != null && !trimNumber.isEmpty() && !trimNumber.equals(series)) {
+        if (trimOrSeries != null && !trimOrSeries.isEmpty() && !trimOrSeries.equals("Not Applicable")) {
+            String trimNumber = extractTrimNumber(trimOrSeries);
+            if (trimNumber != null && !trimNumber.isEmpty() && !trimNumber.equals(trimOrSeries)) {
                 variations.add(baseModel + " " + trimNumber);
             }
         }
