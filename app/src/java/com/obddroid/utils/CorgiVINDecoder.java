@@ -320,86 +320,166 @@ public class CorgiVINDecoder {
     }
 
     /**
+     * Match VIN against a pattern with wildcards
+     *
+     * Pattern format:
+     * - '*' matches any single character
+     * - '|' separates multiple patterns (OR logic)
+     * - Other chars must match exactly
+     *
+     * Examples:
+     * - "**BA" matches any 2 chars + "BA" (e.g., "12BA", "ABBA")
+     * - "A***E" matches "A" + any 3 chars + "E" (e.g., "A123E", "ABCDE")
+     * - "681S" matches exactly "681S"
+     * - "S|T" matches "S" OR "T"
+     * - "*****|*A" matches any 5 chars OR (*A)
+     */
+    private boolean matchesVinPattern(String vin, String patternKeys) {
+        if (patternKeys == null || patternKeys.isEmpty()) {
+            return false;
+        }
+
+        // Split by pipe (|) for OR logic
+        String[] patterns = patternKeys.split("\\|");
+
+        for (String pattern : patterns) {
+            // Try to match this pattern against all possible VIN substrings
+            if (matchesSinglePattern(vin, pattern)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Match VIN against a single pattern (no pipe delimiters)
+     */
+    private boolean matchesSinglePattern(String vin, String pattern) {
+        pattern = pattern.trim();
+        if (pattern.isEmpty()) {
+            return false;
+        }
+
+        int patternLen = pattern.length();
+
+        // Try matching at each possible position in the VIN
+        for (int vinStart = 0; vinStart <= vin.length() - patternLen; vinStart++) {
+            boolean matches = true;
+
+            // Check if VIN substring matches pattern
+            for (int i = 0; i < patternLen; i++) {
+                char patternChar = pattern.charAt(i);
+                char vinChar = vin.charAt(vinStart + i);
+
+                if (patternChar != '*' && patternChar != vinChar) {
+                    matches = false;
+                    break;
+                }
+            }
+
+            if (matches) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Query a specific attribute from patterns
+     *
+     * FIXED: Now properly matches VIN against wildcard patterns in database (* = any char)
      */
     private void queryAttribute(int schemaId, String vin, String tableName, AttributeSetter setter) {
-        String query = "SELECT a.Name " +
+        // Get ALL patterns for this schema (not filtered by Keys)
+        String query = "SELECT p.Keys, a.Name " +
                       "FROM Pattern p " +
                       "JOIN Element e ON p.ElementId = e.Id " +
                       "JOIN " + tableName + " a ON CAST(p.AttributeId AS INTEGER) = a.Id " +
-                      "WHERE p.VinSchemaId = ? " +
-                      "AND p.Keys = ? " +
-                      "LIMIT 1";
+                      "WHERE p.VinSchemaId = ?";
 
-        // Extract relevant VIN positions based on element
-        // Simplified: just try a few common pattern positions
-        String[] positions = extractVinPositions(vin);
+        try (Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(schemaId)})) {
+            // Try to match VIN against each pattern
+            while (cursor.moveToNext()) {
+                String patternKeys = cursor.getString(0);
+                String value = cursor.getString(1);
 
-        for (String pos : positions) {
-            try (Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(schemaId), pos})) {
-                if (cursor.moveToFirst()) {
-                    setter.set(cursor.getString(0));
+                // Check if VIN matches this pattern
+                if (matchesVinPattern(vin, patternKeys)) {
+                    Log.d(TAG, "✓ Attribute match: Table=" + tableName + ", Pattern=" + patternKeys + ", Value=" + value);
+                    setter.set(value);
                     return; // Found it
                 }
-            } catch (Exception e) {
-                // Continue trying other positions
             }
+        } catch (Exception e) {
+            Log.w(TAG, "Error querying attribute from " + tableName + ": " + e.getMessage());
         }
     }
 
     /**
      * Query pattern by Element ID with lookup table join
      * This queries the Pattern table and joins to the attribute table (Model, BodyClass, etc.)
+     *
+     * FIXED: Now properly matches VIN against wildcard patterns in database (* = any char)
      */
     private void queryPatternByElement(int schemaId, String vin, int elementId, String tableName, AttributeSetter setter) {
-        String query = "SELECT a.Name " +
+        // Get ALL patterns for this schema/element (not filtered by Keys)
+        String query = "SELECT p.Keys, a.Name " +
                       "FROM Pattern p " +
                       "JOIN " + tableName + " a ON CAST(p.AttributeId AS INTEGER) = a.Id " +
                       "WHERE p.VinSchemaId = ? " +
-                      "AND p.ElementId = ? " +
-                      "AND p.Keys = ? " +
-                      "LIMIT 1";
+                      "AND p.ElementId = ?";
 
-        String[] positions = extractVinPositions(vin);
+        try (Cursor cursor = database.rawQuery(query,
+                new String[]{String.valueOf(schemaId), String.valueOf(elementId)})) {
 
-        for (String pos : positions) {
-            try (Cursor cursor = database.rawQuery(query,
-                    new String[]{String.valueOf(schemaId), String.valueOf(elementId), pos})) {
-                if (cursor.moveToFirst()) {
-                    String value = cursor.getString(0);
-                    Log.d(TAG, "✓ Pattern match: Element=" + tableName + ", Keys=" + pos + ", Value=" + value);
+            // Try to match VIN against each pattern
+            while (cursor.moveToNext()) {
+                String patternKeys = cursor.getString(0);
+                String value = cursor.getString(1);
+
+                // Check if VIN matches this pattern
+                if (matchesVinPattern(vin, patternKeys)) {
+                    Log.d(TAG, "✓ Pattern match: Element=" + tableName + ", Pattern=" + patternKeys + ", Value=" + value);
                     setter.set(value);
                     return; // Found it
                 }
-            } catch (Exception e) {
-                // Continue trying other positions or table doesn't exist
             }
+        } catch (Exception e) {
+            Log.w(TAG, "Error querying pattern for element " + elementId + ": " + e.getMessage());
         }
     }
 
     /**
      * Query attribute by Element ID (for elements that don't have lookup tables)
+     *
+     * FIXED: Now properly matches VIN against wildcard patterns in database (* = any char)
      */
     private void queryAttributeByElementId(int schemaId, String vin, int elementId, AttributeSetter setter) {
-        String query = "SELECT p.AttributeId " +
+        // Get ALL patterns for this schema/element (not filtered by Keys)
+        String query = "SELECT p.Keys, p.AttributeId " +
                       "FROM Pattern p " +
                       "WHERE p.VinSchemaId = ? " +
-                      "AND p.ElementId = ? " +
-                      "AND p.Keys = ? " +
-                      "LIMIT 1";
+                      "AND p.ElementId = ?";
 
-        String[] positions = extractVinPositions(vin);
+        try (Cursor cursor = database.rawQuery(query,
+                new String[]{String.valueOf(schemaId), String.valueOf(elementId)})) {
 
-        for (String pos : positions) {
-            try (Cursor cursor = database.rawQuery(query,
-                    new String[]{String.valueOf(schemaId), String.valueOf(elementId), pos})) {
-                if (cursor.moveToFirst()) {
-                    setter.set(cursor.getString(0));
+            // Try to match VIN against each pattern
+            while (cursor.moveToNext()) {
+                String patternKeys = cursor.getString(0);
+                String value = cursor.getString(1);
+
+                // Check if VIN matches this pattern
+                if (matchesVinPattern(vin, patternKeys)) {
+                    Log.d(TAG, "✓ Attribute match: Element=" + elementId + ", Pattern=" + patternKeys + ", Value=" + value);
+                    setter.set(value);
                     return; // Found it
                 }
-            } catch (Exception e) {
-                // Continue trying other positions
             }
+        } catch (Exception e) {
+            Log.w(TAG, "Error querying attribute for element " + elementId + ": " + e.getMessage());
         }
     }
 
