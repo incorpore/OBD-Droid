@@ -41,8 +41,8 @@ public class FaultCodeService implements RawTelegramListener {
 
     private static final Logger log = Logger.getLogger(FaultCodeService.class.getSimpleName());
     private static final String PROMPT = ">";
-    private static final long SCAN_TIMEOUT_MS = 2_500L;
-    private static final long CLEAR_TIMEOUT_MS = 1_500L;
+    private static final long SCAN_TIMEOUT_MS = 5_000L;  // Increased for slower adapters & multiline responses
+    private static final long CLEAR_TIMEOUT_MS = 2_500L;  // Increased for reliability
 
     private enum ScanMode { CONFIRMED, PENDING, PERMANENT }
 
