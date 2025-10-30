@@ -95,27 +95,27 @@ public class EcuDiscoveryService implements RawTelegramListener {
                 // Step 1: Enable headers to capture ECU addresses
                 Log.i(TAG, "Step 1: Enabling headers (ATH1)");
                 sendRawCommand("ATH1");
-                Thread.sleep(600);  // Wait for header enable (ELM can take 400-500ms)
+                Thread.sleep(1000);  // Wait for header enable (increased for slower adapters)
 
                 // Step 2: Request Mode 9 PID 04 (Calibration ID)
                 Log.i(TAG, "Step 2: Requesting Calibration ID (0904)");
                 sendRawCommand("0904");
-                Thread.sleep(500);  // Wait for all ECU responses
+                Thread.sleep(1200);  // Wait for all ECU multiline responses (increased for reliability)
 
                 // Step 3: Request Mode 9 PID 06 (CVN - Calibration Verification)
                 Log.i(TAG, "Step 3: Requesting CVN (0906)");
                 sendRawCommand("0906");
-                Thread.sleep(500);  // Wait for all ECU responses
+                Thread.sleep(1200);  // Wait for all ECU multiline responses (increased for reliability)
 
                 // Step 4: Request Mode 9 PID 0A (ECU Name)
                 Log.i(TAG, "Step 4: Requesting ECU Name (090A)");
                 sendRawCommand("090A");
-                Thread.sleep(500);  // Wait for all ECU responses
+                Thread.sleep(1200);  // Wait for all ECU multiline responses (increased for reliability)
 
                 // Step 5: Disable headers to restore normal operation
                 Log.i(TAG, "Step 5: Disabling headers (ATH0)");
                 sendRawCommand("ATH0");
-                Thread.sleep(300);  // Wait for headers to disable
+                Thread.sleep(500);  // Wait for headers to disable
 
                 // Remove raw listener
                 CommService.elm.removeRawTelegramListener(this);
