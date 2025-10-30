@@ -173,12 +173,20 @@ public class RecallService {
             .replace(" Class", "")
             .trim();
 
-        // Variation 1: Base model + full series (e.g., "GLE GLE350-4M")
+        // Variation 1: Clean series model (e.g., "GLE350" from "GLE350-4M") - Mercedes/luxury format
+        if (series != null && !series.isEmpty() && !series.equals("Not Applicable")) {
+            String cleanSeries = extractCleanSeriesModel(series);
+            if (cleanSeries != null && !cleanSeries.isEmpty() && !cleanSeries.equals(baseModel)) {
+                variations.add(cleanSeries);
+            }
+        }
+
+        // Variation 2: Base model + full series (e.g., "GLE GLE350-4M")
         if (series != null && !series.isEmpty() && !series.equals("Not Applicable")) {
             variations.add(baseModel + " " + series);
         }
 
-        // Variation 2: Base model + extracted trim number (e.g., "GLE 350")
+        // Variation 3: Base model + extracted trim number (e.g., "GLE 350")
         if (series != null && !series.isEmpty() && !series.equals("Not Applicable")) {
             String trimNumber = extractTrimNumber(series);
             if (trimNumber != null && !trimNumber.isEmpty() && !trimNumber.equals(series)) {
@@ -186,16 +194,42 @@ public class RecallService {
             }
         }
 
-        // Variation 3: Just base model (e.g., "GLE")
+        // Variation 4: Just base model (e.g., "GLE")
         variations.add(baseModel);
 
-        // Variation 4: Original model as-is (e.g., "GLE-Class")
+        // Variation 5: Original model as-is (e.g., "GLE-Class")
         if (!model.equals(baseModel)) {
             variations.add(model);
         }
 
         Log.d(TAG, "Generated " + variations.size() + " model variations: " + variations);
         return variations.toArray(new String[0]);
+    }
+
+    /**
+     * Extract clean series model from series string by removing suffixes after dash/space.
+     * Examples: "GLE350-4M" -> "GLE350", "X5 xDrive40i" -> "X5", "Accord EX-L" -> "Accord EX"
+     */
+    private String extractCleanSeriesModel(String series) {
+        if (series == null || series.isEmpty()) {
+            return null;
+        }
+
+        // Extract alphanumeric portion before any dash (for Mercedes: "GLE350-4M" -> "GLE350")
+        String cleaned = series.split("-")[0].trim();
+
+        // Also handle space-separated suffixes (for BMW: "X5 xDrive40i" -> "X5")
+        // But only if the second part looks like a suffix (starts with lowercase or has specific patterns)
+        String[] parts = cleaned.split("\\s+");
+        if (parts.length > 1) {
+            // Keep first part if second part looks like a suffix (lowercase start, or contains "Drive", etc.)
+            String secondPart = parts[1];
+            if (secondPart.matches("^[a-z].*") || secondPart.contains("Drive") || secondPart.contains("Matic")) {
+                cleaned = parts[0];
+            }
+        }
+
+        return cleaned;
     }
 
     /**
