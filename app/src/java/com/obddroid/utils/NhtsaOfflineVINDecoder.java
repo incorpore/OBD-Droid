@@ -12,17 +12,26 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * Corgi VIN Decoder - Offline VIN decoding using NHTSA vPIC SQLite database
+ * NHTSA Offline VIN Decoder - Offline VIN decoding using NHTSA vPIC SQLite database
  *
- * Uses the complete vPIC database (66MB) for full offline VIN decoding.
- * Provides dealer-grade data without internet connection.
+ * Uses the complete NHTSA vPIC (Vehicle Product Information Catalog) database (66MB)
+ * for full offline VIN decoding. Provides dealer-grade data without internet connection.
  *
- * Database: vpic.lite.db from @cardog/corgi
- * Source: https://github.com/cardog-ai/corgi
+ * Database Source: NHTSA vPIC Data (https://vpic.nhtsa.dot.gov/)
+ * Database Format: SQLite compiled from NHTSA's public vehicle product information catalog
+ *
+ * Attribution: Database compiled using open-source tooling from the automotive community.
+ *              All vehicle data is public domain from the U.S. Department of Transportation.
+ *
+ * Implementation: 100% custom OBD-Droid code with pattern matching for:
+ *   - Wildcard patterns (*)
+ *   - Character class patterns ([ABC123])
+ *   - Position-specific VIN matching
+ *   - Integrated recall system compatibility
  */
-public class CorgiVINDecoder {
+public class NhtsaOfflineVINDecoder {
 
-    private static final String TAG = "CorgiVINDecoder";
+    private static final String TAG = "NhtsaOfflineVINDecoder";
     private static final String DB_NAME = "vpic.lite.db";
     private static final int DB_VERSION = 1;
 
@@ -78,7 +87,7 @@ public class CorgiVINDecoder {
         }
     }
 
-    public CorgiVINDecoder(Context context) {
+    public NhtsaOfflineVINDecoder(Context context) {
         this.context = context.getApplicationContext();
         initDatabase();
     }

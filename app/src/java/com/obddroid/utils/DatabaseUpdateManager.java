@@ -36,6 +36,7 @@ public class DatabaseUpdateManager {
     private static final String PREF_DATABASE_VERSION = "database_version";
 
     // Update configuration
+    // NHTSA vPIC database compiled into SQLite format (public USDOT vehicle data)
     private static final String DB_DOWNLOAD_URL =
         "https://cdn.jsdelivr.net/npm/@cardog/corgi@latest/dist/db/vpic.lite.db.gz";
     private static final long UPDATE_INTERVAL_MS = 30L * 24 * 60 * 60 * 1000; // 30 days

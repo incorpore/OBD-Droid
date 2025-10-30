@@ -1,8 +1,8 @@
 package com.obddroid.utils;
 
 /**
- * Vehicle data model - compatible with previous NHTSA decoder
- * Now populated from Corgi's offline vPIC database
+ * Vehicle data model - compatible with NHTSA decoder
+ * Populated from both online NHTSA API and offline NHTSA vPIC database
  */
 public class VehicleData {
 
@@ -264,9 +264,9 @@ public class VehicleData {
     }
 
     /**
-     * Create VehicleData from Corgi decoder result
+     * Create VehicleData from offline NHTSA decoder result
      */
-    public static VehicleData fromCorgiInfo(CorgiVINDecoder.VehicleInfo info) {
+    public static VehicleData fromOfflineDecoder(NhtsaOfflineVINDecoder.VehicleInfo info) {
         VehicleData data = new VehicleData();
         data.vin = info.vin;
         data.make = info.make;

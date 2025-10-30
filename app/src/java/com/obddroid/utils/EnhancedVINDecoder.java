@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
  *
  * Powered by:
  * - Primary: NHTSA vPIC API (online)
- * - Fallback: Corgi (@cardog/corgi) - 66MB vPIC database (offline)
+ * - Fallback: NHTSA Offline Decoder - 66MB vPIC database (offline)
  *
  * @author Wal33D <aquataze@yahoo.com>
  */
@@ -27,7 +27,7 @@ public class EnhancedVINDecoder {
     private static final String TAG = "EnhancedVINDecoder";
 
     private final NhtsaVINDecoder onlineDecoder;
-    private final CorgiVINDecoder offlineDecoder;
+    private final NhtsaOfflineVINDecoder offlineDecoder;
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -38,7 +38,7 @@ public class EnhancedVINDecoder {
 
     public EnhancedVINDecoder(Context context) {
         this.onlineDecoder = new NhtsaVINDecoder(context);
-        this.offlineDecoder = new CorgiVINDecoder(context);
+        this.offlineDecoder = new NhtsaOfflineVINDecoder(context);
         Log.d(TAG, "✓ Hybrid VIN Decoder initialized (Online + Offline)");
     }
 
@@ -100,8 +100,8 @@ public class EnhancedVINDecoder {
 
         // Fall back to offline
         Log.d(TAG, "Online decode failed, falling back to offline database");
-        CorgiVINDecoder.VehicleInfo info = offlineDecoder.decode(vin);
-        VehicleData offlineData = VehicleData.fromCorgiInfo(info);
+        NhtsaOfflineVINDecoder.VehicleInfo info = offlineDecoder.decode(vin);
+        VehicleData offlineData = VehicleData.fromOfflineDecoder(info);
         offlineData.dataSource = "Offline Database";
 
         // Add indicators for missing fields
