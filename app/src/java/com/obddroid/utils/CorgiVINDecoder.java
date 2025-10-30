@@ -320,37 +320,66 @@ public class CorgiVINDecoder {
     }
 
     /**
-     * Check if a VIN substring matches a pattern with wildcards
+     * Check if a VIN substring matches a pattern with wildcards and character classes
      *
      * Pattern format:
      * - '*' matches any single character
+     * - '[ABC123]' matches any single character in the set
      * - Other chars must match exactly
-     * - Pattern and substring must be same length
      *
      * Examples:
+     * - vinSubstring="YD4H5", pattern="YD4H[02345789]" → TRUE (5 is in the set)
      * - vinSubstring="12BA", pattern="**BA" → TRUE (** matches 12, BA matches BA)
      * - vinSubstring="ABCDE", pattern="A***E" → TRUE (A matches A, *** matches BCD, E matches E)
      * - vinSubstring="681S", pattern="681S" → TRUE (exact match)
      * - vinSubstring="DA5H", pattern="**BA" → FALSE (5H ≠ BA)
      */
     private boolean matchesPattern(String vinSubstring, String pattern) {
-        // Must be same length to match
-        if (vinSubstring.length() != pattern.length()) {
-            return false;
-        }
+        int vinIdx = 0;
+        int patternIdx = 0;
 
-        // Compare character by character
-        for (int i = 0; i < pattern.length(); i++) {
-            char patternChar = pattern.charAt(i);
-            char vinChar = vinSubstring.charAt(i);
+        while (vinIdx < vinSubstring.length() && patternIdx < pattern.length()) {
+            char vinChar = vinSubstring.charAt(vinIdx);
 
-            // '*' matches any character, otherwise must match exactly
-            if (patternChar != '*' && patternChar != vinChar) {
-                return false;
+            if (pattern.charAt(patternIdx) == '[') {
+                // Character class - find closing ]
+                int closingBracket = pattern.indexOf(']', patternIdx);
+                if (closingBracket == -1) {
+                    // Malformed pattern - treat [ as literal
+                    if (pattern.charAt(patternIdx) != vinChar) {
+                        return false;
+                    }
+                    vinIdx++;
+                    patternIdx++;
+                    continue;
+                }
+
+                // Extract character set
+                String charSet = pattern.substring(patternIdx + 1, closingBracket);
+
+                // Check if vinChar is in the character set
+                if (charSet.indexOf(vinChar) == -1) {
+                    return false; // Character not in set
+                }
+
+                vinIdx++;
+                patternIdx = closingBracket + 1; // Move past ]
+            } else if (pattern.charAt(patternIdx) == '*') {
+                // Wildcard - matches any character
+                vinIdx++;
+                patternIdx++;
+            } else {
+                // Literal character - must match exactly
+                if (pattern.charAt(patternIdx) != vinChar) {
+                    return false;
+                }
+                vinIdx++;
+                patternIdx++;
             }
         }
 
-        return true;
+        // Both must be fully consumed for a match
+        return vinIdx == vinSubstring.length() && patternIdx == pattern.length();
     }
 
     /**
