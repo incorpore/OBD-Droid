@@ -460,11 +460,15 @@ public final class DiscoveryManager implements EcuManager.EcuManagerListener,
             return;
         }
         DiscoveryEvent event = new DiscoveryEvent(sessionId, type, message, ecuAddress, payload);
+        // Capture logWriter reference to avoid race condition with endSession()
+        final DiscoveryLogWriter writer = logWriter;
         executor.execute(() -> {
-            try {
-                logWriter.writeEvent(event);
-            } catch (IOException e) {
-                Log.e(TAG, "Failed to persist discovery event", e);
+            if (writer != null) {
+                try {
+                    writer.writeEvent(event);
+                } catch (IOException e) {
+                    Log.e(TAG, "Failed to persist discovery event", e);
+                }
             }
         });
         Log.i(TAG, event.toLogcatString());

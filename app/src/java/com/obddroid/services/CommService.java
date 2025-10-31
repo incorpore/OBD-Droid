@@ -31,6 +31,9 @@ public abstract class CommService
 	/** media type selection */
 	public static MEDIUM medium = MEDIUM.BLUETOOTH;
 
+	/** OBD Service Coordinator - provides mutual exclusion for adapter access */
+	public static final ObdServiceCoordinator coordinator = new ObdServiceCoordinator();
+
 	/** Constants that indicate the current connection state */
 	public enum STATE
 	{
