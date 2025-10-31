@@ -117,6 +117,12 @@ public class BluetoothCommService extends CommService
 	{
 		log.log(Level.FINE, "connect to: " + device);
 
+		// Check state early to avoid unnecessary queueing
+		if (getState() == STATE.CONNECTING || getState() == STATE.CONNECTED) {
+			log.log(Level.WARNING, "Already connecting/connected - ignoring connect request");
+			return;
+		}
+
 		// Use coordinator ASYNC to prevent ANR on UI thread
 		CommService.coordinator.executeExclusive(
 			"BluetoothCommService.connect",
@@ -124,15 +130,20 @@ public class BluetoothCommService extends CommService
 			() -> {
 				connectionLock.lock();
 				try {
-					// Clean up any existing connection threads before starting new connection
-					cleanupConnectThread();
-					cleanupWorkerThread();
+					// Double-check state inside lock
+					if (getState() == STATE.NONE || getState() == STATE.OFFLINE || getState() == STATE.LISTEN) {
+						// Clean up any existing connection threads before starting new connection
+						cleanupConnectThread();
+						cleanupWorkerThread();
 
-					setState(STATE.CONNECTING);
+						setState(STATE.CONNECTING);
 
-					// Start the thread to connect with the given device
-					mBtConnectThread = new BtConnectThread((BluetoothDevice)device, secure);
-					mBtConnectThread.start();
+						// Start the thread to connect with the given device
+						mBtConnectThread = new BtConnectThread((BluetoothDevice)device, secure);
+						mBtConnectThread.start();
+					} else {
+						log.log(Level.WARNING, "State changed to " + getState() + " - skipping connect");
+					}
 				} finally {
 					connectionLock.unlock();
 				}
@@ -193,6 +204,12 @@ public class BluetoothCommService extends CommService
 	{
 		log.log(Level.FINE, "stop");
 
+		// Check state early to avoid unnecessary queueing
+		if (getState() == STATE.OFFLINE) {
+			log.log(Level.FINE, "Already offline - ignoring stop request");
+			return;
+		}
+
 		// Use coordinator ASYNC to deduplicate multiple stop calls during disconnect storm
 		// CRITICAL: Don't block UI thread!
 		CommService.coordinator.executeExclusive(
@@ -201,13 +218,18 @@ public class BluetoothCommService extends CommService
 			() -> {
 				connectionLock.lock();
 				try {
-					elm.removeTelegramWriter(ser);
+					// Double-check state inside lock
+					if (getState() != STATE.OFFLINE) {
+						elm.removeTelegramWriter(ser);
 
-					// Properly cleanup all threads with timeout
-					cleanupConnectThread();
-					cleanupWorkerThread();
+						// Properly cleanup all threads with timeout
+						cleanupConnectThread();
+						cleanupWorkerThread();
 
-					setState(STATE.OFFLINE);
+						setState(STATE.OFFLINE);
+					} else {
+						log.log(Level.FINE, "Already offline inside lock - skipping cleanup");
+					}
 				} finally {
 					connectionLock.unlock();
 				}

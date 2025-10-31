@@ -111,7 +111,7 @@ public class BtDeviceListActivity extends AppCompatActivity
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			getWindow().setStatusBarColor(Color.parseColor("#212121"));
 			// Also set navigation bar to match if supported
-			getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+			getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));
 		}
 
 		// Set result CANCELED in case the user backs out

@@ -59,7 +59,7 @@ public class VehicleInfoActivity extends AppCompatActivity {
 
         // Set navigation bar to black
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setNavigationBarColor(0xFF000000);
+            getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));
         }
 
         // Set up action bar

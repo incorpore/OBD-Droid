@@ -357,6 +357,11 @@ public class MainActivity extends AppCompatActivity
     // === Vehicle Info Footer ===
     private com.obddroid.ui.components.VehicleInfoFooter vehicleInfoFooter;
 
+    // === Connection Loading Overlay ===
+    private View connectionLoadingOverlay;
+    private TextView connectionLoadingText;
+    private TextView connectionLoadingSubtext;
+
     ElmProt.STAT getEcuConnectionState() {
         return ecuConnectionState;
     }
@@ -401,14 +406,17 @@ public class MainActivity extends AppCompatActivity
                         switch ((CommService.STATE) msg.obj)
                         {
                             case CONNECTED:
+                                hideConnectionLoadingOverlay();
                                 onConnect();
                                 break;
 
                             case CONNECTING:
                                 setStatus(R.string.title_connecting);
+                                showConnectionLoadingOverlay("Connecting to adapter...", "Please wait");
                                 break;
 
                             default:
+                                hideConnectionLoadingOverlay();
                                 onDisconnect();
                                 break;
                         }
@@ -747,7 +755,7 @@ public class MainActivity extends AppCompatActivity
         // Set status bar and navigation bar colors to match our theme right away
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setStatusBarColor(Color.parseColor("#212121"));
-            getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+            getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));
         }
 
         // get additional permissions
@@ -1768,7 +1776,7 @@ public class MainActivity extends AppCompatActivity
             {
                 // Ultra-dark mode: hide status bar and make everything black
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    getWindow().setNavigationBarColor(Color.BLACK);
+                    getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));
                 }
 
                 // Hide status and navigation bars using modern API
@@ -1786,7 +1794,7 @@ public class MainActivity extends AppCompatActivity
             {
                 // Show the status bar and restore dark grey theme
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+                    getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));
                 }
 
                 // Show status and navigation bars using modern API
@@ -1805,7 +1813,7 @@ public class MainActivity extends AppCompatActivity
         if (!prefs.getBoolean(PREF_FULLSCREEN, false)) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 getWindow().setStatusBarColor(Color.parseColor("#212121"));
-                getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+                getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));
             }
         }
 
@@ -3211,6 +3219,56 @@ public class MainActivity extends AppCompatActivity
         } else {
             log.warning("Could not find footer or overlay view");
         }
+
+        // Setup connection loading overlay
+        setupConnectionLoadingOverlay();
+    }
+
+    /**
+     * Setup connection loading overlay for blocking UI during connection
+     */
+    private void setupConnectionLoadingOverlay() {
+        connectionLoadingOverlay = findViewById(R.id.connection_loading_overlay);
+        connectionLoadingText = findViewById(R.id.connection_loading_text);
+        connectionLoadingSubtext = findViewById(R.id.connection_loading_subtext);
+
+        if (connectionLoadingOverlay != null) {
+            log.info("Connection loading overlay initialized");
+        } else {
+            log.warning("Could not find connection loading overlay");
+        }
+    }
+
+    /**
+     * Show the connection loading overlay
+     * @param text Main text to display
+     * @param subtext Subtext to display (optional)
+     */
+    private void showConnectionLoadingOverlay(String text, String subtext) {
+        runOnUiThread(() -> {
+            if (connectionLoadingOverlay != null) {
+                if (connectionLoadingText != null && text != null) {
+                    connectionLoadingText.setText(text);
+                }
+                if (connectionLoadingSubtext != null) {
+                    connectionLoadingSubtext.setText(subtext != null ? subtext : "Please wait");
+                }
+                connectionLoadingOverlay.setVisibility(View.VISIBLE);
+                log.info("Showing connection loading overlay: " + text);
+            }
+        });
+    }
+
+    /**
+     * Hide the connection loading overlay
+     */
+    private void hideConnectionLoadingOverlay() {
+        runOnUiThread(() -> {
+            if (connectionLoadingOverlay != null) {
+                connectionLoadingOverlay.setVisibility(View.GONE);
+                log.info("Hiding connection loading overlay");
+            }
+        });
     }
 
     /**
@@ -3371,34 +3429,35 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
-        try {
-            log.info("Starting disconnect process");
+        log.info("Starting disconnect process");
 
-            // Clear vehicle data on disconnect
-            VehicleManager.getInstance().clearVehicle();
+        // Clear vehicle data on disconnect
+        VehicleManager.getInstance().clearVehicle();
 
-            // Stop communication service to ensure clean disconnect
-            if (mCommService != null) {
-                mCommService.stop();
-                log.info("Stopped communication service on disconnect");
-            }
-
-            // handle further initialisations
-            setMode(MODE.OFFLINE);
-            // Reset ECU connection state
-            ecuConnectionState = ElmProt.STAT.UNDEFINED;
-            ecuUserSelected = false;
-            // Return to main screen
-            setObdService(ObdProt.OBD_SVC_NONE, null);
-
-            CoPilotController.getInstance().endSession("adapter disconnected");
-
-            DiscoveryManager.getInstance().endSession("Adapter disconnected");
-        } finally {
-            // Always reset flag when done
-            isDisconnecting.set(false);
-            log.info("Disconnect process completed");
+        // Stop communication service to ensure clean disconnect
+        if (mCommService != null) {
+            mCommService.stop();
+            log.info("Stopped communication service on disconnect");
         }
+
+        // handle further initialisations
+        setMode(MODE.OFFLINE);
+        // Reset ECU connection state
+        ecuConnectionState = ElmProt.STAT.UNDEFINED;
+        ecuUserSelected = false;
+        // Return to main screen
+        setObdService(ObdProt.OBD_SVC_NONE, null);
+
+        CoPilotController.getInstance().endSession("adapter disconnected");
+
+        DiscoveryManager.getInstance().endSession("Adapter disconnected");
+
+        // Reset the flag after a delay since stop() is now async
+        // This ensures subsequent disconnects after 1 second will work
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            isDisconnecting.set(false);
+            log.info("Disconnect guard reset - ready for next disconnect");
+        }, 1000);
     }
 
     /**

@@ -143,6 +143,9 @@ public class LiveDataActivity extends AppCompatActivity
         CommService.elm.setService(ObdProt.OBD_SVC_DATA);
         log.info("Set OBD service to OBD_SVC_DATA (Live Data mode)");
 
+        // Show streaming notification
+        SnackbarHelper.showInfo(this, "Streaming live data, hang tight!");
+
         // Refresh adapter with current PIDs (in case new ones were added while paused)
         if (recyclerAdapter != null && !ObdProt.PidPvs.isEmpty()) {
             recyclerAdapter.updateData(ObdProt.PidPvs);

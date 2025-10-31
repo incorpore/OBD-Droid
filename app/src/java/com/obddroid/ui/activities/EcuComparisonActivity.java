@@ -69,7 +69,7 @@ public class EcuComparisonActivity extends AppCompatActivity {
 
         // Set navigation bar color to match footer
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setNavigationBarColor(0xFF212121);  // #212121
+            getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));  // #212121
         }
 
         // Set up action bar with back button

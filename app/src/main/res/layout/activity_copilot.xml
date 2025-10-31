@@ -145,6 +145,7 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="60dp"
             app:cardElevation="8dp"
             app:cardCornerRadius="0dp">
 
@@ -239,5 +240,13 @@
         </LinearLayout>
 
     </FrameLayout>
+
+    <com.obddroid.ui.components.VehicleInfoFooter
+        android:id="@+id/vehicle_footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/background_secondary"
+        android:elevation="@dimen/elevation_footer"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

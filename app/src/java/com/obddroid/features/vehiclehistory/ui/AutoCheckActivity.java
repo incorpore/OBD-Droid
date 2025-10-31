@@ -136,7 +136,7 @@ public class AutoCheckActivity extends AppCompatActivity {
         setContentView(R.layout.activity_autocheck);
 
         // Set navigation bar color to match footer
-        getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+        getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));
 
         // Configure action bar
         if (getSupportActionBar() != null) {

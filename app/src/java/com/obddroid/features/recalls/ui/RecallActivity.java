@@ -85,7 +85,7 @@ public class RecallActivity extends AppCompatActivity {
 
         // Set navigation bar to black
         if (getWindow() != null) {
-            getWindow().setNavigationBarColor(0xFF000000);
+            getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));
         }
 
         if (getSupportActionBar() != null) {

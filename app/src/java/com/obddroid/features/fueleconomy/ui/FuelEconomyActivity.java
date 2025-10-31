@@ -113,7 +113,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         // Set status bar and navigation bar colors to match footer (dark grey #212121)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setStatusBarColor(Color.parseColor("#212121"));
-            getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+            getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));
         }
 
         // Set up action bar

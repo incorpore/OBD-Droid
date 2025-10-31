@@ -116,7 +116,7 @@ public class SettingsActivity
 				windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
 			}
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-				getWindow().setNavigationBarColor(Color.BLACK);
+				getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));
 			}
 			// Make the toolbar black
 			if (toolbar != null) {
@@ -128,7 +128,7 @@ public class SettingsActivity
 			// Set status bar and navigation bar colors to match the toolbar
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 				getWindow().setStatusBarColor(Color.parseColor("#212121"));
-				getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+				getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));
 			}
 			// Ensure toolbar is dark grey
 			if (toolbar != null) {
@@ -722,7 +722,7 @@ public class SettingsActivity
 						windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
 					}
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-						getActivity().getWindow().setNavigationBarColor(Color.BLACK);
+						getActivity().getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.background_secondary));
 					}
 					// Make the toolbar black
 					if (toolbar != null) {
@@ -737,7 +737,7 @@ public class SettingsActivity
 						windowInsetsController.show(WindowInsetsCompat.Type.systemBars());
 					}
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-						getActivity().getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+						getActivity().getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.background_secondary));
 					}
 					// Restore toolbar color
 					if (toolbar != null) {

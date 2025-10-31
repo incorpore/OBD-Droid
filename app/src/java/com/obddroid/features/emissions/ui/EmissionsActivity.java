@@ -101,7 +101,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
 
         // Set navigation bar color to match footer
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setNavigationBarColor(0xFF212121);  // #212121
+            getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));  // #212121
         }
 
         // Setup action bar

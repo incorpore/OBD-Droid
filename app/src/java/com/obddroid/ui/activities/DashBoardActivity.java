@@ -190,7 +190,7 @@ public class DashBoardActivity extends AppCompatActivity
 		// Set status bar and navigation bar colors to match our theme
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			getWindow().setStatusBarColor(Color.parseColor("#212121"));
-			getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+			getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));
 		}
 
 		// Apply full screen based on preference using modern WindowInsetsController

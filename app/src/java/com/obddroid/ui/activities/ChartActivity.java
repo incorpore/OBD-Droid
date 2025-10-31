@@ -116,7 +116,7 @@ public class ChartActivity extends AppCompatActivity {
         // Set status bar and navigation bar colors
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setStatusBarColor(Color.parseColor("#212121"));
-            getWindow().setNavigationBarColor(Color.parseColor("#212121"));
+            getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));
         }
 
         // Apply fullscreen based on preference
