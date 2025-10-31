@@ -116,6 +116,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -339,6 +340,9 @@ public class MainActivity extends AppCompatActivity
     // === Auto-Reconnect Tracking ===
     private boolean hasAttemptedAutoReconnect = false;
     private boolean isManuallyReconnecting = false; // Flag to prevent infinite loop during manual reconnect
+
+    // === Disconnect Deduplication ===
+    private final AtomicBoolean isDisconnecting = new AtomicBoolean(false); // Prevent multiple concurrent disconnects
 
     // === Auto-Reconnect Countdown UI ===
     private View autoReconnectCountdownBar;
@@ -2591,6 +2595,16 @@ public class MainActivity extends AppCompatActivity
         // Attempt to connect to the device
         mCommService = new BluetoothCommService(this, mHandler);
         mCommService.connect(device, secure);
+
+        // Clear the manual reconnecting flag after a reasonable timeout
+        // Since connect() is now async, we need to ensure the flag gets cleared
+        // even if the connection fails silently
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (isManuallyReconnecting) {
+                log.info("Clearing manual reconnect flag after connection attempt");
+                isManuallyReconnecting = false;
+            }
+        }, 5000);  // 5 seconds is enough for connection to succeed or fail
     }
 
     /**
@@ -2604,6 +2618,16 @@ public class MainActivity extends AppCompatActivity
         // Attempt to connect to the device
         mCommService = new NetworkCommService(this, mHandler);
         ((NetworkCommService) mCommService).connect(address, port);
+
+        // Clear the manual reconnecting flag after a reasonable timeout
+        // Since connect() is now async, we need to ensure the flag gets cleared
+        // even if the connection fails silently
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (isManuallyReconnecting) {
+                log.info("Clearing manual reconnect flag after connection attempt");
+                isManuallyReconnecting = false;
+            }
+        }, 5000);  // 5 seconds is enough for connection to succeed or fail
     }
 
     /**
@@ -3341,26 +3365,40 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
-        // Clear vehicle data on disconnect
-        VehicleManager.getInstance().clearVehicle();
-
-        // Stop communication service to ensure clean disconnect
-        if (mCommService != null) {
-            mCommService.stop();
-            log.info("Stopped communication service on disconnect");
+        // CRITICAL: Prevent multiple concurrent disconnects
+        if (!isDisconnecting.compareAndSet(false, true)) {
+            log.info("Disconnect already in progress - skipping redundant call");
+            return;
         }
 
-        // handle further initialisations
-        setMode(MODE.OFFLINE);
-        // Reset ECU connection state
-        ecuConnectionState = ElmProt.STAT.UNDEFINED;
-        ecuUserSelected = false;
-        // Return to main screen
-        setObdService(ObdProt.OBD_SVC_NONE, null);
+        try {
+            log.info("Starting disconnect process");
 
-        CoPilotController.getInstance().endSession("adapter disconnected");
+            // Clear vehicle data on disconnect
+            VehicleManager.getInstance().clearVehicle();
 
-        DiscoveryManager.getInstance().endSession("Adapter disconnected");
+            // Stop communication service to ensure clean disconnect
+            if (mCommService != null) {
+                mCommService.stop();
+                log.info("Stopped communication service on disconnect");
+            }
+
+            // handle further initialisations
+            setMode(MODE.OFFLINE);
+            // Reset ECU connection state
+            ecuConnectionState = ElmProt.STAT.UNDEFINED;
+            ecuUserSelected = false;
+            // Return to main screen
+            setObdService(ObdProt.OBD_SVC_NONE, null);
+
+            CoPilotController.getInstance().endSession("adapter disconnected");
+
+            DiscoveryManager.getInstance().endSession("Adapter disconnected");
+        } finally {
+            // Always reset flag when done
+            isDisconnecting.set(false);
+            log.info("Disconnect process completed");
+        }
     }
 
     /**

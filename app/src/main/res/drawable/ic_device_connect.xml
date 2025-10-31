@@ -4,7 +4,31 @@
     android:viewportWidth="24"
     android:viewportHeight="24"
     android:tint="@android:color/white">
+
+    <!-- Simple Electrical Plug - Disconnected -->
+
+    <!-- Plug Body -->
     <path
         android:fillColor="@android:color/white"
-        android:pathData="M7,2v11h3v9l7,-12h-4l4,-8z"/>
+        android:pathData="M8,10 L16,10 Q17,10 17,11 L17,18 Q17,19 16,19 L8,19 Q7,19 7,18 L7,11 Q7,10 8,10 Z"/>
+
+    <!-- Left Prong -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M9,6 L11,6 L11,10 L9,10 Z"/>
+
+    <!-- Right Prong -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M13,6 L15,6 L15,10 L13,10 Z"/>
+
+    <!-- Cable -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M10.5,19 L10.5,22 L13.5,22 L13.5,19 Z"/>
+
+    <!-- Plug face details -->
+    <path
+        android:fillColor="#424242"
+        android:pathData="M9,12 L15,12 L15,17 L9,17 Z"/>
 </vector>

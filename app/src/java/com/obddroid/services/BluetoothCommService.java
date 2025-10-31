@@ -117,20 +117,32 @@ public class BluetoothCommService extends CommService
 	{
 		log.log(Level.FINE, "connect to: " + device);
 
-		connectionLock.lock();
-		try {
-			// Clean up any existing connection threads before starting new connection
-			cleanupConnectThread();
-			cleanupWorkerThread();
+		// Use coordinator ASYNC to prevent ANR on UI thread
+		CommService.coordinator.executeExclusive(
+			"BluetoothCommService.connect",
+			RequestPriority.CONNECTION,
+			() -> {
+				connectionLock.lock();
+				try {
+					// Clean up any existing connection threads before starting new connection
+					cleanupConnectThread();
+					cleanupWorkerThread();
 
-			setState(STATE.CONNECTING);
+					setState(STATE.CONNECTING);
 
-			// Start the thread to connect with the given device
-			mBtConnectThread = new BtConnectThread((BluetoothDevice)device, secure);
-			mBtConnectThread.start();
-		} finally {
-			connectionLock.unlock();
-		}
+					// Start the thread to connect with the given device
+					mBtConnectThread = new BtConnectThread((BluetoothDevice)device, secure);
+					mBtConnectThread.start();
+				} finally {
+					connectionLock.unlock();
+				}
+				return null;
+			}
+		).exceptionally(e -> {
+			log.log(Level.WARNING, "Connection failed via coordinator", e);
+			setState(STATE.OFFLINE);
+			return null;
+		});
 	}
 
 	/**
@@ -181,18 +193,32 @@ public class BluetoothCommService extends CommService
 	{
 		log.log(Level.FINE, "stop");
 
-		connectionLock.lock();
-		try {
-			elm.removeTelegramWriter(ser);
+		// Use coordinator ASYNC to deduplicate multiple stop calls during disconnect storm
+		// CRITICAL: Don't block UI thread!
+		CommService.coordinator.executeExclusive(
+			"BluetoothCommService.stop",
+			RequestPriority.CONNECTION,
+			() -> {
+				connectionLock.lock();
+				try {
+					elm.removeTelegramWriter(ser);
 
-			// Properly cleanup all threads with timeout
-			cleanupConnectThread();
-			cleanupWorkerThread();
+					// Properly cleanup all threads with timeout
+					cleanupConnectThread();
+					cleanupWorkerThread();
 
+					setState(STATE.OFFLINE);
+				} finally {
+					connectionLock.unlock();
+				}
+				return null;
+			}
+		).exceptionally(e -> {
+			log.log(Level.WARNING, "Stop failed via coordinator", e);
+			// Force offline state even if coordinator fails
 			setState(STATE.OFFLINE);
-		} finally {
-			connectionLock.unlock();
-		}
+			return null;
+		});
 	}
 
 	/**

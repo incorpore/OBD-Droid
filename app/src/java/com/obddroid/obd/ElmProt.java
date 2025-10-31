@@ -1443,14 +1443,14 @@ public class ElmProt
 			if (service == OBD_SVC_FREEZEFRAME) {
 				freezeFrameInitialized = false;
 			}
-			
+
 			// send corresponding command(s)
 			switch (service)
 			{
 				case OBD_SVC_CAN_MONITOR:
 					sendCommand(CMD.CANMONITOR, 0);
 					break;
-				
+
 				default:
 					super.setService(service, clearLists);
 			}

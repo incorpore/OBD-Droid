@@ -8,6 +8,7 @@ package com.obddroid.services;
  *
  * PRIORITY RATIONALE:
  * - CRITICAL: Operations that affect safety or must run immediately (clear codes, reset)
+ * - CONNECTION: Connection lifecycle operations (connect/disconnect/stop)
  * - HIGH: User-initiated diagnostic operations (fault scan, ECU discovery)
  * - NORMAL: Batch operations like full vehicle scans (sequential stages)
  * - LOW: Background polling that can be deferred (live data, fuel economy)
@@ -23,7 +24,19 @@ public enum RequestPriority {
      *
      * Timeout: 60 seconds (generous for critical ops)
      */
-    CRITICAL(4, 60_000L),
+    CRITICAL(5, 60_000L),
+
+    /**
+     * CONNECTION priority - Connection lifecycle operations.
+     *
+     * Use cases:
+     * - Connect/disconnect operations (to prevent hang-ups)
+     * - Stop service (to deduplicate multiple calls)
+     * - setService() state transitions
+     *
+     * Timeout: 45 seconds (connection ops need time)
+     */
+    CONNECTION(4, 45_000L),
 
     /**
      * HIGH priority - User-initiated diagnostic operations.
@@ -81,7 +94,7 @@ public enum RequestPriority {
 
     /**
      * Get the numeric priority value
-     * @return Priority value (4 = CRITICAL, 3 = HIGH, 2 = NORMAL, 1 = LOW)
+     * @return Priority value (5 = CRITICAL, 4 = CONNECTION, 3 = HIGH, 2 = NORMAL, 1 = LOW)
      */
     public int getValue() {
         return value;
