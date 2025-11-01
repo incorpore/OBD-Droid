@@ -92,6 +92,17 @@ public class VehicleInfoActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onBackPressed() {
+        // If vehicle info footer is expanded, collapse it first before navigating back
+        if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {
+            vehicleInfoFooter.collapse();
+        } else {
+            // Footer not expanded or doesn't exist - proceed with normal back behavior
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.vehicle_info_menu, menu);
         return true;

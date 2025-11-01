@@ -19,6 +19,8 @@ public class RecallSearchResult {
     private final VehicleData vehicleData;
     private final List<RecallRecord> recalls;
     private final long timestamp;
+    private AutoCheckRecallResult autoCheckRecalls;
+    private boolean autoCheckFetchAttempted;
 
     public RecallSearchResult(String vin, VehicleData vehicleData, List<RecallRecord> recalls) {
         this.vin = vin;
@@ -110,5 +112,31 @@ public class RecallSearchResult {
      */
     public boolean isFresh() {
         return getAgeMinutes() < 60;
+    }
+
+    /**
+     * Attach AutoCheck open recall data to this result.
+     */
+    public void setAutoCheckRecalls(AutoCheckRecallResult autoCheckRecalls) {
+        this.autoCheckRecalls = autoCheckRecalls;
+    }
+
+    /**
+     * Retrieve AutoCheck open recall data if previously fetched.
+     */
+    public AutoCheckRecallResult getAutoCheckRecalls() {
+        return autoCheckRecalls;
+    }
+
+    public void setAutoCheckFetchAttempted(boolean attempted) {
+        this.autoCheckFetchAttempted = attempted;
+    }
+
+    public boolean hasAutoCheckFetchAttempted() {
+        return autoCheckFetchAttempted;
+    }
+
+    public boolean hasOpenRecallsFromAutoCheck() {
+        return autoCheckRecalls != null && autoCheckRecalls.hasOpenRecalls();
     }
 }
