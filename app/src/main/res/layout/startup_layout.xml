@@ -608,10 +608,12 @@
             android:visibility="gone">
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="280dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:minHeight="200dp"
                 android:padding="32dp"
                 android:background="@drawable/loading_dialog_background"
                 android:elevation="8dp">
@@ -625,17 +627,18 @@
 
                 <TextView
                     android:id="@+id/connection_loading_text"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="Connecting to adapter..."
                     android:textColor="@android:color/white"
                     android:textSize="16sp"
+                    android:gravity="center"
                     android:textStyle="bold"/>
 
                 <TextView
                     android:id="@+id/connection_loading_subtext"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="Please wait"

@@ -102,6 +102,7 @@ import com.obddroid.features.copilot.data.CoPilotController;
 import com.obddroid.services.VehicleManager;
 import com.obddroid.services.discovery.DiscoveryManager;
 import com.obddroid.R;
+import com.obddroid.utils.VehicleData;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -357,10 +358,24 @@ public class MainActivity extends AppCompatActivity
     // === Vehicle Info Footer ===
     private com.obddroid.ui.components.VehicleInfoFooter vehicleInfoFooter;
 
+    private enum ConnectionOverlayState {
+        OFFLINE,
+        CONNECTING,
+        DECODING,
+        FINALIZING,
+        READY,
+        FAILED
+    }
+
     // === Connection Loading Overlay ===
     private View connectionLoadingOverlay;
     private TextView connectionLoadingText;
     private TextView connectionLoadingSubtext;
+    private VehicleManager.VehicleChangeListener vehicleInfoListener;
+    private static final long VEHICLE_INFO_TIMEOUT_MS = 15000L;
+    private final Handler connectionOverlayHandler = new Handler(Looper.getMainLooper());
+    private Runnable vehicleInfoTimeoutRunnable;
+    private ConnectionOverlayState overlayState = ConnectionOverlayState.OFFLINE;
 
     ElmProt.STAT getEcuConnectionState() {
         return ecuConnectionState;
@@ -406,18 +421,18 @@ public class MainActivity extends AppCompatActivity
                         switch ((CommService.STATE) msg.obj)
                         {
                             case CONNECTED:
-                                hideConnectionLoadingOverlay();
+                                setOverlayState(ConnectionOverlayState.DECODING);
                                 onConnect();
                                 break;
 
                             case CONNECTING:
                                 setStatus(R.string.title_connecting);
-                                showConnectionLoadingOverlay("Connecting to adapter...", "Please wait");
+                                setOverlayState(ConnectionOverlayState.CONNECTING);
                                 break;
 
                             default:
-                                hideConnectionLoadingOverlay();
                                 onDisconnect();
+                                setOverlayState(ConnectionOverlayState.OFFLINE);
                                 break;
                         }
                         break;
@@ -456,8 +471,6 @@ public class MainActivity extends AppCompatActivity
                             log.info("Saved device name for reconnect: " + mConnectedDeviceName);
                         }
 
-                        SnackbarHelper.showSuccess(MainActivity.this,
-                                getString(R.string.connected_to) + mConnectedDeviceName);
                         DiscoveryManager.getInstance().updateAdapterName(mConnectedDeviceName);
                         break;
 
@@ -736,6 +749,8 @@ public class MainActivity extends AppCompatActivity
 
         // Initialize VehicleManager with context
         VehicleManager.getInstance(this);
+        // Pre-warm VIN database on startup for instant decoding (runs in background)
+        VehicleManager.getInstance().prewarmDatabase();
         DiscoveryManager.getInstance().initialize(getApplicationContext());
         CoPilotController.getInstance().initialize(this);
 
@@ -1131,6 +1146,16 @@ public class MainActivity extends AppCompatActivity
 
         if (remoteTelemetryUiCoordinator != null) {
             remoteTelemetryUiCoordinator.release();
+        }
+
+        cancelVehicleInfoTimeout();
+
+        if (vehicleInfoListener != null) {
+            VehicleManager vehicleManager = VehicleManager.getInstance();
+            if (vehicleManager != null) {
+                vehicleManager.removeListener(vehicleInfoListener);
+            }
+            vehicleInfoListener = null;
         }
 
         DiscoveryManager.getInstance().shutdown();
@@ -2693,7 +2718,6 @@ public class MainActivity extends AppCompatActivity
                     String btAddress = prefs.getString("LAST_DEV_ADDRESS", null);
                     if (btAddress != null) {
                         connectBtDevice(btAddress, prefs.getBoolean("bt_secure_connection", false));
-                        SnackbarHelper.showInfo(this, "Reconnecting to Bluetooth adapter...");
                     } else {
                         isManuallyReconnecting = false;
                         SnackbarHelper.showWarning(this, "No Bluetooth device address found. Please select an adapter.");
@@ -3215,6 +3239,12 @@ public class MainActivity extends AppCompatActivity
 
         if (vehicleInfoFooter != null && overlay != null) {
             vehicleInfoFooter.setOverlayView(overlay);
+            vehicleInfoFooter.setVehicleInfoReadyListener(() -> {
+                if (overlayState == ConnectionOverlayState.DECODING ||
+                    overlayState == ConnectionOverlayState.FINALIZING) {
+                    setOverlayState(ConnectionOverlayState.READY);
+                }
+            });
             log.info("Footer overlay wired up successfully");
         } else {
             log.warning("Could not find footer or overlay view");
@@ -3222,6 +3252,80 @@ public class MainActivity extends AppCompatActivity
 
         // Setup connection loading overlay
         setupConnectionLoadingOverlay();
+    }
+
+    private void cancelVehicleInfoTimeout() {
+        if (vehicleInfoTimeoutRunnable != null) {
+            connectionOverlayHandler.removeCallbacks(vehicleInfoTimeoutRunnable);
+            vehicleInfoTimeoutRunnable = null;
+        }
+    }
+
+    private void startVehicleInfoTimeout() {
+        cancelVehicleInfoTimeout();
+        vehicleInfoTimeoutRunnable = () -> {
+            vehicleInfoTimeoutRunnable = null;
+            if (overlayState == ConnectionOverlayState.DECODING ||
+                overlayState == ConnectionOverlayState.FINALIZING) {
+                log.warning("Vehicle info overlay timed out while waiting for data");
+                setOverlayState(ConnectionOverlayState.FAILED);
+            }
+        };
+        connectionOverlayHandler.postDelayed(vehicleInfoTimeoutRunnable, VEHICLE_INFO_TIMEOUT_MS);
+    }
+
+    private void setOverlayState(ConnectionOverlayState newState) {
+        setOverlayState(newState, null, null);
+    }
+
+    private void setOverlayState(ConnectionOverlayState newState, String overrideTitle, String overrideSubtitle) {
+        overlayState = newState;
+
+        switch (newState) {
+            case OFFLINE:
+                cancelVehicleInfoTimeout();
+                if (getMode() == MODE.DEMO) {
+                    hideConnectionLoadingOverlay();
+                } else {
+                    showConnectionLoadingOverlay(
+                            overrideTitle != null ? overrideTitle : getString(R.string.connection_required_title),
+                            overrideSubtitle != null ? overrideSubtitle : getString(R.string.connection_required_message));
+                }
+                break;
+
+            case CONNECTING:
+                cancelVehicleInfoTimeout();
+                showConnectionLoadingOverlay(
+                        overrideTitle != null ? overrideTitle : getString(R.string.connection_overlay_connecting_title),
+                        overrideSubtitle != null ? overrideSubtitle : getString(R.string.connection_overlay_connecting_subtitle));
+                break;
+
+            case DECODING:
+                showConnectionLoadingOverlay(
+                        overrideTitle != null ? overrideTitle : getString(R.string.connection_overlay_decoding_title),
+                        overrideSubtitle != null ? overrideSubtitle : getString(R.string.connection_overlay_decoding_subtitle));
+                startVehicleInfoTimeout();
+                break;
+
+            case FINALIZING:
+                showConnectionLoadingOverlay(
+                        overrideTitle != null ? overrideTitle : getString(R.string.connection_overlay_finalizing_title),
+                        overrideSubtitle != null ? overrideSubtitle : getString(R.string.connection_overlay_finalizing_subtitle));
+                startVehicleInfoTimeout();
+                break;
+
+            case FAILED:
+                cancelVehicleInfoTimeout();
+                showConnectionLoadingOverlay(
+                        overrideTitle != null ? overrideTitle : getString(R.string.connection_overlay_failed_title),
+                        overrideSubtitle != null ? overrideSubtitle : getString(R.string.connection_overlay_failed_subtitle));
+                break;
+
+            case READY:
+                cancelVehicleInfoTimeout();
+                hideConnectionLoadingOverlay();
+                break;
+        }
     }
 
     /**
@@ -3237,6 +3341,48 @@ public class MainActivity extends AppCompatActivity
         } else {
             log.warning("Could not find connection loading overlay");
         }
+
+        if (vehicleInfoListener == null) {
+            vehicleInfoListener = new VehicleManager.SimpleVehicleChangeListener() {
+                @Override
+                public void onDecodingStarted() {
+                    setOverlayState(ConnectionOverlayState.DECODING);
+                }
+
+                @Override
+                public void onVehicleDecoded(VehicleData vehicleData) {
+                    if (vehicleInfoFooter != null && vehicleInfoFooter.hasVehicleData()) {
+                        setOverlayState(ConnectionOverlayState.READY);
+                    } else {
+                        setOverlayState(ConnectionOverlayState.FINALIZING);
+                    }
+                }
+
+                @Override
+                public void onDecodingError(String error) {
+                    setOverlayState(ConnectionOverlayState.FAILED);
+                }
+
+                @Override
+                public void onVINRetrievalFailed() {
+                    setOverlayState(ConnectionOverlayState.FAILED);
+                }
+
+                @Override
+                public void onVehicleDisconnected() {
+                    setOverlayState(ConnectionOverlayState.OFFLINE);
+                }
+            };
+
+            VehicleManager vehicleManager = VehicleManager.getInstance();
+            if (vehicleManager != null) {
+                vehicleManager.addListener(vehicleInfoListener);
+            } else {
+                log.warning("VehicleManager instance not available when setting up loading overlay listener");
+            }
+        }
+
+        setOverlayState(ConnectionOverlayState.OFFLINE);
     }
 
     /**
@@ -3263,6 +3409,7 @@ public class MainActivity extends AppCompatActivity
      * Hide the connection loading overlay
      */
     private void hideConnectionLoadingOverlay() {
+        cancelVehicleInfoTimeout();
         runOnUiThread(() -> {
             if (connectionLoadingOverlay != null) {
                 connectionLoadingOverlay.setVisibility(View.GONE);
@@ -3415,6 +3562,8 @@ public class MainActivity extends AppCompatActivity
      */
     private void onDisconnect()
     {
+        setOverlayState(ConnectionOverlayState.OFFLINE);
+
         // Don't clear vehicle data or set up dashboard during manual reconnect
         if (isManuallyReconnecting) {
             log.info("Skipping full disconnect handling - manual reconnect in progress");

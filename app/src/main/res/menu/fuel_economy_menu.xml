@@ -9,6 +9,12 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_save_report"
+        android:title="@string/action_save_report"
+        android:icon="@drawable/ic_save_24"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_info"
         android:title="About"
         android:icon="@drawable/ic_info_24"

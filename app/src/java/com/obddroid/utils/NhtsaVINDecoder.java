@@ -29,7 +29,7 @@ public class NhtsaVINDecoder {
 
     private static final String TAG = "NhtsaVINDecoder";
     private static final String NHTSA_API_URL = "https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/";
-    private static final int TIMEOUT_MS = 10000; // 10 seconds
+    private static final int TIMEOUT_MS = 3000; // 3 seconds - reduced for better UX
 
     private final Context context;
     private final Gson gson;

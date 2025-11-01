@@ -1,11 +1,14 @@
 package com.obddroid.features.fueleconomy.ui;
 
+import android.app.Dialog;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.view.View;
+import android.view.Window;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,16 +20,22 @@ import com.obddroid.common.ProcessVariables.PvChangeEvent;
 import com.obddroid.common.ProcessVariables.PvChangeListener;
 import com.obddroid.features.fueleconomy.data.FuelEconomyCalculator;
 import com.obddroid.features.fueleconomy.data.FuelEconomyDataManager;
+import com.obddroid.features.fueleconomy.data.FuelEconomyDataManager.HistoricalData;
 import com.obddroid.features.fueleconomy.data.FuelEconomyPreferences;
+import com.obddroid.features.fueleconomy.data.FuelEconomyReportExporter;
 import com.obddroid.features.fueleconomy.ui.FuelEconomyChart;
 import com.obddroid.features.fueleconomy.ui.FuelFlowGauge;
 import com.obddroid.ui.components.VehicleInfoFooter;
+import com.obddroid.utils.SnackbarHelper;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Queue;
 import java.util.logging.Logger;
+import java.io.IOException;
+
+import org.json.JSONException;
 
 /**
  * Fuel Economy Activity
@@ -60,6 +69,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private FuelEconomyDataManager dataManager;
     private FuelEconomyCalculator calculator;
     private FuelEconomyPreferences fuelEconomyPreferences;
+    private FuelEconomyReportExporter reportExporter;
 
     private Handler updateHandler;
     private static final long UPDATE_INTERVAL = 1000; // Update every second
@@ -142,6 +152,7 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         dataManager = new FuelEconomyDataManager();
         calculator = new FuelEconomyCalculator();
         fuelEconomyPreferences = new FuelEconomyPreferences(this);
+        reportExporter = new FuelEconomyReportExporter(this);
 
         // Initialize with demo data
         initializeDemoData();
@@ -259,6 +270,9 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
         } else if (itemId == R.id.action_calibrate) {
             showCalibrationDialog();
             return true;
+        } else if (itemId == R.id.action_save_report) {
+            showSaveReportDialog();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -316,6 +330,149 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
             .setMessage(message)
             .setPositiveButton("Got it", null)
             .show();
+    }
+
+    private void showSaveReportDialog() {
+        if (!hasFuelEconomyData()) {
+            SnackbarHelper.showInfo(this, "Collect fuel economy data before saving a report.");
+            return;
+        }
+
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_export_ecu);
+        dialog.setCancelable(true);
+
+        TextView titleView = dialog.findViewById(R.id.dialog_title);
+        if (titleView != null) {
+            titleView.setText(getString(R.string.fuel_economy_report_title));
+        }
+
+        View csvOption = dialog.findViewById(R.id.option_export_csv);
+        if (csvOption != null) {
+            csvOption.setOnClickListener(v -> {
+                dialog.dismiss();
+                exportFuelEconomyCsv();
+            });
+        }
+
+        View jsonOption = dialog.findViewById(R.id.option_export_json);
+        if (jsonOption != null) {
+            jsonOption.setOnClickListener(v -> {
+                dialog.dismiss();
+                exportFuelEconomyJson();
+            });
+        }
+
+        View cancelButton = dialog.findViewById(R.id.btn_cancel);
+        if (cancelButton != null) {
+            cancelButton.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
+    private void exportFuelEconomyCsv() {
+        FuelEconomyReportExporter.Snapshot snapshot = buildReportSnapshot();
+        try {
+            String location = reportExporter.exportToCsv(snapshot);
+            SnackbarHelper.showSuccess(this, "Fuel economy report saved: " + location, SnackbarHelper.Duration.LONG);
+        } catch (IOException e) {
+            SnackbarHelper.showError(this, "Failed to export fuel economy report: " + e.getMessage(), SnackbarHelper.Duration.LONG);
+            log.severe("Fuel economy CSV export failed: " + e.getMessage());
+        }
+    }
+
+    private void exportFuelEconomyJson() {
+        FuelEconomyReportExporter.Snapshot snapshot = buildReportSnapshot();
+        try {
+            String location = reportExporter.exportToJson(snapshot);
+            SnackbarHelper.showSuccess(this, "Fuel economy report saved: " + location, SnackbarHelper.Duration.LONG);
+        } catch (IOException | JSONException e) {
+            SnackbarHelper.showError(this, "Failed to export fuel economy report: " + e.getMessage(), SnackbarHelper.Duration.LONG);
+            log.severe("Fuel economy JSON export failed: " + e.getMessage());
+        }
+    }
+
+    private boolean hasFuelEconomyData() {
+        if (dataManager != null && dataManager.hasData()) {
+            return true;
+        }
+        return !Float.isNaN(parseNumericValue(instantMpgValue)) || !Float.isNaN(parseNumericValue(averageMpgValue));
+    }
+
+    private FuelEconomyReportExporter.Snapshot buildReportSnapshot() {
+        FuelEconomyReportExporter.Snapshot snapshot = new FuelEconomyReportExporter.Snapshot();
+
+        String vin = vehicleManager != null ? vehicleManager.getCurrentVIN() : null;
+        snapshot.vin = vin;
+
+        if (vehicleManager != null) {
+            com.obddroid.utils.VehicleData vehicleData = vehicleManager.getCurrentVehicleData();
+            if (vehicleData != null) {
+                snapshot.vehicleName = vehicleData.getDisplayName();
+            }
+        }
+
+        snapshot.instantMpg = parseNumericValue(instantMpgValue);
+        snapshot.averageMpg = parseNumericValue(averageMpgValue);
+        snapshot.fuelLevelPercent = parseNumericValue(fuelLevelValue);
+        snapshot.estimatedRangeMiles = parseNumericValue(rangeValue);
+        snapshot.fuelFlowGalPerHour = parseNumericValue(fuelFlowValue);
+        snapshot.throttlePercent = parseNumericValue(throttlePositionValue);
+        snapshot.vehicleSpeedMph = parseNumericValue(vehicleSpeedValue);
+        snapshot.timeToEmpty = sanitizeText(timeToEmptyValue);
+
+        HistoricalData history = dataManager != null ? dataManager.getHistoricalData() : null;
+        if (history != null) {
+            snapshot.recentAvgMpg = history.recentAverage;
+            snapshot.mediumAvgMpg = history.mediumAverage;
+            snapshot.longTermAvgMpg = history.longTermAverage;
+        } else {
+            snapshot.recentAvgMpg = Float.NaN;
+            snapshot.mediumAvgMpg = Float.NaN;
+            snapshot.longTermAvgMpg = Float.NaN;
+        }
+
+        if (!TextUtils.isEmpty(vin) && fuelEconomyPreferences != null) {
+            snapshot.veCalibrated = fuelEconomyPreferences.isCalibrated(vin);
+            snapshot.tankCapacityGallons = fuelEconomyPreferences.getTankCapacity(vin);
+        }
+
+        snapshot.statusText = sanitizeText(vehicleStatusText);
+        snapshot.statusDetail = null;
+
+        return snapshot;
+    }
+
+    private float parseNumericValue(TextView view) {
+        if (view == null) {
+            return Float.NaN;
+        }
+        String text = view.getText() != null ? view.getText().toString().trim() : "";
+        if (TextUtils.isEmpty(text) || "--".equals(text)) {
+            return Float.NaN;
+        }
+        String normalized = text.replaceAll("[^0-9.\\-]", "");
+        if (TextUtils.isEmpty(normalized)) {
+            return Float.NaN;
+        }
+        try {
+            return Float.parseFloat(normalized);
+        } catch (NumberFormatException e) {
+            return Float.NaN;
+        }
+    }
+
+    private String sanitizeText(TextView view) {
+        if (view == null || view.getText() == null) {
+            return null;
+        }
+        String text = view.getText().toString().trim();
+        if (TextUtils.isEmpty(text) || "--".equals(text)) {
+            return null;
+        }
+        return text;
     }
 
     /**

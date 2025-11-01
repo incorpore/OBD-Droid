@@ -1,6 +1,7 @@
 package com.obddroid.ui.activities;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,13 +24,18 @@ import com.obddroid.R;
 import com.obddroid.services.FaultCodeService;
 import com.obddroid.ui.adapters.FaultCodeListAdapter;
 import com.obddroid.ui.components.VehicleInfoFooter;
+import com.obddroid.features.faultcodes.data.FaultCodeReportExporter;
 import com.obddroid.utils.SnackbarHelper;
 
+import org.json.JSONException;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -54,10 +60,12 @@ public class FaultCodesActivity extends AppCompatActivity {
     // Service and adapter
     private FaultCodeService faultCodeService;
     private FaultCodeListAdapter adapter;
+    private FaultCodeReportExporter reportExporter;
 
     // State
     private List<FaultCodeService.FaultCodeInfo> currentCodes = Collections.emptyList();
     private boolean isScanning;
+    private boolean hasScanResult = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +82,7 @@ public class FaultCodesActivity extends AppCompatActivity {
         }
 
         faultCodeService = new FaultCodeService();
+        reportExporter = new FaultCodeReportExporter(this);
 
         initializeViews();
         setupClickListeners();
@@ -169,6 +178,7 @@ public class FaultCodesActivity extends AppCompatActivity {
         isScanning = false;
         currentCodes = codes != null ? new ArrayList<>(codes) : Collections.emptyList();
         hideProgress();
+        hasScanResult = true;
 
         // Reset scan button text
         scanButton.setText(R.string.fault_codes_button_scan);
@@ -288,6 +298,7 @@ public class FaultCodesActivity extends AppCompatActivity {
         emptyView.setVisibility(View.GONE);
         faultCodesList.setVisibility(View.VISIBLE);
         milStatusCard.setVisibility(View.VISIBLE);
+        hasScanResult = true;
 
         int cardColor = ContextCompat.getColor(this, R.color.fault_error);
         int iconColor = ContextCompat.getColor(this, R.color.text_primary_dark);
@@ -315,6 +326,7 @@ public class FaultCodesActivity extends AppCompatActivity {
         emptyView.setVisibility(View.GONE);
         faultCodesList.setVisibility(View.GONE);
         milStatusCard.setVisibility(View.VISIBLE);
+        hasScanResult = true;
 
         int cardColor = ContextCompat.getColor(this, R.color.fault_success);
         int iconColor = ContextCompat.getColor(this, R.color.text_primary_dark);
@@ -332,6 +344,7 @@ public class FaultCodesActivity extends AppCompatActivity {
         emptyView.setVisibility(View.VISIBLE);
         faultCodesList.setVisibility(View.GONE);
         milStatusCard.setVisibility(View.GONE);
+        hasScanResult = false;
 
         adapter.setFaultCodes(Collections.emptyList());
         scanButton.setText(R.string.fault_codes_button_scan);
@@ -379,11 +392,78 @@ public class FaultCodesActivity extends AppCompatActivity {
         } else if (id == R.id.action_clear_codes) {
             clearCodes();
             return true;
+        } else if (id == R.id.action_save_report) {
+            showSaveReportDialog();
+            return true;
         } else if (id == R.id.action_info) {
             showInfoDialog();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void showSaveReportDialog() {
+        if (!hasScanResult) {
+            SnackbarHelper.showInfo(this, "Scan fault codes before saving a report.");
+            return;
+        }
+
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_export_ecu);
+        dialog.setCancelable(true);
+
+        TextView dialogTitle = dialog.findViewById(R.id.dialog_title);
+        if (dialogTitle != null) {
+            dialogTitle.setText(getString(R.string.fault_codes_report_title));
+        }
+
+        View csvOption = dialog.findViewById(R.id.option_export_csv);
+        if (csvOption != null) {
+            csvOption.setOnClickListener(v -> {
+                dialog.dismiss();
+                exportFaultCodesCsv();
+            });
+        }
+
+        View jsonOption = dialog.findViewById(R.id.option_export_json);
+        if (jsonOption != null) {
+            jsonOption.setOnClickListener(v -> {
+                dialog.dismiss();
+                exportFaultCodesJson();
+            });
+        }
+
+        View cancelButton = dialog.findViewById(R.id.btn_cancel);
+        if (cancelButton != null) {
+            cancelButton.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
+    private void exportFaultCodesCsv() {
+        try {
+            String header = milStatusText != null ? milStatusText.getText().toString() : null;
+            String subtitle = milStatusSubtitle != null ? milStatusSubtitle.getText().toString() : null;
+            String location = reportExporter.exportToCsv(currentCodes, header, subtitle);
+            SnackbarHelper.showSuccess(this, "Fault code report saved: " + location, SnackbarHelper.Duration.LONG);
+        } catch (IOException e) {
+            SnackbarHelper.showError(this, "Failed to export fault code report: " + e.getMessage(), SnackbarHelper.Duration.LONG);
+            log.log(Level.SEVERE, "Fault code CSV export failed", e);
+        }
+    }
+
+    private void exportFaultCodesJson() {
+        try {
+            String header = milStatusText != null ? milStatusText.getText().toString() : null;
+            String subtitle = milStatusSubtitle != null ? milStatusSubtitle.getText().toString() : null;
+            String location = reportExporter.exportToJson(currentCodes, header, subtitle);
+            SnackbarHelper.showSuccess(this, "Fault code report saved: " + location, SnackbarHelper.Duration.LONG);
+        } catch (IOException | JSONException e) {
+            SnackbarHelper.showError(this, "Failed to export fault code report: " + e.getMessage(), SnackbarHelper.Duration.LONG);
+            log.log(Level.SEVERE, "Fault code JSON export failed", e);
+        }
     }
 
     private void showInfoDialog() {

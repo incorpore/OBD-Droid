@@ -60,6 +60,14 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
     private View statusDot;
     private View overlayView;
     private TypedPvList<Object, ProcessVar> vehicleInfoStore;
+    private VehicleInfoReadyListener vehicleInfoReadyListener;
+
+    /**
+     * Listener for notifying when the footer has finished displaying decoded vehicle data.
+     */
+    public interface VehicleInfoReadyListener {
+        void onVehicleInfoReady();
+    }
 
     public VehicleInfoFooter(Context context)
     {
@@ -422,6 +430,32 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         isEcuConnected = false;
     }
 
+    /**
+     * Register a listener to be notified when decoded vehicle data has been rendered in the footer.
+     * @param listener callback invoked on the UI thread when vehicle info is ready
+     */
+    public void setVehicleInfoReadyListener(VehicleInfoReadyListener listener) {
+        this.vehicleInfoReadyListener = listener;
+
+        if (listener != null && currentVehicleData != null) {
+            // Ensure UI has already been updated before invoking the callback
+            post(listener::onVehicleInfoReady);
+        }
+    }
+
+    /**
+     * @return true if decoded vehicle data is currently displayed in the footer.
+     */
+    public boolean hasVehicleData() {
+        return currentVehicleData != null && isConnected;
+    }
+
+    private void notifyVehicleInfoReady() {
+        if (vehicleInfoReadyListener != null) {
+            vehicleInfoReadyListener.onVehicleInfoReady();
+        }
+    }
+
     @Override
     public void pvChanged(PvChangeEvent event) {
         // Mode 9 data updated - refresh expanded content if visible
@@ -517,6 +551,8 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
         if (vehicleInfoStore != null) {
             vehicleInfoStore.removePvChangeListener(this);
         }
+
+        vehicleInfoReadyListener = null;
     }
 
 
@@ -1884,6 +1920,8 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             if (isExpanded) {
                 updateExpandedContent();
             }
+
+            notifyVehicleInfoReady();
 
         } catch (Exception e) {
             Log.e(TAG, "Error updating vehicle display", e);

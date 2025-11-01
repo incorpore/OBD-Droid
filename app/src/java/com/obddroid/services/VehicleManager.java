@@ -79,7 +79,7 @@ public class VehicleManager {
         // Initialize enhanced decoder if not already done
         if (instance.vinDecoder == null && context != null) {
             instance.vinDecoder = new EnhancedVINDecoder(context.getApplicationContext());
-            Log.d(TAG, "Enhanced VIN Decoder initialized (online + offline support)");
+            Log.d(TAG, "Enhanced VIN Decoder initialized (parallel race strategy)");
         }
         return instance;
     }
@@ -92,6 +92,17 @@ public class VehicleManager {
             instance = new VehicleManager();
         }
         return instance;
+    }
+
+    /**
+     * Pre-warm the VIN database on startup for instant decoding
+     * This runs in background and ensures the 66MB database is ready
+     */
+    public void prewarmDatabase() {
+        if (vinDecoder != null) {
+            Log.d(TAG, "Pre-warming VIN database...");
+            vinDecoder.prewarmDatabase();
+        }
     }
 
     /**
