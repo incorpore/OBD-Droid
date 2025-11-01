@@ -26,10 +26,4 @@
         android:icon="@android:drawable/ic_menu_help"
         app:showAsAction="never" />
 
-    <item
-        android:id="@+id/action_track_mode"
-        android:title="Track Mode"
-        android:icon="@drawable/ic_speedometer"
-        app:showAsAction="never" />
-
 </menu>

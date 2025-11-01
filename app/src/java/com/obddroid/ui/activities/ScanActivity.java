@@ -14,7 +14,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -60,11 +59,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
     private CardView aiAnalysisCard;
     private TextView aiAnalysisText;
     private ProgressBar aiAnalysisProgress;
-    private Button startButton;
-    private Button cancelButton;
-    private Button analyzeButton;
-    private Button viewCopilotButton;
-    private Button shareButton;
+    // Buttons removed - now using menu items
 
     private ScanOrchestrator scanService;
     private boolean serviceBound = false;
@@ -133,13 +128,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         aiAnalysisCard = findViewById(R.id.ai_analysis_card);
         aiAnalysisText = findViewById(R.id.ai_analysis_text);
         aiAnalysisProgress = findViewById(R.id.ai_analysis_progress);
-
         // Buttons removed - now using menu items
-        startButton = null;
-        cancelButton = null;
-        analyzeButton = null;
-        viewCopilotButton = null;
-        shareButton = null;
     }
 
     private void setupListeners() {
@@ -171,9 +160,6 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         } else if (id == R.id.action_ask_copilot) {
             openCoPilot();
             return true;
-        } else if (id == R.id.action_track_mode) {
-            launchTrackMode();
-            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -182,18 +168,18 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
     private void updateMenuState() {
         if (optionsMenu == null) return;
 
-        // Default: show Start Scan, hide others
-        setMenuItemVisible(R.id.action_start_scan, true);
-        setMenuItemVisible(R.id.action_analyze_ai, false);
-        setMenuItemVisible(R.id.action_share_report, false);
-        setMenuItemVisible(R.id.action_ask_copilot, false);
+        // Default: enable Start Scan, disable others (all visible but greyed out)
+        setMenuItemEnabled(R.id.action_start_scan, true);
+        setMenuItemEnabled(R.id.action_analyze_ai, false);
+        setMenuItemEnabled(R.id.action_share_report, false);
+        setMenuItemEnabled(R.id.action_ask_copilot, false);
     }
 
-    private void setMenuItemVisible(int menuItemId, boolean visible) {
+    private void setMenuItemEnabled(int menuItemId, boolean enabled) {
         if (optionsMenu != null) {
             MenuItem item = optionsMenu.findItem(menuItemId);
             if (item != null) {
-                item.setVisible(visible);
+                item.setEnabled(enabled);
             }
         }
     }
@@ -233,10 +219,10 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         resultsCard.setVisibility(View.GONE);
 
         // Update menu items - hide all during scan
-        setMenuItemVisible(R.id.action_start_scan, false);
-        setMenuItemVisible(R.id.action_analyze_ai, false);
-        setMenuItemVisible(R.id.action_share_report, false);
-        setMenuItemVisible(R.id.action_ask_copilot, false);
+        setMenuItemEnabled(R.id.action_start_scan, false);
+        setMenuItemEnabled(R.id.action_analyze_ai, false);
+        setMenuItemEnabled(R.id.action_share_report, false);
+        setMenuItemEnabled(R.id.action_ask_copilot, false);
 
         // Start scan with default configuration
         ScanConfiguration config = ScanConfiguration.getDefault();
@@ -254,19 +240,14 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         startActivity(intent);
     }
 
-    private void launchTrackMode() {
-        Intent intent = new Intent(this, com.obddroid.features.trackmode.TrackModeActivity.class);
-        startActivity(intent);
-    }
-
     private void onScanStartInProgress() {
         progressText.setText("Scan in progress...");
 
         // Update menu items - hide all during scan
-        setMenuItemVisible(R.id.action_start_scan, false);
-        setMenuItemVisible(R.id.action_analyze_ai, false);
-        setMenuItemVisible(R.id.action_share_report, false);
-        setMenuItemVisible(R.id.action_ask_copilot, false);
+        setMenuItemEnabled(R.id.action_start_scan, false);
+        setMenuItemEnabled(R.id.action_analyze_ai, false);
+        setMenuItemEnabled(R.id.action_share_report, false);
+        setMenuItemEnabled(R.id.action_ask_copilot, false);
     }
 
     @Override
@@ -282,9 +263,9 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             currentStageText.setText(totalStages + " stages to complete");
 
             vehicleDetails.setText("Scanning in progress - please wait");
-            setMenuItemVisible(R.id.action_analyze_ai, false);
-            setMenuItemVisible(R.id.action_share_report, false);
-            setMenuItemVisible(R.id.action_ask_copilot, false);
+            setMenuItemEnabled(R.id.action_analyze_ai, false);
+            setMenuItemEnabled(R.id.action_share_report, false);
+            setMenuItemEnabled(R.id.action_ask_copilot, false);
         });
     }
 
@@ -347,17 +328,17 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             // Update buttons
             
             
-            setMenuItemVisible(R.id.action_start_scan, true);
-            setMenuItemVisible(R.id.action_analyze_ai, true);
-            setMenuItemVisible(R.id.action_ask_copilot, true);
+            setMenuItemEnabled(R.id.action_start_scan, true);
+            setMenuItemEnabled(R.id.action_analyze_ai, true);
+            setMenuItemEnabled(R.id.action_ask_copilot, true);
 
             ReportArtifacts artifacts = ensureReportArtifacts(report);
             if (artifacts != null) {
-                setMenuItemVisible(R.id.action_share_report, true);
+                setMenuItemEnabled(R.id.action_share_report, true);
                 // Upload scan JSON to CoPilot for retrieval (async)
                 uploadScanToCoPilot(report, artifacts);
             } else {
-                setMenuItemVisible(R.id.action_share_report, false);
+                setMenuItemEnabled(R.id.action_share_report, false);
             }
 
             Toast.makeText(this, "Scan complete! " + report.getStageResults().size() + " stages finished",
@@ -494,10 +475,10 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
 
             
             
-            setMenuItemVisible(R.id.action_start_scan, true);
-            setMenuItemVisible(R.id.action_analyze_ai, false);
-            setMenuItemVisible(R.id.action_share_report, false);
-            setMenuItemVisible(R.id.action_ask_copilot, false);
+            setMenuItemEnabled(R.id.action_start_scan, true);
+            setMenuItemEnabled(R.id.action_analyze_ai, false);
+            setMenuItemEnabled(R.id.action_share_report, false);
+            setMenuItemEnabled(R.id.action_ask_copilot, false);
 
             Toast.makeText(this, "Scan cancelled", Toast.LENGTH_SHORT).show();
         });
@@ -512,10 +493,10 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
 
             
             
-            setMenuItemVisible(R.id.action_start_scan, true);
-            setMenuItemVisible(R.id.action_analyze_ai, false);
-            setMenuItemVisible(R.id.action_share_report, false);
-            setMenuItemVisible(R.id.action_ask_copilot, false);
+            setMenuItemEnabled(R.id.action_start_scan, true);
+            setMenuItemEnabled(R.id.action_analyze_ai, false);
+            setMenuItemEnabled(R.id.action_share_report, false);
+            setMenuItemEnabled(R.id.action_ask_copilot, false);
 
             Toast.makeText(this, "Scan failed: " + error.getMessage(), Toast.LENGTH_LONG).show();
         });
