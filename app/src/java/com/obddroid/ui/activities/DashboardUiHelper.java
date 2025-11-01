@@ -226,6 +226,23 @@ final class DashboardUiHelper {
         } else {
             log.warning("Full Scan card NOT found!");
         }
+
+        // Track Mode card - TODO: Add card_track_mode to main layout
+        // View trackModeCard = activity.findViewById(R.id.card_track_mode);
+        // if (trackModeCard != null) {
+        //     addCardPressAnimation(trackModeCard);
+        //     trackModeCard.setOnClickListener(v -> {
+        //         log.info("Track Mode card clicked!");
+        //         activity.launchTrackModeActivity();
+        //     });
+        //     trackModeCard.setOnLongClickListener(v -> showCardInfoDialog(
+        //         activity,
+        //         "Track Mode",
+        //         "Racing lap timer with telemetry recording. Track your performance on race circuits with automatic lap timing, sector splits, G-force monitoring, and detailed telemetry analysis."
+        //     ));
+        // } else {
+        //     log.warning("Track Mode card NOT found!");
+        // }
     }
 
     private static void addCardPressAnimation(View card) {

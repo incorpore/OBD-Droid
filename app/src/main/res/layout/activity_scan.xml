@@ -238,75 +238,7 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Fixed Action Button Bar - Above Footer -->
-    <LinearLayout
-        android:id="@+id/action_button_bar"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_gravity="bottom"
-        android:layout_marginBottom="60dp"
-        android:orientation="horizontal"
-        android:background="@color/background_secondary"
-        android:elevation="4dp"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp"
-        android:gravity="center">
-
-        <!-- Cancel button (hidden, kept for compatibility) -->
-        <Button
-            android:id="@+id/cancel_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Cancel"
-            android:visibility="gone"
-            style="@style/Widget.AppCompat.Button.Borderless" />
-
-        <!-- Analyze with AI -->
-        <Button
-            android:id="@+id/analyze_button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="match_parent"
-            android:text="ANALYZE WITH AI"
-            android:visibility="gone"
-            android:layout_margin="4dp"
-            android:textSize="11sp" />
-
-        <!-- Share Report -->
-        <Button
-            android:id="@+id/share_button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="match_parent"
-            android:text="SHARE REPORT"
-            android:visibility="gone"
-            android:layout_margin="4dp"
-            android:textSize="11sp" />
-
-        <!-- Start Scan / Scan Again -->
-        <Button
-            android:id="@+id/start_button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="match_parent"
-            android:text="START SCAN"
-            android:layout_margin="4dp"
-            android:textSize="11sp" />
-
-        <!-- Ask CoPilot (hidden initially) -->
-        <Button
-            android:id="@+id/view_copilot_button"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="match_parent"
-            android:text="ASK COPILOT"
-            android:visibility="gone"
-            android:layout_margin="4dp"
-            android:textSize="11sp" />
-
-    </LinearLayout>
+    <!-- Removed button bar - actions moved to menu -->
 
     <com.obddroid.ui.components.VehicleInfoFooter
         android:id="@+id/vehicle_footer"

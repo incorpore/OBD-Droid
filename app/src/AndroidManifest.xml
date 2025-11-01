@@ -177,6 +177,14 @@
             android:parentActivityName="com.obddroid.ui.activities.MainActivity"
             android:exported="false" />
         <activity
+            android:name="com.obddroid.features.trackmode.TrackModeActivity"
+            android:label="Track Mode"
+            android:theme="@style/AppTheme.MaterialComponents"
+            android:configChanges="touchscreen|orientation|screenSize"
+            android:screenOrientation="portrait"
+            android:parentActivityName="com.obddroid.ui.activities.MainActivity"
+            android:exported="false" />
+        <activity
             android:name="com.obddroid.ui.activities.ScanActivity"
             android:label="Full Vehicle Scan"
             android:configChanges="touchscreen|orientation|screenSize"

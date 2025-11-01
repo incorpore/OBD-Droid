@@ -2844,6 +2844,15 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
+     * Launch Track Mode activity
+     */
+    void launchTrackModeActivity() {
+        log.info("Launching Track Mode activity");
+        Intent intent = new Intent(this, com.obddroid.features.trackmode.TrackModeActivity.class);
+        startActivity(intent);
+    }
+
+    /**
      * Initialize the auto-reconnect countdown bar and its click handlers
      */
     private void initializeCountdownBar() {

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_start_scan"
+        android:title="Start Scan"
+        android:icon="@android:drawable/ic_media_play"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_analyze_ai"
+        android:title="Analyze with AI"
+        android:icon="@android:drawable/ic_menu_search"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_share_report"
+        android:title="Share Report"
+        android:icon="@android:drawable/ic_menu_share"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_ask_copilot"
+        android:title="Ask CoPilot"
+        android:icon="@android:drawable/ic_menu_help"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_track_mode"
+        android:title="Track Mode"
+        android:icon="@drawable/ic_speedometer"
+        app:showAsAction="never" />
+
+</menu>
