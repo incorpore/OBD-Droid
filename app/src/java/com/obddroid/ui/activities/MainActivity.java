@@ -1384,6 +1384,25 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
+        // Update menu items based on current connection state
+        // This ensures the correct button (connect/disconnect) is shown when returning from other activities
+        switch (mode) {
+            case ONLINE:
+            case DEMO:
+            case FILE:
+                // Connected - show green disconnect button
+                setMenuItemVisible(R.id.secure_connect_scan, false);
+                setMenuItemVisible(R.id.disconnect, true);
+                break;
+
+            case OFFLINE:
+            default:
+                // Disconnected - show white connect button
+                setMenuItemVisible(R.id.disconnect, false);
+                setMenuItemVisible(R.id.secure_connect_scan, true);
+                break;
+        }
+
         return super.onPrepareOptionsMenu(menu);
     }
 
