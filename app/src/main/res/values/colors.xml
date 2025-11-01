@@ -21,7 +21,7 @@
 
     <!-- Dark Theme Colors -->
     <color name="background_primary">#1E1E1E</color>
-    <color name="background_secondary">#2C2C2C</color>
+    <color name="background_secondary">#212121</color>
     <color name="background_overlay">#80000000</color>
 
     <!-- Text Colors - Dark Theme -->

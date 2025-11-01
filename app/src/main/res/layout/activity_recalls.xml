@@ -152,18 +152,20 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/recalls_tab_all"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        style="@style/Widget.OBD.ToggleButton"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:layout_marginEnd="@dimen/spacing_small"
                         android:text="@string/recalls_tab_all" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/recalls_tab_open"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        style="@style/Widget.OBD.ToggleButton"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:layout_marginStart="@dimen/spacing_small"
                         android:text="@string/recalls_tab_open" />
 
                 </com.google.android.material.button.MaterialButtonToggleGroup>
