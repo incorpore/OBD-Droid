@@ -32,7 +32,7 @@ public class CustomPid implements Serializable {
 
     public CustomPid() {
         this.id = -1;
-        this.enabled = true;
+        this.enabled = false;  // Disabled by default - users must explicitly enable
         this.updatePeriod = 1000;
         this.createdAt = System.currentTimeMillis();
         this.updatedAt = this.createdAt;

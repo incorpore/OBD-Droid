@@ -17,7 +17,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text="No custom PIDs yet.\nTap '+ Add PID' to create one."
+        android:text="No custom PIDs.\n\nPre-loaded manufacturer PIDs are disabled by default.\nTap any PID to enable it, or tap '+ Add Custom PID' to create your own."
         android:textAlignment="center"
         android:textSize="16sp"
         android:visibility="gone" />
@@ -32,18 +32,9 @@
 
         <Button
             android:id="@+id/btn_add_pid"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="+ Add PID" />
-
-        <Button
-            android:id="@+id/btn_load_presets"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:text="Load Presets" />
+            android:text="+ Add Custom PID" />
     </LinearLayout>
 
 </RelativeLayout>

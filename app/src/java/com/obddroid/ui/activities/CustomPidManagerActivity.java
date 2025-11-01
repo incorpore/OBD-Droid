@@ -38,7 +38,6 @@ public class CustomPidManagerActivity extends AppCompatActivity {
     private ListView listView;
     private TextView emptyView;
     private Button btnAddPid;
-    private Button btnLoadPresets;
     private CustomPidAdapter adapter;
     private List<CustomPid> pidList;
 
@@ -68,7 +67,6 @@ public class CustomPidManagerActivity extends AppCompatActivity {
         listView = findViewById(R.id.pid_list);
         emptyView = findViewById(R.id.empty_view);
         btnAddPid = findViewById(R.id.btn_add_pid);
-        btnLoadPresets = findViewById(R.id.btn_load_presets);
 
         // Setup adapter
         pidList = new ArrayList<>();
@@ -77,7 +75,6 @@ public class CustomPidManagerActivity extends AppCompatActivity {
 
         // Setup click listeners
         btnAddPid.setOnClickListener(v -> showAddEditDialog(null));
-        btnLoadPresets.setOnClickListener(v -> showLoadPresetsDialog());
 
         listView.setOnItemClickListener((parent, view, position, id) -> {
             CustomPid pid = pidList.get(position);
@@ -184,8 +181,10 @@ public class CustomPidManagerActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(pid.getName());
 
+        String status = pid.isEnabled() ? "✓ ENABLED" : "✗ Disabled";
         String message = String.format(
-            "PID: %s\nFormula: %s\nUnits: %s\n\n%s",
+            "Status: %s\n\nPID: %s\nFormula: %s\nUnits: %s\n\n%s",
+            status,
             pid.getPidHex(),
             pid.getFormula(),
             pid.getUnits(),
@@ -194,7 +193,21 @@ public class CustomPidManagerActivity extends AppCompatActivity {
 
         builder.setMessage(message);
 
-        builder.setPositiveButton("Edit", (dialog, which) -> showAddEditDialog(pid));
+        // Toggle enable/disable
+        String toggleText = pid.isEnabled() ? "Disable" : "Enable";
+        builder.setPositiveButton(toggleText, (dialog, which) -> {
+            try {
+                pid.setEnabled(!pid.isEnabled());
+                pidManager.updatePid(pid);
+                Toast.makeText(this, pid.isEnabled() ? "PID enabled" : "PID disabled", Toast.LENGTH_SHORT).show();
+                refreshPidList();
+                notifyCustomPidsChanged();  // Notify live data to refresh
+            } catch (Exception e) {
+                Toast.makeText(this, "Error updating PID: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+
+        builder.setNeutralButton("Edit", (dialog, which) -> showAddEditDialog(pid));
 
         builder.setNegativeButton("Delete", (dialog, which) -> {
             new AlertDialog.Builder(this)
@@ -214,36 +227,6 @@ public class CustomPidManagerActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void showLoadPresetsDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Load Manufacturer Presets");
-        builder.setMessage("This will load 18 pre-configured manufacturer-specific PIDs:\n\n" +
-                "• Subaru (3 PIDs)\n" +
-                "• BMW (2 PIDs)\n" +
-                "• Ford (2 PIDs)\n" +
-                "• GM/Chevrolet (2 PIDs)\n" +
-                "• Honda (2 PIDs)\n" +
-                "• Toyota (2 PIDs)\n" +
-                "• VW/Audi (2 PIDs)\n" +
-                "• Mazda (1 PID)\n" +
-                "• Nissan (1 PID)\n\n" +
-                "These will be added if not already present.");
-
-        builder.setPositiveButton("Load Presets", (dialog, which) -> {
-            // The presets are automatically loaded when database is empty
-            // To reload, we need to manually trigger it
-            int currentCount = pidManager.getAllPids().size();
-            if (currentCount >= 18) {
-                Toast.makeText(this, "Presets already loaded (" + currentCount + " PIDs)", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Presets are auto-loaded on first run", Toast.LENGTH_LONG).show();
-            }
-            refreshPidList();
-        });
-
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
-    }
 
     @Override
     public boolean onSupportNavigateUp() {
