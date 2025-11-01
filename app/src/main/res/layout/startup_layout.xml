@@ -597,7 +597,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top"/>
 
-        <!-- Connection Loading Overlay - Simple grey overlay without big loading element -->
+        <!-- Connection Loading Overlay - Just grey overlay, no spinner -->
         <FrameLayout
             android:id="@+id/connection_loading_overlay"
             android:layout_width="match_parent"
@@ -606,16 +606,6 @@
             android:clickable="true"
             android:focusable="true"
             android:visibility="gone">
-
-            <!-- Small subtle progress indicator at bottom -->
-            <ProgressBar
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_gravity="bottom|center_horizontal"
-                android:layout_marginBottom="80dp"
-                android:indeterminate="true"
-                android:indeterminateTint="@color/primary"
-                android:alpha="0.7"/>
 
             <!-- Hidden text views for compatibility with existing code -->
             <TextView

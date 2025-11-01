@@ -4,7 +4,9 @@ import android.content.Context;
 import android.util.Log;
 
 import com.obddroid.ecu.EcuDataItem;
+import com.obddroid.ecu.EcuDataPv;
 import com.obddroid.ecu.PidDefinition;
+import com.obddroid.obd.ObdProt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,14 +14,17 @@ import java.util.List;
 /**
  * Integration layer between Custom PID system and existing OBD infrastructure
  * Loads custom PIDs from database and converts them to EcuDataItems
+ * Integrates directly with ObdProt.PidPvs for live display
  *
  * @author Wal33D
  */
 public class CustomPidIntegration {
     private static final String TAG = "CustomPidIntegration";
+    public static final String ACTION_CUSTOM_PIDS_CHANGED = "com.obddroid.CUSTOM_PIDS_CHANGED";
 
     private final CustomPidManager pidManager;
     private final List<EcuDataItem> customDataItems;
+    private final List<String> loadedPidKeys;  // Track which PIDs we've loaded
 
     /**
      * Create integration instance
@@ -29,6 +34,7 @@ public class CustomPidIntegration {
     public CustomPidIntegration(Context context) {
         this.pidManager = CustomPidManager.getInstance(context);
         this.customDataItems = new ArrayList<>();
+        this.loadedPidKeys = new ArrayList<>();
     }
 
     /**
@@ -213,5 +219,81 @@ public class CustomPidIntegration {
 
         return String.format("Custom PIDs: %d total, %d enabled, %d loaded",
                 total, enabled, loaded);
+    }
+
+    /**
+     * Load all enabled custom PIDs directly into ObdProt.PidPvs for live display
+     * This makes custom PIDs appear in Live Data screen without app restart
+     */
+    public void loadIntoLiveData() {
+        Log.i(TAG, "Loading custom PIDs into ObdProt.PidPvs for live display");
+
+        // Clear previously loaded custom PIDs
+        clearCustomPidsFromLiveData();
+
+        // Load all enabled custom PIDs
+        List<CustomPid> enabledPids = pidManager.getEnabledPids();
+        Log.i(TAG, "Found " + enabledPids.size() + " enabled custom PIDs");
+
+        int loadedCount = 0;
+        for (CustomPid customPid : enabledPids) {
+            try {
+                EcuDataItem dataItem = createDataItem(customPid);
+                if (dataItem != null && dataItem.pv != null) {
+                    // Generate unique key (use String key to avoid conflicts with standard PIDs)
+                    String pidKey = "CUSTOM_" + customPid.getPidHex();
+
+                    // Add to ObdProt.PidPvs so it shows up in Live Data
+                    ObdProt.PidPvs.put(pidKey, dataItem.pv);
+
+                    // Track this key so we can remove it later
+                    loadedPidKeys.add(pidKey);
+                    customDataItems.add(dataItem);
+
+                    Log.d(TAG, "Loaded custom PID into live data: " + customPid.getName() + " (key=" + pidKey + ")");
+                    loadedCount++;
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to load custom PID into live data: " + customPid.getName(), e);
+            }
+        }
+
+        Log.i(TAG, "Successfully loaded " + loadedCount + " custom PIDs into live data");
+    }
+
+    /**
+     * Remove all custom PIDs from ObdProt.PidPvs
+     * Useful before reloading or when custom PIDs are disabled
+     */
+    public void clearCustomPidsFromLiveData() {
+        Log.i(TAG, "Clearing " + loadedPidKeys.size() + " custom PIDs from live data");
+
+        for (String pidKey : loadedPidKeys) {
+            try {
+                ObdProt.PidPvs.remove(pidKey);
+                Log.d(TAG, "Removed custom PID: " + pidKey);
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to remove custom PID: " + pidKey, e);
+            }
+        }
+
+        loadedPidKeys.clear();
+        customDataItems.clear();
+    }
+
+    /**
+     * Refresh custom PIDs in live data (remove old ones, load new ones)
+     * Call this after user adds/edits/deletes custom PIDs
+     */
+    public void refreshLiveData() {
+        Log.i(TAG, "Refreshing custom PIDs in live data");
+        loadIntoLiveData();
+    }
+
+    /**
+     * Get the number of custom PIDs currently loaded in live data
+     */
+    public int getLoadedCount() {
+        return loadedPidKeys.size();
     }
 }
