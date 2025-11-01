@@ -26,10 +26,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import com.github.anastr.speedviewlib.AwesomeSpeedometer;
 import com.obddroid.R;
+import com.obddroid.common.ProcessVariables.PvChangeEvent;
+import com.obddroid.common.ProcessVariables.PvChangeListener;
 import com.obddroid.ecu.EcuDataPv;
-import com.obddroid.ecu.EcuDataPvs;
-import com.obddroid.ecu.PvChangeEvent;
-import com.obddroid.ecu.PvChangeListener;
 import com.obddroid.obd.ObdProt;
 import com.obddroid.features.trackmode.data.LapTime;
 import com.obddroid.features.trackmode.data.Track;
@@ -51,7 +50,8 @@ import java.util.Locale;
  * Activity for track mode - lap timing and telemetry recording
  */
 public class TrackModeActivity extends AppCompatActivity implements
-        LapTimingManager.LapTimingListener {
+        LapTimingManager.LapTimingListener,
+        PvChangeListener {
 
     private static final String TAG = "TrackModeActivity";
 
@@ -73,6 +73,13 @@ public class TrackModeActivity extends AppCompatActivity implements
     private GForceMeterView gForceMeter;
     private LapTimerView lapTimerView;
     private VehicleInfoFooter vehicleInfoFooter;
+
+    // New widgets for map and gauges
+    private ImageView mapPreview;
+    private TextView tvTrackPosition;
+    private TextView tvTrackDistance;
+    private AwesomeSpeedometer gaugeRpm;
+    private AwesomeSpeedometer gaugeSpeed;
 
     // Track components
     private TrackDatabase trackDatabase;
@@ -134,12 +141,20 @@ public class TrackModeActivity extends AppCompatActivity implements
         super.onResume();
         bindCommService();
         startUpdates();
+
+        // Register for live OBD data updates (same as LiveDataActivity)
+        ObdProt.PidPvs.addPvChangeListener(this,
+            PvChangeEvent.PV_ADDED | PvChangeEvent.PV_MODIFIED);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         stopUpdates();
+
+        // Unregister from live data updates
+        ObdProt.PidPvs.removePvChangeListener(this);
+
         if (isServiceBound) {
             unbindService(serviceConnection);
             isServiceBound = false;
@@ -176,6 +191,13 @@ public class TrackModeActivity extends AppCompatActivity implements
         gForceMeter = findViewById(R.id.g_force_meter);
         lapTimerView = findViewById(R.id.lap_timer_view);
         vehicleInfoFooter = findViewById(R.id.vehicle_info_footer);
+
+        // Initialize new widgets
+        mapPreview = findViewById(R.id.map_preview);
+        tvTrackPosition = findViewById(R.id.tv_track_position);
+        tvTrackDistance = findViewById(R.id.tv_track_distance);
+        gaugeRpm = findViewById(R.id.gauge_rpm);
+        gaugeSpeed = findViewById(R.id.gauge_speed);
 
         // Set initial states
         btnEndSession.setEnabled(false);
@@ -214,9 +236,13 @@ public class TrackModeActivity extends AppCompatActivity implements
     }
 
     /**
-     * Update UI with current telemetry
+     * Update UI with current telemetry AND live OBD data
      */
+    @SuppressWarnings("deprecation")
     private void updateUI() {
+        // Always update gauges from live data (even when not in session)
+        updateLiveData();
+
         if (!isSessionActive || telemetryRecorder == null) return;
 
         // Update speed
@@ -582,5 +608,126 @@ public class TrackModeActivity extends AppCompatActivity implements
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Update gauges and displays with live OBD data
+     */
+    @SuppressWarnings({"deprecation", "unchecked"})
+    private void updateLiveData() {
+        try {
+            // Get RPM from PID 0x0C (same as FuelEconomyActivity)
+            EcuDataPv rpmPv = ObdProt.PidPvs.getTyped("0C.0.0");
+            if (rpmPv != null) {
+                Object value = rpmPv.get(EcuDataPv.FID_VALUE);
+                if (value != null) {
+                    float rpm = Float.parseFloat(value.toString());
+
+                    // Update RPM gauge
+                    if (gaugeRpm != null) {
+                        gaugeRpm.speedTo(rpm, 500); // Animate to new value
+                    }
+
+                    // Update RPM text
+                    tvRpm.setText(String.format(Locale.US, "%.0f", rpm));
+                }
+            }
+
+            // Get speed from PID 0x0D
+            EcuDataPv speedPv = ObdProt.PidPvs.getTyped("0D.0.0");
+            if (speedPv != null) {
+                Object value = speedPv.get(EcuDataPv.FID_VALUE);
+                if (value != null) {
+                    float speed = Float.parseFloat(value.toString());
+
+                    // Update speed gauge
+                    if (gaugeSpeed != null) {
+                        gaugeSpeed.speedTo(speed, 500); // Animate to new value
+                    }
+
+                    // Update speed text
+                    tvSpeed.setText(String.format(Locale.US, "%.0f", speed));
+
+                    // Calculate gear if we have RPM
+                    if (rpmPv != null) {
+                        Object rpmValue = rpmPv.get(EcuDataPv.FID_VALUE);
+                        if (rpmValue != null) {
+                            float rpm = Float.parseFloat(rpmValue.toString());
+                            int gear = calculateGear(speed, rpm);
+                            tvGear.setText(gear > 0 ? String.valueOf(gear) : "N");
+                        }
+                    }
+                }
+            }
+
+            // Get throttle position from PID 0x11
+            EcuDataPv throttlePv = ObdProt.PidPvs.getTyped("11.0.0");
+            if (throttlePv != null) {
+                Object value = throttlePv.get(EcuDataPv.FID_VALUE);
+                if (value != null) {
+                    float throttle = Float.parseFloat(value.toString());
+                    // Could add a throttle gauge here if desired
+                }
+            }
+
+            // Get engine load from PID 0x04
+            EcuDataPv loadPv = ObdProt.PidPvs.getTyped("04.0.0");
+            if (loadPv != null) {
+                Object value = loadPv.get(EcuDataPv.FID_VALUE);
+                if (value != null) {
+                    float load = Float.parseFloat(value.toString());
+                    // Could display engine load if desired
+                }
+            }
+
+            // Get GPS data if available
+            EcuDataPv latPv = ObdProt.PidPvs.getTyped("F100.0.0"); // GPS Latitude
+            EcuDataPv lonPv = ObdProt.PidPvs.getTyped("F101.0.0"); // GPS Longitude
+            if (latPv != null && lonPv != null) {
+                Object latValue = latPv.get(EcuDataPv.FID_VALUE);
+                Object lonValue = lonPv.get(EcuDataPv.FID_VALUE);
+                if (latValue != null && lonValue != null) {
+                    double lat = Double.parseDouble(latValue.toString());
+                    double lon = Double.parseDouble(lonValue.toString());
+                    updateTrackPosition(lat, lon);
+                }
+            }
+
+            // Get accelerometer data for G-forces
+            EcuDataPv accelXPv = ObdProt.PidPvs.getTyped("F200.0.0"); // X acceleration
+            EcuDataPv accelYPv = ObdProt.PidPvs.getTyped("F201.0.0"); // Y acceleration
+            if (accelXPv != null && accelYPv != null && gForceMeter != null) {
+                Object xValue = accelXPv.get(EcuDataPv.FID_VALUE);
+                Object yValue = accelYPv.get(EcuDataPv.FID_VALUE);
+                if (xValue != null && yValue != null) {
+                    float gLateral = Float.parseFloat(xValue.toString()) / 9.81f;
+                    float gLongitudinal = Float.parseFloat(yValue.toString()) / 9.81f;
+                    gForceMeter.updateGForce(gLateral, gLongitudinal);
+                }
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating live data", e);
+        }
+    }
+
+    /**
+     * Update track position on map
+     */
+    private void updateTrackPosition(double lat, double lon) {
+        // Update position text
+        if (tvTrackPosition != null) {
+            tvTrackPosition.setText(String.format("Lat: %.6f, Lon: %.6f", lat, lon));
+        }
+
+        // TODO: Update map view with actual position
+        // Would need to integrate with a mapping library like MapBox or Google Maps
+    }
+
+    // PvChangeListener implementation
+    @Override
+    public void pvChanged(PvChangeEvent event) {
+        // Live data has changed, update will happen in the update loop
+        // No need to update here as updateUI is called regularly
     }
 }
