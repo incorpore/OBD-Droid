@@ -37,6 +37,7 @@
     <string name="open_recall_type_label">Type: %1$s</string>
     <string name="open_recall_nhtsa_label">NHTSA Campaign #: %1$s</string>
     <string name="open_recall_oem_label">Manufacturer #: %1$s</string>
+    <string name="open_recall_view_on_nhtsa">View on NHTSA.gov</string>
     <string name="menu_more">More</string>
     <string name="menu_more_description">More options</string>
     <string name="value_placeholder">--</string>

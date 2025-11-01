@@ -107,6 +107,11 @@ public class TrackModeActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_track_mode);
 
+        // Set navigation bar color to match footer
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setNavigationBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.background_secondary));
+        }
+
         // Keep screen on during track sessions
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -139,6 +144,17 @@ public class TrackModeActivity extends AppCompatActivity implements
 
         // Load tracks and show selector
         showTrackSelector();
+    }
+
+    @Override
+    public void onBackPressed() {
+        // If vehicle info footer is expanded, collapse it first before navigating back
+        if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {
+            vehicleInfoFooter.collapse();
+        } else {
+            // Footer not expanded or doesn't exist - proceed with normal back behavior
+            super.onBackPressed();
+        }
     }
 
     @Override

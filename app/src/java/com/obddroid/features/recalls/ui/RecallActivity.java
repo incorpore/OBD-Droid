@@ -104,7 +104,6 @@ public class RecallActivity extends AppCompatActivity {
     private AutoCheckRecallResult openRecallsResult;
     private String currentVin;
     private boolean openRecallsLoading;
-    private boolean openRecallsAttempted;
     private String openRecallsErrorMessage;
 
     @Override
@@ -137,7 +136,6 @@ public class RecallActivity extends AppCompatActivity {
             currentResult = cachedResult;
             currentVin = cachedResult.getVin();
             openRecallsResult = cachedResult.getAutoCheckRecalls();
-            openRecallsAttempted = cachedResult.hasAutoCheckFetchAttempted();
             setOpenTabEnabled(!TextUtils.isEmpty(currentVin));
         } else {
             setOpenTabEnabled(false);
@@ -326,7 +324,6 @@ public class RecallActivity extends AppCompatActivity {
 
                     currentResult = result;
                     openRecallsResult = null;
-                    openRecallsAttempted = false;
                     openRecallsErrorMessage = null;
                     result.setAutoCheckRecalls(null);
                     result.setAutoCheckFetchAttempted(false);
@@ -674,6 +671,7 @@ public class RecallActivity extends AppCompatActivity {
         openRecallsLoading = true;
         openRecallsErrorMessage = null;
         if (openRecallsProviderBadge != null) {
+            openRecallsProviderBadge.setText(R.string.open_recalls_provider_badge);
             openRecallsProviderBadge.setVisibility(View.VISIBLE);
         }
         if (openRecallsLoadingCard != null) {
@@ -700,7 +698,6 @@ public class RecallActivity extends AppCompatActivity {
             return;
         }
 
-        openRecallsAttempted = true;
         openRecallsErrorMessage = null;
         showOpenRecallsLoading();
 
@@ -761,6 +758,16 @@ public class RecallActivity extends AppCompatActivity {
 
         openRecallsErrorMessage = null;
 
+        if (openRecallsProviderBadge != null) {
+            String providerText = getString(R.string.open_recalls_provider_badge);
+            String status = openRecallsResult.getStatusText();
+            if (!TextUtils.isEmpty(status)) {
+                providerText = providerText + " • " + status;
+            }
+            openRecallsProviderBadge.setText(providerText);
+            openRecallsProviderBadge.setVisibility(View.VISIBLE);
+        }
+
         if (openRecallsResult.getRecallDetails() != null && !openRecallsResult.getRecallDetails().isEmpty()) {
             if (openRecallsResultsContainer != null) {
                 for (AutoCheckReport.RecallDetail detail : openRecallsResult.getRecallDetails()) {
@@ -802,6 +809,14 @@ public class RecallActivity extends AppCompatActivity {
         if (openRecallsEmptyMessage != null) {
             openRecallsEmptyMessage.setText(statusText);
         }
+        if (openRecallsProviderBadge != null) {
+            String providerText = getString(R.string.open_recalls_provider_badge);
+            if (!TextUtils.isEmpty(statusText)) {
+                providerText = providerText + " • " + statusText;
+            }
+            openRecallsProviderBadge.setText(providerText);
+            openRecallsProviderBadge.setVisibility(View.VISIBLE);
+        }
     }
 
     private void showOpenRecallsError(String message) {
@@ -824,12 +839,15 @@ public class RecallActivity extends AppCompatActivity {
                 !TextUtils.isEmpty(message) ? message : getString(R.string.recalls_open_error_generic)
             );
         }
+        if (openRecallsProviderBadge != null) {
+            openRecallsProviderBadge.setText(R.string.open_recalls_provider_badge);
+            openRecallsProviderBadge.setVisibility(View.VISIBLE);
+        }
     }
 
     private void resetOpenRecallsState() {
         openRecallsResult = null;
         openRecallsLoading = false;
-        openRecallsAttempted = false;
         openRecallsErrorMessage = null;
 
         if (recallToggleGroup != null && recallToggleGroup.getCheckedButtonId() != R.id.recalls_tab_all) {
