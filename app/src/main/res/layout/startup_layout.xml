@@ -597,56 +597,39 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top"/>
 
-        <!-- Connection Loading Overlay -->
+        <!-- Connection Loading Overlay - Simple grey overlay without big loading element -->
         <FrameLayout
             android:id="@+id/connection_loading_overlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#E6000000"
+            android:background="#66000000"
             android:clickable="true"
             android:focusable="true"
             android:visibility="gone">
 
-            <LinearLayout
-                android:layout_width="280dp"
+            <!-- Small subtle progress indicator at bottom -->
+            <ProgressBar
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_marginBottom="80dp"
+                android:indeterminate="true"
+                android:indeterminateTint="@color/primary"
+                android:alpha="0.7"/>
+
+            <!-- Hidden text views for compatibility with existing code -->
+            <TextView
+                android:id="@+id/connection_loading_text"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:orientation="vertical"
-                android:gravity="center_horizontal"
-                android:minHeight="200dp"
-                android:padding="32dp"
-                android:background="@drawable/loading_dialog_background"
-                android:elevation="8dp">
+                android:visibility="gone"/>
 
-                <ProgressBar
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:layout_gravity="center_horizontal"
-                    android:indeterminate="true"
-                    android:indeterminateTint="@color/primary"/>
+            <TextView
+                android:id="@+id/connection_loading_subtext"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"/>
 
-                <TextView
-                    android:id="@+id/connection_loading_text"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Connecting to adapter..."
-                    android:textColor="@android:color/white"
-                    android:textSize="16sp"
-                    android:gravity="center"
-                    android:textStyle="bold"/>
-
-                <TextView
-                    android:id="@+id/connection_loading_subtext"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Please wait"
-                    android:textColor="#B3FFFFFF"
-                    android:textSize="14sp"
-                    android:gravity="center"/>
-
-            </LinearLayout>
         </FrameLayout>
 
     </FrameLayout>
