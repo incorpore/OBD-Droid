@@ -19,7 +19,7 @@ public class CustomPidDatabase extends SQLiteOpenHelper {
     private static final String TAG = "CustomPidDatabase";
 
     private static final String DATABASE_NAME = "custom_pids.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;  // Bump to disable all pre-loaded PIDs by default
 
     // Table name
     private static final String TABLE_PIDS = "custom_pids";
@@ -88,9 +88,12 @@ public class CustomPidDatabase extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Log.i(TAG, "Upgrading database from version " + oldVersion + " to " + newVersion);
-        // For now, just drop and recreate
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_PIDS);
-        onCreate(db);
+
+        if (oldVersion < 2) {
+            // Version 2: Disable all PIDs by default (they were enabled in v1)
+            Log.i(TAG, "Migrating to v2: Disabling all PIDs by default");
+            db.execSQL("UPDATE " + TABLE_PIDS + " SET " + COL_ENABLED + " = 0");
+        }
     }
 
     /**
