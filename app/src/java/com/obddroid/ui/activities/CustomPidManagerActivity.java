@@ -3,8 +3,14 @@ package com.obddroid.ui.activities;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -14,6 +20,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -21,6 +29,16 @@ import com.obddroid.R;
 import com.obddroid.custompid.CustomPid;
 import com.obddroid.custompid.CustomPidManager;
 import com.obddroid.custompid.CustomPidIntegration;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +58,12 @@ public class CustomPidManagerActivity extends AppCompatActivity {
     private Button btnAddPid;
     private CustomPidAdapter adapter;
     private List<CustomPid> pidList;
+
+    // File picker launchers
+    private ActivityResultLauncher<String> importCSVLauncher;
+    private ActivityResultLauncher<String> exportCSVLauncher;
+    private ActivityResultLauncher<String> importJSONLauncher;
+    private ActivityResultLauncher<String> exportJSONLauncher;
 
     /**
      * Notify other components that custom PIDs have changed
@@ -62,6 +86,9 @@ public class CustomPidManagerActivity extends AppCompatActivity {
 
         // Initialize manager
         pidManager = CustomPidManager.getInstance(this);
+
+        // Initialize file picker launchers
+        initializeFilePickers();
 
         // Find views
         listView = findViewById(R.id.pid_list);
@@ -232,6 +259,166 @@ public class CustomPidManagerActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         finish();
         return true;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_custom_pid_manager, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_export_csv) {
+            exportToCSV();
+            return true;
+        } else if (id == R.id.action_import_csv) {
+            importCSVLauncher.launch("text/*");
+            return true;
+        } else if (id == R.id.action_export_json) {
+            exportToJSON();
+            return true;
+        } else if (id == R.id.action_import_json) {
+            importJSONLauncher.launch("application/json");
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void initializeFilePickers() {
+        // CSV Import
+        importCSVLauncher = registerForActivityResult(
+            new ActivityResultContracts.GetContent(),
+            uri -> {
+                if (uri != null) {
+                    importFromCSVFile(uri);
+                }
+            }
+        );
+
+        // CSV Export
+        exportCSVLauncher = registerForActivityResult(
+            new ActivityResultContracts.CreateDocument("text/csv"),
+            uri -> {
+                if (uri != null) {
+                    saveCSVToFile(uri);
+                }
+            }
+        );
+
+        // JSON Import
+        importJSONLauncher = registerForActivityResult(
+            new ActivityResultContracts.GetContent(),
+            uri -> {
+                if (uri != null) {
+                    importFromJSONFile(uri);
+                }
+            }
+        );
+
+        // JSON Export
+        exportJSONLauncher = registerForActivityResult(
+            new ActivityResultContracts.CreateDocument("application/json"),
+            uri -> {
+                if (uri != null) {
+                    saveJSONToFile(uri);
+                }
+            }
+        );
+    }
+
+    private void exportToCSV() {
+        String filename = "custom_pids_" + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date()) + ".csv";
+        exportCSVLauncher.launch(filename);
+    }
+
+    private void exportToJSON() {
+        String filename = "custom_pids_" + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date()) + ".json";
+        exportJSONLauncher.launch(filename);
+    }
+
+    private void saveCSVToFile(Uri uri) {
+        try {
+            String csv = pidManager.exportToCSV();
+
+            OutputStream outputStream = getContentResolver().openOutputStream(uri);
+            if (outputStream != null) {
+                outputStream.write(csv.getBytes());
+                outputStream.close();
+                Toast.makeText(this, "Exported " + pidList.size() + " PIDs to CSV", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void saveJSONToFile(Uri uri) {
+        try {
+            // For now, use CSV format with .json extension
+            // TODO: Implement proper JSON export in CustomPidManager
+            String csv = pidManager.exportToCSV();
+
+            OutputStream outputStream = getContentResolver().openOutputStream(uri);
+            if (outputStream != null) {
+                outputStream.write(csv.getBytes());
+                outputStream.close();
+                Toast.makeText(this, "Exported " + pidList.size() + " PIDs", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void importFromCSVFile(Uri uri) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            if (inputStream != null) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                StringBuilder csv = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    csv.append(line).append("\n");
+                }
+                reader.close();
+                inputStream.close();
+
+                int imported = pidManager.importFromCSV(csv.toString());
+                Toast.makeText(this, "Imported " + imported + " PIDs from CSV", Toast.LENGTH_SHORT).show();
+                refreshPidList();
+                notifyCustomPidsChanged();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Import failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void importFromJSONFile(Uri uri) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            if (inputStream != null) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                StringBuilder content = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    content.append(line).append("\n");
+                }
+                reader.close();
+                inputStream.close();
+
+                // For now, treat as CSV
+                // TODO: Implement proper JSON import in CustomPidManager
+                int imported = pidManager.importFromCSV(content.toString());
+                Toast.makeText(this, "Imported " + imported + " PIDs", Toast.LENGTH_SHORT).show();
+                refreshPidList();
+                notifyCustomPidsChanged();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Import failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     /**
