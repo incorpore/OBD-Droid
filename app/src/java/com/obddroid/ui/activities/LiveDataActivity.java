@@ -230,6 +230,18 @@ public class LiveDataActivity extends AppCompatActivity
     }
 
     @Override
+    public void onBackPressed() {
+        // If vehicle info footer is expanded, collapse it first before navigating back
+        if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {
+            log.info("Back button pressed - collapsing vehicle info footer");
+            vehicleInfoFooter.collapse();
+        } else {
+            // Footer not expanded or doesn't exist - proceed with normal back behavior
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     public void pvChanged(PvChangeEvent event) {
         // When NEW PIDs are added (vehicle discovery), rebuild the adapter
         if ((event.getType() & PvChangeEvent.PV_ADDED) != 0) {
