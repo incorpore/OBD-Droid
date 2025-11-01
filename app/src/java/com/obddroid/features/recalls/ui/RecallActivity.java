@@ -17,6 +17,9 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -30,6 +33,9 @@ import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.utils.SnackbarHelper;
 
 import org.json.JSONException;
+
+import com.obddroid.features.recalls.model.AutoCheckRecallResult;
+import com.obddroid.features.vehiclehistory.model.AutoCheckReport;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -71,12 +77,35 @@ public class RecallActivity extends AppCompatActivity {
     private View footerOverlay;
     private androidx.coordinatorlayout.widget.CoordinatorLayout coordinatorLayout;
 
+    // Toggle and open recall UI
+    private MaterialButtonToggleGroup recallToggleGroup;
+    private MaterialButton tabAllRecallsButton;
+    private MaterialButton tabOpenRecallsButton;
+    private LinearLayout openRecallsContainer;
+    private TextView openRecallsProviderBadge;
+    private View openRecallsLoadingCard;
+    private TextView openRecallsStatusText;
+    private LinearLayout openRecallsResultsContainer;
+    private View openRecallsEmptyState;
+    private TextView openRecallsEmptyMessage;
+    private View openRecallsErrorCard;
+    private TextView openRecallsErrorMessageView;
+    private Button openRecallsRetryButton;
+
     // Hero card
     private androidx.cardview.widget.CardView heroCard;
     private View heroInfoState;
     private View heroResultsState;
     private TextView heroRecallCount;
     private TextView heroVehicleText;
+
+    // State
+    private RecallSearchResult currentResult;
+    private AutoCheckRecallResult openRecallsResult;
+    private String currentVin;
+    private boolean openRecallsLoading;
+    private boolean openRecallsAttempted;
+    private String openRecallsErrorMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,10 +128,20 @@ public class RecallActivity extends AppCompatActivity {
         exporter = new RecallExporter(this);
 
         bindViews();
+        setupToggleGroup();
         setupFooterOverlay();
 
         // Try to load cached data
         RecallSearchResult cachedResult = loadCachedDataIfAvailable();
+        if (cachedResult != null) {
+            currentResult = cachedResult;
+            currentVin = cachedResult.getVin();
+            openRecallsResult = cachedResult.getAutoCheckRecalls();
+            openRecallsAttempted = cachedResult.hasAutoCheckFetchAttempted();
+            setOpenTabEnabled(!TextUtils.isEmpty(currentVin));
+        } else {
+            setOpenTabEnabled(false);
+        }
 
         // Hide loading and error states initially
         if (loadingCard != null) loadingCard.setVisibility(View.GONE);
@@ -134,6 +173,22 @@ public class RecallActivity extends AppCompatActivity {
         errorMessage = findViewById(R.id.recalls_error_message);
         vehicleInfoFooter = findViewById(R.id.vehicle_footer);
         footerOverlay = findViewById(R.id.footer_overlay);
+        recallToggleGroup = findViewById(R.id.recalls_toggle_group);
+        tabAllRecallsButton = findViewById(R.id.recalls_tab_all);
+        tabOpenRecallsButton = findViewById(R.id.recalls_tab_open);
+        openRecallsContainer = findViewById(R.id.open_recalls_container);
+        openRecallsProviderBadge = findViewById(R.id.open_recalls_provider_badge);
+        openRecallsLoadingCard = findViewById(R.id.open_recalls_loading_card);
+        openRecallsStatusText = findViewById(R.id.open_recalls_status_text);
+        openRecallsResultsContainer = findViewById(R.id.open_recalls_results_container);
+        openRecallsEmptyState = findViewById(R.id.open_recalls_empty_state);
+        openRecallsEmptyMessage = findViewById(R.id.open_recalls_empty_message);
+        openRecallsErrorCard = findViewById(R.id.open_recalls_error_card);
+        openRecallsErrorMessageView = findViewById(R.id.open_recalls_error_message);
+        openRecallsRetryButton = findViewById(R.id.open_recalls_retry_button);
+        if (openRecallsRetryButton != null) {
+            openRecallsRetryButton.setOnClickListener(v -> fetchOpenRecalls());
+        }
 
         // Hero card removed - no longer needed
         // heroCard = findViewById(R.id.recalls_hero_card);
@@ -141,6 +196,37 @@ public class RecallActivity extends AppCompatActivity {
         // heroResultsState = findViewById(R.id.hero_results_state);
         // heroRecallCount = findViewById(R.id.hero_recall_count);
         // heroVehicleText = findViewById(R.id.hero_vehicle_text);
+    }
+
+    private void setupToggleGroup() {
+        if (recallToggleGroup != null) {
+            recallToggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+                if (!isChecked) {
+                    return;
+                }
+                if (checkedId == R.id.recalls_tab_all) {
+                    showAllRecallsTab();
+                } else if (checkedId == R.id.recalls_tab_open) {
+                    showOpenRecallsTab();
+                }
+            });
+            recallToggleGroup.check(R.id.recalls_tab_all);
+        }
+    }
+
+    private void setOpenTabEnabled(boolean enabled) {
+        if (tabOpenRecallsButton != null) {
+            tabOpenRecallsButton.setEnabled(enabled);
+            tabOpenRecallsButton.setAlpha(enabled ? 1f : 0.5f);
+        }
+    }
+
+    private boolean isAllTabSelected() {
+        return recallToggleGroup == null || recallToggleGroup.getCheckedButtonId() == R.id.recalls_tab_all;
+    }
+
+    private boolean isOpenTabSelected() {
+        return recallToggleGroup != null && recallToggleGroup.getCheckedButtonId() == R.id.recalls_tab_open;
     }
 
     private void setupFooterOverlay() {
@@ -198,12 +284,19 @@ public class RecallActivity extends AppCompatActivity {
                 }
             }
         }
+        resetOpenRecallsState();
+        setOpenTabEnabled(false);
     }
 
     /**
      * Perform recall search for the given VIN.
      */
     private void searchRecalls(String vin) {
+        currentVin = vin;
+        currentResult = null;
+        resetOpenRecallsState();
+        setOpenTabEnabled(true);
+
         recallService.searchRecallsByVin(vin, new RecallService.RecallSearchCallback() {
             @Override
             public void onSearchStarted() {
@@ -231,11 +324,19 @@ public class RecallActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     if (loadingCard != null) loadingCard.setVisibility(View.GONE);
 
+                    currentResult = result;
+                    openRecallsResult = null;
+                    openRecallsAttempted = false;
+                    openRecallsErrorMessage = null;
+                    result.setAutoCheckRecalls(null);
+                    result.setAutoCheckFetchAttempted(false);
+
                     // Cache the result
                     dataManager.cacheResult(result);
 
                     // Display the result
                     displayResult(result);
+                    updateTabLabels();
 
                     // Show appropriate message
                     if (result.hasRecalls()) {
@@ -253,7 +354,10 @@ public class RecallActivity extends AppCompatActivity {
             public void onSearchFailed(String error) {
                 runOnUiThread(() -> {
                     if (loadingCard != null) loadingCard.setVisibility(View.GONE);
+                    resetOpenRecallsState();
                     dataManager.clearCurrentResult();
+                    currentResult = null;
+                    openRecallsErrorMessage = null;
                     updateHeroCard(null, false);
                     if (errorCard != null) {
                         errorCard.setVisibility(View.VISIBLE);
@@ -263,6 +367,7 @@ public class RecallActivity extends AppCompatActivity {
                     }
                     resultsContainer.setVisibility(View.GONE);
                     if (emptyState != null) emptyState.setVisibility(View.GONE);
+                    updateTabLabels();
                 });
             }
         });
@@ -276,27 +381,72 @@ public class RecallActivity extends AppCompatActivity {
             return;
         }
 
-        // Hide loading, empty, and error states
+        currentResult = result;
+
         if (loadingCard != null) loadingCard.setVisibility(View.GONE);
         if (errorCard != null) errorCard.setVisibility(View.GONE);
 
+        final boolean showAllTab = isAllTabSelected();
+
+        if (resultsContainer != null) {
+            resultsContainer.removeAllViews();
+        }
+
         if (result.hasRecalls()) {
-            // Update hero card to show results
             updateHeroCard(result, true);
 
-            // Display recall cards
-            resultsContainer.removeAllViews();
-            for (RecallRecord recall : result.getRecalls()) {
-                View recallView = createRecallView(recall);
-                resultsContainer.addView(recallView);
+            if (resultsContainer != null) {
+                for (RecallRecord recall : result.getRecalls()) {
+                    View recallView = createRecallView(recall);
+                    resultsContainer.addView(recallView);
+                }
             }
-            resultsContainer.setVisibility(View.VISIBLE);
-            if (emptyState != null) emptyState.setVisibility(View.GONE);
+
+            if (resultsContainer != null) {
+                resultsContainer.setVisibility(showAllTab ? View.VISIBLE : View.GONE);
+            }
+            if (emptyState != null) {
+                emptyState.setVisibility(View.GONE);
+            }
         } else {
-            // Show empty state
             updateHeroCard(null, false);
-            resultsContainer.setVisibility(View.GONE);
-            if (emptyState != null) emptyState.setVisibility(View.VISIBLE);
+            if (resultsContainer != null) {
+                resultsContainer.setVisibility(View.GONE);
+            }
+            if (emptyState != null) {
+                emptyState.setVisibility(showAllTab ? View.VISIBLE : View.GONE);
+            }
+        }
+
+        if (!showAllTab && openRecallsContainer != null) {
+            openRecallsContainer.setVisibility(View.VISIBLE);
+        }
+
+        updateTabLabels();
+    }
+
+    private void updateTabLabels() {
+        if (tabAllRecallsButton != null) {
+            int totalRecalls = currentResult != null ? currentResult.getRecallCount() : 0;
+            if (totalRecalls > 0) {
+                tabAllRecallsButton.setText(getString(R.string.recalls_tab_all_with_count, totalRecalls));
+            } else {
+                tabAllRecallsButton.setText(R.string.recalls_tab_all);
+            }
+        }
+
+        AutoCheckRecallResult source = openRecallsResult;
+        if (source == null && currentResult != null) {
+            source = currentResult.getAutoCheckRecalls();
+        }
+
+        int openCount = (source != null) ? source.getOpenRecallCount() : 0;
+        if (tabOpenRecallsButton != null) {
+            if (openCount > 0) {
+                tabOpenRecallsButton.setText(getString(R.string.recalls_tab_open_with_count, openCount));
+            } else {
+                tabOpenRecallsButton.setText(R.string.recalls_tab_open);
+            }
         }
     }
 
@@ -420,6 +570,345 @@ public class RecallActivity extends AppCompatActivity {
         });
 
         return view;
+    }
+
+    private View createOpenRecallView(AutoCheckReport.RecallDetail detail) {
+        View view = LayoutInflater.from(this).inflate(R.layout.item_open_recall, openRecallsResultsContainer, false);
+
+        TextView title = view.findViewById(R.id.open_recall_title);
+        TextView status = view.findViewById(R.id.open_recall_status);
+        TextView date = view.findViewById(R.id.open_recall_date);
+        TextView type = view.findViewById(R.id.open_recall_type);
+        TextView nhtsaNumber = view.findViewById(R.id.open_recall_nhtsa_number);
+        TextView oemNumber = view.findViewById(R.id.open_recall_oem_number);
+        TextView description = view.findViewById(R.id.open_recall_description);
+        TextView viewDetails = view.findViewById(R.id.open_recall_open_link);
+
+        if (detail == null) {
+            return view;
+        }
+
+        if (title != null) {
+            String text = !TextUtils.isEmpty(detail.campaignDescription)
+                ? detail.campaignDescription
+                : getString(R.string.recalls_open_default_description);
+            title.setText(text);
+        }
+
+        if (status != null) {
+            if (!TextUtils.isEmpty(detail.status)) {
+                status.setText(getString(R.string.open_recall_status_label, detail.status));
+                status.setVisibility(View.VISIBLE);
+            } else {
+                status.setVisibility(View.GONE);
+            }
+        }
+
+        if (date != null) {
+            if (!TextUtils.isEmpty(detail.recallDate)) {
+                date.setText(getString(R.string.open_recall_date_label, detail.recallDate));
+                date.setVisibility(View.VISIBLE);
+            } else {
+                date.setVisibility(View.GONE);
+            }
+        }
+
+        if (type != null) {
+            if (!TextUtils.isEmpty(detail.recallType)) {
+                type.setText(getString(R.string.open_recall_type_label, detail.recallType));
+                type.setVisibility(View.VISIBLE);
+            } else {
+                type.setVisibility(View.GONE);
+            }
+        }
+
+        final String nhtsaId = detail.nhtsaRecallNo;
+        if (nhtsaNumber != null) {
+            if (!TextUtils.isEmpty(nhtsaId)) {
+                nhtsaNumber.setText(getString(R.string.open_recall_nhtsa_label, nhtsaId));
+                nhtsaNumber.setVisibility(View.VISIBLE);
+            } else {
+                nhtsaNumber.setVisibility(View.GONE);
+            }
+        }
+
+        if (oemNumber != null) {
+            if (!TextUtils.isEmpty(detail.oemRecallNo)) {
+                oemNumber.setText(getString(R.string.open_recall_oem_label, detail.oemRecallNo));
+                oemNumber.setVisibility(View.VISIBLE);
+            } else {
+                oemNumber.setVisibility(View.GONE);
+            }
+        }
+
+        if (description != null) {
+            if (!TextUtils.isEmpty(detail.campaignDescription)) {
+                description.setText(detail.campaignDescription);
+                description.setVisibility(View.VISIBLE);
+            } else {
+                description.setVisibility(View.GONE);
+            }
+        }
+
+        if (viewDetails != null) {
+            if (!TextUtils.isEmpty(nhtsaId)) {
+                viewDetails.setVisibility(View.VISIBLE);
+                viewDetails.setOnClickListener(v -> {
+                    String url = "https://www.nhtsa.gov/recalls?nhtsaId=" + nhtsaId;
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        startActivity(intent);
+                    } catch (Exception e) {
+                        showSnackbar(getString(R.string.recalls_open_link_error), SnackbarHelper.MessageType.ERROR);
+                    }
+                });
+            } else {
+                viewDetails.setVisibility(View.GONE);
+            }
+        }
+
+        return view;
+    }
+
+    private void showOpenRecallsLoading() {
+        openRecallsLoading = true;
+        openRecallsErrorMessage = null;
+        if (openRecallsProviderBadge != null) {
+            openRecallsProviderBadge.setVisibility(View.VISIBLE);
+        }
+        if (openRecallsLoadingCard != null) {
+            openRecallsLoadingCard.setVisibility(View.VISIBLE);
+        }
+        if (openRecallsStatusText != null) {
+            openRecallsStatusText.setText(R.string.recalls_open_loading_message);
+        }
+        if (openRecallsResultsContainer != null) {
+            openRecallsResultsContainer.removeAllViews();
+            openRecallsResultsContainer.setVisibility(View.GONE);
+        }
+        if (openRecallsEmptyState != null) {
+            openRecallsEmptyState.setVisibility(View.GONE);
+        }
+        if (openRecallsErrorCard != null) {
+            openRecallsErrorCard.setVisibility(View.GONE);
+        }
+    }
+
+    private void fetchOpenRecalls() {
+        if (TextUtils.isEmpty(currentVin)) {
+            showOpenRecallsError(getString(R.string.recalls_open_error_no_vin));
+            return;
+        }
+
+        openRecallsAttempted = true;
+        openRecallsErrorMessage = null;
+        showOpenRecallsLoading();
+
+        recallService.fetchOpenRecalls(currentVin, new RecallService.OpenRecallCallback() {
+            @Override
+            public void onLoading() {
+                runOnUiThread(RecallActivity.this::showOpenRecallsLoading);
+            }
+
+            @Override
+            public void onSuccess(AutoCheckRecallResult result) {
+                runOnUiThread(() -> {
+                    openRecallsLoading = false;
+                    openRecallsResult = result;
+                    openRecallsErrorMessage = null;
+                    if (currentResult != null) {
+                        currentResult.setAutoCheckRecalls(result);
+                        currentResult.setAutoCheckFetchAttempted(true);
+                    }
+                    renderOpenRecalls();
+                    updateTabLabels();
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    openRecallsLoading = false;
+                    openRecallsResult = null;
+                    openRecallsErrorMessage = error;
+                    if (currentResult != null) {
+                        currentResult.setAutoCheckRecalls(null);
+                        currentResult.setAutoCheckFetchAttempted(true);
+                    }
+                    showOpenRecallsError(error);
+                    updateTabLabels();
+                });
+            }
+        });
+    }
+
+    private void renderOpenRecalls() {
+        if (openRecallsLoadingCard != null) {
+            openRecallsLoadingCard.setVisibility(View.GONE);
+        }
+        if (openRecallsErrorCard != null) {
+            openRecallsErrorCard.setVisibility(View.GONE);
+        }
+
+        if (openRecallsResultsContainer != null) {
+            openRecallsResultsContainer.removeAllViews();
+        }
+
+        if (openRecallsResult == null) {
+            showOpenRecallsError(getString(R.string.recalls_open_error_generic));
+            return;
+        }
+
+        openRecallsErrorMessage = null;
+
+        if (openRecallsResult.getRecallDetails() != null && !openRecallsResult.getRecallDetails().isEmpty()) {
+            if (openRecallsResultsContainer != null) {
+                for (AutoCheckReport.RecallDetail detail : openRecallsResult.getRecallDetails()) {
+                    View recallView = createOpenRecallView(detail);
+                    openRecallsResultsContainer.addView(recallView);
+                }
+                openRecallsResultsContainer.setVisibility(View.VISIBLE);
+            }
+            if (openRecallsEmptyState != null) {
+                openRecallsEmptyState.setVisibility(View.GONE);
+            }
+        } else if (openRecallsResult.hasCountMismatch()) {
+            showOpenRecallsError(getString(R.string.recalls_open_error_mismatch));
+            return;
+        } else {
+            String status = openRecallsResult.getStatusText();
+            showOpenRecallsEmpty(!TextUtils.isEmpty(status) ? status : getString(R.string.recalls_open_empty_message));
+            return;
+        }
+
+        updateTabLabels();
+    }
+
+    private void showOpenRecallsEmpty(String statusText) {
+        openRecallsErrorMessage = null;
+        if (openRecallsLoadingCard != null) {
+            openRecallsLoadingCard.setVisibility(View.GONE);
+        }
+        if (openRecallsResultsContainer != null) {
+            openRecallsResultsContainer.removeAllViews();
+            openRecallsResultsContainer.setVisibility(View.GONE);
+        }
+        if (openRecallsErrorCard != null) {
+            openRecallsErrorCard.setVisibility(View.GONE);
+        }
+        if (openRecallsEmptyState != null) {
+            openRecallsEmptyState.setVisibility(View.VISIBLE);
+        }
+        if (openRecallsEmptyMessage != null) {
+            openRecallsEmptyMessage.setText(statusText);
+        }
+    }
+
+    private void showOpenRecallsError(String message) {
+        openRecallsErrorMessage = message;
+        if (openRecallsLoadingCard != null) {
+            openRecallsLoadingCard.setVisibility(View.GONE);
+        }
+        if (openRecallsResultsContainer != null) {
+            openRecallsResultsContainer.removeAllViews();
+            openRecallsResultsContainer.setVisibility(View.GONE);
+        }
+        if (openRecallsEmptyState != null) {
+            openRecallsEmptyState.setVisibility(View.GONE);
+        }
+        if (openRecallsErrorCard != null) {
+            openRecallsErrorCard.setVisibility(View.VISIBLE);
+        }
+        if (openRecallsErrorMessageView != null) {
+            openRecallsErrorMessageView.setText(
+                !TextUtils.isEmpty(message) ? message : getString(R.string.recalls_open_error_generic)
+            );
+        }
+    }
+
+    private void resetOpenRecallsState() {
+        openRecallsResult = null;
+        openRecallsLoading = false;
+        openRecallsAttempted = false;
+        openRecallsErrorMessage = null;
+
+        if (recallToggleGroup != null && recallToggleGroup.getCheckedButtonId() != R.id.recalls_tab_all) {
+            recallToggleGroup.check(R.id.recalls_tab_all);
+        }
+
+        if (openRecallsContainer != null) {
+            openRecallsContainer.setVisibility(View.GONE);
+        }
+        if (openRecallsProviderBadge != null) {
+            openRecallsProviderBadge.setVisibility(View.GONE);
+        }
+        if (openRecallsResultsContainer != null) {
+            openRecallsResultsContainer.removeAllViews();
+            openRecallsResultsContainer.setVisibility(View.GONE);
+        }
+        if (openRecallsLoadingCard != null) {
+            openRecallsLoadingCard.setVisibility(View.GONE);
+        }
+        if (openRecallsEmptyState != null) {
+            openRecallsEmptyState.setVisibility(View.GONE);
+        }
+        if (openRecallsErrorCard != null) {
+            openRecallsErrorCard.setVisibility(View.GONE);
+        }
+        if (tabOpenRecallsButton != null) {
+            tabOpenRecallsButton.setText(R.string.recalls_tab_open);
+        }
+    }
+
+    private void showAllRecallsTab() {
+        if (openRecallsContainer != null) {
+            openRecallsContainer.setVisibility(View.GONE);
+        }
+        if (openRecallsProviderBadge != null) {
+            openRecallsProviderBadge.setVisibility(View.GONE);
+        }
+        if (currentResult != null) {
+            displayResult(currentResult);
+        } else {
+            if (resultsContainer != null) {
+                resultsContainer.setVisibility(View.GONE);
+            }
+            if (emptyState != null) {
+                emptyState.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private void showOpenRecallsTab() {
+        if (openRecallsContainer != null) {
+            openRecallsContainer.setVisibility(View.VISIBLE);
+        }
+        if (openRecallsProviderBadge != null) {
+            openRecallsProviderBadge.setVisibility(View.VISIBLE);
+        }
+        if (resultsContainer != null) {
+            resultsContainer.setVisibility(View.GONE);
+        }
+        if (emptyState != null) {
+            emptyState.setVisibility(View.GONE);
+        }
+
+        AutoCheckRecallResult cached = currentResult != null ? currentResult.getAutoCheckRecalls() : null;
+        if (cached != null && openRecallsResult == null) {
+            openRecallsResult = cached;
+        }
+
+        if (openRecallsResult != null) {
+            renderOpenRecalls();
+        } else if (openRecallsLoading) {
+            showOpenRecallsLoading();
+        } else if (openRecallsErrorMessage != null) {
+            showOpenRecallsError(openRecallsErrorMessage);
+        } else if (!TextUtils.isEmpty(currentVin)) {
+            fetchOpenRecalls();
+        } else {
+            showOpenRecallsError(getString(R.string.recalls_open_error_no_vin));
+        }
     }
 
     /**

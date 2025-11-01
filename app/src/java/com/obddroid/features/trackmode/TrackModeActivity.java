@@ -42,6 +42,7 @@ import com.obddroid.services.CommService;
 import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.utils.PermissionManager;
 import com.obddroid.utils.SnackbarHelper;
+import com.obddroid.utils.MapTileHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -116,6 +117,10 @@ public class TrackModeActivity extends AppCompatActivity implements
         lapTimingManager = new LapTimingManager();
         lapTimingManager.addListener(this);
         telemetryRecorder = new TelemetryRecorder(this, lapTimingManager);
+
+        // Start telemetry recorder to get GPS updates (even before session)
+        // This allows us to show the map and current location
+        telemetryRecorder.startRecording(null);
 
         // Setup UI
         setupViews();
@@ -264,6 +269,36 @@ public class TrackModeActivity extends AppCompatActivity implements
     private void updateUI() {
         // Always update gauges from live data (even when not in session)
         updateLiveData();
+
+        // Update map with GPS location
+        if (telemetryRecorder != null) {
+            Location currentLoc = telemetryRecorder.getCurrentLocation();
+            if (currentLoc != null && mapPreview != null) {
+                // Load OpenStreetMap tile for current location
+                MapTileHelper.loadMapTile(
+                    currentLoc.getLatitude(),
+                    currentLoc.getLongitude(),
+                    16, // Zoom level 16 for detailed street view
+                    mapPreview
+                );
+
+                // Update position text
+                if (tvTrackPosition != null) {
+                    tvTrackPosition.setText(String.format(Locale.US,
+                        "Lat: %.6f, Lon: %.6f",
+                        currentLoc.getLatitude(),
+                        currentLoc.getLongitude()));
+                }
+
+                // Update distance if in session
+                if (isSessionActive && tvTrackDistance != null) {
+                    float distance = currentSession != null ?
+                        (float)(currentSession.getTotalDistance() / 1000.0) : 0;
+                    tvTrackDistance.setText(String.format(Locale.US,
+                        "Distance: %.2f km", distance));
+                }
+            }
+        }
 
         if (!isSessionActive || telemetryRecorder == null) return;
 
@@ -702,18 +737,8 @@ public class TrackModeActivity extends AppCompatActivity implements
                 }
             }
 
-            // Get GPS data if available
-            EcuDataPv latPv = ObdProt.PidPvs.getTyped("F100.0.0"); // GPS Latitude
-            EcuDataPv lonPv = ObdProt.PidPvs.getTyped("F101.0.0"); // GPS Longitude
-            if (latPv != null && lonPv != null) {
-                Object latValue = latPv.get(EcuDataPv.FID_VALUE);
-                Object lonValue = lonPv.get(EcuDataPv.FID_VALUE);
-                if (latValue != null && lonValue != null) {
-                    double lat = Double.parseDouble(latValue.toString());
-                    double lon = Double.parseDouble(lonValue.toString());
-                    updateTrackPosition(lat, lon);
-                }
-            }
+            // GPS data now handled by TelemetryRecorder using LocationManager
+            // The map is updated in the main updateUI() method
 
             // Get accelerometer data for G-forces
             EcuDataPv accelXPv = ObdProt.PidPvs.getTyped("F200.0.0"); // X acceleration
@@ -733,18 +758,6 @@ public class TrackModeActivity extends AppCompatActivity implements
         }
     }
 
-    /**
-     * Update track position on map
-     */
-    private void updateTrackPosition(double lat, double lon) {
-        // Update position text
-        if (tvTrackPosition != null) {
-            tvTrackPosition.setText(String.format("Lat: %.6f, Lon: %.6f", lat, lon));
-        }
-
-        // TODO: Update map view with actual position
-        // Would need to integrate with a mapping library like MapBox or Google Maps
-    }
 
     // PvChangeListener implementation
     @Override
