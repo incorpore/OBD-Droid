@@ -47,6 +47,12 @@ import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.ui.activities.DashBoardActivity;
 import com.obddroid.utils.SnackbarHelper;
 import com.obddroid.utils.PermissionManager;
+import com.obddroid.custompid.CustomPidIntegration;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.IntentFilter;
 
 import java.util.List;
 import java.util.logging.Logger;
@@ -74,6 +80,21 @@ public class LiveDataActivity extends AppCompatActivity
     // Telemetry managers
     private GpsTelemetryManager gpsTelemetryManager;
     private SensorTelemetryManager sensorTelemetryManager;
+
+    // Custom PID integration
+    private CustomPidIntegration customPidIntegration;
+
+    // Broadcast receiver for custom PID changes
+    private final BroadcastReceiver customPidChangeReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            log.info("Received custom PID change broadcast - refreshing custom PIDs");
+            loadCustomPids();
+            if (recyclerAdapter != null) {
+                recyclerAdapter.updateData(ObdProt.PidPvs);
+            }
+        }
+    };
 
     // Update handler
     private Handler updateHandler = new Handler(Looper.getMainLooper());
@@ -132,12 +153,39 @@ public class LiveDataActivity extends AppCompatActivity
         // Telemetry managers are created on-demand
     }
 
+    private void loadCustomPids() {
+        try {
+            if (customPidIntegration == null) {
+                customPidIntegration = new CustomPidIntegration(this);
+            }
+
+            // Load all enabled custom PIDs into live data
+            customPidIntegration.loadIntoLiveData();
+
+            int loadedCount = customPidIntegration.getLoadedCount();
+            if (loadedCount > 0) {
+                log.info("Loaded " + loadedCount + " custom PIDs into live data");
+            }
+        } catch (Exception e) {
+            log.warning("Failed to load custom PIDs: " + e.getMessage());
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
 
         // Register PV change listeners for OBD data
         ObdProt.PidPvs.addPvChangeListener(this, PvChangeEvent.PV_ADDED | PvChangeEvent.PV_MODIFIED);
+
+        // Register broadcast receiver for custom PID changes
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            customPidChangeReceiver,
+            new IntentFilter(CustomPidIntegration.ACTION_CUSTOM_PIDS_CHANGED)
+        );
+
+        // Load custom PIDs into live data
+        loadCustomPids();
 
         // Set OBD service to live data mode
         CommService.elm.setService(ObdProt.OBD_SVC_DATA);
@@ -164,6 +212,9 @@ public class LiveDataActivity extends AppCompatActivity
 
         // Unregister PV change listeners
         ObdProt.PidPvs.removePvChangeListener(this);
+
+        // Unregister broadcast receiver
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(customPidChangeReceiver);
 
         // Stop updates
         updateHandler.removeCallbacks(updateRunnable);

@@ -2,6 +2,7 @@ package com.obddroid.ui.activities;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,10 +15,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.obddroid.R;
 import com.obddroid.custompid.CustomPid;
 import com.obddroid.custompid.CustomPidManager;
+import com.obddroid.custompid.CustomPidIntegration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +41,15 @@ public class CustomPidManagerActivity extends AppCompatActivity {
     private Button btnLoadPresets;
     private CustomPidAdapter adapter;
     private List<CustomPid> pidList;
+
+    /**
+     * Notify other components that custom PIDs have changed
+     * This allows LiveDataActivity to refresh without app restart
+     */
+    private void notifyCustomPidsChanged() {
+        Intent intent = new Intent(CustomPidIntegration.ACTION_CUSTOM_PIDS_CHANGED);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -158,6 +170,7 @@ public class CustomPidManagerActivity extends AppCompatActivity {
                 }
 
                 refreshPidList();
+                notifyCustomPidsChanged();  // Notify live data to refresh
             } catch (Exception e) {
                 Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
@@ -191,6 +204,7 @@ public class CustomPidManagerActivity extends AppCompatActivity {
                     pidManager.deletePid(pid.getId());
                     Toast.makeText(this, "PID deleted", Toast.LENGTH_SHORT).show();
                     refreshPidList();
+                    notifyCustomPidsChanged();  // Notify live data to refresh
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
