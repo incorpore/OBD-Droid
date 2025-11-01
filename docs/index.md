@@ -10,11 +10,13 @@ Professional-grade diagnostic tools and multi-ECU support:
 - **[dealer-diagnostics-roadmap.md](./dealer-diagnostics-roadmap.md)** – Dealer-grade diagnostics roadmap and feature backlog
 - **[multi-ecu-discovery-plan.md](./multi-ecu-discovery-plan.md)** – Discovery and addressing plan for multi-ECU vehicles
 
+#### Technical Analysis
+- **[protocol-analysis.md](./protocol-analysis.md)** – Deep-dive OBD-II protocol analysis and implementation insights
+
 #### Diagnostic Reports & Case Studies
 - **[dealer-diag-reports/](./dealer-diag-reports/)** – In-house dealer shop diagnostic reports
   - **[README.md](./dealer-diag-reports/README.md)** – Quick start guide for diagnostic workflows
   - **[2022_GMC_Canyon_P0302_Cylinder2_Misfire.md](./dealer-diag-reports/2022_GMC_Canyon_P0302_Cylinder2_Misfire.md)** – P0302 misfire diagnosis with MAP sensor analysis
-  - **[2014_Ford_F150_PSCM_Lockout_No_Power_Steering.md](./dealer-diag-reports/2014_Ford_F150_PSCM_Lockout_No_Power_Steering.md)** – PSCM lockout diagnostic case study
 
 #### Vehicle Baseline Profiles
 - **[vehicle-profiles/](./vehicle-profiles/)** – Complete OBD baseline scans and diagnostic records
@@ -28,15 +30,7 @@ Professional-grade diagnostic tools and multi-ECU support:
 
 **Single source of truth for all AI-powered features:**
 
-- **[vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md)** – Complete unified plan (64% complete)
-
----
-
-### Data & Telemetry
-
-Backend services and analytics:
-
-- **[telemetry-and-history.md](./telemetry-and-history.md)** – Telemetry system architecture and vehicle history tracking
+- **[vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md)** – Complete unified plan for CoPilot and AI-powered diagnostics
 
 ---
 
@@ -58,13 +52,13 @@ Play Store launch planning and go-to-market strategy:
 → [vehicle-profiles/README.md](./vehicle-profiles/README.md)
 
 **Need AI/CoPilot integration details?**
-→ [vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md) (Agents API, scan orchestration, AI analyzer, full specs)
+→ [vehicle-intelligence-suite-plan.md](./vehicle-intelligence-suite-plan.md)
+
+**Deep protocol analysis?**
+→ [protocol-analysis.md](./protocol-analysis.md)
 
 **Preparing for launch?**
 → [launch-plan.md](./launch-plan.md)
-
-**Setting up telemetry/backend?**
-→ [telemetry-and-history.md](./telemetry-and-history.md)
 
 ---
 
@@ -77,10 +71,10 @@ docs/
 ├── Dealer Diagnostics & ECU
 │   ├── dealer-diagnostics-roadmap.md
 │   ├── multi-ecu-discovery-plan.md
+│   ├── protocol-analysis.md
 │   ├── dealer-diag-reports/
 │   │   ├── README.md
-│   │   ├── 2022_GMC_Canyon_P0302_Cylinder2_Misfire.md
-│   │   └── 2014_Ford_F150_PSCM_Lockout_No_Power_Steering.md
+│   │   └── 2022_GMC_Canyon_P0302_Cylinder2_Misfire.md
 │   └── vehicle-profiles/
 │       ├── README.md
 │       ├── 2017_Nissan_Frontier_VIN778459.md
@@ -88,9 +82,6 @@ docs/
 │
 ├── AI & Intelligence
 │   └── vehicle-intelligence-suite-plan.md
-│
-├── Data & Telemetry
-│   └── telemetry-and-history.md
 │
 └── Launch & Growth
     ├── launch-plan.md
