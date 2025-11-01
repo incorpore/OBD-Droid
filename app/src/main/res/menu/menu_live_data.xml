@@ -23,4 +23,11 @@
         android:icon="@drawable/ic_file_upload_24"
         app:showAsAction="never" />
 
+    <!-- Manage Custom PIDs -->
+    <item
+        android:id="@+id/action_manage_custom_pids"
+        android:title="Manage Custom PIDs"
+        android:icon="@android:drawable/ic_menu_add"
+        app:showAsAction="never" />
+
 </menu>

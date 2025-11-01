@@ -107,6 +107,11 @@
             android:configChanges="touchscreen|orientation|screenSize"
             android:exported="false" />
         <activity
+            android:name="com.obddroid.ui.activities.CustomPidManagerActivity"
+            android:label="Custom PIDs"
+            android:configChanges="touchscreen|orientation|screenSize"
+            android:exported="false" />
+        <activity
             android:name="com.obddroid.ui.activities.LiveDataActivity"
             android:label="Live Data"
             android:configChanges="touchscreen|orientation|screenSize"

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Required Fields"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_pid_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Name (e.g., Boost Pressure)"
+            android:inputType="textCapWords" />
+
+        <EditText
+            android:id="@+id/et_pid_hex"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="PID Hex (e.g., 221634)"
+            android:inputType="textNoSuggestions"
+            android:digits="0123456789ABCDEFabcdef" />
+
+        <EditText
+            android:id="@+id/et_formula"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Formula (e.g., (A*256+B)/10)"
+            android:inputType="textNoSuggestions" />
+
+        <EditText
+            android:id="@+id/et_units"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Units (e.g., kPa, °C, PSI)"
+            android:inputType="text" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Vehicle-Specific (Optional)"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_make"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Make (e.g., Subaru) - leave empty for universal"
+            android:inputType="textCapWords" />
+
+        <EditText
+            android:id="@+id/et_model"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Model (e.g., WRX, STI) - optional"
+            android:inputType="textCapWords" />
+
+        <EditText
+            android:id="@+id/et_years"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Years (e.g., 2008-2021 or 2020) - optional"
+            android:inputType="text" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Additional Info"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Description - optional"
+            android:inputType="textMultiLine"
+            android:minLines="2"
+            android:gravity="top" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Formula Variables:\nA, B, C, D = OBD response bytes\nOperations: +, -, *, /, ^, (), min(), max(), abs()"
+            android:textSize="11sp"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+
+</ScrollView>

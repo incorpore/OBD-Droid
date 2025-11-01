@@ -243,6 +243,10 @@ public class LiveDataActivity extends AppCompatActivity
         } else if (id == R.id.action_save_report) {
             showSaveReportDialog();
             return true;
+        } else if (id == R.id.action_manage_custom_pids) {
+            Intent intent = new Intent(this, CustomPidManagerActivity.class);
+            startActivity(intent);
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
