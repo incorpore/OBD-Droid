@@ -16,7 +16,7 @@
 
     <item
         android:id="@+id/action_info"
-        android:title="About"
+        android:title="Help"
         android:icon="@drawable/ic_info_24"
         app:showAsAction="never" />
 
