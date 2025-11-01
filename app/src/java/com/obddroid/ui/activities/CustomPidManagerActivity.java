@@ -272,17 +272,11 @@ public class CustomPidManagerActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.action_export_csv) {
-            exportToCSV();
+        if (id == R.id.action_export) {
+            showExportDialog();
             return true;
-        } else if (id == R.id.action_import_csv) {
-            importCSVLauncher.launch("text/*");
-            return true;
-        } else if (id == R.id.action_export_json) {
-            exportToJSON();
-            return true;
-        } else if (id == R.id.action_import_json) {
-            importJSONLauncher.launch("application/json");
+        } else if (id == R.id.action_import) {
+            showImportDialog();
             return true;
         }
 
@@ -331,14 +325,40 @@ public class CustomPidManagerActivity extends AppCompatActivity {
         );
     }
 
-    private void exportToCSV() {
-        String filename = "custom_pids_" + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date()) + ".csv";
-        exportCSVLauncher.launch(filename);
+    private void showExportDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Export Custom PIDs");
+        builder.setMessage("Choose export format:");
+
+        builder.setPositiveButton("CSV Format", (dialog, which) -> {
+            String filename = "custom_pids_" + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date()) + ".csv";
+            exportCSVLauncher.launch(filename);
+        });
+
+        builder.setNeutralButton("JSON Format", (dialog, which) -> {
+            String filename = "custom_pids_" + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date()) + ".json";
+            exportJSONLauncher.launch(filename);
+        });
+
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
     }
 
-    private void exportToJSON() {
-        String filename = "custom_pids_" + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date()) + ".json";
-        exportJSONLauncher.launch(filename);
+    private void showImportDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Import Custom PIDs");
+        builder.setMessage("Choose file format to import:");
+
+        builder.setPositiveButton("CSV Format", (dialog, which) -> {
+            importCSVLauncher.launch("text/*");
+        });
+
+        builder.setNeutralButton("JSON Format", (dialog, which) -> {
+            importJSONLauncher.launch("application/json");
+        });
+
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
     }
 
     private void saveCSVToFile(Uri uri) {
