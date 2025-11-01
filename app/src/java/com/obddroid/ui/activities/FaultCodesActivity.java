@@ -95,6 +95,17 @@ public class FaultCodesActivity extends AppCompatActivity {
         showEmptyState();
     }
 
+    @Override
+    public void onBackPressed() {
+        // If vehicle info footer is expanded, collapse it first before navigating back
+        if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {
+            vehicleInfoFooter.collapse();
+        } else {
+            // Footer not expanded or doesn't exist - proceed with normal back behavior
+            super.onBackPressed();
+        }
+    }
+
     private void initializeViews() {
         milStatusCard = findViewById(R.id.mil_status_card);
         milStatusIcon = findViewById(R.id.mil_status_icon);

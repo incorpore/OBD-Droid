@@ -145,6 +145,17 @@ public class EcuListActivity extends AppCompatActivity implements EcuManager.Ecu
     }
 
     @Override
+    public void onBackPressed() {
+        // If vehicle info footer is expanded, collapse it first before navigating back
+        if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {
+            vehicleInfoFooter.collapse();
+        } else {
+            // Footer not expanded or doesn't exist - proceed with normal back behavior
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         // DON'T call startListening() - we want FRESH scans only!

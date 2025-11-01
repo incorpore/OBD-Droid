@@ -145,6 +145,15 @@ public class TrackModeActivity extends AppCompatActivity implements
         // Register for live OBD data updates (same as LiveDataActivity)
         ObdProt.PidPvs.addPvChangeListener(this,
             PvChangeEvent.PV_ADDED | PvChangeEvent.PV_MODIFIED);
+
+        // CRITICAL: Set OBD service to live data mode to start streaming
+        // This is what FuelEconomyActivity does to get live data
+        try {
+            CommService.elm.setService(ObdProt.OBD_SVC_DATA);
+            Log.i(TAG, "Set OBD service to OBD_SVC_DATA (Live Data mode)");
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to request Live Data service: " + e.getMessage());
+        }
     }
 
     @Override
@@ -154,6 +163,19 @@ public class TrackModeActivity extends AppCompatActivity implements
 
         // Unregister from live data updates
         ObdProt.PidPvs.removePvChangeListener(this);
+
+        // Only stop OBD polling if we're finishing (user leaving Track Mode)
+        // Keep polling active if just pausing temporarily
+        if (isFinishing()) {
+            try {
+                CommService.elm.setService(ObdProt.OBD_SVC_NONE);
+                Log.i(TAG, "Set OBD service to NONE (stopped polling - activity finishing)");
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to stop Live Data service: " + e.getMessage());
+            }
+        } else {
+            Log.i(TAG, "Activity pausing but not finishing - keeping OBD service active");
+        }
 
         if (isServiceBound) {
             unbindService(serviceConnection);
