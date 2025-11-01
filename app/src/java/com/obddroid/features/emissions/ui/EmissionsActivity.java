@@ -967,7 +967,20 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
             // Set performance bar width
             performanceBar.setVisibility(View.VISIBLE);
             LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) performanceBar.getLayoutParams();
-            params.weight = monitor.getRatio();
+
+            // Progress bar should show readiness progress, not IUMPR ratio
+            // If monitor is Ready, show 100%. If Not Ready, cap progress at 80% max
+            // to avoid confusion (IUMPR ratio can be >100% while monitor is Not Ready)
+            float progressWeight;
+            if (monitor.isReady) {
+                progressWeight = 1.0f;  // 100% - monitor is ready
+            } else {
+                // Cap at 80% for not-ready monitors, even if IUMPR is high
+                // This shows data is accumulating but monitor isn't complete yet
+                progressWeight = Math.min(monitor.getRatio(), 0.8f);
+            }
+
+            params.weight = progressWeight;
             performanceBar.setLayoutParams(params);
             performanceBar.setBackgroundColor(COLOR_NOT_READY);
         }
