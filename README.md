@@ -149,13 +149,13 @@ Adapter ⇨ CommService ⇨ ObdProt ⇨ ObdDataService ─┬─► Live Data / 
                                                   ├─► CsvLoggingService (GPS + sensors)
                                                   └─► Feature Modules (CoPilot, Recalls, AutoCheck)
 
-AutoCheck API ⇨ AutoCheckService ⇨ VehicleHistoryActivity / RecallActivity
-NHTSA API     ⇨ RecallLookupAndroid ⇨ RecallActivity (All Recalls tab)
-Claude API    ⇨ CoPilotService ⇨ CoPilotActivity (contextual AI answers)
+Vehicle Data Service ⇨ AutoCheckService ⇨ VehicleHistoryActivity / RecallActivity
+NHTSA API            ⇨ RecallLookupAndroid ⇨ RecallActivity (All Recalls tab)
+Claude API           ⇨ CoPilotService ⇨ CoPilotActivity (contextual AI answers)
 ```
 
 - **Separation of Concerns** – OBD stack lives in its own package, while UI features orchestrate data via managers/services.
-- **Request Queues & Caching** – AutoCheck companion caches VIN lookups; in-app caching enables instant revisit offline.
+- **Request Queues & Caching** – Vehicle data service caches VIN lookups; in-app caching enables instant revisit offline.
 - **Configurable Telemetry** – Logging and AI features respond to user settings stored in `SharedPreferences`.
 
 ---
@@ -221,7 +221,7 @@ git submodule update --init --recursive
 adb shell am start -n com.obddroid/.ui.activities.MainActivity
 ```
 
-> **Tip:** AutoCheck vehicle history relies on the companion `autocheck-api` service. Run it locally (`npm install && npm run dev`) or point the app at the hosted instance before testing history/recall features.
+> **Tip:** Vehicle history and recall features rely on the companion `vehicle-data-service`. Run it locally (`npm install && npm run dev`) or point the app at the hosted instance before testing history/recall features.
 
 ---
 
@@ -246,7 +246,7 @@ adb shell am start -n com.obddroid/.ui.activities.MainActivity
 
 | Integration | Purpose | Notes |
 | --- | --- | --- |
-| **AutoCheck API** | Premium vehicle history & open recall data | Companion Node/Playwright service with Redis caching & rate limiting. |
+| **Vehicle Data Service** | Premium vehicle history & open recall data | Companion Node/Playwright service with Redis caching & rate limiting. Provides AutoCheck reports, NHTSA recalls, and VIN decoding. |
 | **NHTSA Recall API** | Campaign listings, remedy info, VIN decodes | Back bone for “All Recalls” tab and VIN decoder. |
 | **Anthropic Claude** | Conversational diagnostics | Context-aware responses with client-side redaction. |
 | **VIN Decoder** | Make/model/trim heuristics | Normalizes manufacturer naming for recall lookups. |
