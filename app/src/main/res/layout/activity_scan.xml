@@ -240,6 +240,15 @@
 
     <!-- Removed button bar - actions moved to menu -->
 
+    <View
+        android:id="@+id/footer_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/background_overlay"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"/>
+
     <com.obddroid.ui.components.VehicleInfoFooter
         android:id="@+id/vehicle_footer"
         android:layout_width="match_parent"

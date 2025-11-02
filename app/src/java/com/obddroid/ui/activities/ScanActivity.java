@@ -17,7 +17,8 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.obddroid.ui.components.VehicleInfoFooter;
+import com.obddroid.utils.SnackbarHelper;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -59,6 +60,8 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
     private CardView aiAnalysisCard;
     private TextView aiAnalysisText;
     private ProgressBar aiAnalysisProgress;
+    private VehicleInfoFooter vehicleFooter;
+    private View footerOverlay;
     // Buttons removed - now using menu items
 
     private ScanOrchestrator scanService;
@@ -129,6 +132,12 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         aiAnalysisText = findViewById(R.id.ai_analysis_text);
         aiAnalysisProgress = findViewById(R.id.ai_analysis_progress);
         // Buttons removed - now using menu items
+
+        vehicleFooter = findViewById(R.id.vehicle_footer);
+        footerOverlay = findViewById(R.id.footer_overlay);
+        if (vehicleFooter != null && footerOverlay != null) {
+            vehicleFooter.setOverlayView(footerOverlay);
+        }
     }
 
     private void setupListeners() {
@@ -202,12 +211,12 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
 
     private void startScan() {
         if (!serviceBound || scanService == null) {
-            Toast.makeText(this, "Scan service not ready", Toast.LENGTH_SHORT).show();
+            showSnackbar("Scan service not ready", SnackbarHelper.MessageType.ERROR);
             return;
         }
 
         if (scanService.isScanning()) {
-            Toast.makeText(this, "Scan already in progress", Toast.LENGTH_SHORT).show();
+            showSnackbar("Scan already in progress", SnackbarHelper.MessageType.INFO);
             return;
         }
 
@@ -341,8 +350,8 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
                 setMenuItemEnabled(R.id.action_share_report, false);
             }
 
-            Toast.makeText(this, "Scan complete! " + report.getStageResults().size() + " stages finished",
-                Toast.LENGTH_LONG).show();
+            showSnackbar("Scan complete! " + report.getStageResults().size() + " stages finished",
+                SnackbarHelper.MessageType.SUCCESS);
         });
     }
 
@@ -362,7 +371,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             report.attachArtifacts(artifacts);
             return artifacts;
         } catch (IOException e) {
-            Toast.makeText(this, "Unable to prepare report artifacts: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            showSnackbar("Unable to prepare report artifacts: " + e.getMessage(), SnackbarHelper.MessageType.ERROR);
             return null;
         }
     }
@@ -376,7 +385,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
 
     private void shareScanReport() {
         if (lastReport == null) {
-            Toast.makeText(this, "Run a scan before sharing", Toast.LENGTH_SHORT).show();
+            showSnackbar("Run a scan before sharing", SnackbarHelper.MessageType.INFO);
             return;
         }
 
@@ -403,7 +412,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         }
 
         if (shareFile == null || !shareFile.exists()) {
-            Toast.makeText(this, "No report file available to share", Toast.LENGTH_LONG).show();
+            showSnackbar("No report file available to share", SnackbarHelper.MessageType.WARNING);
             return;
         }
 
@@ -418,7 +427,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
         try {
             startActivity(Intent.createChooser(shareIntent, "Share Scan Report"));
         } catch (Exception e) {
-            Toast.makeText(this, "Unable to share report: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            showSnackbar("Unable to share report: " + e.getMessage(), SnackbarHelper.MessageType.ERROR);
         }
     }
 
@@ -435,14 +444,14 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             }
             return summaryFile;
         } catch (IOException e) {
-            Toast.makeText(this, "Unable to create summary file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            showSnackbar("Unable to create summary file: " + e.getMessage(), SnackbarHelper.MessageType.ERROR);
             return null;
         }
     }
 
     private void runAIAnalysis() {
         if (lastReport == null) {
-            Toast.makeText(this, "No scan data available for analysis", Toast.LENGTH_SHORT).show();
+            showSnackbar("No scan data available for analysis", SnackbarHelper.MessageType.INFO);
             return;
         }
 
@@ -480,7 +489,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             setMenuItemEnabled(R.id.action_share_report, false);
             setMenuItemEnabled(R.id.action_ask_copilot, false);
 
-            Toast.makeText(this, "Scan cancelled", Toast.LENGTH_SHORT).show();
+            showSnackbar("Scan cancelled", SnackbarHelper.MessageType.WARNING);
         });
     }
 
@@ -498,7 +507,7 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             setMenuItemEnabled(R.id.action_share_report, false);
             setMenuItemEnabled(R.id.action_ask_copilot, false);
 
-            Toast.makeText(this, "Scan failed: " + error.getMessage(), Toast.LENGTH_LONG).show();
+            showSnackbar("Scan failed: " + error.getMessage(), SnackbarHelper.MessageType.ERROR);
         });
     }
 
@@ -600,6 +609,10 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
+    }
+
+    private void showSnackbar(String message, SnackbarHelper.MessageType type) {
+        SnackbarHelper.showSnackbar(this, message, type);
     }
 
     /**
