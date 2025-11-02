@@ -48,6 +48,7 @@ import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.ui.activities.DashBoardActivity;
 import com.obddroid.utils.SnackbarHelper;
 import com.obddroid.utils.PermissionManager;
+import com.obddroid.utils.HelpDialogUtils;
 import com.obddroid.custompid.CustomPidIntegration;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -729,11 +730,12 @@ public class LiveDataActivity extends AppCompatActivity
     }
 
     private void showInfoDialog() {
-        new AlertDialog.Builder(this)
-            .setTitle(R.string.live_data_info_title)
-            .setMessage(R.string.live_data_info_message)
-            .setPositiveButton(R.string.live_data_info_ack, null)
-            .setIcon(android.R.drawable.ic_menu_info_details)
-            .show();
+        HelpDialogUtils.showHelpDialog(
+            this,
+            R.string.live_data_info_title,
+            R.string.live_data_info_message,
+            R.string.live_data_info_ack,
+            android.R.drawable.ic_menu_info_details
+        );
     }
 }

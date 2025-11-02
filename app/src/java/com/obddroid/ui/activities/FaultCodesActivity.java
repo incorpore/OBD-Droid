@@ -26,6 +26,7 @@ import com.obddroid.ui.adapters.FaultCodeListAdapter;
 import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.features.faultcodes.data.FaultCodeReportExporter;
 import com.obddroid.utils.SnackbarHelper;
+import com.obddroid.utils.HelpDialogUtils;
 
 import org.json.JSONException;
 
@@ -490,11 +491,12 @@ public class FaultCodesActivity extends AppCompatActivity {
     }
 
     private void showInfoDialog() {
-        new AlertDialog.Builder(this)
-            .setTitle(R.string.fault_codes_info_title)
-            .setMessage(R.string.fault_codes_info_message)
-            .setPositiveButton(R.string.fault_codes_info_ack, null)
-            .setIcon(android.R.drawable.ic_menu_info_details)
-            .show();
+        HelpDialogUtils.showHelpDialog(
+            this,
+            R.string.fault_codes_info_title,
+            R.string.fault_codes_info_message,
+            R.string.fault_codes_info_ack,
+            android.R.drawable.ic_menu_info_details
+        );
     }
 }

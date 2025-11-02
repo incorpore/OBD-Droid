@@ -38,6 +38,7 @@ import com.obddroid.ui.adapters.ColorAdapter;
 import com.obddroid.ui.adapters.ObdItemAdapter;
 import com.obddroid.ui.components.AutoHider;
 import com.obddroid.utils.ExportTask;
+import com.obddroid.utils.HelpDialogUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -384,11 +385,12 @@ public class ChartActivity extends AppCompatActivity {
     }
 
     private void showInfoDialog() {
-        new AlertDialog.Builder(this)
-            .setTitle(R.string.chart_info_title)
-            .setMessage(R.string.chart_info_message)
-            .setPositiveButton(R.string.chart_info_ack, null)
-            .setIcon(android.R.drawable.ic_menu_info_details)
-            .show();
+        HelpDialogUtils.showHelpDialog(
+            this,
+            R.string.chart_info_title,
+            R.string.chart_info_message,
+            R.string.chart_info_ack,
+            android.R.drawable.ic_menu_info_details
+        );
     }
 }

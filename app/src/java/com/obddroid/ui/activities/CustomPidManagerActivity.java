@@ -29,6 +29,7 @@ import com.obddroid.R;
 import com.obddroid.custompid.CustomPid;
 import com.obddroid.custompid.CustomPidManager;
 import com.obddroid.custompid.CustomPidIntegration;
+import com.obddroid.utils.HelpDialogUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -511,11 +512,12 @@ public class CustomPidManagerActivity extends AppCompatActivity {
     }
 
     private void showInfoDialog() {
-        new AlertDialog.Builder(this)
-            .setTitle(R.string.custom_pid_info_title)
-            .setMessage(R.string.custom_pid_info_message)
-            .setPositiveButton(R.string.custom_pid_info_ack, null)
-            .setIcon(android.R.drawable.ic_menu_info_details)
-            .show();
+        HelpDialogUtils.showHelpDialog(
+            this,
+            R.string.custom_pid_info_title,
+            R.string.custom_pid_info_message,
+            R.string.custom_pid_info_ack,
+            android.R.drawable.ic_menu_info_details
+        );
     }
 }

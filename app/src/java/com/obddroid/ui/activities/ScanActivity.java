@@ -20,6 +20,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.utils.SnackbarHelper;
+import com.obddroid.utils.HelpDialogUtils;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -677,11 +678,12 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
     }
 
     private void showInfoDialog() {
-        new AlertDialog.Builder(this)
-            .setTitle(R.string.scan_info_title)
-            .setMessage(R.string.scan_info_message)
-            .setPositiveButton(R.string.scan_info_ack, null)
-            .setIcon(android.R.drawable.ic_menu_info_details)
-            .show();
+        HelpDialogUtils.showHelpDialog(
+            this,
+            R.string.scan_info_title,
+            R.string.scan_info_message,
+            R.string.scan_info_ack,
+            android.R.drawable.ic_menu_info_details
+        );
     }
 }

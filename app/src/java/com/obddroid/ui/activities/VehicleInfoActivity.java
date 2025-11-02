@@ -25,6 +25,7 @@ import com.google.gson.GsonBuilder;
 import com.obddroid.R;
 import com.obddroid.services.VehicleManager;
 import com.obddroid.ui.components.VehicleInfoFooter;
+import com.obddroid.utils.HelpDialogUtils;
 import com.obddroid.utils.SnackbarHelper;
 import com.obddroid.utils.VehicleData;
 
@@ -783,11 +784,12 @@ public class VehicleInfoActivity extends AppCompatActivity {
     }
 
     private void showInfoDialog() {
-        new AlertDialog.Builder(this)
-            .setTitle(R.string.vehicle_info_info_title)
-            .setMessage(R.string.vehicle_info_info_message)
-            .setPositiveButton(R.string.vehicle_info_info_ack, null)
-            .setIcon(android.R.drawable.ic_menu_info_details)
-            .show();
+        HelpDialogUtils.showHelpDialog(
+            this,
+            R.string.vehicle_info_info_title,
+            R.string.vehicle_info_info_message,
+            R.string.vehicle_info_info_ack,
+            android.R.drawable.ic_menu_info_details
+        );
     }
 }

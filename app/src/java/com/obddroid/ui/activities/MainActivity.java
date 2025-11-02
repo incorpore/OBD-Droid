@@ -95,6 +95,7 @@ import com.obddroid.services.StateManager;
 import com.obddroid.ui.components.AutoHider;
 import com.obddroid.utils.ExportTask;
 import com.obddroid.utils.FileHelper;
+import com.obddroid.utils.HelpDialogUtils;
 import com.obddroid.utils.PermissionManager;
 import com.obddroid.utils.SnackbarHelper;
 import com.obddroid.ui.helpers.StateCleanupDialog;
@@ -945,12 +946,32 @@ public class MainActivity extends AppCompatActivity
         // Auto-reconnect on startup if enabled (only on first resume)
         attemptAutoReconnectIfEnabled();
 
-        // DO NOT switch OBD service on resume - causes unstable adapters to cycle
-        // Just use whatever service is currently running
+        // Smart mode restoration: restore MainActivity's mode if it was changed by another activity
+        // This prevents mode mismatch that causes connection cycling
         if (CommService.elm != null && mCommService != null)
         {
             int currentService = CommService.elm.getService();
-            log.info("MainActivity resuming - keeping current service: " + currentService + " (no switch)");
+
+            // Only restore if:
+            // 1. MainActivity has a valid service set (not NONE)
+            // 2. Current service doesn't match what MainActivity expects
+            // 3. We're connected (prevents switching during initial connection)
+            if (obdService != ElmProt.OBD_SVC_NONE &&
+                currentService != obdService &&
+                (ecuConnectionState == ElmProt.STAT.CONNECTED || ecuConnectionState == ElmProt.STAT.ECU_DETECTED))
+            {
+                log.info("MainActivity resuming - restoring service from " + currentService + " to " + obdService + " (mode mismatch detected)");
+
+                // Add small delay to ensure connection is stable before switching
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    if (CommService.elm != null && CommService.elm.getService() != obdService) {
+                        CommService.elm.setService(obdService);
+                        log.info("Service restored to " + obdService);
+                    }
+                }, 300); // 300ms delay to prevent rapid switching
+            } else {
+                log.info("MainActivity resuming - keeping current service: " + currentService + " (no mismatch)");
+            }
         }
 
         // set up data display update timer
@@ -3865,12 +3886,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void showInfoDialog() {
-        new AlertDialog.Builder(this)
-            .setTitle(R.string.main_info_title)
-            .setMessage(R.string.main_info_message)
-            .setPositiveButton(R.string.main_info_ack, null)
-            .setIcon(android.R.drawable.ic_menu_info_details)
-            .show();
+        HelpDialogUtils.showHelpDialog(
+            this,
+            R.string.main_info_title,
+            R.string.main_info_message,
+            R.string.main_info_ack,
+            android.R.drawable.ic_menu_info_details
+        );
     }
 
     /**
