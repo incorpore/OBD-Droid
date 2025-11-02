@@ -172,11 +172,8 @@ public final class DiscoveryManager implements EcuManager.EcuManagerListener,
 
     private static DiscoveryManager instance;
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
-        Thread t = new Thread(r, "discovery-log-writer");
-        t.setDaemon(true);
-        return t;
-    });
+    private final Object executorLock = new Object();
+    private ExecutorService executor = createExecutor();
 
     private final Set<Integer> discoveredAddresses = Collections.synchronizedSet(new HashSet<>());
     private final ConcurrentHashMap<Integer, JSONObject> ecuSnapshots = new ConcurrentHashMap<>();
@@ -329,7 +326,12 @@ public final class DiscoveryManager implements EcuManager.EcuManagerListener,
     public void shutdown() {
         endSession("Discovery manager shutdown");
         VehicleManager.getInstance().removeListener(this);
-        executor.shutdownNow();
+        synchronized (executorLock) {
+            if (executor != null && !executor.isShutdown()) {
+                executor.shutdownNow();
+            }
+            executor = null;
+        }
         initialized.set(false);
     }
 
@@ -462,7 +464,8 @@ public final class DiscoveryManager implements EcuManager.EcuManagerListener,
         DiscoveryEvent event = new DiscoveryEvent(sessionId, type, message, ecuAddress, payload);
         // Capture logWriter reference to avoid race condition with endSession()
         final DiscoveryLogWriter writer = logWriter;
-        executor.execute(() -> {
+        ExecutorService exec = ensureExecutor();
+        exec.execute(() -> {
             if (writer != null) {
                 try {
                     writer.writeEvent(event);
@@ -472,6 +475,23 @@ public final class DiscoveryManager implements EcuManager.EcuManagerListener,
             }
         });
         Log.i(TAG, event.toLogcatString());
+    }
+
+    private ExecutorService ensureExecutor() {
+        synchronized (executorLock) {
+            if (executor == null || executor.isShutdown() || executor.isTerminated()) {
+                executor = createExecutor();
+            }
+            return executor;
+        }
+    }
+
+    private ExecutorService createExecutor() {
+        return Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "discovery-log-writer");
+            t.setDaemon(true);
+            return t;
+        });
     }
 
     private static String generateSessionId() {
