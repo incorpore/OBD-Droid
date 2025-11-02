@@ -209,10 +209,10 @@ public class FaultCodeDetailsActivity extends AppCompatActivity {
                     query.append(vehicleData.modelYear).append(" ");
                 }
                 if (vehicleData.make != null && !vehicleData.make.isEmpty()) {
-                    query.append(vehicleData.make).append(" ");
+                    query.append(capitalizeWords(vehicleData.make)).append(" ");
                 }
                 if (vehicleData.model != null && !vehicleData.model.isEmpty()) {
-                    query.append(vehicleData.model).append(" ");
+                    query.append(capitalizeWords(vehicleData.model)).append(" ");
                 }
             }
 
@@ -229,6 +229,33 @@ public class FaultCodeDetailsActivity extends AppCompatActivity {
             log.log(Level.SEVERE, "Failed to search web for fault code", e);
             SnackbarHelper.showError(this, getString(R.string.fault_codes_web_search_failed));
         }
+    }
+
+    /**
+     * Capitalizes the first letter of each word in a string.
+     * Handles cases like "HONDA CIVIC" -> "Honda Civic" or "honda civic" -> "Honda Civic"
+     */
+    private String capitalizeWords(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+
+        StringBuilder result = new StringBuilder();
+        boolean capitalizeNext = true;
+
+        for (char c : text.toCharArray()) {
+            if (Character.isWhitespace(c)) {
+                result.append(c);
+                capitalizeNext = true;
+            } else if (capitalizeNext) {
+                result.append(Character.toUpperCase(c));
+                capitalizeNext = false;
+            } else {
+                result.append(Character.toLowerCase(c));
+            }
+        }
+
+        return result.toString();
     }
 
     private void openNondaVideo() {
