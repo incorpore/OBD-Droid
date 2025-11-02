@@ -75,21 +75,25 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicl
     <td><img src="docs/screenshots/vehicle-history.png" width="220" alt="Vehicle History" /></td>
     <td><img src="docs/screenshots/vehicle-history-2.png" width="220" alt="Vehicle History Timeline" /></td>
     <td><img src="docs/screenshots/vehicle-history-3.png" width="220" alt="Vehicle History Details" /></td>
+    <td><img src="docs/screenshots/vehicle-history-export.png" width="220" alt="Vehicle History Export" /></td>
   </tr>
   <tr>
     <td>AutoCheck overview with vehicle score, alerts, and at-a-glance stats.</td>
     <td>Ownership timeline and odometer verification pulled from AutoCheck.</td>
     <td>Detailed campaign list, title history, and AutoCheck report drill-down.</td>
+    <td>One-tap export drawer for PDF/JSON sharing of AutoCheck vehicle history.</td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/vin-decoder.png" width="220" alt="VIN Decoder" /></td>
-    <td><img src="docs/screenshots/vehicle-history-export.png" width="220" alt="Vehicle History Export" /></td>
     <td><img src="docs/screenshots/dashboard-footer.png" width="220" alt="Vehicle Footer" /></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
     <td>VIN decode powering downstream features like recalls and AutoCheck.</td>
-    <td>One-tap export drawer for PDF/JSON sharing of AutoCheck vehicle history.</td>
     <td>Signature vehicle footer with quick stats, connection state, and VIN context.</td>
+    <td></td>
+    <td></td>
   </tr>
 </table>
 
