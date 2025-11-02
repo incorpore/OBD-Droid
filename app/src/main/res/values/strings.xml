@@ -84,6 +84,37 @@
     <string name="fault_codes_info_title">About Fault Codes</string>
     <string name="fault_codes_info_ack">Got it</string>
     <string name="fault_codes_info_message">Diagnostic Trouble Codes (DTCs)\n\nPERMANENT CODES (Red)\nEmissions-related codes that cannot be cleared with a scan tool. These clear automatically when the vehicle detects the issue is resolved.\n\nSTORED CODES (Orange)\nActive faults that triggered the Check Engine Light. These indicate current issues that need attention.\n\nPENDING CODES (Yellow)\nIntermittent issues detected but not yet confirmed. The ECU is monitoring these conditions.\n\nCODE PREFIXES:\nP - Powertrain (Engine, Transmission)\nC - Chassis (ABS, Suspension)\nB - Body (Airbags, Climate Control)\nU - Network or Communication\n\nHow It Works:\nThis page scans your vehicle using OBD-II Mode 03 (stored codes), Mode 07 (pending codes), and Mode 0A (permanent codes). Tap any code to inspect details, clear codes, or research fixes.</string>
+
+    <!-- Main Activity Help -->
+    <string name="main_info_title">About OBD-Droid</string>
+    <string name="main_info_ack">Got it</string>
+    <string name="main_info_message">OBD-Droid connects to your vehicle\'s OBD-II port to monitor engine performance, diagnose issues, and track vehicle health.\n\nGETTING STARTED:\n1. Tap Connect to select your OBD-II adapter\n2. Choose Bluetooth, USB, or WiFi connection\n3. Once connected, explore features from the home screen\n\nFEATURES:\n• Live Data - Real-time engine parameters\n• Fault Codes - Diagnose check engine lights\n• Vehicle Info - VIN, protocols, ECU details\n• Charts - Visualize sensor data over time\n\nTIPS:\n• Keep adapter plugged in while driving for best results\n• Some features require vehicle ignition ON\n• Not all vehicles support all OBD-II modes</string>
+
+    <!-- Live Data Help -->
+    <string name="live_data_info_title">About Live Data</string>
+    <string name="live_data_info_ack">Got it</string>
+    <string name="live_data_info_message">Monitor real-time engine parameters and sensor data from your vehicle.\n\nHOW IT WORKS:\nData refreshes continuously from supported PIDs (Parameter IDs). Tap any parameter to view in chart mode or enable GPS/motion telemetry for enhanced tracking.\n\nFEATURES:\n• Real-time sensor updates\n• GPS integration for speed/location\n• Motion sensors (acceleration, gyro)\n• Save reports for analysis\n• Create custom PIDs for advanced monitoring\n\nTIPS:\n• Not all vehicles support all PIDs\n• Refresh rate depends on adapter speed\n• Custom PIDs allow monitoring non-standard parameters</string>
+
+    <!-- Chart Help -->
+    <string name="chart_info_title">About Charts</string>
+    <string name="chart_info_ack">Got it</string>
+    <string name="chart_info_message">Visualize sensor data over time to identify patterns and trends.\n\nFEATURES:\n• Plot multiple parameters simultaneously\n• Zoom and pan through historical data\n• Snapshot charts for later review\n• Share charts with mechanics or friends\n\nTIPS:\n• Long-press chart to freeze current view\n• Use snapshot to save important trends\n• Charts help diagnose intermittent issues</string>
+
+    <!-- Vehicle Info Help -->
+    <string name="vehicle_info_info_title">About Vehicle Info</string>
+    <string name="vehicle_info_info_ack">Got it</string>
+    <string name="vehicle_info_info_message">View detailed information about your vehicle and its onboard systems.\n\nINFORMATION DISPLAYED:\n• VIN (Vehicle Identification Number)\n• Supported OBD protocols\n• ECU (Engine Control Unit) details\n• Calibration IDs\n• Emissions compliance\n\nFEATURES:\n• Refresh to update information\n• Save reports for records\n• Verify vehicle specifications\n\nUSES:\n• Confirm VIN before purchase\n• Check emissions readiness\n• Verify ECU firmware versions</string>
+
+    <!-- Custom PID Manager Help -->
+    <string name="custom_pid_info_title">About Custom PIDs</string>
+    <string name="custom_pid_info_ack">Got it</string>
+    <string name="custom_pid_info_message">Create and manage custom Parameter IDs for advanced vehicle monitoring.\n\nWHAT ARE CUSTOM PIDs?\nCustom PIDs allow you to monitor non-standard OBD parameters specific to your vehicle make/model, such as turbo boost, transmission temp, or manufacturer-specific sensors.\n\nFEATURES:\n• Import/export PID definitions\n• Create custom formulas and units\n• Share PIDs with other users\n• Test PIDs before saving\n\nTIPS:\n• Consult vehicle service manual for PID values\n• Test new PIDs carefully to avoid errors\n• Share working PIDs with the community</string>
+
+    <!-- Scan Activity Help -->
+    <string name="scan_info_title">About Diagnostic Scan</string>
+    <string name="scan_info_ack">Got it</string>
+    <string name="scan_info_message">Perform comprehensive vehicle diagnostics and health checks.\n\nSCAN TYPES:\n• Quick Scan - Fast fault code check\n• Full Scan - Comprehensive system analysis\n• Emissions Scan - Readiness monitors\n\nFEATURES:\n• AI-powered analysis\n• Share reports with mechanics\n• Ask CoPilot for diagnostic help\n• Track scan history\n\nTIPS:\n• Perform scans with engine warm for accuracy\n• Regular scans help catch issues early\n• Use AI analysis for repair recommendations</string>
+
     <plurals name="fault_codes_count">
         <item quantity="one">%d fault code found</item>
         <item quantity="other">%d fault codes found</item>

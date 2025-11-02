@@ -1,5 +1,6 @@
 package com.obddroid.ui.activities;
 
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -168,6 +169,9 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             return true;
         } else if (id == R.id.action_ask_copilot) {
             openCoPilot();
+            return true;
+        } else if (id == R.id.action_info) {
+            showInfoDialog();
             return true;
         }
 
@@ -670,5 +674,14 @@ public class ScanActivity extends AppCompatActivity implements ScanOrchestrator.
             unbindService(serviceConnection);
             serviceBound = false;
         }
+    }
+
+    private void showInfoDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.scan_info_title)
+            .setMessage(R.string.scan_info_message)
+            .setPositiveButton(R.string.scan_info_ack, null)
+            .setIcon(android.R.drawable.ic_menu_info_details)
+            .show();
     }
 }

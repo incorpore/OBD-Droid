@@ -141,9 +141,18 @@ public class FaultCodeService implements RawTelegramListener {
                 CommService.elm.addRawTelegramListener(this);
                 try {
                     String response = sendAndAwait("04", CLEAR_TIMEOUT_MS);
-                    log.fine(() -> "Clear response: " + response);
-                    return response.toUpperCase(Locale.US).contains("OK")
-                        || response.toUpperCase(Locale.US).contains("NODATA");
+                    log.info("Clear response: " + response);
+                    String upper = response.toUpperCase(Locale.US);
+                    // Accept various success responses:
+                    // - "44" (standard positive response = 0x40 + 0x04)
+                    // - "STOPPED" (ECU reset after clearing)
+                    // - "OK", "NODATA" (some adapters)
+                    // - Empty response (some adapters)
+                    return upper.contains("44")
+                        || upper.contains("STOPPED")
+                        || upper.contains("OK")
+                        || upper.contains("NODATA")
+                        || response.trim().isEmpty();
                 } finally {
                     CommService.elm.removeRawTelegramListener(this);
                 }

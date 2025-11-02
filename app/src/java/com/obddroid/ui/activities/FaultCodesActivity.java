@@ -243,14 +243,26 @@ public class FaultCodesActivity extends AppCompatActivity {
     private void clearCodes() {
         if (isScanning) {
             log.fine("Clear request ignored – operation already in progress");
+            SnackbarHelper.showInfo(this, "Scan operation in progress. Please wait...");
             return;
         }
 
         if (currentCodes.isEmpty()) {
             log.fine("Clear request ignored – no codes to clear");
+            SnackbarHelper.showInfo(this, "No fault codes to clear. Scan for codes first.");
             return;
         }
 
+        // Show confirmation dialog
+        new AlertDialog.Builder(this)
+            .setTitle("Clear Fault Codes")
+            .setMessage("Are you sure you want to clear all fault codes? This action cannot be undone.")
+            .setPositiveButton("Clear", (dialog, which) -> performClearCodes())
+            .setNegativeButton("Cancel", null)
+            .show();
+    }
+
+    private void performClearCodes() {
         isScanning = true;
         showProgress();
 

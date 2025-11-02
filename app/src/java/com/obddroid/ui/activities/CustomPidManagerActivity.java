@@ -278,6 +278,9 @@ public class CustomPidManagerActivity extends AppCompatActivity {
         } else if (id == R.id.action_import) {
             showImportDialog();
             return true;
+        } else if (id == R.id.action_info) {
+            showInfoDialog();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -505,5 +508,14 @@ public class CustomPidManagerActivity extends AppCompatActivity {
 
             return convertView;
         }
+    }
+
+    private void showInfoDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.custom_pid_info_title)
+            .setMessage(R.string.custom_pid_info_message)
+            .setPositiveButton(R.string.custom_pid_info_ack, null)
+            .setIcon(android.R.drawable.ic_menu_info_details)
+            .show();
     }
 }

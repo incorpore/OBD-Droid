@@ -14,6 +14,8 @@ import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.ListAdapter;
 
+import android.app.AlertDialog;
+
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
@@ -337,6 +339,9 @@ public class ChartActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.share) {
             new ExportTask(this).execute(seriesDataList);
+        } else if (item.getItemId() == R.id.action_info) {
+            showInfoDialog();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -376,5 +381,14 @@ public class ChartActivity extends AppCompatActivity {
     protected void onStop() {
         refreshTimer.purge();
         super.onStop();
+    }
+
+    private void showInfoDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.chart_info_title)
+            .setMessage(R.string.chart_info_message)
+            .setPositiveButton(R.string.chart_info_ack, null)
+            .setIcon(android.R.drawable.ic_menu_info_details)
+            .show();
     }
 }

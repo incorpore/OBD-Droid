@@ -19,4 +19,9 @@
         android:enabled="true"
         app:showAsAction="always"
         android:title="@string/settings"/>
+    <item
+        android:id="@+id/action_info"
+        android:title="Help"
+        android:icon="@drawable/ic_info_24"
+        app:showAsAction="never" />
 </menu>

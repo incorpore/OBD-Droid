@@ -674,7 +674,16 @@ public class ElmProt
 		switch (getResponseId(bufferStr))
 		{
 			case SEARCH:
-				setStatus(status != STAT.ECU_DETECT ? STAT.CONNECTING : status);
+				// Only set to CONNECTING if we're not already in a good connected state
+				// This prevents unnecessary status changes during transient "SEARCHING" messages
+				// that occur after NODATA responses
+				if (status != STAT.ECU_DETECT &&
+				    status != STAT.CONNECTED &&
+				    status != STAT.ECU_DETECTED &&
+				    status != STAT.ECU_SELECTED)
+				{
+					setStatus(STAT.CONNECTING);
+				}
 				// NO break here
 			case QMARK:
 			case NODATA:

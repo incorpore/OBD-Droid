@@ -1,5 +1,6 @@
 package com.obddroid.ui.activities;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Build;
@@ -309,6 +310,9 @@ public class LiveDataActivity extends AppCompatActivity
         } else if (id == R.id.action_manage_custom_pids) {
             Intent intent = new Intent(this, CustomPidManagerActivity.class);
             startActivity(intent);
+            return true;
+        } else if (id == R.id.action_info) {
+            showInfoDialog();
             return true;
         }
 
@@ -722,5 +726,14 @@ public class LiveDataActivity extends AppCompatActivity
     private String escapeCsv(String value) {
         if (value == null) return "";
         return value.replace("\"", "\"\"");
+    }
+
+    private void showInfoDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.live_data_info_title)
+            .setMessage(R.string.live_data_info_message)
+            .setPositiveButton(R.string.live_data_info_ack, null)
+            .setIcon(android.R.drawable.ic_menu_info_details)
+            .show();
     }
 }

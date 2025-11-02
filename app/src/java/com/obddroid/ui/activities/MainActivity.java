@@ -1519,6 +1519,10 @@ public class MainActivity extends AppCompatActivity
                 }
                 return true;
 
+            case R.id.action_info:
+                showInfoDialog();
+                return true;
+
         }
 
         return super.onOptionsItemSelected(item);
@@ -3858,6 +3862,15 @@ public class MainActivity extends AppCompatActivity
         }
 
         dialog.show();
+    }
+
+    private void showInfoDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.main_info_title)
+            .setMessage(R.string.main_info_message)
+            .setPositiveButton(R.string.main_info_ack, null)
+            .setIcon(android.R.drawable.ic_menu_info_details)
+            .show();
     }
 
     /**

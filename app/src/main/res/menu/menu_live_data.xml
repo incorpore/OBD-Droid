@@ -30,4 +30,11 @@
         android:icon="@android:drawable/ic_menu_add"
         app:showAsAction="never" />
 
+    <!-- Help -->
+    <item
+        android:id="@+id/action_info"
+        android:title="Help"
+        android:icon="@drawable/ic_info_24"
+        app:showAsAction="never" />
+
 </menu>

@@ -23,6 +23,13 @@
                 android:title="Save Report"
                 app:iconTint="@color/text_secondary_dark"
                 app:showAsAction="never" />
+
+            <item
+                android:id="@+id/action_info"
+                android:icon="@drawable/ic_info_24"
+                android:title="Help"
+                app:iconTint="@color/text_secondary_dark"
+                app:showAsAction="never" />
         </menu>
     </item>
 

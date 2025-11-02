@@ -1,5 +1,6 @@
 package com.obddroid.ui.activities;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.os.Build;
 import android.os.Bundle;
@@ -119,6 +120,9 @@ public class VehicleInfoActivity extends AppCompatActivity {
             return true;
         } else if (item.getItemId() == R.id.action_save_vehicle_info) {
             showSaveReportDialog();
+            return true;
+        } else if (item.getItemId() == R.id.action_info) {
+            showInfoDialog();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -776,5 +780,14 @@ public class VehicleInfoActivity extends AppCompatActivity {
         if (rootView != null) {
             SnackbarHelper.showSnackbar(this, message, type);
         }
+    }
+
+    private void showInfoDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.vehicle_info_info_title)
+            .setMessage(R.string.vehicle_info_info_message)
+            .setPositiveButton(R.string.vehicle_info_info_ack, null)
+            .setIcon(android.R.drawable.ic_menu_info_details)
+            .show();
     }
 }

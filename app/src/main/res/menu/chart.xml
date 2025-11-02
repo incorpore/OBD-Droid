@@ -10,4 +10,9 @@
         android:title="@string/share"
         app:showAsAction="ifRoom"
         android:icon="@drawable/ic_share_24"/>
+    <item
+        android:id="@+id/action_info"
+        android:title="Help"
+        android:icon="@drawable/ic_info_24"
+        app:showAsAction="never" />
 </menu>
