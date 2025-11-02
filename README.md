@@ -4,6 +4,11 @@
 
 OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicle workstation. From live telemetry to AutoCheck intelligence and an AI copilot, every module is engineered to make complex diagnostics feel effortless.
 
+> **TL;DR**
+> - Plug in any ELM327 adapter, launch the Android app, and get live data in under a minute.
+> - One tap runs a full ECU scan, logs CSV/GPS telemetry, and syncs findings with your AI copilot.
+> - Safety recalls, AutoCheck history, VIN decode, and report exports are all presented in-app with the same cohesive UI.
+
 ---
 
 ## 🚀 Why It Stands Out
@@ -65,11 +70,13 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicl
     <td><img src="docs/screenshots/emissions.png" width="220" alt="Emissions Readiness" /></td>
     <td><img src="docs/screenshots/full-vehicle-scan.png" width="220" alt="Full Vehicle Scan" /></td>
     <td><img src="docs/screenshots/ecu-list.png" width="220" alt="ECU Modules" /></td>
+    <td><img src="docs/screenshots/live-data-6.png" width="220" alt="Live Data Telemetry" /></td>
   </tr>
   <tr>
     <td>Inspection-ready I/M monitor dashboard showing pass/fail status at a glance.</td>
     <td>Step-by-step ECU discovery with progress tracking and baseline snapshot creation.</td>
     <td>Comprehensive ECU list with addressing, protocol metadata, and change tracking.</td>
+    <td>Live powertrain data fused with GPS & motion telemetry from the device sensors.</td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/fault-codes-start-screen.png" width="220" alt="Fault Codes Start" /></td>
@@ -135,6 +142,11 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicl
 - AutoCheck companion API delivers premium vehicle history, open recalls, ownership, and odometer insights.
 - PDF export pipeline for shop handoffs, customer reports, and archive records.
 - Hybrid recall center blending NHTSA campaigns with AutoCheck VIN-specific items.
+
+### Fault Code Workflow
+- Launch screen guides the user to initiate a fresh scan before clearing codes.<br/><img src="docs/screenshots/fault-codes-start-screen.png" width="220" alt="Fault Codes Start" />
+- Detected DTC list surfaces severity badges, quick actions, and export shortcuts.<br/><img src="docs/screenshots/fault-codes-detected.png" width="220" alt="Fault Codes Detected" />
+- Detail cards provide summaries, consequences, remedies, and OEM links in-app.<br/><img src="docs/screenshots/fault-code-detail.png" width="220" alt="Fault Code Detail" />
 
 ---
 
