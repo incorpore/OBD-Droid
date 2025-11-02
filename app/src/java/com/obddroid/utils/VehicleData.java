@@ -200,11 +200,11 @@ public class VehicleData {
 
     // Setters
     public void setMake(String make) {
-        this.make = make;
+        this.make = capitalizeWords(make);
     }
 
     public void setModel(String model) {
-        this.model = model;
+        this.model = capitalizeWords(model);
     }
 
     public void setModelYear(String modelYear) {
@@ -269,8 +269,8 @@ public class VehicleData {
     public static VehicleData fromOfflineDecoder(NhtsaOfflineVINDecoder.VehicleInfo info) {
         VehicleData data = new VehicleData();
         data.vin = info.vin;
-        data.make = info.make;
-        data.model = info.model;
+        data.make = capitalizeWords(info.make);
+        data.model = capitalizeWords(info.model);
         data.modelYear = info.modelYear;
         data.series = info.series;
         data.trim = info.trim;
@@ -299,6 +299,34 @@ public class VehicleData {
         data.valid = info.valid;
         data.errorMessage = info.errorMessage;
         return data;
+    }
+
+    /**
+     * Capitalizes the first letter of each word in a string.
+     * Handles cases like "HONDA CIVIC" -> "Honda Civic" or "honda civic" -> "Honda Civic"
+     * Returns null if input is null to maintain nullability contracts.
+     */
+    private static String capitalizeWords(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+
+        StringBuilder result = new StringBuilder();
+        boolean capitalizeNext = true;
+
+        for (char c : text.toCharArray()) {
+            if (Character.isWhitespace(c)) {
+                result.append(c);
+                capitalizeNext = true;
+            } else if (capitalizeNext) {
+                result.append(Character.toUpperCase(c));
+                capitalizeNext = false;
+            } else {
+                result.append(Character.toLowerCase(c));
+            }
+        }
+
+        return result.toString();
     }
 
     @Override
