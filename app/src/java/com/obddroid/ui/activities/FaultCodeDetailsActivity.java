@@ -21,8 +21,10 @@ import androidx.core.content.ContextCompat;
 import com.obddroid.R;
 import com.obddroid.obd.ElmProt;
 import com.obddroid.services.CommService;
+import com.obddroid.services.VehicleManager;
 import com.obddroid.ui.components.VehicleInfoFooter;
 import com.obddroid.utils.SnackbarHelper;
+import com.obddroid.utils.VehicleData;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,6 +32,7 @@ import java.util.logging.Logger;
 /**
  * Activity for displaying detailed information and actions for a specific fault code.
  * Provides options to view freeze frame, search web, watch videos, ask AI, and copy code.
+ * Web searches are enhanced with vehicle year/make/model context for more relevant results.
  */
 public class FaultCodeDetailsActivity extends AppCompatActivity {
 
@@ -194,8 +197,33 @@ public class FaultCodeDetailsActivity extends AppCompatActivity {
 
     private void searchFaultCodeOnWeb() {
         try {
+            // Build intelligent search query with vehicle context
+            StringBuilder query = new StringBuilder();
+
+            // Get vehicle data from VehicleManager
+            VehicleData vehicleData = VehicleManager.getInstance().getCurrentVehicleData();
+
+            // Include vehicle make, model, year if available for more relevant results
+            if (vehicleData != null) {
+                if (vehicleData.modelYear != null && !vehicleData.modelYear.isEmpty()) {
+                    query.append(vehicleData.modelYear).append(" ");
+                }
+                if (vehicleData.make != null && !vehicleData.make.isEmpty()) {
+                    query.append(vehicleData.make).append(" ");
+                }
+                if (vehicleData.model != null && !vehicleData.model.isEmpty()) {
+                    query.append(vehicleData.model).append(" ");
+                }
+            }
+
+            // Add fault code
+            query.append(faultCode);
+
+            // Log the enhanced search query
+            log.info("Searching web for: " + query.toString());
+
             Intent intent = new Intent(Intent.ACTION_WEB_SEARCH);
-            intent.putExtra(SearchManager.QUERY, "OBD " + faultCode);
+            intent.putExtra(SearchManager.QUERY, query.toString());
             startActivity(intent);
         } catch (Exception e) {
             log.log(Level.SEVERE, "Failed to search web for fault code", e);
