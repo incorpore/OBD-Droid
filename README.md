@@ -105,6 +105,8 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicl
 - Adaptive polling with automatic ISO/KWP/CAN protocol negotiation.
 - Multiple view modes (list, chart, dashboard, HUD) backed by shared `ProcessVariables`.
 - CSV logger service stitches OBD values with GPS, accelerometer, and metadata for post-drive analysis.
+  <br/><img src="docs/screenshots/live-data-6.png" width="280" alt="Live Data with Telemetry" />
+  <div><em>Live data + GPS/motion telemetry captured from device sensors alongside vehicle PIDs.</em></div>
 
 ### Diagnostics & Scanning
 - Full-vehicle scan orchestrator maps ECUs, persistent DTCs, pending codes, and module metadata.
