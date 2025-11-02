@@ -3,7 +3,7 @@ package com.obddroid.services;
 import android.content.Context;
 import android.util.Log;
 import com.obddroid.obd.ElmProt;
-import com.obddroid.utils.EnhancedVINDecoder;
+import com.obddroid.utils.VINDecoder;
 import com.obddroid.utils.VehicleData;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +36,8 @@ public class VehicleManager {
     // Listeners for vehicle changes
     private final List<VehicleChangeListener> listeners = new ArrayList<>();
 
-    // Enhanced VIN decoder (tries online NHTSA, falls back to offline)
-    private EnhancedVINDecoder vinDecoder;
+    // VIN decoder (tries online NHTSA, falls back to offline)
+    private VINDecoder vinDecoder;
 
     /**
      * Listener interface for vehicle changes
@@ -78,8 +78,8 @@ public class VehicleManager {
         }
         // Initialize enhanced decoder if not already done
         if (instance.vinDecoder == null && context != null) {
-            instance.vinDecoder = new EnhancedVINDecoder(context.getApplicationContext());
-            Log.d(TAG, "Enhanced VIN Decoder initialized (parallel race strategy)");
+            instance.vinDecoder = new VINDecoder(context.getApplicationContext());
+            Log.d(TAG, "VIN Decoder initialized (parallel race strategy)");
         }
         return instance;
     }
@@ -171,7 +171,7 @@ public class VehicleManager {
         // Decode using enhanced decoder (tries online, falls back to offline)
         if (vinDecoder != null) {
             final String vinToDecode = vin;
-            vinDecoder.decodeAsync(vinToDecode, new EnhancedVINDecoder.DecodeCallback() {
+            vinDecoder.decodeAsync(vinToDecode, new VINDecoder.DecodeCallback() {
                 @Override
                 public void onSuccess(VehicleData vehicleData) {
                     Log.d(TAG, "VIN decode successful: " + vehicleData.getDisplayName());

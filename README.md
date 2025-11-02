@@ -51,7 +51,7 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicl
 - <img src="docs/screenshots/fault-code-detail.png" width="220" alt="Fault Code Detail" /> – Deep dive card with freeze frame, remedy, and AI assistance.
 - <img src="docs/screenshots/full-vehicle-scan.png" width="220" alt="Full Vehicle Scan" /> – ECU discovery progress and baseline snapshot library.
 - <img src="docs/screenshots/emissions.png" width="220" alt="Emissions Readiness" /> – I/M monitors with pass/fail flags for inspection prep.
-- <img src="docs/screenshots/vin-decoder.png" width="220" alt="VIN Decoder" /> – Enhanced decode powering downstream features.
+- <img src="docs/screenshots/vin-decoder.png" width="220" alt="VIN Decoder" /> – VIN decode powering downstream features.
 - <img src="docs/screenshots/vehicle-history-export.png" width="220" alt="Vehicle History Export" /> – Share-ready PDF/JSON export drawer.
 
 </details>
@@ -77,7 +77,7 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicl
     <td><img src="docs/screenshots/dashboard-footer.png" width="220" alt="Vehicle Footer" /></td>
   </tr>
   <tr>
-    <td>Enhanced VIN decode powering downstream features like recalls and AutoCheck.</td>
+    <td>VIN decode powering downstream features like recalls and AutoCheck.</td>
     <td>One-tap export drawer for PDF/JSON sharing of AutoCheck vehicle history.</td>
     <td>Signature vehicle footer with quick stats, connection state, and VIN context.</td>
   </tr>
@@ -105,7 +105,7 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicl
 - Conversation history cached per vehicle for continuity.
 
 ### Vehicle Intelligence
-- VIN decode via `EnhancedVINDecoder` (NHTSA) with manufacturer/trim heuristics.
+- VIN decode via `VINDecoder` (NHTSA) with manufacturer/trim heuristics.
 - AutoCheck companion API delivers premium vehicle history, open recalls, ownership, and odometer insights.
 - PDF export pipeline for shop handoffs, customer reports, and archive records.
 - Hybrid recall center blending NHTSA campaigns with AutoCheck VIN-specific items.
@@ -227,7 +227,7 @@ adb shell am start -n com.obddroid/.ui.activities.MainActivity
 | **AutoCheck API** | Premium vehicle history & open recall data | Companion Node/Playwright service with Redis caching & rate limiting. |
 | **NHTSA Recall API** | Campaign listings, remedy info, VIN decodes | Back bone for “All Recalls” tab and VIN decoder. |
 | **Anthropic Claude** | Conversational diagnostics | Context-aware responses with client-side redaction. |
-| **Enhanced VIN Decoder** | Make/model/trim heuristics | Normalizes manufacturer naming for recall lookups. |
+| **VIN Decoder** | Make/model/trim heuristics | Normalizes manufacturer naming for recall lookups. |
 
 ---
 
