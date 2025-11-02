@@ -58,6 +58,33 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicl
 
 ---
 
+## 🎛️ Feature Gallery
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/emissions.png" width="220" alt="Emissions Readiness" /></td>
+    <td><img src="docs/screenshots/full-vehicle-scan.png" width="220" alt="Full Vehicle Scan" /></td>
+    <td><img src="docs/screenshots/ecu-list.png" width="220" alt="ECU Modules" /></td>
+  </tr>
+  <tr>
+    <td>Inspection-ready I/M monitor dashboard showing pass/fail status at a glance.</td>
+    <td>Step-by-step ECU discovery with progress tracking and baseline snapshot creation.</td>
+    <td>Comprehensive ECU list with addressing, protocol metadata, and change tracking.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/vin-decoder.png" width="220" alt="VIN Decoder" /></td>
+    <td><img src="docs/screenshots/vehicle-history-export.png" width="220" alt="Vehicle History Export" /></td>
+    <td><img src="docs/screenshots/dashboard-footer.png" width="220" alt="Vehicle Footer" /></td>
+  </tr>
+  <tr>
+    <td>Enhanced VIN decode powering downstream features like recalls and AutoCheck.</td>
+    <td>One-tap export drawer for PDF/JSON sharing of AutoCheck vehicle history.</td>
+    <td>Signature vehicle footer with quick stats, connection state, and VIN context.</td>
+  </tr>
+</table>
+
+---
+
 ## 🧩 Feature Deep Dive
 
 ### Real-time Telemetry
