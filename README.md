@@ -249,13 +249,12 @@ External services referenced:
 
 ---
 
-## 💬 Let’s Connect
+## 💬 Let's Connect
 
-- Portfolio: _add link here_
-- LinkedIn: _add link here_
-- Email: _add contact here_
+- LinkedIn: [Waleed Judah](https://www.linkedin.com/in/waleed-judah-53406787/)
+- Email: aquataze@yahoo.com
 
-> Found this useful? ⭐ the repo, share it with your community, and let’s keep connected cars transparent.
+> Found this useful? ⭐ the repo, share it with your community, and let's keep connected cars transparent.
 Update the API endpoint in app settings or configuration.
 
 ---
