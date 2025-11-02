@@ -21,26 +21,41 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade diagno
 
 ## 📸 Product Tour
 
-| Screen | Description |
-| --- | --- |
-| ![Dashboard](docs/screenshots/dashboard.png) | Live vehicle overview with quick actions, health summaries, and shortcut metrics. |
-| ![Live Data](docs/screenshots/live-data.png) | Customizable PID lists, chart overlays, and logging controls. |
-| ![Fault Codes](docs/screenshots/fault-codes.png) | Rich DTC cards with freeze frames, fix notes, and AI insights. |
-| ![Vehicle History](docs/screenshots/vehicle-history.png) | AutoCheck report viewer with ownership timeline, odometer verification, and export actions. |
-| ![Safety Recalls](docs/screenshots/recalls-all.png) | Combined NHTSA recall campaigns with AutoCheck open-recall integration in a segmented layout. |
+<table>
+  <tr>
+    <td><img src="docs/screenshots/dashboard.png" width="260" alt="Dashboard" /></td>
+    <td>Live vehicle overview with quick actions, health summaries, and shortcut metrics.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/live-data.png" width="260" alt="Live Data" /></td>
+    <td>Customizable PID lists, chart overlays, and logging controls.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/fault-codes.png" width="260" alt="Fault Codes" /></td>
+    <td>Rich DTC cards with freeze frames, fix notes, and AI insights.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/vehicle-history.png" width="260" alt="Vehicle History" /></td>
+    <td>AutoCheck report viewer with ownership timeline, odometer verification, and export actions.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/recalls-all.png" width="260" alt="Safety Recalls" /></td>
+    <td>Combined NHTSA recall campaigns with AutoCheck open-recall integration in a segmented layout.</td>
+  </tr>
+</table>
 
 > Screenshots live inside `docs/screenshots/`. Swap in your own captures before publishing the portfolio.
 
 <details>
 <summary>Bonus shots worth highlighting</summary>
 
-- ![Dashboard Vehicle Footer](docs/screenshots/dashboard-footer.png) — Persistent vehicle identity footer available across screens.
-- ![Live Data (Scrolled)](docs/screenshots/live-data-3.png) — Extended PID telemetry set with HUD-ready formatting.
-- ![Fault Code Detail](docs/screenshots/fault-code-detail.png) — Deep dive card with freeze frame, remedy, and AI call-to-action.
-- ![Full Vehicle Scan](docs/screenshots/full-vehicle-scan.png) — ECU discovery progress and snapshot library.
-- ![Emissions Readiness](docs/screenshots/emissions.png) — I/M monitors with pass/fail flags.
-- ![VIN Decoder](docs/screenshots/vin-decoder.png) — Enhanced decoder output powering downstream features.
-- ![Vehicle History Export](docs/screenshots/vehicle-history-export.png) — Share-ready PDF/JSON export drawer.
+- <img src="docs/screenshots/dashboard-footer.png" width="220" alt="Vehicle Footer" /> — Persistent vehicle identity footer available across screens.
+- <img src="docs/screenshots/live-data-3.png" width="220" alt="Live Data (Scrolled)" /> — Extended PID telemetry set with HUD-ready formatting.
+- <img src="docs/screenshots/fault-code-detail.png" width="220" alt="Fault Code Detail" /> — Deep dive card with freeze frame, remedy, and AI call-to-action.
+- <img src="docs/screenshots/full-vehicle-scan.png" width="220" alt="Full Vehicle Scan" /> — ECU discovery progress and snapshot library.
+- <img src="docs/screenshots/emissions.png" width="220" alt="Emissions Readiness" /> — I/M monitors with pass/fail flags.
+- <img src="docs/screenshots/vin-decoder.png" width="220" alt="VIN Decoder" /> — Enhanced decoder output powering downstream features.
+- <img src="docs/screenshots/vehicle-history-export.png" width="220" alt="Vehicle History Export" /> — Share-ready PDF/JSON export drawer.
 
 </details>
 
@@ -58,7 +73,7 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade diagno
 - Baseline scan library compares historic snapshots to spot new modules or faults.
 - Emissions center mirrors inspection readiness (I/M monitors, catalyst status, O2 sensors).
 
-> ![Full vehicle scan workflow](docs/screenshots/full-vehicle-scan.png)
+> <img src="docs/screenshots/full-vehicle-scan.png" width="280" alt="Full vehicle scan workflow" />
 
 ### Intelligent Assistance
 - **CoPilot** (Claude API) pulls context from active DTCs, vehicle metadata, and previous chats.
@@ -75,8 +90,9 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade diagno
   - **All Recalls** – NHTSA public campaigns and remedy data.
   - **Open Recalls** – AutoCheck VIN-specific, manufacturer actionable items.
 
-> ![Vehicle history summary](docs/screenshots/vehicle-history-2.png)
-> ![VIN decode detail](docs/screenshots/vin-decoder.png)
+> <img src="docs/screenshots/vehicle-history-2.png" width="280" alt="Vehicle history summary" />
+>
+> <img src="docs/screenshots/vin-decoder.png" width="280" alt="VIN decode detail" />
 
 ---
 

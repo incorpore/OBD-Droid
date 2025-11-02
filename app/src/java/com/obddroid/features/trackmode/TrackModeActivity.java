@@ -197,16 +197,17 @@ public class TrackModeActivity extends AppCompatActivity implements
         } else {
             Log.i(TAG, "Activity pausing but not finishing - keeping OBD service active");
         }
-
-        if (isServiceBound) {
-            unbindService(serviceConnection);
-            isServiceBound = false;
-        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        // Unbind from CommService when activity is destroyed
+        if (isServiceBound) {
+            unbindService(serviceConnection);
+            isServiceBound = false;
+        }
         if (isSessionActive) {
             endSession();
         }
