@@ -182,6 +182,7 @@ Claude API           ⇨ CoPilotService ⇨ CoPilotActivity (contextual AI answe
 | Data | SharedPreferences caching, on-disk CSV, JSON interop for AutoCheck reports |
 | Integrations | NHTSA APIs, Experian AutoCheck (Playwright scrape), Anthropic Claude |
 | Tooling | Gradle, Android Studio Giraffe+, Lint, unit tests, GitHub Actions (companion API) |
+| Submodules | [DTC Database](https://github.com/Wal33D/dtc-database) · [NHTSA Recall Lookup](https://github.com/Wal33D/nhtsa-recall-lookup) · [Automotive Logo Library](https://github.com/Wal33D/automotive-logo-library) |
 
 ---
 
