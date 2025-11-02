@@ -302,14 +302,20 @@ public class VehicleData {
     }
 
     /**
-     * Capitalizes the first letter of each word in a string.
-     * Handles cases like "HONDA CIVIC" -> "Honda Civic" or "honda civic" -> "Honda Civic"
+     * Capitalizes the first letter of each word in a string and removes dashes.
+     * Handles cases like:
+     * - "HONDA CIVIC" -> "Honda Civic"
+     * - "MERCEDES-BENZ" -> "Mercedes Benz"
+     * - "mercedes-benz" -> "Mercedes Benz"
      * Returns null if input is null to maintain nullability contracts.
      */
     private static String capitalizeWords(String text) {
         if (text == null || text.isEmpty()) {
             return text;
         }
+
+        // Replace dashes with spaces for better readability and search
+        text = text.replace('-', ' ');
 
         StringBuilder result = new StringBuilder();
         boolean capitalizeNext = true;

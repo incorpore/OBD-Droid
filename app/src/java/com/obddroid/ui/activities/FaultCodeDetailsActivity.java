@@ -232,13 +232,19 @@ public class FaultCodeDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Capitalizes the first letter of each word in a string.
-     * Handles cases like "HONDA CIVIC" -> "Honda Civic" or "honda civic" -> "Honda Civic"
+     * Capitalizes the first letter of each word in a string and removes dashes.
+     * Handles cases like:
+     * - "HONDA CIVIC" -> "Honda Civic"
+     * - "MERCEDES-BENZ" -> "Mercedes Benz"
+     * - "mercedes-benz" -> "Mercedes Benz"
      */
     private String capitalizeWords(String text) {
         if (text == null || text.isEmpty()) {
             return text;
         }
+
+        // Replace dashes with spaces for better search results
+        text = text.replace('-', ' ');
 
         StringBuilder result = new StringBuilder();
         boolean capitalizeNext = true;
