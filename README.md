@@ -1,21 +1,20 @@
 # OBD‑Droid
 
-**Full-stack Android diagnostics suite for connected vehicles**
+**Full-stack Android diagnostics suite built for technicians, tuners, and enthusiasts.**
 
-OBD‑Droid turns any ELM327-compatible adapter into a professional-grade diagnostic workstation. Built for technicians and enthusiasts, it combines real-time telemetry, deep ECU scanning, AutoCheck vehicle intelligence, and an AI copilot into one cohesive Android experience.
+OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicle workstation. From live telemetry to AutoCheck intelligence and an AI copilot, every module is engineered to make complex diagnostics feel effortless.
 
 ---
 
-## ✨ Highlights
+## 🚀 Why It Stands Out
 
-- **Live Telemetry Dashboard** with custom PID groups, charts, heads-up mode, CSV/GPS logging, and offline session caching.
-- **Deep Diagnostics Pipeline** for full ECU discovery, freeze-frame capture, emissions readiness, and health scoring.
-- **AI Copilot** that contextualizes DTCs, symptoms, and AutoCheck data using Anthropic Claude.
-- **Dual Recall Intelligence** blending public NHTSA campaigns with VIN-specific open recalls from AutoCheck.
-- **AutoCheck Vehicle History** (ownership, title, accident, odometer) delivered in-app with PDF export.
-- **Modular Architecture**: service-driven data layer, feature-scoped packages, and standalone shared libraries.
+- **Mission Control for Your Vehicle** – Real-time dashboards, custom PIDs, HUD mode, and CSV/GPS logging.
+- **Deep Diagnostics Pipeline** – ECU discovery, freeze frames, emissions readiness, and health scoring in one flow.
+- **VIN-Aware Intelligence** – AutoCheck history with ownership, odometer, and open recalls side-by-side with NHTSA data.
+- **AI Copilot** – Anthropic Claude delivers contextual answers using live vehicle data and prior conversations.
+- **Modular Architecture** – Service-driven Android app, standalone companion APIs, and reusable libraries.
 
-> _“From connection handshake to AI-assisted troubleshooting, OBD‑Droid shows how far modern Android can stretch inside the garage.”_
+> _“From handshake to fix recommendation, OBD‑Droid shows how far Android can stretch inside the garage.”_
 
 ---
 
@@ -28,11 +27,11 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade diagno
   </tr>
   <tr>
     <td><img src="docs/screenshots/live-data.png" width="260" alt="Live Data" /></td>
-    <td>Customizable PID lists, chart overlays, and logging controls.</td>
+    <td>Customizable PID lists, chart overlays, HUD mode, and streaming CSV capture.</td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/fault-codes.png" width="260" alt="Fault Codes" /></td>
-    <td>Rich DTC cards with freeze frames, fix notes, and AI insights.</td>
+    <td>Rich DTC cards with freeze frames, remedy hints, and AI follow-ups.</td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/vehicle-history.png" width="260" alt="Vehicle History" /></td>
@@ -40,22 +39,20 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade diagno
   </tr>
   <tr>
     <td><img src="docs/screenshots/recalls-all.png" width="260" alt="Safety Recalls" /></td>
-    <td>Combined NHTSA recall campaigns with AutoCheck open-recall integration in a segmented layout.</td>
+    <td>Segmented toggle combining public NHTSA campaigns with VIN-specific AutoCheck open recalls.</td>
   </tr>
 </table>
 
-> Screenshots live inside `docs/screenshots/`. Swap in your own captures before publishing the portfolio.
-
 <details>
-<summary>Bonus shots worth highlighting</summary>
+<summary>More UI moments</summary>
 
-- <img src="docs/screenshots/dashboard-footer.png" width="220" alt="Vehicle Footer" /> — Persistent vehicle identity footer available across screens.
-- <img src="docs/screenshots/live-data-3.png" width="220" alt="Live Data (Scrolled)" /> — Extended PID telemetry set with HUD-ready formatting.
-- <img src="docs/screenshots/fault-code-detail.png" width="220" alt="Fault Code Detail" /> — Deep dive card with freeze frame, remedy, and AI call-to-action.
-- <img src="docs/screenshots/full-vehicle-scan.png" width="220" alt="Full Vehicle Scan" /> — ECU discovery progress and snapshot library.
-- <img src="docs/screenshots/emissions.png" width="220" alt="Emissions Readiness" /> — I/M monitors with pass/fail flags.
-- <img src="docs/screenshots/vin-decoder.png" width="220" alt="VIN Decoder" /> — Enhanced decoder output powering downstream features.
-- <img src="docs/screenshots/vehicle-history-export.png" width="220" alt="Vehicle History Export" /> — Share-ready PDF/JSON export drawer.
+- <img src="docs/screenshots/dashboard-footer.png" width="220" alt="Vehicle Footer" /> – Persistent vehicle identity footer across screens.
+- <img src="docs/screenshots/live-data-3.png" width="220" alt="Live Data (Scrolled)" /> – Extended PID telemetry with HUD-ready formatting.
+- <img src="docs/screenshots/fault-code-detail.png" width="220" alt="Fault Code Detail" /> – Deep dive card with freeze frame, remedy, and AI assistance.
+- <img src="docs/screenshots/full-vehicle-scan.png" width="220" alt="Full Vehicle Scan" /> – ECU discovery progress and baseline snapshot library.
+- <img src="docs/screenshots/emissions.png" width="220" alt="Emissions Readiness" /> – I/M monitors with pass/fail flags for inspection prep.
+- <img src="docs/screenshots/vin-decoder.png" width="220" alt="VIN Decoder" /> – Enhanced decode powering downstream features.
+- <img src="docs/screenshots/vehicle-history-export.png" width="220" alt="Vehicle History Export" /> – Share-ready PDF/JSON export drawer.
 
 </details>
 
@@ -64,31 +61,27 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade diagno
 ## 🧩 Feature Deep Dive
 
 ### Real-time Telemetry
-- Adaptive polling with automatic protocol negotiation (ISO 9141-2, KWP2000, CAN).
+- Adaptive polling with automatic ISO/KWP/CAN protocol negotiation.
 - Multiple view modes (list, chart, dashboard, HUD) backed by shared `ProcessVariables`.
 - CSV logger service stitches OBD values with GPS, accelerometer, and metadata for post-drive analysis.
 
 ### Diagnostics & Scanning
 - Full-vehicle scan orchestrator maps ECUs, persistent DTCs, pending codes, and module metadata.
 - Baseline scan library compares historic snapshots to spot new modules or faults.
-- Emissions center mirrors inspection readiness (I/M monitors, catalyst status, O2 sensors).
+- Emissions center mirrors inspection readiness (I/M monitors, catalyst status, O₂ sensors).
 
 > <img src="docs/screenshots/full-vehicle-scan.png" width="280" alt="Full vehicle scan workflow" />
 
 ### Intelligent Assistance
-- **CoPilot** (Claude API) pulls context from active DTCs, vehicle metadata, and previous chats.
-- Automatic suggested next steps and part lookup hints (based on failure patterns).
-- Conversation threads cached per vehicle for continuity.
+- **CoPilot** (Anthropic Claude) pulls context from active DTCs, vehicle metadata, and prior chats.
+- Automatic suggested next steps and part lookup hints based on failure patterns.
+- Conversation history cached per vehicle for continuity.
 
 ### Vehicle Intelligence
-- VIN decode via `EnhancedVINDecoder` (NHTSA) with manufacturer and trim heuristics.
-- AutoCheck API integration (companion Node service) for premium vehicle history:
-  - Ownership chain, odometer verification, title brands, accident reports.
-  - Open recall counts + detailed campaigns, exposed separately from NHTSA.
-  - PDF export pipeline for shop handoffs.
-- Hybrid recall center with segmented toggle:
-  - **All Recalls** – NHTSA public campaigns and remedy data.
-  - **Open Recalls** – AutoCheck VIN-specific, manufacturer actionable items.
+- VIN decode via `EnhancedVINDecoder` (NHTSA) with manufacturer/trim heuristics.
+- AutoCheck companion API delivers premium vehicle history, open recalls, ownership, and odometer insights.
+- PDF export pipeline for shop handoffs, customer reports, and archive records.
+- Hybrid recall center blending NHTSA campaigns with AutoCheck VIN-specific items.
 
 > <img src="docs/screenshots/vehicle-history-2.png" width="280" alt="Vehicle history summary" />
 >
@@ -96,55 +89,71 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade diagno
 
 ---
 
-## 🛠 Tech Stack
+## 🧱 Architecture at a Glance
+
+```
+            ┌──────────┐
+Adapter ⇨ CommService ⇨ ObdProt ⇨ ObdDataService ─┬─► Live Data / Gauges
+            └──────────┘                           ├─► Fault Codes / Emissions
+                                                  │   (freeze frames, readiness)
+                                                  ├─► ScanOrchestrator → Baseline Library
+                                                  ├─► CsvLoggingService (GPS + sensors)
+                                                  └─► Feature Modules (CoPilot, Recalls, AutoCheck)
+
+AutoCheck API ⇨ AutoCheckService ⇨ VehicleHistoryActivity / RecallActivity
+NHTSA API     ⇨ RecallLookupAndroid ⇨ RecallActivity (All Recalls tab)
+Claude API    ⇨ CoPilotService ⇨ CoPilotActivity (contextual AI answers)
+```
+
+- **Separation of Concerns** – OBD stack lives in its own package, while UI features orchestrate data via managers/services.
+- **Request Queues & Caching** – AutoCheck companion caches VIN lookups; in-app caching enables instant revisit offline.
+- **Configurable Telemetry** – Logging and AI features respond to user settings stored in `SharedPreferences`.
+
+---
+
+## 🔧 Tech Stack
 
 | Layer | Details |
 | --- | --- |
 | Language | Java 17 (Android), TypeScript/Node (AutoCheck companion) |
-| UI | AppCompat + Material Components, RecyclerView, NestedScrollView, custom card system |
+| UI | AppCompat + Material Components, RecyclerView, custom cards, HUD mode |
 | Architecture | Service + manager pattern, feature-scoped packages, background workers |
 | Data | SharedPreferences caching, on-disk CSV, JSON interop for AutoCheck reports |
-| Integrations | NHTSA APIs, Experian AutoCheck (scraped via Playwright service), Anthropic Claude |
+| Integrations | NHTSA APIs, Experian AutoCheck (Playwright scrape), Anthropic Claude |
 | Tooling | Gradle, Android Studio Giraffe+, Lint, unit tests, GitHub Actions (companion API) |
 
 ---
 
-## 🧭 Project Map
+## 📦 Project Map
 
 ```
 OBD-Droid/
 ├── app/
 │   ├── src/java/com/obddroid/
-│   │   ├── features/
-│   │   │   ├── copilot/           # AI assistant
-│   │   │   ├── emissions/         # I/M readiness & compliance
-│   │   │   ├── fueleconomy/       # MPG tracker
-│   │   │   ├── recalls/           # NHTSA + AutoCheck open recalls
-│   │   │   ├── vehiclehistory/    # AutoCheck reports & PDF export
-│   │   │   └── common/            # Shared feature components
-│   │   ├── obd/                   # Core OBD protocol stack
-│   │   ├── scan/                  # ECU discovery & orchestration
-│   │   ├── telemetry/             # CSV logging, GPS stitching
-│   │   ├── services/              # Foreground/background Android services
-│   │   ├── ui/activities/         # Primary screens
-│   │   └── utils/                 # Helpers, VIN decoding, state managers
-├── modules/
-│   ├── dtc-database/              # Offline DTC catalog
-│   ├── nhtsa-recall-lookup/       # Java/Kotlin bindings for NHTSA APIs
-│   └── automotive-logo-library/   # OEM brand assets
-├── docs/                          # Product notes, launch plans, screenshots
+│   │   ├── features/          # Feature modules (copilot, emissions, recalls, etc.)
+│   │   ├── obd/               # Core OBD protocol implementation
+│   │   ├── scan/              # ECU discovery & orchestration
+│   │   ├── telemetry/         # CSV logging, GPS stitching
+│   │   ├── services/          # Foreground/background Android services
+│   │   ├── ui/activities/     # Primary screens
+│   │   └── utils/             # Helpers, VIN decoding, state managers
+├── modules/                   # External libraries (submodules)
+│   ├── dtc-database/          # Offline DTC catalog
+│   ├── nhtsa-recall-lookup/   # NHTSA API bindings
+│   └── automotive-logo-library/
+├── docs/                      # Product notes, screenshots
 └── README.md
 ```
 
 ---
 
-## 🚀 Getting Started
+## ⚙️ Getting Started
 
 ### Prerequisites
 - Android Studio **Giraffe** (or newer) with **JDK 17**.
 - Android SDK targets **API 21 – 34** (Android 5.0 – 14).
-- Physical Android device (recommended) with Bluetooth OR USB host support.
-- ELM327-compatible OBD-II adapter (Bluetooth Classic, BLE via Serial, USB, or Wi-Fi).
+- Physical Android device (recommended) with Bluetooth or USB host support.
+- ELM327-compatible OBD-II adapter (Bluetooth Classic, BLE serial, USB, or Wi-Fi).
 
 ### Clone & Bootstrap
 
@@ -163,7 +172,7 @@ git submodule update --init --recursive
 adb shell am start -n com.obddroid/.ui.activities.MainActivity
 ```
 
-> **Tip:** The AutoCheck vehicle history feature depends on the companion `autocheck-api` service. Bring it up locally (`npm install && npm run dev`) or point the app to the hosted instance.
+> **Tip:** AutoCheck vehicle history relies on the companion `autocheck-api` service. Run it locally (`npm install && npm run dev`) or point the app at the hosted instance before testing history/recall features.
 
 ---
 
@@ -172,58 +181,26 @@ adb shell am start -n com.obddroid/.ui.activities.MainActivity
 | Task | Command |
 | --- | --- |
 | Clean build | `./gradlew clean` |
-| Compile app sources | `./gradlew :app:compileDebugJavaWithJavac` |
+| Compile sources | `./gradlew :app:compileDebugJavaWithJavac` |
 | Unit tests | `./gradlew :app:testDebugUnitTest` |
 | Lint & static analysis | `./gradlew :app:lintDebug` |
 | Instrumentation tests | `./gradlew :app:connectedDebugAndroidTest` |
 | Generate signed bundle | `./gradlew :app:bundleRelease` |
 
 **Environment toggles**
-- `gradle.properties` controls feature flags, logging verbosity, and Claude API settings.
-- `app/build.gradle` encapsulates product flavors and dependency graph (no hard-coded secrets).
+- `gradle.properties` houses feature flags, logging verbosity, and Claude API settings.
+- `app/build.gradle` encapsulates flavors, signing configs, and dependency graph.
 
 ---
 
-## 🔌 Key Integrations
+## 🔌 Integrations
 
 | Integration | Purpose | Notes |
 | --- | --- | --- |
-| **AutoCheck API** | Premium vehicle history & open recall data | Companion Node/Playwright service scrapes authenticated reports, caches with Redis, serves REST. |
-| **NHTSA Recall API** | Campaign listings, remedy info, VIN decodes | Base data source for “All Recalls” tab. |
-| **Anthropic Claude** | Conversational diagnostics | Configured in CoPilot feature; redacts sensitive info before requests. |
-| **Enhanced VIN Decoder** | Make/model/trim heuristics | Wraps NHTSA decode, normalizes model name variants to drive recall lookups. |
-
----
-
-## 🧱 Architecture Notes
-
-```
-            ┌──────────┐
-Adapter ⇨ CommService ⇨ ObdProt ⇨ ObdDataService ─┬─► Live Data / Gauges
-            └──────────┘                           ├─► Fault Codes / Emissions
-                                                  │   (freeze frames, readiness)
-                                                  ├─► ScanOrchestrator → Baseline Library
-                                                  ├─► CsvLoggingService (GPS + sensors)
-                                                  └─► Feature Modules (CoPilot, Recalls, AutoCheck)
-
-AutoCheck API ⇨ AutoCheckService ⇨ RecallActivity / AutoCheckActivity
-NHTSA API     ⇨ RecallLookupAndroid ⇨ RecallActivity (All Recalls tab)
-Claude API    ⇨ CoPilotService ⇨ CoPilotActivity (contextual AI answers)
-```
-
-- **Separation of Concerns**: OBD stack lives in its own package, while UI features orchestrate data via managers/services.
-- **Request Queues & Caching**: AutoCheck companion caches VIN lookups; in-app caching reduces network load and supports offline revisit.
-- **Configurable Telemetry**: Logging and AI features respond to user settings stored in `SharedPreferences`.
-
----
-
-## 🧑‍💻 Contribution Guide
-
-1. Follow existing Java style (Android Studio default with explicit braces).
-2. Keep feature-specific logic under `features/<feature-name>`.
-3. For new UI flows, create a `Coordinator` where shared interactions are needed.
-4. Add unit tests for utility classes and managers; exercise critical flows manually with a connected adapter.
-5. Run lint + unit tests before opening a PR.
+| **AutoCheck API** | Premium vehicle history & open recall data | Companion Node/Playwright service with Redis caching & rate limiting. |
+| **NHTSA Recall API** | Campaign listings, remedy info, VIN decodes | Back bone for “All Recalls” tab and VIN decoder. |
+| **Anthropic Claude** | Conversational diagnostics | Context-aware responses with client-side redaction. |
+| **Enhanced VIN Decoder** | Make/model/trim heuristics | Normalizes manufacturer naming for recall lookups. |
 
 ---
 
@@ -238,62 +215,15 @@ Claude API    ⇨ CoPilotService ⇨ CoPilotActivity (contextual AI answers)
 
 ---
 
-## 📄 License & Attribution
+## 🤝 Meet the Maker
 
-This project is proprietary and maintained by **Waleed Judah**. Please reach out for collaboration or demo requests.
+Built and maintained by **Waleed Judah**  
+📫 aquataze@yahoo.com · 🔗 [LinkedIn](https://www.linkedin.com/in/waleed-judah-53406787/)
 
-External services referenced:
-- Experian AutoCheck (commercial license required).
-- NHTSA APIs (public domain).
-- Anthropic Claude (API key & usage agreement required).
+> Found this useful? ⭐ the repo, share it with your community, and keep connected cars transparent.
 
 ---
 
-## 💬 Let's Connect
+## 🔒 License
 
-- LinkedIn: [Waleed Judah](https://www.linkedin.com/in/waleed-judah-53406787/)
-- Email: aquataze@yahoo.com
-
-> Found this useful? ⭐ the repo, share it with your community, and let's keep connected cars transparent.
-Update the API endpoint in app settings or configuration.
-
----
-
-## Troubleshooting
-
-### Connection Issues
-- Ensure Bluetooth/USB permissions are granted
-- Check adapter is properly plugged into OBD-II port
-- Verify vehicle ignition is on
-- Try different protocol settings if auto-detect fails
-
-### No Data Displayed
-- Confirm vehicle supports OBD-II (1996+ for US vehicles)
-- Check adapter compatibility
-- Verify correct protocol is selected
-- Try manual protocol selection
-
-### Build Errors
-- Ensure JDK 17+ is installed
-- Update Android SDK to latest version
-- Sync Gradle files
-- Clean and rebuild project
-
----
-
-## License
-
-This project is private and proprietary. All rights reserved.
-
----
-
-## Support
-
-For issues, questions, or feature requests, please open an issue on GitHub or contact the development team.
-
----
-
-**Current Version:** OBDroid v20616
-**Last Updated:** October 2025
-**Minimum Android:** 5.0 (API 21)
-**Target Android:** 14 (API 34)
+This project is proprietary. All rights reserved. Reach out for collaboration, demos, or enterprise inquiries.
