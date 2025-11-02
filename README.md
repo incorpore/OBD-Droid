@@ -246,7 +246,7 @@ adb shell am start -n com.obddroid/.ui.activities.MainActivity
 
 | Integration | Purpose | Notes |
 | --- | --- | --- |
-| **Vehicle Data Service** | Premium vehicle history & open recall data | Companion Node/Playwright service with Redis caching & rate limiting. Provides AutoCheck reports, NHTSA recalls, and VIN decoding. |
+| **Vehicle Data Service** | Premium vehicle history & open recall data | Backend service with Redis caching & rate limiting. Provides AutoCheck reports, NHTSA recalls, and VIN decoding. |
 | **NHTSA Recall API** | Campaign listings, remedy info, VIN decodes | Back bone for “All Recalls” tab and VIN decoder. |
 | **Anthropic Claude** | Conversational diagnostics | Context-aware responses with client-side redaction. |
 | **VIN Decoder** | Make/model/trim heuristics | Normalizes manufacturer naming for recall lookups. |
