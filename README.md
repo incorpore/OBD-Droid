@@ -65,13 +65,21 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicl
     <td><img src="docs/screenshots/emissions.png" width="220" alt="Emissions Readiness" /></td>
     <td><img src="docs/screenshots/full-vehicle-scan.png" width="220" alt="Full Vehicle Scan" /></td>
     <td><img src="docs/screenshots/ecu-list.png" width="220" alt="ECU Modules" /></td>
-    <td><img src="docs/screenshots/fault-codes-start-screen.png" width="220" alt="Fault Codes Start" /></td>
   </tr>
   <tr>
     <td>Inspection-ready I/M monitor dashboard showing pass/fail status at a glance.</td>
     <td>Step-by-step ECU discovery with progress tracking and baseline snapshot creation.</td>
     <td>Comprehensive ECU list with addressing, protocol metadata, and change tracking.</td>
-    <td>Fault code entry screen prompting users to scan their vehicle.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/fault-codes-start-screen.png" width="220" alt="Fault Codes Start" /></td>
+    <td><img src="docs/screenshots/fault-codes-detected.png" width="220" alt="Fault Codes Detected" /></td>
+    <td><img src="docs/screenshots/fault-code-detail.png" width="220" alt="Fault Code Detail" /></td>
+  </tr>
+  <tr>
+    <td>Fault code launcher prompting users to initiate a fresh scan.</td>
+    <td>Detected DTC list with severity badges and quick actions.</td>
+    <td>Drill-down view showing summaries, remedies, and export options.</td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/vehicle-history.png" width="220" alt="Vehicle History" /></td>
@@ -86,15 +94,15 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicl
     <td>One-tap export drawer for PDF/JSON sharing of AutoCheck vehicle history.</td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/fault-codes-detected.png" width="220" alt="Fault Codes Detected" /></td>
     <td><img src="docs/screenshots/vin-decoder.png" width="220" alt="VIN Decoder" /></td>
     <td><img src="docs/screenshots/dashboard-footer.png" width="220" alt="Vehicle Footer" /></td>
     <td></td>
+    <td></td>
   </tr>
   <tr>
-    <td>Detailed fault code list with summaries, remedies, and export options.</td>
     <td>VIN decode powering downstream features like recalls and AutoCheck.</td>
     <td>Signature vehicle footer with quick stats, connection state, and VIN context.</td>
+    <td></td>
     <td></td>
   </tr>
 </table>
