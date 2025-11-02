@@ -16,7 +16,7 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicl
 - **Mission Control for Your Vehicle** – Real-time dashboards, custom PIDs, HUD mode, and CSV/GPS logging.
 - **Deep Diagnostics Pipeline** – ECU discovery, freeze frames, emissions readiness, and health scoring in one flow.
 - **VIN-Aware Intelligence** – AutoCheck history with ownership, odometer, and open recalls side-by-side with NHTSA data.
-- **AI Copilot** – Anthropic Claude delivers contextual answers using live vehicle data and prior conversations.
+- **AI Copilot** – OpenAI ChatGPT delivers contextual answers using live vehicle data and prior conversations.
 - **Modular Architecture** – Service-driven Android app, standalone companion APIs, and reusable libraries.
 
 > _“From handshake to fix recommendation, OBD‑Droid shows how far Android can stretch inside the garage.”_
@@ -133,7 +133,7 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade vehicl
 > <img src="docs/screenshots/full-vehicle-scan.png" width="280" alt="Full vehicle scan workflow" />
 
 ### Intelligent Assistance
-- **CoPilot** (Anthropic Claude) pulls context from active DTCs, vehicle metadata, and prior chats.
+- **CoPilot** (OpenAI ChatGPT) pulls context from active DTCs, vehicle metadata, and prior chats.
 - Automatic suggested next steps and part lookup hints based on failure patterns.
 - Conversation history cached per vehicle for continuity.
 
@@ -180,7 +180,7 @@ Claude API           ⇨ CoPilotService ⇨ CoPilotActivity (contextual AI answe
 | UI | AppCompat + Material Components, RecyclerView, custom cards, HUD mode |
 | Architecture | Service + manager pattern, feature-scoped packages, background workers |
 | Data | SharedPreferences caching, on-disk CSV, JSON interop for AutoCheck reports |
-| Integrations | NHTSA APIs, Experian AutoCheck (Playwright scrape), Anthropic Claude |
+| Integrations | NHTSA APIs, Experian AutoCheck (Playwright scrape), OpenAI ChatGPT |
 | Tooling | Gradle, Android Studio Giraffe+, Lint, unit tests, GitHub Actions (companion API) |
 | Submodules | [DTC Database](https://github.com/Wal33D/dtc-database) · [NHTSA Recall Lookup](https://github.com/Wal33D/nhtsa-recall-lookup) · [Automotive Logo Library](https://github.com/Wal33D/automotive-logo-library) |
 
@@ -261,7 +261,7 @@ adb shell am start -n com.obddroid/.ui.activities.MainActivity
 | --- | --- | --- |
 | **Vehicle Data Service** | Premium vehicle history & open recall data | Backend service with Redis caching & rate limiting. Provides AutoCheck reports, NHTSA recalls, and VIN decoding. |
 | **NHTSA Recall API** | Campaign listings, remedy info, VIN decodes | Back bone for “All Recalls” tab and VIN decoder. |
-| **Anthropic Claude** | Conversational diagnostics | Context-aware responses with client-side redaction. |
+| **OpenAI ChatGPT** | Conversational diagnostics | Context-aware responses with client-side redaction. |
 | **VIN Decoder** | Make/model/trim heuristics | Normalizes manufacturer naming for recall lookups. |
 
 ---
