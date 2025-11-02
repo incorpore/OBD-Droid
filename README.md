@@ -26,10 +26,23 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade diagno
 | ![Dashboard](docs/screenshots/dashboard.png) | Live vehicle overview with quick actions, health summaries, and shortcut metrics. |
 | ![Live Data](docs/screenshots/live-data.png) | Customizable PID lists, chart overlays, and logging controls. |
 | ![Fault Codes](docs/screenshots/fault-codes.png) | Rich DTC cards with freeze frames, fix notes, and AI insights. |
-| ![AutoCheck](docs/screenshots/autocheck.png) | Full AutoCheck report viewer including open recalls and ownership timeline. |
-| ![Safety Recalls](docs/screenshots/open-recalls.png) | “All Recalls” (NHTSA) vs “Open Recalls” (AutoCheck) segmented view for portfolio-ready UX. |
+| ![Vehicle History](docs/screenshots/vehicle-history.png) | AutoCheck report viewer with ownership timeline, odometer verification, and export actions. |
+| ![Safety Recalls](docs/screenshots/recalls-all.png) | Combined NHTSA recall campaigns with AutoCheck open-recall integration in a segmented layout. |
 
 > Screenshots live inside `docs/screenshots/`. Swap in your own captures before publishing the portfolio.
+
+<details>
+<summary>Bonus shots worth highlighting</summary>
+
+- ![Dashboard Vehicle Footer](docs/screenshots/dashboard-footer.png) — Persistent vehicle identity footer available across screens.
+- ![Live Data (Scrolled)](docs/screenshots/live-data-3.png) — Extended PID telemetry set with HUD-ready formatting.
+- ![Fault Code Detail](docs/screenshots/fault-code-detail.png) — Deep dive card with freeze frame, remedy, and AI call-to-action.
+- ![Full Vehicle Scan](docs/screenshots/full-vehicle-scan.png) — ECU discovery progress and snapshot library.
+- ![Emissions Readiness](docs/screenshots/emissions.png) — I/M monitors with pass/fail flags.
+- ![VIN Decoder](docs/screenshots/vin-decoder.png) — Enhanced decoder output powering downstream features.
+- ![Vehicle History Export](docs/screenshots/vehicle-history-export.png) — Share-ready PDF/JSON export drawer.
+
+</details>
 
 ---
 
@@ -45,6 +58,8 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade diagno
 - Baseline scan library compares historic snapshots to spot new modules or faults.
 - Emissions center mirrors inspection readiness (I/M monitors, catalyst status, O2 sensors).
 
+> ![Full vehicle scan workflow](docs/screenshots/full-vehicle-scan.png)
+
 ### Intelligent Assistance
 - **CoPilot** (Claude API) pulls context from active DTCs, vehicle metadata, and previous chats.
 - Automatic suggested next steps and part lookup hints (based on failure patterns).
@@ -59,6 +74,9 @@ OBD‑Droid turns any ELM327-compatible adapter into a professional-grade diagno
 - Hybrid recall center with segmented toggle:
   - **All Recalls** – NHTSA public campaigns and remedy data.
   - **Open Recalls** – AutoCheck VIN-specific, manufacturer actionable items.
+
+> ![Vehicle history summary](docs/screenshots/vehicle-history-2.png)
+> ![VIN decode detail](docs/screenshots/vin-decoder.png)
 
 ---
 
