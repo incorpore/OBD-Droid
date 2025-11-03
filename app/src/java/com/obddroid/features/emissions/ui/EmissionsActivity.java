@@ -82,7 +82,6 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
     private static final long UPDATE_INTERVAL = 2000; // Update every 2 seconds
 
     // Service management
-    private int previousService = ObdProt.OBD_SVC_NONE;
     private boolean dataQueryInProgress = false;
 
     // Colors
@@ -151,18 +150,19 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         super.onResume();
         log.info("=== EmissionsActivity onResume() ===");
 
-        // Register PV change listeners
+        // Register PV change listeners (only for ADD and MODIFY events to reduce overhead)
         if (ObdProt.PidPvs != null) {
-            ObdProt.PidPvs.addPvChangeListener(this);
+            ObdProt.PidPvs.addPvChangeListener(this,
+                PvChangeEvent.PV_ADDED | PvChangeEvent.PV_MODIFIED);
         }
         if (ObdProt.VidPvs != null) {
-            ObdProt.VidPvs.addPvChangeListener(this);
+            ObdProt.VidPvs.addPvChangeListener(this,
+                PvChangeEvent.PV_ADDED | PvChangeEvent.PV_MODIFIED);
         }
 
         // Request live sensor data from vehicle (Mode 1)
         // This is critical for emissions diagnostics - we need real-time O2 sensors, fuel trim, etc.
         if (CommService.elm != null) {
-            previousService = CommService.elm.getService();
             log.info("Setting OBD service to OBD_SVC_DATA (Mode 1) for live sensor data");
             CommService.elm.setService(ObdProt.OBD_SVC_DATA);
         }
@@ -189,13 +189,34 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         // Stop updates
         updateHandler.removeCallbacksAndMessages(null);
 
-        // Restore previous OBD service if activity is finishing
-        if (isFinishing() && CommService.elm != null && previousService != ObdProt.OBD_SVC_NONE) {
-            log.info("Restoring previous OBD service: " + previousService);
-            CommService.elm.setService(previousService);
+        // Only stop OBD polling if activity is finishing, otherwise keep it active
+        // This matches LiveDataActivity and FuelEconomyActivity pattern
+        if (isFinishing()) {
+            if (CommService.elm != null) {
+                log.info("Activity finishing - stopping OBD service");
+                CommService.elm.setService(ObdProt.OBD_SVC_NONE);
+            }
+        } else {
+            log.info("Activity pausing but not finishing - keeping OBD service active");
         }
 
         dataQueryInProgress = false;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // Backup cleanup of listeners in case onPause() didn't run
+        // This matches FuelEconomyActivity pattern for safety
+        if (ObdProt.PidPvs != null) {
+            ObdProt.PidPvs.removePvChangeListener(this);
+        }
+        if (ObdProt.VidPvs != null) {
+            ObdProt.VidPvs.removePvChangeListener(this);
+        }
+
+        log.info("=== EmissionsActivity destroyed ===");
     }
 
     @Override

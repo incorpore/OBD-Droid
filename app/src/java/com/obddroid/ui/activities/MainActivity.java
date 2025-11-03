@@ -422,8 +422,18 @@ public class MainActivity extends AppCompatActivity
                         switch ((CommService.STATE) msg.obj)
                         {
                             case CONNECTED:
-                                setOverlayState(ConnectionOverlayState.DECODING);
-                                onConnect();
+                                // Only call onConnect() for NEW connections, not when already connected
+                                // This prevents re-initialization when activity recreates with existing connection
+                                if (mode != MODE.ONLINE)
+                                {
+                                    log.info("New connection detected - initializing");
+                                    setOverlayState(ConnectionOverlayState.DECODING);
+                                    onConnect();
+                                }
+                                else
+                                {
+                                    log.info("Already connected - skipping re-initialization");
+                                }
                                 break;
 
                             case CONNECTING:
@@ -946,32 +956,12 @@ public class MainActivity extends AppCompatActivity
         // Auto-reconnect on startup if enabled (only on first resume)
         attemptAutoReconnectIfEnabled();
 
-        // Smart mode restoration: restore MainActivity's mode if it was changed by another activity
-        // This prevents mode mismatch that causes connection cycling
+        // DO NOT switch OBD service on resume - causes reconnection and instability
+        // Just use whatever service is currently running to maintain connection stability
         if (CommService.elm != null && mCommService != null)
         {
             int currentService = CommService.elm.getService();
-
-            // Only restore if:
-            // 1. MainActivity has a valid service set (not NONE)
-            // 2. Current service doesn't match what MainActivity expects
-            // 3. We're connected (prevents switching during initial connection)
-            if (obdService != ElmProt.OBD_SVC_NONE &&
-                currentService != obdService &&
-                (ecuConnectionState == ElmProt.STAT.CONNECTED || ecuConnectionState == ElmProt.STAT.ECU_DETECTED))
-            {
-                log.info("MainActivity resuming - restoring service from " + currentService + " to " + obdService + " (mode mismatch detected)");
-
-                // Add small delay to ensure connection is stable before switching
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    if (CommService.elm != null && CommService.elm.getService() != obdService) {
-                        CommService.elm.setService(obdService);
-                        log.info("Service restored to " + obdService);
-                    }
-                }, 300); // 300ms delay to prevent rapid switching
-            } else {
-                log.info("MainActivity resuming - keeping current service: " + currentService + " (no mismatch)");
-            }
+            log.info("MainActivity resuming - keeping current service: " + currentService + " (no switch)");
         }
 
         // set up data display update timer
@@ -1003,10 +993,18 @@ public class MainActivity extends AppCompatActivity
             switch (currentState)
             {
                 case CONNECTED:
-                    // Service is connected, ensure UI reflects this
+                    // Service is connected - just sync UI mode WITHOUT re-initializing
+                    // IMPORTANT: Don't call onConnect() here - that resets adapter, clears data,
+                    // and restarts discovery session. onConnect() should ONLY be called when
+                    // MESSAGE_STATE_CHANGE indicates a NEW connection, not on activity resume.
                     if (mode != MODE.ONLINE)
                     {
-                        onConnect();
+                        log.info("Syncing UI to ONLINE mode (already connected - no re-init)");
+                        mode = MODE.ONLINE;
+                        setMenuItemVisible(R.id.secure_connect_scan, false);
+                        setMenuItemVisible(R.id.disconnect, true);
+                        updateServiceMenuItems(true);
+                        setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
                     }
                     break;
 
@@ -3085,9 +3083,19 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
-        // Check if we're already connected
-        if (mCommService != null && mCommService.getState() == CommService.STATE.CONNECTED) {
-            log.info("Auto-reconnect: Already connected");
+        // Check if we're already connected using BOTH mCommService AND ElmProt status
+        // IMPORTANT: When MainActivity recreates, mCommService may be null even though
+        // connection is still active. Check ElmProt status as fallback.
+        boolean isCommServiceConnected = (mCommService != null && mCommService.getState() == CommService.STATE.CONNECTED);
+        boolean isElmConnected = (CommService.elm != null &&
+                                  (CommService.elm.getStatus() == ElmProt.STAT.CONNECTED ||
+                                   CommService.elm.getStatus() == ElmProt.STAT.ECU_DETECTED ||
+                                   CommService.elm.getStatus() == ElmProt.STAT.ECU_SELECTED));
+
+        if (isCommServiceConnected || isElmConnected) {
+            log.info("Auto-reconnect: Already connected (CommService: " + isCommServiceConnected +
+                    ", ElmProt: " + isElmConnected + ", Status: " +
+                    (CommService.elm != null ? CommService.elm.getStatus() : "null") + ")");
             hasAttemptedAutoReconnect = true;
             return;
         }

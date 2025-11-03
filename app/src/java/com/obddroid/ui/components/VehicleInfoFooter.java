@@ -802,7 +802,7 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             addStyledDetailRow("Trim", currentVehicleData.trim);
         }
 
-        // Add Body/Structure section
+        // Add Body/Structure section with cute vehicle icon
         addStyledSectionHeader("Body & Structure");
 
         // Format body class text for better readability
@@ -811,6 +811,13 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
             // If it has a slash, just use the first part for cleaner display
             bodyClass = bodyClass.split("/")[0].trim();
         }
+
+        // Add cute vehicle icon based on body class
+        String vehicleEmoji = getVehicleEmoji(bodyClass);
+        if (vehicleEmoji != null) {
+            addVehicleTypeHero(vehicleEmoji, bodyClass);
+        }
+
         addStyledDetailRow("Body Class", bodyClass);
 
         // Format vehicle type similarly
@@ -1982,6 +1989,111 @@ public class VehicleInfoFooter extends LinearLayout implements PvChangeListener
                 statusDot.getBackground().setTint(Color.parseColor("#888888")); // Gray when disconnected
             }
         }
+    }
+
+    /**
+     * Get a cute emoji based on the vehicle's body class
+     * @param bodyClass The body class from NHTSA data
+     * @return An emoji representing the vehicle type, or null if no match
+     */
+    private String getVehicleEmoji(String bodyClass) {
+        if (bodyClass == null) return null;
+
+        String lowerBodyClass = bodyClass.toLowerCase();
+
+        // SUVs and Crossovers
+        if (lowerBodyClass.contains("suv") || lowerBodyClass.contains("sport utility")) {
+            return "🚙";
+        }
+        // Trucks and Pickups
+        else if (lowerBodyClass.contains("truck") || lowerBodyClass.contains("pickup")) {
+            return "🛻";
+        }
+        // Vans and Minivans
+        else if (lowerBodyClass.contains("van") || lowerBodyClass.contains("minivan")) {
+            return "🚐";
+        }
+        // Sedans
+        else if (lowerBodyClass.contains("sedan")) {
+            return "🚗";
+        }
+        // Coupes and Sports Cars
+        else if (lowerBodyClass.contains("coupe") || lowerBodyClass.contains("sports car") ||
+                 lowerBodyClass.contains("sport")) {
+            return "🏎️";
+        }
+        // Wagons
+        else if (lowerBodyClass.contains("wagon")) {
+            return "🚙";
+        }
+        // Convertibles
+        else if (lowerBodyClass.contains("convertible") || lowerBodyClass.contains("cabriolet")) {
+            return "🚘";
+        }
+        // Hatchbacks
+        else if (lowerBodyClass.contains("hatchback")) {
+            return "🚗";
+        }
+        // Buses
+        else if (lowerBodyClass.contains("bus")) {
+            return "🚌";
+        }
+        // Motorcycles
+        else if (lowerBodyClass.contains("motorcycle")) {
+            return "🏍️";
+        }
+
+        // Default fallback
+        return "🚗";
+    }
+
+    /**
+     * Add a hero section with large vehicle emoji and body class
+     * @param emoji The vehicle emoji
+     * @param bodyClass The body class name
+     */
+    private void addVehicleTypeHero(String emoji, String bodyClass) {
+        // Create hero container with subtle background
+        LinearLayout heroContainer = new LinearLayout(getContext());
+        heroContainer.setOrientation(LinearLayout.HORIZONTAL);
+        heroContainer.setGravity(Gravity.CENTER_VERTICAL);
+        heroContainer.setPadding(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(12));
+        heroContainer.setBackgroundColor(Color.parseColor("#2A2A2A")); // Slightly lighter than footer
+
+        // Add large emoji icon
+        TextView emojiView = new TextView(getContext());
+        emojiView.setText(emoji);
+        emojiView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 48); // Big and cute!
+        LinearLayout.LayoutParams emojiParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        emojiParams.rightMargin = dpToPx(16);
+        heroContainer.addView(emojiView, emojiParams);
+
+        // Add body class text with styling
+        TextView bodyClassView = new TextView(getContext());
+        bodyClassView.setText(bodyClass);
+        bodyClassView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        bodyClassView.setTextColor(Color.parseColor("#FFFFFF"));
+        bodyClassView.setTypeface(Typeface.DEFAULT_BOLD);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        heroContainer.addView(bodyClassView, textParams);
+
+        // Add to expanded content with margins
+        LinearLayout.LayoutParams heroParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        heroParams.topMargin = dpToPx(8);
+        heroParams.bottomMargin = dpToPx(12);
+        heroParams.leftMargin = dpToPx(16);
+        heroParams.rightMargin = dpToPx(16);
+
+        expandedContentLayout.addView(heroContainer, heroParams);
     }
 
     private int dpToPx(int dp)
