@@ -196,6 +196,15 @@ public class ScanOrchestrator extends Service {
             Log.e(TAG, "Failed to generate report artifacts for scan " + scanId, e);
         }
 
+        // CRITICAL: Clean up service state to prevent excessive cycling
+        // Stages may have left the service in an active polling mode (OBD_SVC_DATA, OBD_SVC_VEH_INFO, etc).
+        // When returning to MainActivity, rapid service switching can trigger the adapter's excessive
+        // cycling protection, causing disconnection. Set service to NONE to ensure clean handoff.
+        if (CommService.elm != null) {
+            Log.i(TAG, "Scan complete - setting service to NONE to prevent excessive cycling");
+            CommService.elm.setService(com.obddroid.obd.ObdProt.OBD_SVC_NONE);
+        }
+
         notifyProgress(listener -> listener.onScanCompleted(report));
     }
 
