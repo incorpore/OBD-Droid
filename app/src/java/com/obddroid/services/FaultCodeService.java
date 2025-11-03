@@ -5,6 +5,7 @@ import android.os.SystemClock;
 import com.obddroid.ecu.EcuCodeItem;
 import com.obddroid.ecu.ObdCodeList;
 import com.obddroid.interfaces.RawTelegramListener;
+import com.obddroid.obd.ElmProt;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -173,6 +174,15 @@ public class FaultCodeService implements RawTelegramListener {
             return CompletableFuture.failedFuture(new IllegalStateException("ELM not available"));
         }
 
+        // Check connection state before scanning
+        ElmProt.STAT status = CommService.elm.getStatus();
+        if (status != ElmProt.STAT.CONNECTED && status != ElmProt.STAT.ECU_DETECTED && status != ElmProt.STAT.ECU_SELECTED) {
+            log.warning("Cannot scan - connection not stable. Current status: " + status);
+            return CompletableFuture.failedFuture(
+                new IllegalStateException("Connection not ready for scanning. Status: " + status)
+            );
+        }
+
         if (!isScanning.compareAndSet(false, true)) {
             log.warning("Scan already in progress – returning existing future");
             return currentScan != null
@@ -215,21 +225,21 @@ public class FaultCodeService implements RawTelegramListener {
         CommService.elm.addRawTelegramListener(this);
         try {
             if (modes.contains(ScanMode.CONFIRMED)) {
-                String response = sendAndAwait("03", SCAN_TIMEOUT_MS);
+                String response = sendAndAwaitWithRetry("03", SCAN_TIMEOUT_MS, 2);
                 log.info("Mode 03 RAW response: [" + response + "]");
                 List<FaultCodeInfo> confirmed = parseFaultCodes(response, CodeType.CONFIRMED);
                 log.info("Mode 03 parsed " + confirmed.size() + " codes");
                 results.addAll(confirmed);
             }
             if (modes.contains(ScanMode.PENDING)) {
-                String response = sendAndAwait("07", SCAN_TIMEOUT_MS);
+                String response = sendAndAwaitWithRetry("07", SCAN_TIMEOUT_MS, 2);
                 log.info("Mode 07 RAW response: [" + response + "]");
                 List<FaultCodeInfo> pending = parseFaultCodes(response, CodeType.PENDING);
                 log.info("Mode 07 parsed " + pending.size() + " codes");
                 results.addAll(pending);
             }
             if (modes.contains(ScanMode.PERMANENT)) {
-                String response = sendAndAwait("0A", SCAN_TIMEOUT_MS);
+                String response = sendAndAwaitWithRetry("0A", SCAN_TIMEOUT_MS, 2);
                 log.info("Mode 0A RAW response: [" + response + "]");
                 List<FaultCodeInfo> permanent = parseFaultCodes(response, CodeType.PERMANENT);
                 log.info("Mode 0A parsed " + permanent.size() + " codes");
@@ -282,6 +292,56 @@ public class FaultCodeService implements RawTelegramListener {
             }
             expectingResponse.set(false);
             return responseBuffer.toString().trim();
+        }
+    }
+
+    /**
+     * Send a raw command with retry logic for invalid responses.
+     * Retries when adapter returns "STOPPED", "?", or empty responses (adapter transitioning modes).
+     */
+    private String sendAndAwaitWithRetry(String command, long timeoutMs, int maxRetries) throws InterruptedException, TimeoutException {
+        int attempt = 0;
+        String response;
+
+        while (true) {
+            try {
+                response = sendAndAwait(command, timeoutMs);
+                String cleanResponse = response.replaceAll("[\\s\\[\\]]", "").toUpperCase(Locale.US);
+
+                // Check if response is invalid (adapter transitioning/not ready)
+                // Use contains() to handle responses like "[STOPPED]", "STOPPED ?", etc.
+                boolean isInvalid = cleanResponse.isEmpty()
+                    || cleanResponse.contains("STOPPED")
+                    || cleanResponse.equals("?")
+                    || cleanResponse.contains("ERROR");
+
+                if (isInvalid && attempt < maxRetries) {
+                    attempt++;
+                    log.warning(String.format("Got invalid response '%s' for command %s (attempt %d/%d), retrying after delay...",
+                        response, command, attempt, maxRetries + 1));
+                    // Wait 500ms for adapter to stabilize before retrying
+                    Thread.sleep(500);
+                    continue;
+                }
+
+                // Either got valid response or exhausted retries
+                if (isInvalid && attempt >= maxRetries) {
+                    log.warning(String.format("Exhausted %d retries for command %s, last response: '%s'",
+                        maxRetries + 1, command, response));
+                }
+
+                return response;
+
+            } catch (TimeoutException e) {
+                if (attempt < maxRetries) {
+                    attempt++;
+                    log.warning(String.format("Timeout for command %s (attempt %d/%d), retrying...",
+                        command, attempt, maxRetries + 1));
+                    Thread.sleep(500);
+                    continue;
+                }
+                throw e;
+            }
         }
     }
 
@@ -383,7 +443,11 @@ public class FaultCodeService implements RawTelegramListener {
         while (cursor >= 0 && cursor + 4 <= cleanData.length()) {
             int count;
             try {
-                count = Integer.parseInt(cleanData.substring(cursor + 2, cursor + 4), 16);
+                // Parse count byte: bits 0-6 = DTC count, bit 7 = MIL status
+                int countByte = Integer.parseInt(cleanData.substring(cursor + 2, cursor + 4), 16);
+                count = countByte & 0x7F;  // Mask off MIL bit (bit 7) to get actual DTC count
+                boolean milOn = (countByte & 0x80) != 0;
+                log.fine(() -> String.format("DTC count byte: 0x%02X (count=%d, MIL=%s)", countByte, count, milOn ? "ON" : "OFF"));
             } catch (NumberFormatException ex) {
                 log.log(Level.WARNING, "Invalid DTC count in response segment: " + cleanData, ex);
                 break;

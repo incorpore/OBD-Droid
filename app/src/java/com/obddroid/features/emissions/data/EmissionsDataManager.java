@@ -124,11 +124,15 @@ public class EmissionsDataManager {
     /**
      * Update all monitor data (readiness + IUMPR)
      *
-     * Convenience method to update both readiness and performance data.
+     * CRITICAL: IUMPR data must be parsed BEFORE readiness status!
+     * The parseMonitorStatus() method checks monitor.conditions to determine
+     * if non-continuous monitors are available when the incomplete bit is clear.
+     * If we parse readiness first, conditions=0 and monitors are incorrectly
+     * marked as unavailable. This causes the first scan to show wrong data.
      */
     public void updateAllData() {
-        updateMonitorReadiness();
-        updateIUMPRData();
+        updateIUMPRData();          // Parse IUMPR data FIRST to populate conditions
+        updateMonitorReadiness();  // Then parse readiness (uses conditions values)
     }
 
     /**
