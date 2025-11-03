@@ -36,6 +36,16 @@ public class EmissionsDataParser {
 
         String lowerDescription = description.toLowerCase(Locale.US);
 
+        // CRITICAL: Only parse READINESS STATUS PIDs from Mode 1 PID 0x01!
+        // Reject regular sensor PIDs like "Oxygen sensors present", "EVAP purge", etc.
+        // Readiness PIDs have "test" in description, except "Misfire status"
+        boolean isReadinessPid = lowerDescription.contains("test")
+                              || lowerDescription.equals("misfire status");
+
+        if (!isReadinessPid) {
+            return null;  // Skip non-readiness PIDs
+        }
+
         if (lowerDescription.contains("misfire")) {
             return "MISFIRE";
         } else if (lowerDescription.contains("fuel system")) {
