@@ -221,6 +221,21 @@ public class FaultCodeService implements RawTelegramListener {
     private List<FaultCodeInfo> executeScan(EnumSet<ScanMode> modes) throws InterruptedException, TimeoutException {
         log.info(() -> "Starting fault code scan for modes: " + modes);
 
+        // CRITICAL: Save current service and disable OBD polling before querying fault codes
+        // Fault code commands (Mode 03/07/0A) are DIRECT commands that conflict with
+        // active polling services (Mode 01/09). If a service is active, the adapter
+        // returns "STOPPED" when we try to send fault code commands.
+        int previousService = CommService.elm.getService();
+        boolean serviceWasSwitched = previousService != com.obddroid.obd.ObdProt.OBD_SVC_NONE;
+
+        if (serviceWasSwitched) {
+            log.info("Temporarily disabling OBD service " + com.obddroid.obd.ObdProt.getServiceName(previousService) +
+                     " to query fault codes");
+            CommService.elm.setService(com.obddroid.obd.ObdProt.OBD_SVC_NONE);
+            // Give adapter time to stop polling before sending direct commands
+            Thread.sleep(100);
+        }
+
         List<FaultCodeInfo> results = new ArrayList<>();
         CommService.elm.addRawTelegramListener(this);
         try {
@@ -247,6 +262,12 @@ public class FaultCodeService implements RawTelegramListener {
             }
         } finally {
             CommService.elm.removeRawTelegramListener(this);
+
+            // Restore previous service if we switched it
+            if (serviceWasSwitched) {
+                log.info("Restoring OBD service " + com.obddroid.obd.ObdProt.getServiceName(previousService));
+                CommService.elm.setService(previousService);
+            }
         }
 
         // Sort by type priority (permanent > confirmed > pending), then alphabetically
