@@ -79,8 +79,12 @@ public final class MonitorTestStage implements ScanStage {
 
     private MonitorSnapshot buildSnapshot() {
         MonitorSnapshot snapshot = new MonitorSnapshot();
-        snapshot.populateReadinessFromPid();
-        snapshot.populateIumprFromVid();
+        // CRITICAL: Parse IUMPR data FIRST to populate conditions, THEN check readiness
+        // The applyReadiness() method checks monitor.conditions to determine if non-continuous
+        // monitors are available when the incomplete bit is clear. If we parse readiness first,
+        // conditions=0 and monitors are incorrectly marked as unavailable.
+        snapshot.populateIumprFromVid();     // Parse IUMPR FIRST to populate conditions
+        snapshot.populateReadinessFromPid(); // Then parse readiness (uses conditions values)
         snapshot.computeOverall();
         return snapshot;
     }
