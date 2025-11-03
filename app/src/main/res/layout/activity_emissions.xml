@@ -7,10 +7,18 @@
     android:layout_height="match_parent"
     android:background="@color/background_primary">
 
+    <!-- Main content area with layered states -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    <!-- Content ScrollView (hidden initially) -->
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/content_scroll_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:fillViewport="true"
+        android:visibility="gone">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -109,6 +117,57 @@
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+        <!-- Empty State (shown initially) -->
+        <LinearLayout
+            android:id="@+id/empty_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="@dimen/spacing_xxl"
+            android:visibility="visible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🌿"
+                android:textSize="64sp"
+                android:layout_marginBottom="@dimen/spacing_large" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/emissions_empty_title"
+                android:textSize="@dimen/text_section_header"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary_dark"
+                android:layout_marginBottom="@dimen/spacing_small" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/emissions_empty_message"
+                android:textSize="@dimen/text_caption"
+                android:textColor="@color/text_tertiary_dark"
+                android:textAlignment="center"
+                android:gravity="center"
+                android:layout_marginBottom="@dimen/spacing_xxl" />
+
+            <!-- Scan Button -->
+            <Button
+                android:id="@+id/scan_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/emissions_button_scan"
+                android:textSize="@dimen/text_caption"
+                android:textStyle="bold"
+                android:backgroundTint="@color/fault_success"
+                android:textColor="@color/text_primary_dark" />
+        </LinearLayout>
+
+    </FrameLayout>
 
     <!-- Vehicle Info Footer -->
     <com.obddroid.ui.components.VehicleInfoFooter

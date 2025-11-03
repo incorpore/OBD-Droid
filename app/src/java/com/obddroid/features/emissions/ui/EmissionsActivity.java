@@ -16,11 +16,13 @@ import android.provider.MediaStore;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.core.widget.NestedScrollView;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -74,6 +76,12 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
     private VehicleInfoFooter vehicleInfoFooter;
     private View snackbarAnchor;  // Anchor view for snackbars
 
+    // Scan screen components
+    private View emptyView;
+    private Button scanButton;
+    private NestedScrollView contentScrollView;
+    private boolean hasScanned = false;
+
     // Data layer components
     private EmissionsDataManager dataManager;
 
@@ -124,11 +132,19 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         // Initialize data layer
         dataManager = new EmissionsDataManager();
 
-        // Start periodic updates
-        startPeriodicUpdates();
+        // Setup scan button click handler
+        setupScanButton();
+
+        log.info("EmissionsActivity initialized - showing empty state");
     }
 
     private void initializeViews() {
+        // Scan screen components
+        emptyView = findViewById(R.id.empty_view);
+        scanButton = findViewById(R.id.scan_button);
+        contentScrollView = findViewById(R.id.content_scroll_view);
+
+        // Content views
         emissionsStatusBanner = findViewById(R.id.emissions_status_banner);
         statusIcon = findViewById(R.id.status_icon);
         overallStatusText = findViewById(R.id.overall_status_text);
@@ -139,6 +155,39 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         snackbarAnchor = findViewById(R.id.content_frame);  // Use CoordinatorLayout for snackbar creation
 
         log.info("Views initialized");
+    }
+
+    private void setupScanButton() {
+        if (scanButton != null) {
+            scanButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startEmissionsScan();
+                }
+            });
+        }
+    }
+
+    /**
+     * ULTRA-SIMPLE scan transition - no delays, no handlers, just instant state switching!
+     */
+    private void startEmissionsScan() {
+        log.info("=== Starting emissions scan (instant transition) ===");
+
+        // 1. Hide empty state, show content - SYNCHRONOUSLY
+        emptyView.setVisibility(View.GONE);
+        contentScrollView.setVisibility(View.VISIBLE);
+
+        // 2. Mark as scanned
+        hasScanned = true;
+
+        // 3. Start periodic updates
+        startPeriodicUpdates();
+
+        // 4. Trigger immediate display update
+        updateDisplay();
+
+        log.info("Emissions scan complete - content visible!");
     }
 
     /**
@@ -176,11 +225,15 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
             CommService.elm.setService(ObdProt.OBD_SVC_DATA);
         }
 
-        // Request emissions data if connected
-        requestEmissionsData();
-
-        // Update display
-        updateDisplay();
+        // Only request data and update display if we've already scanned
+        // Otherwise, wait for scan button click
+        if (hasScanned) {
+            log.info("Already scanned - requesting emissions data and updating display");
+            requestEmissionsData();
+            updateDisplay();
+        } else {
+            log.info("Not scanned yet - showing empty state, waiting for scan button");
+        }
     }
 
     @Override

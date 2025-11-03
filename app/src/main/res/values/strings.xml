@@ -133,6 +133,12 @@
     <string name="fault_codes_nonda_failed">Unable to open YouTube. Please try again later.</string>
     <string name="fault_codes_copied">Copied: %1$s</string>
     <string name="fault_codes_copy_failed">Unable to copy to clipboard</string>
+
+    <!-- Emissions Activity -->
+    <string name="emissions_empty_title">Ready to Scan</string>
+    <string name="emissions_empty_message">Check your emissions readiness status and monitor system diagnostics</string>
+    <string name="emissions_button_scan">Scan Emissions Status</string>
+
     <string name="obd_test_progress">OBD test control in progress.\n
     Please check vehicle reaction.</string>
     <string name="obd_test_confirm">OBD test control requested.\n\n
