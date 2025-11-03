@@ -374,16 +374,15 @@ public final class MonitorTestStage implements ScanStage {
                 } else {
                     boolean incompleteBit = (raw & 0x100) != 0;
                     if (incompleteBit) {
+                        // Incomplete bit set = monitor is available but not ready
                         available = true;
                         ready = false;
                     } else {
-                        if (conditions > 0) {
-                            available = true;
-                            ready = true;
-                        } else {
-                            available = false;
-                            ready = false;
-                        }
+                        // Incomplete bit clear = monitor is either not supported OR complete
+                        // Per OBD-II spec, if we see this PID entry at all, monitor is supported
+                        // The fact that we're parsing this readiness entry means it's available
+                        available = true;
+                        ready = true;
                     }
                 }
             } else {
