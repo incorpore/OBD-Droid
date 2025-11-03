@@ -112,10 +112,16 @@ public class EmissionsDataParser {
                     isComplete = false;
                 } else {
                     // Bit clear = not supported OR complete
-                    // Per OBD-II spec, if we see this PID entry at all, monitor is supported
-                    // The fact that we're parsing this readiness entry means it's available
-                    isAvailable = true;
-                    isComplete = true;
+                    // Use IUMPR data to disambiguate: if conditions > 0, monitor is supported
+                    // NOTE: We parse IUMPR BEFORE readiness (in updateAllData), so conditions is populated!
+                    if (monitor.conditions > 0) {
+                        isAvailable = true;
+                        isComplete = true;
+                    } else {
+                        // No IUMPR data + bit clear = not supported by this vehicle
+                        isAvailable = false;
+                        isComplete = false;
+                    }
                 }
             }
 

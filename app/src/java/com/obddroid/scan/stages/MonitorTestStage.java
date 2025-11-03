@@ -379,10 +379,16 @@ public final class MonitorTestStage implements ScanStage {
                         ready = false;
                     } else {
                         // Incomplete bit clear = monitor is either not supported OR complete
-                        // Per OBD-II spec, if we see this PID entry at all, monitor is supported
-                        // The fact that we're parsing this readiness entry means it's available
-                        available = true;
-                        ready = true;
+                        // Use IUMPR data to disambiguate: if conditions > 0, monitor is supported
+                        // NOTE: We parse IUMPR BEFORE readiness (in buildSnapshot), so conditions is populated!
+                        if (conditions > 0) {
+                            available = true;
+                            ready = true;
+                        } else {
+                            // No IUMPR data + bit clear = not supported by this vehicle
+                            available = false;
+                            ready = false;
+                        }
                     }
                 }
             } else {
