@@ -251,10 +251,18 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        ObdProt.PidPvs.removePvChangeListener(this);
+
+        // Backup cleanup of PV listener in case onPause() didn't run
+        // Defense-in-depth pattern matching LiveDataActivity and EmissionsActivity
+        if (ObdProt.PidPvs != null) {
+            ObdProt.PidPvs.removePvChangeListener(this);
+        }
+
         if (vehicleManager != null) {
             vehicleManager.removeListener(vehicleChangeListener);
         }
+
+        log.info("=== FuelEconomyActivity destroyed ===");
     }
 
     @Override
