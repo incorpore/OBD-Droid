@@ -956,12 +956,21 @@ public class MainActivity extends AppCompatActivity
         // Auto-reconnect on startup if enabled (only on first resume)
         attemptAutoReconnectIfEnabled();
 
-        // DO NOT switch OBD service on resume - causes reconnection and instability
-        // Just use whatever service is currently running to maintain connection stability
-        if (CommService.elm != null && mCommService != null)
+        // Restore OBD service if it was stopped by child activity (e.g., EmissionsActivity)
+        // This prevents Bluetooth timeout disconnects when returning to MainActivity
+        if (CommService.elm != null && mCommService != null && mode == MODE.ONLINE)
         {
             int currentService = CommService.elm.getService();
-            log.info("MainActivity resuming - keeping current service: " + currentService + " (no switch)");
+
+            if (currentService == ObdProt.OBD_SVC_NONE) {
+                // Service was stopped by child activity - restart default service to keep connection alive
+                int defaultService = (obdService != ObdProt.OBD_SVC_NONE) ? obdService : ObdProt.OBD_SVC_DATA;
+                log.info("MainActivity resuming - restarting OBD service from NONE to " + defaultService + " to prevent disconnect");
+                CommService.elm.setService(defaultService);
+            } else {
+                // Service is already running - keep it stable
+                log.info("MainActivity resuming - keeping current service: " + currentService + " (no switch)");
+            }
         }
 
         // set up data display update timer
