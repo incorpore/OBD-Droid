@@ -232,6 +232,19 @@ public class LiveDataActivity extends AppCompatActivity
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // Backup cleanup of PV listener in case onPause() didn't run
+        // Defense-in-depth pattern matching FuelEconomyActivity and EmissionsActivity
+        if (ObdProt.PidPvs != null) {
+            ObdProt.PidPvs.removePvChangeListener(this);
+        }
+
+        log.info("=== LiveDataActivity destroyed ===");
+    }
+
+    @Override
     public void onBackPressed() {
         // If vehicle info footer is expanded, collapse it first before navigating back
         if (vehicleInfoFooter != null && vehicleInfoFooter.isExpanded()) {

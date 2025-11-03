@@ -44,31 +44,41 @@ public final class LiveDataStage implements ScanStage {
             if (CommService.elm != null) {
                 log.info("SCAN: Activating live data service (Mode 01)");
 
-                // Remember current service
+                // Remember current service so we can reliably restore it afterwards
                 int previousService = CommService.elm.getService();
+                boolean serviceChanged = previousService != ObdProt.OBD_SVC_DATA;
 
-                // Activate Service 01 (live data) - this will trigger OBD to start querying PIDs
-                CommService.elm.setService(ObdProt.OBD_SVC_DATA, false);
+                try {
+                    // Activate Service 01 (live data) - this will trigger OBD to start querying PIDs
+                    if (serviceChanged) {
+                        CommService.elm.setService(ObdProt.OBD_SVC_DATA, false);
+                    }
 
-                // Wait for data to populate (give OBD protocol time to query supported PIDs)
-                log.info("SCAN: Waiting for live data to populate...");
-                int maxWaitSeconds = 8;
-                int initialSize = ObdProt.PidPvs.size();
+                    // Wait for data to populate (give OBD protocol time to query supported PIDs)
+                    log.info("SCAN: Waiting for live data to populate...");
+                    int maxWaitSeconds = 8;
+                    int initialSize = ObdProt.PidPvs.size();
 
-                for (int i = 0; i < maxWaitSeconds * 2; i++) {
-                    Thread.sleep(500);
-                    context.checkCancelled();
+                    for (int i = 0; i < maxWaitSeconds * 2; i++) {
+                        Thread.sleep(500);
+                        context.checkCancelled();
 
-                    int currentSize = ObdProt.PidPvs.size();
-                    log.fine("SCAN: PidPvs size: " + currentSize);
+                        int currentSize = ObdProt.PidPvs.size();
+                        log.fine("SCAN: PidPvs size: " + currentSize);
 
-                    // If we've received data and it's been stable for 1 second, we're done
-                    if (currentSize > 1 && i > 2) {
-                        break;
+                        // If we've received data and it's been stable for 1 second, we're done
+                        if (currentSize > 1 && i > 2) {
+                            break;
+                        }
+                    }
+
+                    log.info("SCAN: Live data populated, PidPvs size: " + ObdProt.PidPvs.size());
+                } finally {
+                    if (serviceChanged) {
+                        log.info("SCAN: Restoring previous service " + ObdProt.getServiceName(previousService));
+                        CommService.elm.setService(previousService, false);
                     }
                 }
-
-                log.info("SCAN: Live data populated, PidPvs size: " + ObdProt.PidPvs.size());
             } else {
                 log.warning("SCAN: CommService.elm is null, cannot actively request live data");
             }

@@ -44,27 +44,39 @@ public final class VehicleInfoStage implements ScanStage {
             if (CommService.elm != null) {
                 log.info("SCAN: Activating vehicle info service (Mode 09)");
 
-                // Activate Service 09 (vehicle info) - this will trigger OBD to start querying VIDs
-                CommService.elm.setService(ObdProt.OBD_SVC_VEH_INFO, false);
+                int previousService = CommService.elm.getService();
+                boolean serviceChanged = previousService != ObdProt.OBD_SVC_VEH_INFO;
 
-                // Wait for data to populate (give OBD protocol time to query supported VIDs)
-                log.info("SCAN: Waiting for vehicle info to populate...");
-                int maxWaitSeconds = 6;
+                try {
+                    // Activate Service 09 (vehicle info) - this will trigger OBD to start querying VIDs
+                    if (serviceChanged) {
+                        CommService.elm.setService(ObdProt.OBD_SVC_VEH_INFO, false);
+                    }
 
-                for (int i = 0; i < maxWaitSeconds * 2; i++) {
-                    Thread.sleep(500);
-                    context.checkCancelled();
+                    // Wait for data to populate (give OBD protocol time to query supported VIDs)
+                    log.info("SCAN: Waiting for vehicle info to populate...");
+                    int maxWaitSeconds = 6;
 
-                    int currentSize = ObdProt.VidPvs.size();
-                    log.fine("SCAN: VidPvs size: " + currentSize);
+                    for (int i = 0; i < maxWaitSeconds * 2; i++) {
+                        Thread.sleep(500);
+                        context.checkCancelled();
 
-                    // If we've received data and it's been stable for 1 second, we're done
-                    if (currentSize > 0 && i > 2) {
-                        break;
+                        int currentSize = ObdProt.VidPvs.size();
+                        log.fine("SCAN: VidPvs size: " + currentSize);
+
+                        // If we've received data and it's been stable for 1 second, we're done
+                        if (currentSize > 0 && i > 2) {
+                            break;
+                        }
+                    }
+
+                    log.info("SCAN: Vehicle info populated, VidPvs size: " + ObdProt.VidPvs.size());
+                } finally {
+                    if (serviceChanged) {
+                        log.info("SCAN: Restoring previous service " + ObdProt.getServiceName(previousService));
+                        CommService.elm.setService(previousService, false);
                     }
                 }
-
-                log.info("SCAN: Vehicle info populated, VidPvs size: " + ObdProt.VidPvs.size());
             } else {
                 log.warning("SCAN: CommService.elm is null, cannot actively request vehicle info");
             }

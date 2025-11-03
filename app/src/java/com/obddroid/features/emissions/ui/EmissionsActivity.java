@@ -81,6 +81,15 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
     private Handler updateHandler = new Handler(Looper.getMainLooper());
     private static final long UPDATE_INTERVAL = 2000; // Update every 2 seconds
 
+    // Periodic update runnable (field-based for precise cleanup)
+    private final Runnable updateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateDisplay();
+            updateHandler.postDelayed(this, UPDATE_INTERVAL);
+        }
+    };
+
     // Service management
     private boolean dataQueryInProgress = false;
 
@@ -186,8 +195,8 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
             ObdProt.VidPvs.removePvChangeListener(this);
         }
 
-        // Stop updates
-        updateHandler.removeCallbacksAndMessages(null);
+        // Stop updates - precise callback removal matches LiveDataActivity pattern
+        updateHandler.removeCallbacks(updateRunnable);
 
         // Only stop OBD polling if activity is finishing, otherwise keep it active
         // This matches LiveDataActivity and FuelEconomyActivity pattern
@@ -322,13 +331,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
     }
 
     private void startPeriodicUpdates() {
-        updateHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                updateDisplay();
-                updateHandler.postDelayed(this, UPDATE_INTERVAL);
-            }
-        }, UPDATE_INTERVAL);
+        updateHandler.postDelayed(updateRunnable, UPDATE_INTERVAL);
     }
 
     private boolean hasExportableData() {

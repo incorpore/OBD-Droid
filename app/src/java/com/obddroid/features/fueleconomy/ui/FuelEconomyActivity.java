@@ -74,6 +74,15 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     private Handler updateHandler;
     private static final long UPDATE_INTERVAL = 1000; // Update every second
 
+    // Periodic update runnable (field-based for precise cleanup)
+    private final Runnable updateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateDisplayedValues();
+            updateHandler.postDelayed(this, UPDATE_INTERVAL);
+        }
+    };
+
     // Tank capacity management
     private com.obddroid.utils.VehiclePreferences vehiclePreferences;  // Legacy - still used by calculator
     private com.obddroid.services.VehicleManager vehicleManager;
@@ -652,17 +661,12 @@ public class FuelEconomyActivity extends AppCompatActivity implements PvChangeLi
     }
 
     private void startPeriodicUpdates() {
-        updateHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                updateDisplayedValues();
-                updateHandler.postDelayed(this, UPDATE_INTERVAL);
-            }
-        }, UPDATE_INTERVAL);
+        updateHandler.postDelayed(updateRunnable, UPDATE_INTERVAL);
     }
 
     private void stopPeriodicUpdates() {
-        updateHandler.removeCallbacksAndMessages(null);
+        // Precise callback removal - matches LiveDataActivity pattern
+        updateHandler.removeCallbacks(updateRunnable);
     }
 
     @Override
