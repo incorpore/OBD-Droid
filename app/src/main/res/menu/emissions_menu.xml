@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/action_rescan"
-        android:title="Rescan Emissions Data"
+        android:title="Rescan"
         android:icon="@drawable/ic_refresh_24"
         app:showAsAction="never" />
 
