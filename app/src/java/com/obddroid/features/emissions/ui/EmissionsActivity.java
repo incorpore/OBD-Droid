@@ -159,6 +159,14 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
             ObdProt.VidPvs.addPvChangeListener(this);
         }
 
+        // Request live sensor data from vehicle (Mode 1)
+        // This is critical for emissions diagnostics - we need real-time O2 sensors, fuel trim, etc.
+        if (CommService.elm != null) {
+            previousService = CommService.elm.getService();
+            log.info("Setting OBD service to OBD_SVC_DATA (Mode 1) for live sensor data");
+            CommService.elm.setService(ObdProt.OBD_SVC_DATA);
+        }
+
         // Request emissions data if connected
         requestEmissionsData();
 
@@ -181,7 +189,12 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         // Stop updates
         updateHandler.removeCallbacksAndMessages(null);
 
-        // No service restoration needed - we never switch services
+        // Restore previous OBD service if activity is finishing
+        if (isFinishing() && CommService.elm != null && previousService != ObdProt.OBD_SVC_NONE) {
+            log.info("Restoring previous OBD service: " + previousService);
+            CommService.elm.setService(previousService);
+        }
+
         dataQueryInProgress = false;
     }
 
@@ -262,7 +275,7 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
 
     /**
      * Start a fresh emissions data request from the vehicle
-     * This switches OBD services to Mode 1 and Mode 9 to retrieve the data
+     * This requests Mode 1 live data (already set in onResume)
      */
     private void startEmissionsDataRequest() {
         if (CommService.elm == null) {
@@ -276,12 +289,13 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
             return;
         }
 
-        // DO NOT switch OBD services - causes instability with some adapters
-        // Just display whatever emissions data is already available
-        log.info("Displaying emissions data from current service (service switching disabled)");
+        log.info("Requesting fresh emissions data from vehicle");
         dataQueryInProgress = true;
 
-        // Update display immediately with available data
+        // Service is already set to OBD_SVC_DATA in onResume()
+        // Data will flow automatically through PvChangeListener callbacks
+
+        // Update display to show current data
         updateDisplay();
         dataQueryInProgress = false;
     }
@@ -762,6 +776,11 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         log.info("  PidPvs: " + (ObdProt.PidPvs != null ? ObdProt.PidPvs.size() + " items" : "null"));
         log.info("  VidPvs: " + (ObdProt.VidPvs != null ? ObdProt.VidPvs.size() + " items" : "null"));
 
+        // Log current sensor values for debugging
+        if (ObdProt.PidPvs != null && !ObdProt.PidPvs.isEmpty()) {
+            logSensorValues();
+        }
+
         // Update all monitor data using data manager
         dataManager.updateAllData();
 
@@ -986,5 +1005,227 @@ public class EmissionsActivity extends AppCompatActivity implements PvChangeList
         }
 
         monitorsContainer.addView(cardView);
+    }
+
+    //===================================================================================
+    // SENSOR DATA RETRIEVAL - Critical emissions-related sensors from Mode 1
+    //===================================================================================
+
+    /**
+     * Get oxygen sensor 1 bank 1 voltage (PID 0x14)
+     * @return Voltage in volts, or null if not available
+     */
+    private Float getO2Sensor1Bank1() {
+        EcuDataPv pv = ObdProt.PidPvs.getTyped("14.0.0");  // PID 0x14, sensor 0, bank 0
+        if (pv != null) {
+            Object value = pv.get(EcuDataPv.FID_VALUE);
+            if (value != null) {
+                try {
+                    return Float.parseFloat(value.toString());
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get oxygen sensor 2 bank 1 voltage (PID 0x15)
+     * @return Voltage in volts, or null if not available
+     */
+    private Float getO2Sensor2Bank1() {
+        EcuDataPv pv = ObdProt.PidPvs.getTyped("15.0.0");  // PID 0x15
+        if (pv != null) {
+            Object value = pv.get(EcuDataPv.FID_VALUE);
+            if (value != null) {
+                try {
+                    return Float.parseFloat(value.toString());
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get short term fuel trim bank 1 (PID 0x06)
+     * @return Percentage (-100 to +100), or null if not available
+     */
+    private Float getShortTermFuelTrim() {
+        EcuDataPv pv = ObdProt.PidPvs.getTyped("06.0.0");  // PID 0x06
+        if (pv != null) {
+            Object value = pv.get(EcuDataPv.FID_VALUE);
+            if (value != null) {
+                try {
+                    return Float.parseFloat(value.toString());
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get long term fuel trim bank 1 (PID 0x07)
+     * @return Percentage (-100 to +100), or null if not available
+     */
+    private Float getLongTermFuelTrim() {
+        EcuDataPv pv = ObdProt.PidPvs.getTyped("07.0.0");  // PID 0x07
+        if (pv != null) {
+            Object value = pv.get(EcuDataPv.FID_VALUE);
+            if (value != null) {
+                try {
+                    return Float.parseFloat(value.toString());
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get engine coolant temperature (PID 0x05)
+     * @return Temperature in Celsius, or null if not available
+     */
+    private Float getCoolantTemp() {
+        EcuDataPv pv = ObdProt.PidPvs.getTyped("05.0.0");  // PID 0x05
+        if (pv != null) {
+            Object value = pv.get(EcuDataPv.FID_VALUE);
+            if (value != null) {
+                try {
+                    return Float.parseFloat(value.toString());
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get intake air temperature (PID 0x0F)
+     * @return Temperature in Celsius, or null if not available
+     */
+    private Float getIntakeAirTemp() {
+        EcuDataPv pv = ObdProt.PidPvs.getTyped("0F.0.0");  // PID 0x0F
+        if (pv != null) {
+            Object value = pv.get(EcuDataPv.FID_VALUE);
+            if (value != null) {
+                try {
+                    return Float.parseFloat(value.toString());
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get engine load (PID 0x04)
+     * @return Load percentage (0-100), or null if not available
+     */
+    private Float getEngineLoad() {
+        EcuDataPv pv = ObdProt.PidPvs.getTyped("04.0.0");  // PID 0x04
+        if (pv != null) {
+            Object value = pv.get(EcuDataPv.FID_VALUE);
+            if (value != null) {
+                try {
+                    return Float.parseFloat(value.toString());
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get engine RPM (PID 0x0C)
+     * @return RPM, or null if not available
+     */
+    private Float getEngineRPM() {
+        EcuDataPv pv = ObdProt.PidPvs.getTyped("0C.0.0");  // PID 0x0C
+        if (pv != null) {
+            Object value = pv.get(EcuDataPv.FID_VALUE);
+            if (value != null) {
+                try {
+                    return Float.parseFloat(value.toString());
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get mass air flow (PID 0x10)
+     * @return MAF in grams/second, or null if not available
+     */
+    private Float getMassAirFlow() {
+        EcuDataPv pv = ObdProt.PidPvs.getTyped("10.0.0");  // PID 0x10
+        if (pv != null) {
+            Object value = pv.get(EcuDataPv.FID_VALUE);
+            if (value != null) {
+                try {
+                    return Float.parseFloat(value.toString());
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get throttle position (PID 0x11)
+     * @return Throttle percentage (0-100), or null if not available
+     */
+    private Float getThrottlePosition() {
+        EcuDataPv pv = ObdProt.PidPvs.getTyped("11.0.0");  // PID 0x11
+        if (pv != null) {
+            Object value = pv.get(EcuDataPv.FID_VALUE);
+            if (value != null) {
+                try {
+                    return Float.parseFloat(value.toString());
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Log current emissions sensor values for debugging
+     */
+    private void logSensorValues() {
+        log.info("=== Current Emissions Sensor Values ===");
+        log.info("  O2 Sensor 1 Bank 1: " + formatSensorValue(getO2Sensor1Bank1(), "V"));
+        log.info("  O2 Sensor 2 Bank 1: " + formatSensorValue(getO2Sensor2Bank1(), "V"));
+        log.info("  Short Term Fuel Trim: " + formatSensorValue(getShortTermFuelTrim(), "%"));
+        log.info("  Long Term Fuel Trim: " + formatSensorValue(getLongTermFuelTrim(), "%"));
+        log.info("  Coolant Temperature: " + formatSensorValue(getCoolantTemp(), "°C"));
+        log.info("  Intake Air Temperature: " + formatSensorValue(getIntakeAirTemp(), "°C"));
+        log.info("  Engine Load: " + formatSensorValue(getEngineLoad(), "%"));
+        log.info("  Engine RPM: " + formatSensorValue(getEngineRPM(), ""));
+        log.info("  Mass Air Flow: " + formatSensorValue(getMassAirFlow(), "g/s"));
+        log.info("  Throttle Position: " + formatSensorValue(getThrottlePosition(), "%"));
+        log.info("======================================");
+    }
+
+    /**
+     * Format sensor value for display
+     */
+    private String formatSensorValue(Float value, String unit) {
+        if (value == null) {
+            return "N/A";
+        }
+        return String.format(Locale.US, "%.2f %s", value, unit);
     }
 }
