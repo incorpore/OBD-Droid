@@ -1,0 +1,77 @@
+OBD-Droid
+Copyright (c) 2024-2026 Waleed Judah
+
+This product includes software developed by third parties.
+
+================================================================================
+Third-Party Libraries
+================================================================================
+
+jSerialComm (com.fazecast:jSerialComm)
+  License: GNU Lesser General Public License v3.0 (LGPL-3.0)
+  https://github.com/Fazecast/jSerialComm
+
+usb-serial-for-android (com.github.mik3y:usb-serial-for-android)
+  License: MIT License
+  https://github.com/mik3y/usb-serial-for-android
+
+SpeedView (com.github.anastr:speedviewlib)
+  License: Apache License 2.0
+  https://github.com/anastr/SpeedView
+
+MPAndroidChart (com.github.PhilJay:MPAndroidChart)
+  License: Apache License 2.0
+  https://github.com/PhilJay/MPAndroidChart
+
+HiveMQ MQTT Client (com.hivemq:hivemq-mqtt-client)
+  License: Apache License 2.0
+  https://github.com/hivemq/hivemq-mqtt-client
+
+Lottie for Android (com.airbnb.android:lottie)
+  License: Apache License 2.0
+  https://github.com/airbnb/lottie-android
+
+Markwon (io.noties.markwon)
+  License: Apache License 2.0
+  https://github.com/noties/Markwon
+
+Gson (com.google.code.gson:gson)
+  License: Apache License 2.0
+  https://github.com/google/gson
+
+FlexboxLayout (com.google.android.flexbox:flexbox)
+  License: Apache License 2.0
+  https://github.com/nicklockwood/FlexboxLayout
+
+AndroidX Libraries
+  License: Apache License 2.0
+  https://developer.android.com/jetpack/androidx
+
+Material Components for Android
+  License: Apache License 2.0
+  https://github.com/material-components/material-components-android
+
+================================================================================
+Submodules
+================================================================================
+
+DTC Database (modules/dtc-database)
+  License: MIT License
+  https://github.com/Wal33D/dtc-database
+
+NHTSA Recall Lookup (modules/nhtsa-recall-lookup)
+  License: MIT License
+  https://github.com/Wal33D/nhtsa-recall-lookup
+
+Automotive Logo Library (modules/automotive-logo-library)
+  License: MIT License
+  https://github.com/Wal33D/automotive-logo-library
+
+================================================================================
+Note on LGPL
+================================================================================
+
+jSerialComm is distributed under LGPL-3.0. This application links to jSerialComm
+as an unmodified library dependency. Users may substitute their own version of
+jSerialComm in compliance with the LGPL. The source code for jSerialComm is
+available at https://github.com/Fazecast/jSerialComm.

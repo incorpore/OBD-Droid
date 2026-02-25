@@ -18,16 +18,22 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.obddroid.BuildConfig;
+
 /**
- * Service to fetch AutoCheck vehicle history reports from the API
- * Runs API calls on background thread and returns results on main thread
+ * Service to fetch AutoCheck vehicle history reports from the API.
+ * Runs API calls on background thread and returns results on main thread.
+ *
+ * Configure via gradle properties (set in local.properties):
+ *   AUTOCHECK_API_BASE_URL=https://your-instance.example.com
+ *   AUTOCHECK_API_KEY=your-api-key
  */
 public class AutoCheckService {
     private static final String TAG = "AutoCheckService";
 
-    // API Configuration - Production server
-    private static final String API_BASE_URL = "https://your-autocheck-instance";
-    private static final String API_KEY = "REDACTED_API_KEY";
+    // API Configuration – set via BuildConfig (see gradle.properties / local.properties)
+    private static final String API_BASE_URL = BuildConfig.AUTOCHECK_API_BASE_URL;
+    private static final String API_KEY = BuildConfig.AUTOCHECK_API_KEY;
     private static final int TIMEOUT_MS = 60000; // 60 seconds for browser automation
 
     private final Context context;

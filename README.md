@@ -286,6 +286,6 @@ Built and maintained by **Waleed Judah**
 
 ---
 
-## 🔒 License
+## 📄 License
 
-This project is proprietary. All rights reserved. Reach out for collaboration, demos, or enterprise inquiries.
+This project is licensed under the [MIT License](LICENSE). See the `LICENSE` file for details.

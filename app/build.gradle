@@ -12,6 +12,10 @@ android {
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
+        // AutoCheck API – override in local.properties (gitignored)
+        buildConfigField "String", "AUTOCHECK_API_BASE_URL", "\"${project.findProperty('AUTOCHECK_API_BASE_URL') ?: ''}\""
+        buildConfigField "String", "AUTOCHECK_API_KEY", "\"${project.findProperty('AUTOCHECK_API_KEY') ?: ''}\""
+
         lintOptions {
             // Override lint error on targetSdkVersion
             abortOnError false
@@ -43,6 +47,10 @@ android {
 
     applicationVariants.configureEach { variant ->
         variant.resValue "string", "app_version", variant.versionName
+    }
+
+    buildFeatures {
+        buildConfig true
     }
 
     buildTypes {
