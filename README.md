@@ -279,8 +279,10 @@ adb shell am start -n com.obddroid/.ui.activities.MainActivity
 
 ## 🤝 Meet the Maker
 
-Built and maintained by **Waleed Judah**  
+Built and maintained by **Waleed Judah**
 📫 aquataze@yahoo.com · 🔗 [LinkedIn](https://www.linkedin.com/in/waleed-judah-53406787/)
+
+> Seriously though — if you're hiring, reach out. All I do is build.
 
 > Found this useful? ⭐ the repo, share it with your community, and keep connected cars transparent.
 
