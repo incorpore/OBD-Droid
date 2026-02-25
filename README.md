@@ -234,7 +234,7 @@ git submodule update --init --recursive
 adb shell am start -n com.obddroid/.ui.activities.MainActivity
 ```
 
-> **Tip:** Vehicle history and recall features rely on the companion `vehicle-data-service`. Run it locally (`npm install && npm run dev`) or point the app at the hosted instance before testing history/recall features.
+> **Note:** The Vehicle History feature requires a **private AutoCheck backend** that you host yourself. This is not included in the open-source release. If you have access to AutoCheck data through your own dealership or subscription, you can stand up your own backend and configure the endpoint in `local.properties`. All other features (live data, fault codes, emissions, recalls via NHTSA, AI copilot) work without it.
 
 ---
 
@@ -259,7 +259,7 @@ adb shell am start -n com.obddroid/.ui.activities.MainActivity
 
 | Integration | Purpose | Notes |
 | --- | --- | --- |
-| **Vehicle Data Service** | Premium vehicle history & open recall data | Backend service with Redis caching & rate limiting. Provides AutoCheck reports, NHTSA recalls, and VIN decoding. |
+| **Vehicle Data Service** | Premium vehicle history & open recall data | **Private — not included.** Requires your own AutoCheck backend. Configure endpoint and API key in `local.properties`. |
 | **NHTSA Recall API** | Campaign listings, remedy info, VIN decodes | Back bone for “All Recalls” tab and VIN decoder. |
 | **OpenAI ChatGPT** | Conversational diagnostics | Context-aware responses with client-side redaction. |
 | **VIN Decoder** | Make/model/trim heuristics | Normalizes manufacturer naming for recall lookups. |

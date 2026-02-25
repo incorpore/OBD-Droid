@@ -24,8 +24,9 @@ import com.obddroid.BuildConfig;
  * Service to fetch AutoCheck vehicle history reports from the API.
  * Runs API calls on background thread and returns results on main thread.
  *
+ * Requires a private AutoCheck backend (not included in this project).
  * Configure via gradle properties (set in local.properties):
- *   AUTOCHECK_API_BASE_URL=https://your-instance.example.com
+ *   AUTOCHECK_API_BASE_URL=your-private-endpoint
  *   AUTOCHECK_API_KEY=your-api-key
  */
 public class AutoCheckService {
